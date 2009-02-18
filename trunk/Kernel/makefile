@@ -107,6 +107,7 @@ profile := true
 libdir      := ./lib
 srcdir      := ./src
 includedir  := ./include
+bindir		:= ./bin
 
 # default file to be included when the executable build is required
 exe-source-file := ${srcdir}/EDLUTKernel.cpp

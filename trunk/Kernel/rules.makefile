@@ -11,6 +11,7 @@ $(exetarget) : $(exe-objects)
 	@echo
 	@echo ------------------ making executable
 	@echo
+	@mkdir -p $(bindir)
 	$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 .PHONY  : library
@@ -23,6 +24,7 @@ $(libtarget): $(objects)
 	@echo
 	@echo ------------------ creating library
 	@echo
+	@mkdir -p $(libdir)
 	$(AR) $(ARFLAGS) $@ $^
 
 .PHONY : tags
@@ -30,7 +32,7 @@ tags   :
 	@echo
 	@echo ------------------ creating tag entries
 	@echo
-	@etags $(includedir)/*.h $(includedir)/$(packagename)/*.h $(srcdir)/*.cpp $(srcdir)/*.cc $(srcdir)/*.c
+	@etags $(includedir)/*.h $(includedir)/*.h $(srcdir)/*.cpp $(srcdir)/*.cc $(srcdir)/*.c
 
 .PHONY : dox
 dox    : Doxyfile
@@ -51,14 +53,14 @@ distclean  :
 	@echo
 	@echo ------------------ cleaning everything
 	@echo
-	@rm -f $(pkgconfigfile) $(libtarget) $(packagename) $(objects) ${exetarget} ${exe-objects} $(dependencies) ${exe-dependencies} TAGS gmon.out
+	@rm -f $(pkgconfigfile) $(libtarget) $(packagename) $(objects) ${exetarget}.exe ${exe-objects} $(dependencies) ${exe-dependencies} TAGS gmon.out
 
 .PHONY : clean
 clean  :
 	@echo
 	@echo ------------------ cleaning *.o exe lib
 	@echo
-	@rm -f $(objects) ${exe-objects} ${libtarget} ${exetarget} TAGS gmon.out
+	@rm -f $(objects) ${exe-objects} ${libtarget} ${exetarget}.exe TAGS gmon.out
 
 .PHONY : clear
 clear :
@@ -72,7 +74,7 @@ install: $(libtarget) pkgfile uninstall
 	@echo ------------------ installing at $(installdir)
 	@echo
 	@mkdir -p $(installdir)/include/$(packagename)
-	@cp -vfR $(includedir)/$(packagename)/[!.]* $(installdir)/include/$(packagename)
+	@cp -vfR $(includedir)/[!.]* $(installdir)/include/$(packagename)
 	@mkdir -p $(installdir)/lib/pkgconfig
 	@cp -vfR $(libtarget)  $(installdir)/lib
 	@echo
