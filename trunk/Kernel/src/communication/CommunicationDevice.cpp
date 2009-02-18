@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           CommunicationDevice.cpp  -  description       *
+ *                           CommunicationDevice.cpp                       *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -15,7 +15,7 @@
  ***************************************************************************/
 
 
-#include "./include/communicationdevice.h"
+#include "../../include/communication/communicationdevice.h"
 
 
 //( CommunicationDevice

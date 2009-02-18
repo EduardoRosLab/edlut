@@ -22,16 +22,16 @@
 
 #include <iostream>
 
-#include "./simulation/include/ParamReader.h"
-#include "./simulation/include/Simulation.h"
+#include "../include/simulation/ParamReader.h"
+#include "../include/simulation/Simulation.h"
 
-#include "./simulation/include/ParameterException.h"
+#include "../include/simulation/ParameterException.h"
 
-#include "./communication/include/ConnectionException.h"
+#include "../include/communication/ConnectionException.h"
 
-#include "./spike/include/EDLUTFileException.h"
-#include "./spike/include/EDLUTException.h"
-#include "./spike/include/Network.h"
+#include "../include/spike/EDLUTFileException.h"
+#include "../include/spike/EDLUTException.h"
+#include "../include/spike/Network.h"
 
 
 using namespace std;

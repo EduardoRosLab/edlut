@@ -14,12 +14,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/PropagatedSpike.h"
+#include "../../include/spike/PropagatedSpike.h"
 
-#include "./include/Interconnection.h"
-#include "./include/Neuron.h"
+#include "../../include/spike/Interconnection.h"
+#include "../../include/spike/Neuron.h"
 
-#include "../simulation/include/Simulation.h"
+#include "../../include/simulation/Simulation.h"
 
 PropagatedSpike::PropagatedSpike():Spike() {
 }

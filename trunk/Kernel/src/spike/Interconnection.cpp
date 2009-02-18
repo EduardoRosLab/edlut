@@ -14,11 +14,11 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/Interconnection.h"
+#include "../../include/spike/Interconnection.h"
 
 #include <math.h>
-#include "./include/WeightChange.h"
-#include "./include/Neuron.h"
+#include "../../include/spike/WeightChange.h"
+#include "../../include/spike/Neuron.h"
 
 Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), lastspiketime(0){
 	

@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include ".\include\EDLUTException.h"
+#include "../../include/spike/EDLUTException.h"
 
 const char * EDLUTException::Taskmsgs[] ={
 	"",

@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           FileOutputSpikeDriver.cpp  -  description     *
+ *                           FileOutputSpikeDriver.cpp                     *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,10 +14,10 @@
  *                                                                         *
  ***************************************************************************/
  
-#include "./include/FileOutputSpikeDriver.h"
+#include "../../include/communication/FileOutputSpikeDriver.h"
 
-#include "../spike/include/Spike.h"
-#include "../spike/include/Neuron.h"
+#include "../../include/spike/Spike.h"
+#include "../../include/spike/Neuron.h"
 
 FileOutputSpikeDriver::FileOutputSpikeDriver(const char * NewFileName) throw (EDLUTException): FileName(NewFileName){
 	this->Handler = fopen(NewFileName,"w");

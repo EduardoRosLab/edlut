@@ -14,14 +14,14 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/InternalSpike.h"
+#include "../../include/spike/InternalSpike.h"
 
 #include <list>
-#include "./include/Neuron.h"
+#include "../../include/spike/Neuron.h"
 
-#include "../simulation/include/Simulation.h"
+#include "../../include/simulation/Simulation.h"
 
-#include "../communication/include/OutputSpikeDriver.h"
+#include "../../include/communication/OutputSpikeDriver.h"
 
 InternalSpike::InternalSpike():Spike() {
 }

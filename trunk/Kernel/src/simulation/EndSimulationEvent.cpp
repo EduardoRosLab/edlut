@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp  -  description               *
+ *                           EndSimulationEvent.cpp                        *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,9 +14,9 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/EndSimulationEvent.h"
+#include "../../include/simulation/EndSimulationEvent.h"
 
-#include "./include/Simulation.h"
+#include "../../include/simulation/Simulation.h"
 
 EndSimulationEvent::EndSimulationEvent():Event(0){
 }

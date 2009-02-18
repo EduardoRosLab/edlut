@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           InputSpikeDriver.cpp  -  description          *
+ *                           InputSpikeDriver.cpp                          *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
  
-#include "./include/InputSpikeDriver.h"
+#include "../../include/communication/InputSpikeDriver.h"
 
 InputSpikeDriver::~InputSpikeDriver(){
 	

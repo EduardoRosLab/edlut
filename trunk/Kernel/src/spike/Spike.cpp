@@ -14,9 +14,9 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/Spike.h"
+#include "../../include/spike/Spike.h"
 
-#include "./include/Neuron.h"
+#include "../../include/spike/Neuron.h"
 
 Spike::Spike():Event(0), source(0){
 }

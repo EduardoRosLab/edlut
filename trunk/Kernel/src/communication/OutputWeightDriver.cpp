@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           OutputWeightDriver.cpp  -  description        *
+ *                           OutputWeightDriver.cpp                        *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include ".\include\OutputWeightDriver.h"
+#include "../../include/communication/OutputWeightDriver.h"
 
 
 OutputWeightDriver::~OutputWeightDriver(){

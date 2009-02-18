@@ -14,10 +14,10 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/MultiplicativeWeightChange.h"
+#include "../../include/spike/MultiplicativeWeightChange.h"
 
-#include "./include/Interconnection.h"
-#include "./include/Neuron.h"
+#include "../../include/spike/Interconnection.h"
+#include "../../include/spike/Neuron.h"
 
 #include <math.h>
 

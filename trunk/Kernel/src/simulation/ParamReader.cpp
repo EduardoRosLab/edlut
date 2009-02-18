@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp  -  description               *
+ *                           ParamReader.cpp                               *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,24 +14,24 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/ParamReader.h"
+#include "../../include/simulation/ParamReader.h"
 
-#include "../communication/include/FileInputSpikeDriver.h"
-#include "../communication/include/TCPIPInputSpikeDriver.h"
+#include "../../include/communication/FileInputSpikeDriver.h"
+#include "../../include/communication/TCPIPInputSpikeDriver.h"
 
-#include "../communication/include/FileOutputSpikeDriver.h"
-#include "../communication/include/TCPIPOutputSpikeDriver.h"
+#include "../../include/communication/FileOutputSpikeDriver.h"
+#include "../../include/communication/TCPIPOutputSpikeDriver.h"
 
-#include "../communication/include/TCPIPInputOutputSpikeDriver.h"
+#include "../../include/communication/TCPIPInputOutputSpikeDriver.h"
 
-#include "../communication/include/ServerSocket.h"
-#include "../communication/include/ClientSocket.h"
+#include "../../include/communication/ServerSocket.h"
+#include "../../include/communication/ClientSocket.h"
 
-#include "../communication/include/FileOutputWeightDriver.h"
+#include "../../include/communication/FileOutputWeightDriver.h"
 
-#include "../communication/include/ConnectionException.h"
+#include "../../include/communication/ConnectionException.h"
 
-#include "./include/ParameterException.h"
+#include "../../include/simulation/ParameterException.h"
  
 void ParamReader::ParseArguments(int Number, char ** Arguments) throw (ParameterException, ConnectionException) {
 	for (int i=1; i<Number; ++i){

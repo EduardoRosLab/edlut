@@ -14,14 +14,14 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/Neuron.h"
+#include "../../include/spike/Neuron.h"
 
-#include "./include/NeuronType.h"
-#include "./include/InternalSpike.h"
-#include "./include/PropagatedSpike.h"
-#include "./include/Interconnection.h"
+#include "../../include/spike/NeuronType.h"
+#include "../../include/spike/InternalSpike.h"
+#include "../../include/spike/PropagatedSpike.h"
+#include "../../include/spike/Interconnection.h"
 
-#include "../simulation/include/EventQueue.h"
+#include "../../include/simulation/EventQueue.h"
 
 Neuron::Neuron(){
 }

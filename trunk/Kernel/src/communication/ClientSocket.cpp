@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp  -  description               *
+ *                           ClientSocket.cpp                              *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/ClientSocket.h"
+#include "../../include/communication/ClientSocket.h"
 
 ClientSocket::ClientSocket(string server_address, unsigned short tcp_port):CdSocket(CLIENT,server_address,tcp_port){
 }

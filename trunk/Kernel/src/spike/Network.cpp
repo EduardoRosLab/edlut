@@ -14,16 +14,16 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/Network.h"
+#include "../../include/spike/Network.h"
 
-#include "./include/Interconnection.h"
-#include "./include/Neuron.h"
-#include "./include/NeuronType.h"
-#include "./include/MultiplicativeWeightChange.h"
-#include "./include/AdditiveWeightChange.h"
+#include "../../include/spike/Interconnection.h"
+#include "../../include/spike/Neuron.h"
+#include "../../include/spike/NeuronType.h"
+#include "../../include/spike/MultiplicativeWeightChange.h"
+#include "../../include/spike/AdditiveWeightChange.h"
 
-#include "../simulation/include/Utils.h"
-#include "../simulation/include/Configuration.h"
+#include "../../include/simulation/Utils.h"
+#include "../../include/simulation/Configuration.h"
 
 int qsort_inters(const void *e1, const void *e2){
 	int ord;

@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp  -  description               *
+ *                           ConnectionException.cpp                       *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include ".\include\ConnectionException.h"
+#include "../../include/communication/ConnectionException.h"
 
 ConnectionException::ConnectionException(string TargetAddress, unsigned short TargetPort, string ErrorMessage):Address(TargetAddress), Port(TargetPort), Message(ErrorMessage){
 }

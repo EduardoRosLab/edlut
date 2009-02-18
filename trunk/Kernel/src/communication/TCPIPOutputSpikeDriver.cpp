@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           TCPIPOutpuSpikeDriver.cpp  -  description     *
+ *                           TCPIPOutputSpikeDriver.cpp                     *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,11 +14,11 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/TCPIPOutputSpikeDriver.h"
-#include "./include/CdSocket.h"
+#include "../../include/communication/TCPIPOutputSpikeDriver.h"
+#include "../../include/communication/CdSocket.h"
 
-#include "../spike/include/Spike.h"
-#include "../spike/include/Neuron.h"
+#include "../../include/spike/Spike.h"
+#include "../../include/spike/Neuron.h"
 
 
 TCPIPOutputSpikeDriver::TCPIPOutputSpikeDriver(CdSocket * NewSocket):Socket(NewSocket){

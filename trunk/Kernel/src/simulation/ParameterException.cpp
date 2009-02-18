@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp  -  description               *
+ *                           ParameterException.cpp                        *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include ".\include\ParameterException.h"
+#include "../../include/simulation/ParameterException.h"
 
 ParameterException::ParameterException(string ErrorParameter, string ErrorMessage):Parameter(ErrorParameter), Message(ErrorMessage){
 }

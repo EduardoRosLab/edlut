@@ -1,5 +1,5 @@
 /***************************************************************************
- *           TCPIPInputOutputSpikeDriver.cpp  -  description               *
+ *                           TCPIPInputOutputSpikeDriver.cpp               *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,15 +14,15 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/TCPIPInputOutputSpikeDriver.h"
+#include "../../include/communication/TCPIPInputOutputSpikeDriver.h"
 
-#include "./include/CdSocket.h"
+#include "../../include/communication/CdSocket.h"
 
-#include "../simulation/include/EventQueue.h"
+#include "../../include/simulation/EventQueue.h"
 
-#include "../spike/include/InputSpike.h"
-#include "../spike/include/Network.h"
-#include "../spike/include/Neuron.h"
+#include "../../include/spike/InputSpike.h"
+#include "../../include/spike/Network.h"
+#include "../../include/spike/Neuron.h"
 
 TCPIPInputOutputSpikeDriver::TCPIPInputOutputSpikeDriver(CdSocket * NewSocket):Socket(NewSocket){
 	this->Finished = false;	
