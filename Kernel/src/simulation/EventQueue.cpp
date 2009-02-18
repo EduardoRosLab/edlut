@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp  -  description               *
+ *                           EventQueue.cpp                                *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,9 +14,9 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/EventQueue.h"
+#include "../../include/simulation/EventQueue.h"
 
-#include "./include/Event.h"
+#include "../../include/simulation/Event.h"
 
 EventQueue::EventQueue() : Events(1,(Event *)0){
 

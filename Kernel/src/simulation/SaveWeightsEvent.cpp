@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp  -  description               *
+ *                           SaveWeightsEvent.cpp                          *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,10 +14,10 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/SaveWeightsEvent.h"
+#include "../../include/simulation/SaveWeightsEvent.h"
 
-#include "./include/Simulation.h"
-#include "./include/EventQueue.h"
+#include "../../include/simulation/Simulation.h"
+#include "../../include/simulation/EventQueue.h"
 
 SaveWeightsEvent::SaveWeightsEvent():Event(0){
 }

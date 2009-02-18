@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/EDLUTFileException.h"
+#include "../../include/spike/EDLUTFileException.h"
 
 EDLUTFileException::EDLUTFileException(int a, int b, int c, int d, long Line): EDLUTException(a,b,c,d), Currentline(Line) {
 }

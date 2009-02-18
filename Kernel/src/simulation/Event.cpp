@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp  -  description               *
+ *                           Event.cpp                                     *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,9 +14,9 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/Event.h"
+#include "../../include/simulation/Event.h"
 
-#include "./include/Simulation.h"
+#include "../../include/simulation/Simulation.h"
 
 Event::Event():time(0){
 }

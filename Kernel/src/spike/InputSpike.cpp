@@ -14,12 +14,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include ".\include\InputSpike.h"
+#include "../../include/spike/InputSpike.h"
 
-#include "./include/Neuron.h"
-#include "../simulation/include/Simulation.h"
+#include "../../include/spike/Neuron.h"
+#include "../../include/simulation/Simulation.h"
 
-#include "../communication/include/OutputSpikeDriver.h"
+#include "../../include/communication/OutputSpikeDriver.h"
 
 InputSpike::InputSpike():Spike() {
 }

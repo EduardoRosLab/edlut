@@ -14,12 +14,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/NeuronType.h"
+#include "../../include/spike/NeuronType.h"
 
-#include "./include/NeuronModelTable.h"
+#include "../../include/spike/NeuronModelTable.h"
 
-#include "../simulation/include/Configuration.h"
-#include "../simulation/include/Utils.h"
+#include "../../include/simulation/Configuration.h"
+#include "../../include/simulation/Utils.h"
 
 char * NeuronType::GetId(){
 	return this->ident;	

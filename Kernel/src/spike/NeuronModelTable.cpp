@@ -14,9 +14,9 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/NeuronModelTable.h"
+#include "../../include/spike/NeuronModelTable.h"
 
-#include "../simulation/include/Utils.h"
+#include "../../include/simulation/Utils.h"
 
 NeuronModelTable::TableDimension::TableDimension(): size(0), coord(0), vindex(0), voffset(0), vscale(0), vfirst(0), statevar(0), interp(0), nextintdim(0) {
 	

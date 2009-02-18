@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp  -  description               *
+ *                           CdSocket.cpp                                  *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -16,9 +16,9 @@
 
 
 #include <iostream>
-#include "./include/CdSocket.h"
-#include "./include/timer.h"
-#include "./include/CommunicationDevice.h"
+#include "../../include/communication/CdSocket.h"
+#include "../../include/communication/timer.h"
+#include "../../include/communication/CommunicationDevice.h"
 
 #define SERVER_PATH "server"
 

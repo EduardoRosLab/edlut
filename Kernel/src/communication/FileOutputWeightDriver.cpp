@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           FileOutputWeightDriver.cpp  -  description    *
+ *                           FileOutputWeightDriver.cpp                    *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,9 +14,9 @@
  *                                                                         *
  ***************************************************************************/
  
-#include "./include/FileOutputWeightDriver.h"
+#include "../../include/communication/FileOutputWeightDriver.h"
 
-#include "../spike/include/Network.h"
+#include "../../include/spike/Network.h"
 
 FileOutputWeightDriver::FileOutputWeightDriver(const char * NewFileName) throw (EDLUTException): FileName(NewFileName){
 }

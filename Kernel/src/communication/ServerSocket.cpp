@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           ServerSocket.cpp  -  description              *
+ *                           ServerSocket.cpp                              *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/ServerSocket.h"
+#include "../../include/communication/ServerSocket.h"
 
 ServerSocket::ServerSocket(unsigned short tcp_port):CdSocket(SERVER,"",tcp_port){
 }

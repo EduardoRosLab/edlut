@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           TCPIPInputSpikeDriver.cpp  -  description     *
+ *                           TCPIPInputSpikeDriver.cpp                     *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,14 +14,14 @@
  *                                                                         *
  ***************************************************************************/
  
-#include "./include/TCPIPInputSpikeDriver.h"
+#include "../../include/communication/TCPIPInputSpikeDriver.h"
 
-#include "./include/CdSocket.h"
+#include "../../include/communication/CdSocket.h"
 
-#include "../simulation/include/EventQueue.h"
+#include "../../include/simulation/EventQueue.h"
 
-#include "../spike/include/InputSpike.h"
-#include "../spike/include/Network.h"
+#include "../../include/spike/InputSpike.h"
+#include "../../include/spike/Network.h"
 
 
 

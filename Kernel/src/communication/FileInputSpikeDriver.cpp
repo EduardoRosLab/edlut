@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           FileInputSpikeDriver.cpp  -  description      *
+ *                           FileInputSpikeDriver.cpp                      *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,14 +14,14 @@
  *                                                                         *
  ***************************************************************************/
  
-#include "./include/FileInputSpikeDriver.h"
+#include "../../include/communication/FileInputSpikeDriver.h"
 
-#include "../simulation/include/utils.h"
-#include "../simulation/include/EventQueue.h"
+#include "../../include/simulation/utils.h"
+#include "../../include/simulation/EventQueue.h"
 
-#include "../spike/include/EDLUTFileException.h"
-#include "../spike/include/Network.h"
-#include "../spike/include/InputSpike.h"
+#include "../../include/spike/EDLUTFileException.h"
+#include "../../include/spike/Network.h"
+#include "../../include/spike/InputSpike.h"
 
 FileInputSpikeDriver::FileInputSpikeDriver(const char * NewFileName) throw (EDLUTException): FileName(NewFileName), Currentline(1L){
 	this->Finished = false;

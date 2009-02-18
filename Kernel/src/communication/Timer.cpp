@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           Timer.cpp  -  description					   *
+ *                           Timer.cpp                 					   *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "./include/timer.h"
+#include "../../include/communication/timer.h"
 
 //( Timer
 

@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           OutputSpikeDriver.cpp  -  description         *
+ *                           OutputSpikeDriver.cpp                         *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include ".\include\OutputSpikeDriver.h"
+#include "../../include/communication/OutputSpikeDriver.h"
 
 OutputSpikeDriver::~OutputSpikeDriver(){
 	
