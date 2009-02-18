@@ -17,11 +17,11 @@ exe-dependencies  := $(subst .o,.d,$(exe-objects))
 ifeq ($(parallelize),true)
 # parallel compilation variables
    libtarget     := $(libdir)/lib$(packagename).a
-   exetarget     := $(packagename)
+   exetarget     := $(bindir)/$(packagename)
    pkgconfigfile := $(packagename).pc
 else
    libtarget     := $(libdir)/lib$(packagename).a
-   exetarget     := $(packagename)
+   exetarget     := $(bindir)/$(packagename)
    pkgconfigfile := $(packagename).pc
 endif
 
