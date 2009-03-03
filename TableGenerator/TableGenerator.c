@@ -10,7 +10,7 @@
 #define MAXIDSIZEC "32"
 #define MAXINTERVALS 6
 #define MAXFILES 7
-#define MAXTABLES 7
+#define MAXTABLES 8
 // the table configuration file may want to access Tables structure
 
 struct tcoordinates
