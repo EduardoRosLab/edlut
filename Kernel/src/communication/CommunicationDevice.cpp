@@ -15,7 +15,7 @@
  ***************************************************************************/
 
 
-#include "../../include/communication/communicationdevice.h"
+#include "../../include/communication/CommunicationDevice.h"
 
 
 //( CommunicationDevice

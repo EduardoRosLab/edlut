@@ -17,7 +17,7 @@
 
 #include <iostream>
 #include "../../include/communication/CdSocket.h"
-#include "../../include/communication/timer.h"
+#include "../../include/communication/Timer.h"
 #include "../../include/communication/CommunicationDevice.h"
 
 #define SERVER_PATH "server"
