@@ -16,7 +16,7 @@
  
 #include "../../include/communication/FileInputSpikeDriver.h"
 
-#include "../../include/simulation/utils.h"
+#include "../../include/simulation/Utils.h"
 #include "../../include/simulation/EventQueue.h"
 
 #include "../../include/spike/EDLUTFileException.h"

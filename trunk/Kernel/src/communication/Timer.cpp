@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/communication/timer.h"
+#include "../../include/communication/Timer.h"
 
 //( Timer
 
