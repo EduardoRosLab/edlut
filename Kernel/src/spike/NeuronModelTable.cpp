@@ -43,10 +43,10 @@ void NeuronModelTable::GenerateVirtualCoordinates() throw (EDLUTException){
 	float minsca,sca,first,last;
 	unsigned int size;
 	for(idim=0;idim<this->ndims;idim++){ // for each dimension of the table
-		minsca=0;  // search for the minimum coordinate increment
+		minsca=1.0/0.0;  // search for the minimum coordinate increment
 		for(icoord=1;icoord < this->dims[idim].size;icoord++){
 			sca=(this->dims[idim].coord[icoord] - this->dims[idim].coord[icoord-1]);
-			if(sca < minsca || minsca == 0){
+			if(sca < minsca && sca != 0.0){
 				minsca=sca;
 			}
 		}
