@@ -153,7 +153,7 @@ void NeuronModelTable::LoadTable(FILE *fd) throw (EDLUTException){
 						//show_info(msgbuf);
 					}
 					
-					elems=(void **) new float [totsize];
+					elems=(void **) malloc((totsize-this->nelems)*sizeof(void *)+this->nelems*sizeof(float));
 					if(elems){
 						unsigned long i;
 						if(fread(elems+totsize-this->nelems,sizeof(float),this->nelems,fd) == this->nelems){
@@ -162,7 +162,7 @@ void NeuronModelTable::LoadTable(FILE *fd) throw (EDLUTException){
 							for(idim=0;idim < this->ndims-1;idim++){
 								vecsize*=this->dims[idim].size;
 								for(i=0;i < vecsize;i++){
-									*(elems+totsize+i)=elems+totsize+vecsize+i*this->dims[idim+1].size;
+									*(elems+totsize+i)=(float *) (elems+totsize+vecsize)+i*this->dims[idim+1].size;
 								}
 								totsize+=vecsize;
 							}
