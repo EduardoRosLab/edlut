@@ -147,12 +147,17 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 		} else if (CurrentArgument=="-log"){
 			if (i+1<Number){
 				// Check if it is a valid file and exists
-				this->MonitorDrivers.push_back(new FileOutputSpikeDriver (Arguments[++i]));
+				this->MonitorDrivers.push_back(new FileOutputSpikeDriver (Arguments[++i],false));
+			}
+		} else if (CurrentArgument=="-logp"){
+			if (i+1<Number){
+				// Check if it is a valid file and exists
+				this->MonitorDrivers.push_back(new FileOutputSpikeDriver (Arguments[++i],true));
 			}
 		} else if (CurrentArgument=="-of"){
 			if (i+1<Number){
 				// Check if it is a valid file and exists
-				this->OutputDrivers.push_back(new FileOutputSpikeDriver (Arguments[++i]));
+				this->OutputDrivers.push_back(new FileOutputSpikeDriver (Arguments[++i],false));
 			}
 		} else if (CurrentArgument=="-oc"){
 			if (i+2<Number){

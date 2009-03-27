@@ -59,6 +59,11 @@ class FileOutputSpikeDriver: public OutputSpikeDriver {
 		 */
 		const char * FileName;
 		
+		/*!
+		 * Write potential events.
+		 */
+		bool PotentialWriteable;
+		
 	public:
 	
 		/*!
@@ -67,10 +72,11 @@ class FileOutputSpikeDriver: public OutputSpikeDriver {
 		 * It creates a new object from the file target.
 		 * 
 		 * \param NewFileName Name of the target output file.
+		 * \param WritePotential If true, the potential events will be saved.
 		 * 
 		 * \throw EDLUTException If something wrong happens when the file is been wrotten.
 		 */
-		FileOutputSpikeDriver(const char * NewFileName) throw (EDLUTException);
+		FileOutputSpikeDriver(const char * NewFileName, bool WritePotential) throw (EDLUTException);
 		
 		/*!
 		 * \brief Class desctructor.
