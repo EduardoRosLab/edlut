@@ -335,7 +335,7 @@ void Network::SaveWeights(const char *wfile) throw (EDLUTException){
 	FILE *fh;
 	int connind,ret;
 	long Currentline;
-	fh=fopen(wfile,"w");
+	fh=fopen(wfile,"wt");
 	if(fh){
 		float weight,antweight;
 		int nantw;

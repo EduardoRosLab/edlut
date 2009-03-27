@@ -19,8 +19,9 @@
 #include "../../include/spike/Spike.h"
 #include "../../include/spike/Neuron.h"
 
-FileOutputSpikeDriver::FileOutputSpikeDriver(const char * NewFileName) throw (EDLUTException): FileName(NewFileName){
-	this->Handler = fopen(NewFileName,"w");
+FileOutputSpikeDriver::FileOutputSpikeDriver(const char * NewFileName, bool WritePotential) throw (EDLUTException): FileName(NewFileName){
+	this->PotentialWriteable = WritePotential;
+	this->Handler = fopen(NewFileName,"wt");
 	if (!this->Handler){
 		throw EDLUTException(2,2,2,0);
 	}
@@ -45,7 +46,7 @@ bool FileOutputSpikeDriver::IsBuffered() const{
 }
 
 bool FileOutputSpikeDriver::IsWritePotentialCapable() const{
-	return true;	
+	return this->PotentialWriteable;	
 }
 
 void FileOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
