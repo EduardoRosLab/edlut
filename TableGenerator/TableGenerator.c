@@ -5,6 +5,7 @@
 #include <math.h>
 #include <float.h>
 #include <time.h>
+#include <stdint.h>
 
 #define MAXIDSIZE 32
 #define MAXIDSIZEC "32"
