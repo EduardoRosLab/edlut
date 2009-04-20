@@ -44,7 +44,7 @@ ifeq ($(profile),true)
   CXXFLAGS+= -pg
 endif
 
-CXXFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing -std=c++0x
 
 ARFLAGS = ruv
 CTAGFLAGS := -e -R --languages=c++,c

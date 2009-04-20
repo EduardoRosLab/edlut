@@ -121,13 +121,21 @@ void NeuronModelTable::GenerateVirtualCoordinates() throw (EDLUTException){
 void NeuronModelTable::LoadTable(FILE *fd) throw (EDLUTException){
 	void **elems;
 	unsigned long idim,totsize,vecsize;
-	if(fread(&(this->nelems),sizeof(unsigned long),1,fd)==1){
-		if(this->nelems>0){
-			if(fread(&(this->ndims),sizeof(unsigned long),1,fd)==1){
+	uint64_t nelems;
+	 
+	if(fread(&(nelems),sizeof(uint64_t),1,fd)==1){
+		this->nelems = nelems;
+		if(this->nelems>0 && (uint64_t)(this->nelems)==nelems){
+			uint64_t ndims;
+			if(fread(&ndims,sizeof(uint64_t),1,fd)==1){
+            	this->ndims=ndims;
+
 				vecsize=1L;
 				totsize=0L;
 				for(idim=0;idim < this->ndims;idim++){
-					if(fread(&(this->dims[idim].size),sizeof(unsigned long),1,fd)==1){
+					uint64_t dsize;
+               		if(fread(&dsize,sizeof(uint64_t),1,fd)==1){
+                  		this->dims[idim].size=dsize;
 						vecsize*=this->dims[idim].size;
 						totsize+=vecsize;
 						this->dims[idim].coord=(float *) new float [this->dims[idim].size];
@@ -180,7 +188,7 @@ void NeuronModelTable::LoadTable(FILE *fd) throw (EDLUTException){
             	throw EDLUTException(9,21,19,0);
 			}
 		}else{
-			throw EDLUTException(9,23,19,0);
+			(nelems>0)?throw EDLUTException(9,45,19,0):throw EDLUTException(9,23,19,0);
 		}
 	}else{
 		throw EDLUTException(9,22,19,0);

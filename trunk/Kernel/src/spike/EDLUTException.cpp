@@ -78,7 +78,8 @@ const char * EDLUTException::Errormsgs[] ={
 	"Can't read the numbers of tables used to update the state variables",
 	"Can't read the initialization value for each state variable",
 	"Can't read the number of table used for end of prediction",
-	"Specified insufficient number of neuron types"
+	"Specified insufficient number of neuron types",
+	"The table is too big for the current processor/compiler architecture or the table file is corrupt"
 };
 
 const char * EDLUTException::Repairmsgs[] ={
