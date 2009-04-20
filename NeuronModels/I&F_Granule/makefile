@@ -14,8 +14,8 @@ all : $(source_model_file) $(tables_generator)
 	@echo ------------------ creating neuron model file from $(source_model_file)
 	@echo
 	@cp $(source_model_file) tab2cfg.c
-	$(compiler) -o $(tables_executable) $(tables_generator)
-	$(tables_executable)
+	$(compiler) -o $(tables_executable) $(tables_generator) -lm -g
+	./$(tables_executable)
 	@echo
 	@echo ------------------ cleaning auxiliar files
 	@echo
