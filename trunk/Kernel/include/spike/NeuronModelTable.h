@@ -35,7 +35,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-#include <cstdint>
+#include <stdint.h>
 
 
 #include "./EDLUTFileException.h"
