@@ -1,4 +1,4 @@
-#labels Featured
+#labels Featured,Phase-Support
 =EDLUT: Brief description=
 
 The EDLUT (Event-Driven simulator based on _[http://en.wikipedia.org/wiki/Lookup_table Look-Up-Tables]_) is an advanced tool that allows splitting neural network simulations in two stages:
