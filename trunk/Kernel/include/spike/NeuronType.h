@@ -236,6 +236,14 @@ class NeuronType{
    		void ClearNeuronType();
    		
    		/*!
+  		 * \brief It prints information about the load type.
+  		 * 
+  		 * It prints information about the load type.
+  		 * 
+  		 */
+  		void TypeInfo();
+  		
+   		/*!
    		 * \brief It loads the neuron model description.
    		 * 
    		 * It loads the neuron type description from the file .cfg.

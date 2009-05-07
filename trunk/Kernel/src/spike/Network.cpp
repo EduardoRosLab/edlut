@@ -69,6 +69,75 @@ void Network::FindInConnections(){
 	}
 }
 
+void Network::TablesInfo(){
+    int ntype,ntable;
+    for(ntype=0;ntype<this->nneutypes;ntype++){
+        for(ntable=0;ntable<this->neutypes[ntype].GetTableNumber();ntable++){
+        	this->neutypes[ntype].GetTableAt(ntable)->TableInfo();
+        }
+    }
+}
+
+
+void Network::TypesInfo(){
+    int ntype;
+    for(ntype=0;ntype<this->nneutypes;ntype++){
+        this->neutypes[ntype].TypeInfo();
+    }
+}
+
+void Network::NetInfo(){
+	
+	this->TablesInfo();
+	this->TypesInfo();
+	
+    int ind,ind2,wneu=0;
+    printf("Neuron types:\n");
+    for(ind=0;ind<this->nneutypes && ind < MAXINFOLINES;ind++){
+        printf("- Type: %i state vars: %i tables: %i\n",ind,this->neutypes[ind].GetStateVarsNumber(),this->neutypes[ind].GetTableNumber());
+    }
+   
+    if(ind < this->nneutypes){
+        printf("...%i\n",this->nneutypes-1);
+    }
+   
+    printf("Neurons:\n");
+   
+    for(ind=0;ind<this->nneurons && ind < MAXINFOLINES;ind++){
+        printf("- Neuron: %i typ: %s v0: %g v1: %g lastup: %g predsp:%g (%i)%s\n",ind,this->neurons[ind].GetNeuronType()->GetId(),this->neurons[ind].GetStateVarAt(1),this->neurons[ind].GetStateVarAt(2),this->neurons[ind].GetLastUpdate(),this->neurons[ind].GetPredictedSpike(),this->neurons[ind].GetOutputNumber(),(this->neurons[ind].IsOutput()?"o":""));
+        wneu=0;
+        for(ind2=0;ind2<this->ninters && this->inters[ind2].GetTarget()!=this->neurons+ind && this->inters[ind2].GetSource()!=this->neurons+ind ;ind2++);
+        if(ind2 == this->ninters)
+            wneu=1;
+    }
+   
+    if(ind < this->nneurons){
+        printf("...%i\n",this->nneurons-1);
+    }
+   
+    if(wneu)
+        printf("Warning: There are neurons without connection\n");
+      
+    printf("Weight change types:\n");
+    for(ind=0;ind<this->nwchanges && ind < MAXINFOLINES;ind++){
+        printf("- Change: %i trigger: %i max pos: %g alpha: %g beta: %g\n",ind,this->wchanges[ind]->GetTrigger(),this->wchanges[ind]->GetMaxPos(),this->wchanges[ind]->GetA1Pre(),this->wchanges[ind]->GetA2PrePre());
+    }
+   
+    if(ind < this->nwchanges){
+        printf("...%i\n",this->nwchanges-1);
+    }
+
+    printf("Interconnections:\n");
+    
+    for(ind=0;ind<this->ninters && ind < MAXINFOLINES;ind++){
+        printf("- Interc: %i source: %i target: %i delay: %g type: %c weight: %g\n",ind,this->inters[ind].GetSource()->GetIndex(),this->inters[ind].GetTarget()->GetIndex(),this->inters[ind].GetDelay(),(this->inters[ind].GetType()==1)?'E':((this->inters[ind].GetType()==0)?'I':'C'),this->inters[ind].GetWeight());
+    }
+
+    if(ind < this->ninters){
+        printf("...%i\n",this->ninters-1);
+    }
+}
+
 NeuronType * Network::LoadNetTypes(char *neutype) throw (EDLUTException){
 	int ni;
    	NeuronType * type;
