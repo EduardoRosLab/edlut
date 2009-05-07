@@ -118,6 +118,20 @@ void NeuronModelTable::GenerateVirtualCoordinates() throw (EDLUTException){
 	
 }
 
+void NeuronModelTable::TableInfo()
+{
+   unsigned long idim;
+   printf("Number of elements: %lu\tNumber of dimensions: %lu\n",this->nelems,this->ndims);
+   for(idim=0;idim < this->ndims;idim++){
+      printf("Dimension %lu: size %lu vsize %i vscale %g coords: ",idim,this->dims[idim].size,(int)((this->dims[idim].coord[this->dims[idim].size-1]-this->dims[idim].coord[0])/this->dims[idim].vscale+2),this->dims[idim].vscale);
+      if(this->dims[idim].size>0){
+         printf("[%g, %g]",this->dims[idim].coord[0],this->dims[idim].coord[this->dims[idim].size-1]);
+      }
+      printf("\n");
+   }
+}
+
+
 void NeuronModelTable::LoadTable(FILE *fd) throw (EDLUTException){
 	void **elems;
 	unsigned long idim,totsize,vecsize;
@@ -237,8 +251,8 @@ void NeuronModelTable::LoadTableDescription(FILE *fh, long & Currentline) throw 
 }
 
 
-NeuronModelTable::TableDimension NeuronModelTable::GetDimensionAt(int index) const{
-	return this->dims[index];	
+const NeuronModelTable::TableDimension * NeuronModelTable::GetDimensionAt(int index) const{
+	return this->dims+index;	
 }
   		
 void NeuronModelTable::SetDimensionAt(int index, NeuronModelTable::TableDimension Dimension){
@@ -261,13 +275,13 @@ unsigned long NeuronModelTable::GetElementsNumber() const{
 	return this->nelems;
 }
 
-/*int NeuronModelTable::GetInterpolation() const{
+int NeuronModelTable::GetInterpolation() const{
 	return this->interp;
 }
   		
-void NeuronModelTable::SetInterpolation(int Interpolation){
-	this->interp = Interpolation;
-}*/
+int NeuronModelTable::GetFirstInterpolation() const{
+	return this->firstintdim;
+}
 
 float NeuronModelTable::TableAccessDirect(float statevars[MAXSTATEVARS]){
 	unsigned int idim,tind;

@@ -156,6 +156,14 @@ class NeuronModelTable {
   		~NeuronModelTable();
   		
   		/*!
+  		 * \brief It prints information about the load table.
+  		 * 
+  		 * It prints information about the load table.
+  		 * 
+  		 */
+  		void TableInfo();
+  		
+  		/*!
   		 * \brief It loads a neuron model table.
   		 * 
   		 * It loads the neuron model table values from the .dat file.
@@ -194,7 +202,7 @@ class NeuronModelTable {
   		 * 
   		 * \return The indexth table dimension.
   		 */
-  		TableDimension GetDimensionAt(int index) const;
+  		const TableDimension * GetDimensionAt(int index) const;
   		
   		/*!
   		 * \brief It sets a table dimension.
@@ -245,9 +253,23 @@ class NeuronModelTable {
   		 */
   		unsigned long GetElementsNumber() const;
   		
-  		/*int GetInterpolation() const;
+  		/*!
+  		 * \brief It gets the interpolation of the dimensions.
+  		 * 
+  		 * It gets the interpolation of the dimensions.
+  		 * 
+  		 * \return The interpolation of the dimensions.
+  		 */
+  		int GetInterpolation() const;
   		
-  		void SetInterpolation(int Interpolation);*/
+  		/*!
+  		 * \brief It gets the first interpolated dimension.
+  		 * 
+  		 * It gets the first interpolated dimension.
+  		 * 
+  		 * \return The first interpolated dimension.
+  		 */
+  		int GetFirstInterpolation() const;
   		
   		/*!
   		 * \brief It gets the table value.

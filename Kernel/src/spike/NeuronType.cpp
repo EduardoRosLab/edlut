@@ -74,6 +74,19 @@ void NeuronType::ClearNeuronType(){
 	this->ntables=0;
 	this->nstatevars=0;
 }
+
+void NeuronType::TypeInfo(){
+    unsigned long idim,itab;
+    printf("Ident: %s\n",this->ident);
+    for(itab=0;itab<this->ntables;itab++){
+        printf("%lu %i(%+i)   ",this->tables[itab].GetDimensionNumber(),this->tables[itab].GetInterpolation(),this->tables[itab].GetFirstInterpolation());
+        for(idim=0;idim<this->tables[itab].GetDimensionNumber();idim++){
+        	printf("%i %i(%i)  ",this->tables[itab].GetDimensionAt(idim)->statevar,this->tables[itab].GetDimensionAt(idim)->interp,this->tables[itab].GetDimensionAt(idim)->nextintdim);
+        }
+      	printf("\n");
+     }
+  }
+
 			
 void NeuronType::LoadNeuronType(char * neutype) throw (EDLUTFileException){
 	FILE *fh;
@@ -134,7 +147,7 @@ void NeuronType::LoadNeuronType(char * neutype) throw (EDLUTFileException){
                  			this->ntstatevars=0;
                  			for(nt=0;nt<this->nstatevars;nt++){
          						ctablen=this->statevartables[nt];
-            					for(nv=0;nv<this->tables[ctablen].GetDimensionNumber() && this->tables[ctablen].GetDimensionAt(nv).statevar != 0;nv++);
+            					for(nv=0;nv<this->tables[ctablen].GetDimensionNumber() && this->tables[ctablen].GetDimensionAt(nv)->statevar != 0;nv++);
             					if(nv<this->tables[ctablen].GetDimensionNumber()){
             						tdeptables[nt]=1;
             						this->ntstatevars++;

@@ -126,6 +126,22 @@ class Network{
    		void SetWeightOrdination();
    		
    		/*!
+  		 * \brief It prints information about load tables.
+  		 * 
+  		 * It prints information about load tables.
+  		 * 
+  		 */
+  		void TablesInfo();
+  		
+  		/*!
+  		 * \brief It prints information about load types.
+  		 * 
+  		 * It prints information about load types.
+  		 * 
+  		 */
+  		void TypesInfo();  		
+  		
+   		/*!
    		 * \brief It loads the neuron type characteristics.
    		 * 
    		 * It checks if the neuron type has been loaded, and in other case,
@@ -209,6 +225,14 @@ class Network{
    		 * It destroies a network object and frees the memory.
    		 */
    		~Network();
+   		
+   		/*!
+  		 * \brief It prints information about load network.
+  		 * 
+  		 * It prints information about load network.
+  		 * 
+  		 */
+   		void NetInfo();
    		
    		/*!
    		 * \brief It gets a neuron by the index.
