@@ -182,9 +182,13 @@ void NeuronModelTable::LoadTable(FILE *fd) throw (EDLUTException){
 							vecsize=1L;
 							totsize=0L;
 							for(idim=0;idim < this->ndims-1;idim++){
-								vecsize*=this->dims[idim].size;
+								long relpos;
+                        		void *basepos;
+                        		vecsize*=this->dims[idim].size;
 								for(i=0;i < vecsize;i++){
-									*(elems+totsize+i)=(float *) (elems+totsize+vecsize)+i*this->dims[idim+1].size;
+									relpos=i*this->dims[idim+1].size;
+                           			basepos=elems+totsize+vecsize;
+                           			*(elems+totsize+i)=(idim+1 < this->ndims-1)?(void **)basepos+relpos:(void **)((float *)basepos+relpos);
 								}
 								totsize+=vecsize;
 							}
