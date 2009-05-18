@@ -26,7 +26,7 @@ void AdditiveWeightChange::update_activity(double time,Interconnection * Connect
 	// CHANGED
 	// VERSION USING ANALYTICALLY SOLVED EQUATIONS
 	float delta_t = (time-Connection->GetLastSpikeTime());
-	float tau = 0.1;
+	float tau = this->GetMaxPos();
 	float quot = delta_t/tau;
 	float ex = exp(-quot);
 
