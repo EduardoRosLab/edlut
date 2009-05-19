@@ -27,6 +27,9 @@ void AdditiveWeightChange::update_activity(double time,Interconnection * Connect
 	// VERSION USING ANALYTICALLY SOLVED EQUATIONS
 	float delta_t = (time-Connection->GetLastSpikeTime());
 	float tau = this->GetMaxPos();
+	if (tau==0){
+		tau = 1e-6;	
+	}
 	float quot = delta_t/tau;
 	float ex = exp(-quot);
 
@@ -62,10 +65,10 @@ void AdditiveWeightChange::ApplyWeightChange(Interconnection * Connection, doubl
 	if(this->GetTrigger() == 1){
 		for(int i=0; i<Connection->GetTarget()->GetInputNumber(); ++i){
 			Interconnection * interi=Connection->GetTarget()->GetInputConnectionAt(i);
-		    WeightChange * wchani=interi->GetWeightChange();
+		    AdditiveWeightChange * wchani=(AdditiveWeightChange *)interi->GetWeightChange();
 		    if (wchani!=0){
 		    	//CHANGED
-		     	update_activity(SpikeTime,interi, false);
+		     	wchani->update_activity(SpikeTime,interi, false);
 		     	float NewWeight = interi->GetWeight()+wchani->GetA2PrePre()*interi->GetActivityAt(1);
 		     	//
 		     	if(NewWeight>interi->GetMaxWeight())
