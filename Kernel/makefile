@@ -142,6 +142,7 @@ simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            $(srcdir)/simulation/Utils.cpp
                            
 spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
+						   $(srcdir)/spike/AdditiveGaussianWeightChange.cpp \
                            $(srcdir)/spike/EDLUTException.cpp \
                            $(srcdir)/spike/EDLUTFileException.cpp \
                            $(srcdir)/spike/InputSpike.cpp \
