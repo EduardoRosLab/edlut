@@ -21,6 +21,7 @@
 #include "../../include/spike/NeuronType.h"
 #include "../../include/spike/MultiplicativeWeightChange.h"
 #include "../../include/spike/AdditiveWeightChange.h"
+#include "../../include/spike/AdditiveGaussianWeightChange.h"
 
 #include "../../include/simulation/Utils.h"
 #include "../../include/simulation/Configuration.h"
@@ -257,6 +258,8 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         						}
         						if (multiplicative==1){
         							this->wchanges[wcind] = new MultiplicativeWeightChange();
+        						}else if (multiplicative==2){
+        							this->wchanges[wcind] = new AdditiveGaussianWeightChange();
         						}else{
         							this->wchanges[wcind] = new AdditiveWeightChange();
         						}
