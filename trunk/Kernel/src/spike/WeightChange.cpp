@@ -37,22 +37,6 @@ void WeightChange::SetNumExps(int NewNumExps){
 	this->numexps = NewNumExps;
 }
    		
-float WeightChange::GetLparAt(int index) const{
-	return this->lpar[index];
-}
-   		
-void WeightChange::SetLparAt(int index, float NewLpar){
-	this->lpar[index] = NewLpar;
-}
-   		
-float WeightChange::GetCparAt(int index) const{
-	return this->cpar[index];
-}
-   		
-void WeightChange::SetCparAt(int index, float NewCpar){
-	this->cpar[index] = NewCpar;
-}
-   		
 int WeightChange::GetTrigger() const{
 	return this->trigger;
 }
@@ -76,3 +60,4 @@ float WeightChange::GetA2PrePre() const{
 void WeightChange::SetA2PrePre(float NewA2PrePre){
 	this->a2prepre = NewA2PrePre;
 }
+

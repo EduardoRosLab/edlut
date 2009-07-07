@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           AdditiveWeightChange.h                        *
+ *                           SinWeightChange.h                        *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,34 +14,46 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef ADDITIVEWEIGHTCHANGE_H_
-#define ADDITIVEWEIGHTCHANGE_H_
+#ifndef SINWEIGHTCHANGE_H_
+#define SINWEIGHTCHANGE_H_
 
 /*!
- * \file MultiplicativeWeightChange.h
+ * \file SinWeightChange.h
  *
  * \author Jesus Garrido
- * \author Richard Carrido
- * \date August 2008
+ * \author Niceto Luque
+ * \author Richard Carrillo
+ * \date July 2009
  *
- * This file declares a class which abstracts a multiplicative learning rule.
+ * This file declares a class which abstracts a exponential-sinuidal additive learning rule.
  */
  
-#include "./WeightChange.h"
+#include "./AdditiveWeightChange.h"
  
 /*!
- * \class AdditiveWeightChange
+ * \class SinWeightChange
  *
- * \brief Additive learning rule.
+ * \brief Sinuidal learning rule.
  *
- * This class abstract the behaviour of a additive learning rule.
+ * This class abstract the behaviour of a exponential-sinuidal additive learning rule.
  *
  * \author Jesus Garrido
+ * \author Niceto Luque
  * \author Richard Carrillo
- * \date August 2008
+ * \date July 2009
  */ 
-class AdditiveWeightChange: public WeightChange{
+class SinWeightChange: public AdditiveWeightChange{
 	private:
+		/*!
+		 * Precalculated terms.
+		 */
+	    const static float terms [11][11];
+	
+		/*!
+		 * The exponent of the sinuidal function.
+		 */
+		int exponent;
+		
 		/*!
    		 * \brief It updates the previous activity in the connection.
    		 * 
@@ -54,18 +66,17 @@ class AdditiveWeightChange: public WeightChange{
 		virtual void update_activity(double time,Interconnection * Connection,bool spike);
 	
 	public:
-   	
-   		/*!
-   		 * \brief It applys the weight change function.
-   		 * 
-   		 * It applys the weight change function.
-   		 * 
-   		 * \param Connection The connection where the spike happened.
-   		 * \param SpikeTime The spike time.
-   		 */
-   		virtual void ApplyWeightChange(Interconnection * Connection,double SpikeTime);
-   		
-   		/*!
+		/*!
+		 * \brief Default constructor. It creates a new sinusoidal additive learning-rule
+		 * with the parameter exponent.
+		 * 
+		 * Default constructor. It creates a new sinusoidal additive learning-rule
+		 * with the parameter exponent.
+		 * \param NewExponent Exponent for the learning rule. e^(-x)*Sin(x)^Exponent.
+		 */
+		SinWeightChange(int NewExponent);
+	
+		/*!
 		 * \brief It gets the number of state variables that this learning rule needs.
 		 * 
 		 * It gets the number of state variables that this learning rule needs.
@@ -74,6 +85,15 @@ class AdditiveWeightChange: public WeightChange{
 		 */
    		virtual int GetNumberOfVar() const;
    		
+   		/*!
+		 * \brief It gets the value of the exponent in the sin function.
+		 * 
+		 * It gets the value of the exponent in the sin function.
+		 * 
+		 * \return The value of the exponent in the sin function.
+		 */
+   		int GetExponent() const;
+   		
 };
 
-#endif /*ADDITIVEWEIGHTCHANGE_H_*/
+#endif /*SINWEIGHTCHANGE_H_*/

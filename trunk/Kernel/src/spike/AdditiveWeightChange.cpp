@@ -22,6 +22,10 @@
 
 #include <math.h>
 
+int AdditiveWeightChange::GetNumberOfVar() const{
+	return 2;
+}
+
 void AdditiveWeightChange::update_activity(double time,Interconnection * Connection,bool spike){
 	// CHANGED
 	// VERSION USING ANALYTICALLY SOLVED EQUATIONS
@@ -33,8 +37,8 @@ void AdditiveWeightChange::update_activity(double time,Interconnection * Connect
 	float quot = delta_t/tau;
 	float ex = exp(-quot);
 
-	float OldE1 = Connection->GetActivityAt(0);
-	float OldE = Connection->GetActivityAt(1);
+	float OldE1 = Connection->GetActivityAt(1);
+	float OldE = Connection->GetActivityAt(0);
 	float NewE = (OldE+quot*OldE1)*ex;
 	float NewE1 = OldE1*ex; 
 	
@@ -42,8 +46,8 @@ void AdditiveWeightChange::update_activity(double time,Interconnection * Connect
 		NewE1 += 1;
 	}
 	
-	Connection->SetActivityAt(0,NewE1);
-	Connection->SetActivityAt(1,NewE);
+	Connection->SetActivityAt(1,NewE1);
+	Connection->SetActivityAt(0,NewE);
 }
 
 void AdditiveWeightChange::ApplyWeightChange(Interconnection * Connection, double SpikeTime){
@@ -69,7 +73,7 @@ void AdditiveWeightChange::ApplyWeightChange(Interconnection * Connection, doubl
 		    if (wchani!=0){
 		    	//CHANGED
 		     	wchani->update_activity(SpikeTime,interi, false);
-		     	float NewWeight = interi->GetWeight()+wchani->GetA2PrePre()*interi->GetActivityAt(1);
+		     	float NewWeight = interi->GetWeight()+wchani->GetA2PrePre()*interi->GetActivityAt(0);
 		     	//
 		     	if(NewWeight>interi->GetMaxWeight())
 		       		NewWeight=interi->GetMaxWeight();

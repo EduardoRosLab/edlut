@@ -21,10 +21,14 @@
 
 #include <math.h>
 
+int MultiplicativeWeightChange::GetNumberOfVar() const{
+	return 2;
+}
+
 void MultiplicativeWeightChange::ApplyWeightChange(Interconnection * Connection, double SpikeTime){
 	int indexp;
 	float activ;
-	WeightChange *wchani;
+	MultiplicativeWeightChange *wchani;
 	
 	for(indexp=0;indexp<this->GetNumExps();indexp++){
 		Connection->SetActivityAt(indexp,1+Connection->GetActivityAt(indexp)*exp((Connection->GetLastSpikeTime()-SpikeTime)*this->GetLparAt(indexp)));
@@ -37,7 +41,7 @@ void MultiplicativeWeightChange::ApplyWeightChange(Interconnection * Connection,
 		Interconnection *interi;
 		for(int i=0; i<Connection->GetTarget()->GetInputNumber(); ++i){
 			interi=Connection->GetTarget()->GetInputConnectionAt(i);
-			wchani=interi->GetWeightChange();
+			wchani=(MultiplicativeWeightChange *) interi->GetWeightChange();
 			if (wchani!=0){
 				activ=0;
 				for(indexp=0;indexp<wchani->GetNumExps();indexp++){
@@ -47,4 +51,20 @@ void MultiplicativeWeightChange::ApplyWeightChange(Interconnection * Connection,
 			}
         }
 	}
+}
+
+float MultiplicativeWeightChange::GetLparAt(int index) const{
+	return this->lpar[index];
+}
+   		
+void MultiplicativeWeightChange::SetLparAt(int index, float NewLpar){
+	this->lpar[index] = NewLpar;
+}
+   		
+float MultiplicativeWeightChange::GetCparAt(int index) const{
+	return this->cpar[index];
+}
+   		
+void MultiplicativeWeightChange::SetCparAt(int index, float NewCpar){
+	this->cpar[index] = NewCpar;
 }
