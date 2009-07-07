@@ -54,16 +54,6 @@ class WeightChange{
    		int numexps;
    		
    		/*!
-   		 * Activity register.
-   		 */
-   		float lpar[3];
-   		
-   		/*!
-   		 * Activity register.
-   		 */
-   		float cpar[3];
-   		
-   		/*!
    		 * This weight change is a trigger.
    		 */
    		int trigger;
@@ -79,6 +69,15 @@ class WeightChange{
    		float a2prepre;
    		
    	public:
+   	
+   		/*!
+		 * \brief It gets the number of state variables that this learning rule needs.
+		 * 
+		 * It gets the number of state variables that this learning rule needs.
+		 * 
+		 * \return The number of state variables that this learning rule needs.
+		 */
+   		virtual int GetNumberOfVar() const = 0;
    	
    		/*!
 		 * \brief It gets the maximum time of the learning rule.
@@ -115,48 +114,6 @@ class WeightChange{
 		 * \param NewNumExps The number of activity registers.
 		 */
    		void SetNumExps(int NewNumExps);
-   		
-   		/*!
-		 * \brief It gets the Lpar parameter of the learning rule.
-		 * 
-		 * It gets the Lpar parameter of the learning rule.
-		 * 
-		 * \param index Parameter index.
-		 * 
-		 * \return Lpar parameter at indexth position.
-		 */
-   		float GetLparAt(int index) const;
-   		
-   		/*!
-		 * \brief It sets the Lpar parameter of the learning rule.
-		 * 
-		 * It sets the Lpar parameter of the learning rule.
-		 * 
-		 * \param index Parameter index.
-		 * \param NewLpar parameter at indexth position.
-		 */
-   		void SetLparAt(int index, float NewLpar);
-   		
-   		/*!
-		 * \brief It gets the Cpar parameter of the learning rule.
-		 * 
-		 * It gets the Cpar parameter of the learning rule.
-		 * 
-		 * \param index Parameter index.
-		 * 
-		 * \return Cpar parameter at indexth position.
-		 */
-   		float GetCparAt(int index) const;
-   		
-   		/*!
-		 * \brief It sets the Cpar parameter of the learning rule.
-		 * 
-		 * It sets the Cpar parameter of the learning rule.
-		 * 
-		 * \param index Parameter index.
-		 * \param NewCpar parameter at indexth position.
-		 */
-   		void SetCparAt(int index, float NewCpar);
    		
    		/*!
    		 * \brief It gets a trigger indicator.
@@ -211,6 +168,24 @@ class WeightChange{
    		 * \param NewA2PrePre The A2 parameter.
    		 */
    		void SetA2PrePre(float NewA2PrePre);
+   		
+   		/*!
+   		 * \brief It gets the sigma parameter.
+   		 * 
+   		 * It gets the sigma parameter.
+   		 * 
+   		 * \return The sigma parameter.
+   		 */
+   		float GetSigma() const;
+   		
+   		/*!
+   		 * \brief It sets the sigma parameter.
+   		 * 
+   		 * It sets the sigma parameter.
+   		 * 
+   		 * \param NewSigma The sigma parameter.
+   		 */
+   		void SetSigma(float NewSigma);
    		
    		/*!
    		 * \brief It applys the weight change function.

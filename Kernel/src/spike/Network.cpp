@@ -21,7 +21,7 @@
 #include "../../include/spike/NeuronType.h"
 #include "../../include/spike/MultiplicativeWeightChange.h"
 #include "../../include/spike/AdditiveWeightChange.h"
-#include "../../include/spike/AdditiveGaussianWeightChange.h"
+#include "../../include/spike/SinWeightChange.h"
 
 #include "../../include/simulation/Utils.h"
 #include "../../include/simulation/Configuration.h"
@@ -250,26 +250,29 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         					int indexp;
         					static float explpar[]={30.1873,60.3172,5.9962};
         					static float expcpar[]={-5.2410,3.1015,2.2705};
+        					int grade;
         					skip_comments(fh,Currentline);
-        					if(fscanf(fh,"%i",&trigger)==1 && fscanf(fh,"%f",&maxpos)==1 && fscanf(fh,"%f",&a1pre)==1 && fscanf(fh,"%f",&a2prepre)==1 && fscanf(fh,"%i",&multiplicative)==1){
+        					if(fscanf(fh,"%i",&trigger)==1 && fscanf(fh,"%f",&maxpos)==1 && fscanf(fh,"%f",&a1pre)==1 && fscanf(fh,"%f",&a2prepre)==1 && fscanf(fh,"%i",&grade)==1 && fscanf(fh,"%i",&multiplicative)==1){
         						if(a1pre < -1.0 || a1pre > 1.0){
         							throw EDLUTFileException(4,27,22,1,Currentline);
         							break;
         						}
         						if (multiplicative==1){
         							this->wchanges[wcind] = new MultiplicativeWeightChange();
-        						}else if (multiplicative==2){
-        							this->wchanges[wcind] = new AdditiveGaussianWeightChange();
-        						}else{
+        							
+        							for(indexp=0;indexp<this->wchanges[wcind]->GetNumExps();indexp++){
+                       					((MultiplicativeWeightChange *) this->wchanges[wcind])->SetLparAt(indexp,(maxpos == 0)?0:(0.1/maxpos)*explpar[indexp]);
+                       					((MultiplicativeWeightChange *) this->wchanges[wcind])->SetCparAt(indexp,expcpar[indexp]);
+                       				}
+        						} else if (multiplicative==2){
+        							this->wchanges[wcind] = new SinWeightChange(grade);
+        						} else{
         							this->wchanges[wcind] = new AdditiveWeightChange();
         						}
         						this->wchanges[wcind]->SetTrigger(trigger);
                        			this->wchanges[wcind]->SetMaxPos(maxpos);
                        			this->wchanges[wcind]->SetNumExps(3);
-                       			for(indexp=0;indexp<this->wchanges[wcind]->GetNumExps();indexp++){
-                       				this->wchanges[wcind]->SetLparAt(indexp,(maxpos == 0)?0:(0.1/maxpos)*explpar[indexp]);
-                       				this->wchanges[wcind]->SetCparAt(indexp,expcpar[indexp]);
-                       			}
+                       			
                        			
                        			this->wchanges[wcind]->SetA1Pre(a1pre);
                        			this->wchanges[wcind]->SetA2PrePre(a2prepre);

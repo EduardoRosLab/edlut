@@ -17,18 +17,21 @@
 #include "../../include/spike/Interconnection.h"
 
 #include <math.h>
+#include "../../include/spike/ActivityRegister.h"
 #include "../../include/spike/WeightChange.h"
 #include "../../include/spike/Neuron.h"
 
-Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), lastspiketime(0){
+Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), activity(0), lastspiketime(0){
 	
 }
 
-Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, WeightChange* NewWeightChange, float NewActivity [3], float NewLastSpikeTime):
+Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, WeightChange* NewWeightChange, float NewLastSpikeTime):
 	source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), weight(NewWeight), maxweight(NewMaxWeight), wchange(NewWeightChange), lastspiketime(NewLastSpikeTime) {
-	this->activity[0] = NewActivity[0];
-	this->activity[1] = NewActivity[1];
-	this->activity[2] = NewActivity[2];		
+	if (NewWeightChange->GetNumberOfVar()>0){
+		activity = new ActivityRegister(NewWeightChange->GetNumberOfVar());	
+	}else{
+		activity = 0;
+	}
 }
 
 long int Interconnection::GetIndex() const{
@@ -92,21 +95,43 @@ WeightChange * Interconnection::GetWeightChange() const{
 }
 		
 void Interconnection::SetWeightChange(WeightChange * NewWeightChange){
+	if (this->wchange==0){
+		if (NewWeightChange->GetNumberOfVar()>0){
+			activity = new ActivityRegister(NewWeightChange->GetNumberOfVar());
+		}else{
+			activity = 0;
+		}
+	}else if (this->wchange!=NewWeightChange){
+		// Update the activity register
+		if (this->wchange->GetNumberOfVar()!=NewWeightChange->GetNumberOfVar()){
+			if (activity!=0){
+				delete activity;
+			}
+			if (NewWeightChange->GetNumberOfVar()>0){
+				activity = new ActivityRegister(NewWeightChange->GetNumberOfVar());
+			}else{
+				activity = 0;
+			}
+		}
+	}
+	
 	this->wchange = NewWeightChange;
 }
 
 void Interconnection::ClearActivity(){
-	for (int i=0; i<3; ++i){
-		this->activity[i] = 0.0F;
+	if (activity!=0){
+		for (int i=0; i<this->activity->GetVarNumber(); ++i){
+			this->activity->SetVarValueAt(i,0);
+		}
 	}
 }
 		
 float Interconnection::GetActivityAt(int index) const{
-	return this->activity[index];
+	return this->activity->GetVarValueAt(index);
 }
 		
 void Interconnection::SetActivityAt(int index, float NewActivity){
-	this->activity[index] = NewActivity;
+	this->activity->SetVarValueAt(index, NewActivity);
 }
 		
 double Interconnection::GetLastSpikeTime() const{

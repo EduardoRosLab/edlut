@@ -30,6 +30,7 @@
 
 class Neuron;
 class WeightChange;
+class ActivityRegister;
 
 /*!
  * \class Interconnection
@@ -87,9 +88,9 @@ class Interconnection {
 		WeightChange* wchange;
 		
 		/*!
-		 * \brief The activity register of the connection. The last three activities.
+		 * \brief The activity register of the connection.
 		 */
-		float activity[3];
+		ActivityRegister* activity;
 		
 		/*!
 		 * \brief The time of the last fired spike.
@@ -121,7 +122,7 @@ class Interconnection {
 		 * \param NewActivity Last activity register of this connection.
 		 * \param NewLastSpikeTime Time of the last propagated spike in this connection.
 		 */
-		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, WeightChange* NewWeightChange, float NewActivity [3], float NewLastSpikeTime);
+		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, WeightChange* NewWeightChange, float NewLastSpikeTime);
 		
 		/*!
 		 * \brief It gets the connection index.
