@@ -143,6 +143,7 @@ simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            
 spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
 						   $(srcdir)/spike/ActivityRegister.cpp \
+                           $(srcdir)/spike/ActivityRegister.cpp \
                            $(srcdir)/spike/EDLUTException.cpp \
                            $(srcdir)/spike/EDLUTFileException.cpp \
                            $(srcdir)/spike/InputSpike.cpp \
@@ -155,7 +156,8 @@ spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
                            $(srcdir)/spike/NeuronType.cpp \
                            $(srcdir)/spike/PropagatedSpike.cpp \
                            $(srcdir)/spike/Spike.cpp \
-                           $(srcdir)/spike/WeightChange.cpp
+                           $(srcdir)/spike/WeightChange.cpp \
+                           $(srcdir)/spike/SinWeightChange.cpp
                           
 sources     := $(communication-sources) \
                $(simulation-sources) \
