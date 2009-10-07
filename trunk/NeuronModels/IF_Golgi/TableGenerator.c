@@ -1,4 +1,4 @@
-// Version 2.1
+// Version 2.2
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,8 +10,10 @@
 #define MAXIDSIZE 32
 #define MAXIDSIZEC "32"
 #define MAXINTERVALS 6
-#define MAXFILES 7
-#define MAXTABLES 8
+#define MAXFILES 2
+#define MAXTABLES 10
+
+#define inline
 // the table configuration file may want to access Tables structure
 
 struct tcoordinates
@@ -30,6 +32,8 @@ struct ttable
 
 // Generated-table global variable
 struct ttable Tables[MAXTABLES];
+
+   int Deb;
 
 #include "tab2cfg.c"
 #define MAXDIMENSIONS (NUM_EQS+1)
@@ -312,7 +316,7 @@ int load_conffile(char *cfgfile)
                for(fi=0;fi<Confdef.nfiles && ret;fi++)
                  {
                   skip_comments(fh);
-                  if(fscanf(fh,"%"MAXIDSIZEC"s",Confdef.file[fi].ident)==1)
+                  if(fscanf(fh,"%"MAXIDSIZEC"[^\n]%*[^\n]",Confdef.file[fi].ident)==1)
                     {
                      skip_comments(fh);
                      if(fscanf(fh,"%i",&Confdef.file[fi].ntables)==1)
@@ -508,6 +512,7 @@ struct tcoordinates get_coordinates_from_cfg(struct ttablecfg *tab)
       if(maxran > 0)
         {
          double basei,expon;
+         
          coord.ranges=(float **)malloc(sizeof(float *)*ndims+sizeof(float)*maxran);
          coord.neqsel=(int **)malloc(sizeof(int *)*ndims+sizeof(int)*maxran);
          if(coord.ranges && coord.neqsel)
@@ -544,11 +549,11 @@ struct tcoordinates get_coordinates_from_cfg(struct ttablecfg *tab)
            }
          else
            {
+            perror("*>Allocating memory for table coordinates");
             free(coord.neqsel);
             free(coord.ranges);
             free(coord.posdim);
             free(coord.size);
-            perror("*>Allocating memory for table coordinates");
             coord.ranges=NULL;
            }
         }
@@ -560,9 +565,9 @@ struct tcoordinates get_coordinates_from_cfg(struct ttablecfg *tab)
      }
    else
      {
+      perror("*>Allocating memory for table coordinate data");
       free(coord.posdim);
       free(coord.size);
-      perror("*>Allocating memory for table coordinate data");
       coord.ranges=NULL;
      }
    if(!coord.ranges) // if the allocation fails, set all pointers to NULL
@@ -577,8 +582,8 @@ struct tcoordinates get_coordinates_from_cfg(struct ttablecfg *tab)
 int save_table(FILE *ofd, struct ttablecfg *tab, struct tcoordinates coord, float *table)
   {
    int ret;
-   unsigned long tabsize,ndims;
-   long i;
+   uint64_t tabsize,ndims;
+   int64_t i;
    ret=0;
    if(ofd)
      {
@@ -586,16 +591,17 @@ int save_table(FILE *ofd, struct ttablecfg *tab, struct tcoordinates coord, floa
       fflush(stdout);
       ndims=tab->ndimensions;
       tabsize=coord.posdim[ndims];
-      if(fwrite(&tabsize,sizeof(unsigned long),1,ofd) != 1)
+      if(fwrite(&tabsize,sizeof(uint64_t),1,ofd) != 1)
          perror("Writing");
       else
-         if(fwrite(&ndims,sizeof(unsigned long),1,ofd) != 1)
+         if(fwrite(&ndims,sizeof(uint64_t),1,ofd) != 1)
             perror("Writing");
          else
            {
             for(i=ndims-1;i>=0;i--)
               {
-               if(fwrite(coord.size+i,sizeof(unsigned long),1,ofd) == 1)
+               uint64_t csize=coord.size[i];
+               if(fwrite(&csize,sizeof(uint64_t),1,ofd) == 1)
                  {
                   if(!(fwrite(coord.ranges[i],sizeof(float),coord.size[i],ofd) == coord.size[i]))
                     {
@@ -1017,6 +1023,7 @@ void calculate_table(float *table, struct ttablecfg *tab, struct consts *cons, s
    else
       prev_t=coord.ranges[dimper[0]][coo[0]]; // first initial-dimension (normally time) coordinate
    time_step=1; // Not important
+   Deb=0;
    do
      {
       tabpos=0;
@@ -1030,13 +1037,13 @@ void calculate_table(float *table, struct ttablecfg *tab, struct consts *cons, s
       next_t=(dimvarper[0] == 0)?coord.ranges[dimper[0]][coo[0]]:0.0; // if table has time dimension, calculate current time coordinate
       table_element_calculation(next_t-prev_t, tab, cons, &vars, &time_step, neqsys, &table[tabpos]);
       prev_t=next_t;
-/*      if(Function_evaluations > 10000)
+/*      if(Function_evaluations > 100000L)
         {
          Function_evaluations=0;
          for(i=0;i<ndims;i++)
             printf("%f ",coord.ranges[i][coo[dimper[i]]]);
          puts("");
-        }*/
+        } */
      }
    while(inc_coordinates(coo, dimper, dimvarper, tab, &coord, &vars, &prev_t));
   }
@@ -1053,6 +1060,7 @@ struct ttable generate_table(FILE *ofd, struct ttablecfg *tabcfg, struct consts 
       printf("Calculating...");
       fflush(stdout);
       tabsize=table.coord.posdim[tabcfg->ndimensions];
+//      printf("[malloc: %lu]\n",sizeof(float)*tabsize);
       table.elems=(float *)malloc(sizeof(float)*tabsize);
       if(table.elems)
         {
@@ -1067,9 +1075,9 @@ struct ttable generate_table(FILE *ofd, struct ttablecfg *tabcfg, struct consts 
         }
       else
         {
+         perror("*>Table file size too large (Not enough memory)");
          free(table.coord.ranges);
          table.coord.ranges=NULL;
-         perror("*>Table file size too large (Not enough memory)");
         }
      }
    else
@@ -1089,7 +1097,7 @@ int generate_files(void)
    ret=1;
    for(Currentfile=0;Currentfile<Confdef.nfiles;Currentfile++)
      {
-      ofd=fopen(Confdef.file[Currentfile].ident,"w");
+      ofd=fopen(Confdef.file[Currentfile].ident,"wb");
       if(ofd)
         {
          struct consts *cons;
@@ -1130,5 +1138,6 @@ int main()
    ret=load_conffile("tab2cfg.c");
    if(ret)
       generate_files();
-   return(!ret);
+   return(ret);
   }
+
