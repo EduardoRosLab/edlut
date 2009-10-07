@@ -1138,6 +1138,6 @@ int main()
    ret=load_conffile("tab2cfg.c");
    if(ret)
       generate_files();
-   return(ret);
+   return(!ret);
   }
 
