@@ -45,6 +45,7 @@ void Neuron::InitNeuron(int NewIndex, NeuronType * Type, bool Monitored, bool Is
   	//noutputs=0;
   	//firstincon=NULL; // initial value needed by find_in_connections
    	monitored=Monitored;
+        this->spikeCounter = 0; // For LSAM
    	this->isOutput = IsOutput;
 }
 
@@ -236,4 +237,12 @@ NeuronType * Neuron::GetNeuronType() const{
 	return this->type;
 }
 
+/* For LSAM */
+void Neuron::SetSpikeCounter(long n) {
+  this->spikeCounter = n;
+}
 
+/* For LSAM */
+long Neuron::GetSpikeCounter() {
+  return this->spikeCounter;
+}

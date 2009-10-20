@@ -131,8 +131,9 @@ communication-sources	:= $(srcdir)/communication/CdSocket.cpp \
                            $(srcdir)/communication/TCPIPOutputSpikeDriver.cpp \
                            $(srcdir)/communication/Timer.cpp
                            
-simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
+simulation-sources	:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            $(srcdir)/simulation/EndSimulationEvent.cpp \
+                           $(srcdir)/simulation/StopSimulationEvent.cpp \
                            $(srcdir)/simulation/Event.cpp \
                            $(srcdir)/simulation/EventQueue.cpp \
                            $(srcdir)/simulation/ParameterException.cpp \
@@ -141,8 +142,8 @@ simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            $(srcdir)/simulation/Simulation.cpp \
                            $(srcdir)/simulation/Utils.cpp
                            
-spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
-						   $(srcdir)/spike/ActivityRegister.cpp \
+spike-sources		:= $(srcdir)/spike/AdditiveWeightChange.cpp \
+			   $(srcdir)/spike/ActivityRegister.cpp \
                            $(srcdir)/spike/ActivityRegister.cpp \
                            $(srcdir)/spike/EDLUTException.cpp \
                            $(srcdir)/spike/EDLUTFileException.cpp \
@@ -158,10 +159,13 @@ spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
                            $(srcdir)/spike/Spike.cpp \
                            $(srcdir)/spike/WeightChange.cpp \
                            $(srcdir)/spike/SinWeightChange.cpp
+
+interface-sources	:= $(srcdir)/interface/LSAM_Interface.cpp
                           
 sources     := $(communication-sources) \
                $(simulation-sources) \
-               $(spike-sources)
+               $(spike-sources) \
+	       $(interface-sources)
 
 
 ################################################################################

@@ -18,10 +18,13 @@
 
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Spike.h"
+#include "../../include/spike/InputSpike.h"
 #include "../../include/spike/Neuron.h"
 
+#include "../../include/simulation/ParamReader.h"
 #include "../../include/simulation/EventQueue.h"
 #include "../../include/simulation/EndSimulationEvent.h"
+#include "../../include/simulation/StopSimulationEvent.h"
 #include "../../include/simulation/SaveWeightsEvent.h"
 #include "../../include/simulation/CommunicationEvent.h"
 
@@ -29,9 +32,32 @@
 #include "../../include/communication/InputSpikeDriver.h"
 #include "../../include/communication/OutputWeightDriver.h"
 
-Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep) throw (EDLUTException): Net(0), Queue(0), InputSpike(), OutputSpike(), OutputWeight(), Totsimtime(SimulationTime), SimulationStep(NewSimulationStep), SaveWeightStep(0), EndOfSimulation(false), Updates(0), Heapoc(0){
+#include "../include/simulation/ParameterException.h"
+
+#include "../include/communication/ConnectionException.h"
+
+#include "../include/spike/EDLUTFileException.h"
+#include "../include/spike/EDLUTException.h"
+
+
+		
+Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep, double NewSaveWeightStep) throw (EDLUTException): Net(0), Queue(0), InputSpike(), OutputSpike(), OutputWeight(), Totsimtime(SimulationTime), SimulationStep(NewSimulationStep), SaveWeightStep(NewSaveWeightStep), CurrentSimulationTime(0), EndOfSimulation(false), Updates(0), Heapoc(0){
 	Queue = new EventQueue();
 	Net = new Network(NetworkFile, WeightsFile, this->Queue);
+
+	// Add a final simulation event
+	this->Queue->InsertEvent(new EndSimulationEvent(Totsimtime));
+
+	// Add the first communication event
+	if (this->SimulationStep>0.0F){
+		this->Queue->InsertEvent(new CommunicationEvent(this->SimulationStep));		
+	}
+
+	// Add the first save weight event
+	if (this->SaveWeightStep>0.0F){
+		this->Queue->InsertEvent(new SaveWeightsEvent(this->SaveWeightStep));	
+	}
+	
 }
 
 Simulation::Simulation(const Simulation & ant):Net(ant.Net), Queue(ant.Queue), InputSpike(ant.InputSpike), OutputSpike(ant.OutputSpike), OutputWeight(ant.OutputWeight), Totsimtime(ant.Totsimtime), SaveWeightStep(ant.SaveWeightStep), EndOfSimulation(ant.EndOfSimulation), Updates(ant.Updates), Heapoc(ant.Heapoc){
@@ -42,6 +68,10 @@ Simulation::~Simulation(){
 
 void Simulation::EndSimulation(){
 	this->EndOfSimulation = true;
+}
+
+void Simulation::StopSimulation(){
+	this->StopOfSimulation = true;
 }
 
 void Simulation::SetSaveStep(float NewSaveStep){
@@ -60,26 +90,23 @@ double Simulation::GetSimulationStep(){
 	return this->SimulationStep;	
 }
 
+double Simulation::GetFinalSimulationTime(){
+	return this->Totsimtime;	
+}
+		
 void Simulation::RunSimulation()  throw (EDLUTException){
-	this->CurrentSimulationTime = 0.0;
+       this->RunSimulationSlot(this->Totsimtime);
+}
+
+void Simulation::RunSimulationSlot(double preempt_time)  throw (EDLUTException){
 	
-	// Get the external initial inputs
-	this->GetInput();
 	
-	// Add a final simulation event
-	this->Queue->InsertEvent(new EndSimulationEvent(this->Totsimtime));
+	this->StopOfSimulation = false;
 	
-	// Add the first save weight event
-	if (this->SaveWeightStep>0.0F){
-		this->Queue->InsertEvent(new SaveWeightsEvent(this->SaveWeightStep));	
-	}
+	// Add a stop simulation event in preempt_time
+	this->Queue->InsertEvent(new StopSimulationEvent(preempt_time));       
 	
-	// Add the first communication event
-	if (this->SimulationStep>0.0F){
-		this->Queue->InsertEvent(new CommunicationEvent(this->SimulationStep));		
-	}	
-	
-	while(!this->EndOfSimulation){
+	while(!this->EndOfSimulation && !this->StopOfSimulation){
 		Event * NewEvent;
 		
 		NewEvent=this->Queue->RemoveEvent();
@@ -92,21 +119,30 @@ void Simulation::RunSimulation()  throw (EDLUTException){
 		Heapoc+=Queue->Size();
 			
 		if(NewEvent->GetTime() - this->CurrentSimulationTime < -0.0001){
-			cerr << "Internal error: Bad spike time. Spike: " << NewEvent->GetTime() << " Current: " << this->CurrentSimulationTime << endl;
+			cerr << 
+                        "Internal error: Bad spike time. Spike: " <<
+                        NewEvent->GetTime() <<
+                        " Current: " <<
+                        this->CurrentSimulationTime <<
+                        endl;
 		}
 			
 		this->CurrentSimulationTime=NewEvent->GetTime(); // only for checking
 
-		NewEvent->ProcessEvent(this);
+                NewEvent->ProcessEvent(this);
 		
 		delete NewEvent;
-	}
+       }
 }
 
 void Simulation::WriteSpike(const Spike * spike){
 	Neuron * neuron=spike->GetSource();  // source of the spike
-    
-    if(neuron->IsMonitored()){
+        // For LSAM: Increment neuron's spike counter
+	neuron->SetSpikeCounter(1 + neuron->GetSpikeCounter());
+        // For LSAM: Increment total spike counter
+        this->SetTotalSpikeCounter(1 + this->GetTotalSpikeCounter());
+    	
+	if(neuron->IsMonitored()){
 		for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
 			(*it)->WriteSpike(spike);
 		}
@@ -163,16 +199,20 @@ void Simulation::GetInput(){
 	}
 }
 
+long Simulation::GetTotalSpikeCounter(){
+	return this->TotalSpikeCounter;	
+}
+
+void Simulation::SetTotalSpikeCounter(int value) {
+	this->TotalSpikeCounter = value;	
+}
+
 Network * Simulation::GetNetwork() const{
 	return this->Net;	
 }
 
 EventQueue * Simulation::GetQueue() const{
 	return this->Queue;
-}
-		
-double Simulation::GetTotalSimulationTime() const{
-	return this->Totsimtime;	
 }
 		
 long long Simulation::GetSimulationUpdates() const{
@@ -213,4 +253,52 @@ void Simulation::AddOutputWeightDriver(OutputWeightDriver * NewOutput){
 		
 void Simulation::RemoveOutputWeightDriver(OutputWeightDriver * NewOutput){
 	this->OutputWeight.remove(NewOutput);
+}
+
+Simulation * CreateAndInitializeSimulation(ParamReader Reader) throw (EDLUTException, ConnectionException){
+	Simulation * Simul = NULL;
+
+	Simul = new Simulation(Reader.GetNetworkFile(),
+                         Reader.GetWeightsFile(),
+                         Reader.GetSimulationTime(),
+                         Reader.GetSimulationStepTime(),
+			 Reader.GetSaveWeightStepTime());
+        
+	for (unsigned int i=0; i<Reader.GetInputSpikeDrivers().size(); ++i){
+		Simul->AddInputSpikeDriver(Reader.GetInputSpikeDrivers()[i]);
+	}
+			
+	for (unsigned int i=0; i<Reader.GetOutputSpikeDrivers().size(); ++i){
+		Simul->AddOutputSpikeDriver(Reader.GetOutputSpikeDrivers()[i]);
+	}
+		
+	for (unsigned int i=0; i<Reader.GetMonitorDrivers().size(); ++i){
+		Simul->AddMonitorActivityDriver(Reader.GetMonitorDrivers()[i]);
+	}
+		
+	for (unsigned int i=0; i<Reader.GetOutputWeightDrivers().size(); ++i){
+		Simul->AddOutputWeightDriver(Reader.GetOutputWeightDrivers()[i]);
+	}
+					
+	if(Reader.CheckInfo()){
+		//Simul.GetNetwork()->tables_info();
+		//neutypes_info();
+		Simul->GetNetwork()->NetInfo();
+	}
+			
+	// Reset total spike counter
+        Simul->SetTotalSpikeCounter(0);
+
+	// Get the external initial inputs
+	Simul->GetInput();
+
+	return Simul;		
+}
+
+Simulation * CreateAndInitializeSimulation(int count, char *parameters[]) throw (EDLUTException, ConnectionException, ParameterException) {
+        Simulation * Simul;
+
+	ParamReader Reader(count, parameters);
+        Simul = CreateAndInitializeSimulation(Reader);
+	return Simul;
 }

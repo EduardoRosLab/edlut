@@ -105,6 +105,11 @@ class Neuron{
    		bool monitored;
    		
    		/*!
+   		 * Counts the number of fired spikes.
+   		 */
+   		long spikeCounter;
+   		
+   		/*!
    		 * It tells if neuron is output neuron
    		 */
    		bool isOutput;
@@ -416,6 +421,24 @@ class Neuron{
    		 */
 		NeuronType * GetNeuronType() const;
    		  		
+		/*!
+   		 * \brief Sets the spike counter.
+   		 * 
+   		 * Sets the neuron spike counter. For LSAM.
+		 * 
+   		 * \param n is the value that the spike counter should be set to.
+   		 */
+                void SetSpikeCounter(long n);
+
+		/*!
+   		 * \brief Number of spikes fired.
+   		 * 
+   		 * Number of spikes fired by this neuron. For LSAM.
+   		 * 
+   		 * \return The number of spikes fired by the neuron.
+   		 */
+                long GetSpikeCounter();
+
 };
   
 #endif /*NEURON_H_*/

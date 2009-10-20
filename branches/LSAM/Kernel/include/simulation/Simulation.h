@@ -24,12 +24,15 @@
  * \author Richard Carrido
  * \date August 2008
  *
- * This file declares a class which abstracts a simulation of an spiking neural network.
+ * This file declares a class which abstracts a simulation of a spiking neural network.
  */
  
+
 #include <list>
 
 #include "../spike/EDLUTException.h"
+#include "../communication/ConnectionException.h"
+#include "../simulation/ParameterException.h"
 
 class Network;
 class EventQueue;
@@ -38,7 +41,7 @@ class OutputSpikeDriver;
 class OutputWeightDriver;
 class Spike;
 class Neuron;
-
+class ParamReader;
 
 /*!
  * \class Simulation
@@ -110,6 +113,11 @@ class Simulation{
 		 * End of simulation
 		 */
 		bool EndOfSimulation;
+
+		/*!
+		 * Stop of simulation
+		 */
+		bool StopOfSimulation;
 		
 		/*!
 		 * Number of realized updates.
@@ -121,23 +129,13 @@ class Simulation{
 		 */
 		long long Heapoc;
 
-	protected:
-		
-		/*!
-		 * \brief It realizes the main process of simulation.
-		 * 
-		 * It propagates the spikes after the input is loaded. This propagation ends when the
-		 * simulation time is higher than the total simulation time or when no more activity is
-		 * produced.
-		 * 
-		 * \pre The activity has been previously loaded.
-		 * 
-		 * \throw EDLUTException If something wrong happends in the spike propagation process.
+                /*!
+		 * Total spike count.
 		 */
-		void RunSimulationStep() throw (EDLUTException);
-				
+		long TotalSpikeCounter;
+		
 	public:
-	
+
 		/*Simulation(Network * Net, InputDriver * NewInput, OutputDriver * NewOutput, long SimulationTime);*/
 		
 		/*!
@@ -149,10 +147,11 @@ class Simulation{
 		 * \param WeightsFile Weights description file name. The network synaptic weights will be loaded from this file.
 		 * \param SimulationTime Simulation total time.
 		 * \param NewSimulationStep Simulation step time.
+		 * \param NewSaveWeigthStep Save weight step time.
 		 * 
 		 * throw EDLUTException If something wrong happens.
 		 */
-		Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep=0.00) throw (EDLUTException);
+		Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep=0.00, double NewSaveWeightStep=0.00) throw (EDLUTException);
 		
 		/*!
 		 * \brief Copy constructor of the class.
@@ -207,11 +206,26 @@ class Simulation{
 		double GetSimulationStep();
 		
 		/*!
+		 * \brief It gets the total simulation time.
+		 * 
+		 * It gets the total simulation time.
+		 * 
+		 * \return The total simulation time (in seconds).
+		 */
+		double GetFinalSimulationTime();
+		
+		/*!
 		 * \brief It ends the simulation before the next event.
 		 * 
 		 * It ends the simulation before the next event.
 		 */
 		void EndSimulation();
+
+		/*!		 * \brief It stops the simulation before the next event.
+		 * 
+		 * It stops the simulation before the next event.
+		 */
+		void StopSimulation();
 				 
 				
 		/*!
@@ -287,20 +301,35 @@ class Simulation{
 		 void RemoveOutputWeightDriver(OutputWeightDriver * NewOutput);
 		
 		/*!
-		 * \brief It runs the simulation.
+		 * \brief It realizes the main process of simulation until simulation time > Total simulation time.
 		 * 
-		 * It runs the simulation.
+		 * It propagates the spikes after the input is loaded. This propagation ends when the
+		 * simulation time is higher than the total simulation time or when no more activity is
+		 * produced.
 		 * 
-		 * \throw EDLUTException If something wrong happens.
+		 * \pre The activity has been previously loaded.
+		 * 
+		 * \throw EDLUTException If something wrong happends in the spike propagation process.
 		 */
 		void RunSimulation() throw (EDLUTException);
-		
+
+		/*!
+		 * \brief It runs the simulation until simulation time > preempt_time.
+		 * 
+		 * It runs the simulation until simulation time > preempt_time.
+		 * 
+		 * \throw EDLUTException If something wrong happens.
+		 * 
+		 * \param preempt_time is the ending time of the time slot.
+		 */
+		void RunSimulationSlot(double preempt_time) throw (EDLUTException);
+
 		/*!
 		 * \brief It writes a spike in the activity log and in the outputs.
 		 * 
 		 * It writes a spike in the activity log and in the outputs.
 		 * 
-		 * \param spike The spike to be wrotten.
+		 * \param spike The spike to be written.
 		 */
 		void WriteSpike(const Spike * spike);
 		
@@ -328,6 +357,22 @@ class Simulation{
 		 * It sends the happened events.
 		 */
 		void SendOutput();
+		
+		/*!
+		 * \brief Set total spike count.
+		 * 
+		 * Sets the total spike counter.
+		 * \param value is value to set the counter to.
+		 */		
+		void SetTotalSpikeCounter(int value);
+		
+		/*!
+		 * \brief Get total spike count.
+		 * 
+		 * Gets the total spike counter.
+		 * \returns the counter value.
+		 */		
+		long GetTotalSpikeCounter();
 		
 		/*!
 		 * \brief It gets the input activity.
@@ -379,8 +424,55 @@ class Simulation{
 		 * 
 		 * \return The number of acumulated event queue sizes.
 		 */
-		long long GetHeapAcumSize() const;		
-	
+		long long GetHeapAcumSize() const;
+
 };
+
+/*!
+ * \brief It creates and initializes the simulation.
+ *  * It creates and initializes the simulation.
+ * 
+ * \throw EDLUTException If something wrong happens.
+ * \throw ConnectionException If the connection haven't been able to be stablished.
+ *  * \param Reader is the parser of parameters
+ */Simulation * CreateAndInitializeSimulation(ParamReader Reader) throw (EDLUTException, ConnectionException);
+
+/** Initializes the simulation.
+Initializes the simulation, and reads in tables.
+For a detailed description of the
+EDLUT simulator and its switches, please refer to the EDLUT
+documentation.
+
+\param count		is the number of items in the argument vector.
+\param parameters	is the vector of switches and their parameters.
+
+Obligatory switches and switch values:
+\param "-time Simulation_Time"		 sets the total simulation time (in seconds).
+\param "-nf Network_File"		 sets the network description file.
+\param "-wf Weights_File"		 sets the weights file.
+
+Optional switches and switch values:
+\param "-info"				 shows network information.
+\param "-sf File_Name"			 saves the final weights in file File_Name.
+\param "-wt Save_Weight_Step"		 sets the step time between weights saving.
+\param "-st Step_Time"			 sets the step time in simulation in seconds.
+\param "-log File_Name"			 saves the activity register in file File_Name.
+\param "-if Input_File"		 	 adds the Input_File file to the input sources of the simulation.
+\param "-of Output_File"		 adds the Output_File file to the output targets of the simulation.
+\param "-ic IPDirection:Port Server|Client"	 adds the connection as a server or a client at 
+                                                 the specified address to the input sources of the simulation.
+\param "-oc IPDirection:Port Server|Client"	 adds the connection as a server or a client at
+                                                 the specified address to the output targets of the simulation.	 
+\param "-ioc IPDirection:Port Server|Client"	 adds the connection as a server or a client at the specified
+                                                 address to the input sources and in the output targets of the simulation.
+\throw EDLUTException If something wrong happens.
+\throw ConnectionException If the connection haven't been able to be stablished.
+\throw ParameterException If the parameters are wrong.
+
+
+\returns a simulation object, holding the state of simulation. */
+
+Simulation * CreateAndInitializeSimulation(int count, char *parameters[]) throw (EDLUTException, ConnectionException, ParameterException);
+
 
 #endif /*SIMULATION_H_*/
