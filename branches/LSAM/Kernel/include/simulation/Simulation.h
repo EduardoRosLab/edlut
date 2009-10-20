@@ -428,51 +428,4 @@ class Simulation{
 
 };
 
-/*!
- * \brief It creates and initializes the simulation.
- *  * It creates and initializes the simulation.
- * 
- * \throw EDLUTException If something wrong happens.
- * \throw ConnectionException If the connection haven't been able to be stablished.
- *  * \param Reader is the parser of parameters
- */Simulation * CreateAndInitializeSimulation(ParamReader Reader) throw (EDLUTException, ConnectionException);
-
-/** Initializes the simulation.
-Initializes the simulation, and reads in tables.
-For a detailed description of the
-EDLUT simulator and its switches, please refer to the EDLUT
-documentation.
-
-\param count		is the number of items in the argument vector.
-\param parameters	is the vector of switches and their parameters.
-
-Obligatory switches and switch values:
-\param "-time Simulation_Time"		 sets the total simulation time (in seconds).
-\param "-nf Network_File"		 sets the network description file.
-\param "-wf Weights_File"		 sets the weights file.
-
-Optional switches and switch values:
-\param "-info"				 shows network information.
-\param "-sf File_Name"			 saves the final weights in file File_Name.
-\param "-wt Save_Weight_Step"		 sets the step time between weights saving.
-\param "-st Step_Time"			 sets the step time in simulation in seconds.
-\param "-log File_Name"			 saves the activity register in file File_Name.
-\param "-if Input_File"		 	 adds the Input_File file to the input sources of the simulation.
-\param "-of Output_File"		 adds the Output_File file to the output targets of the simulation.
-\param "-ic IPDirection:Port Server|Client"	 adds the connection as a server or a client at 
-                                                 the specified address to the input sources of the simulation.
-\param "-oc IPDirection:Port Server|Client"	 adds the connection as a server or a client at
-                                                 the specified address to the output targets of the simulation.	 
-\param "-ioc IPDirection:Port Server|Client"	 adds the connection as a server or a client at the specified
-                                                 address to the input sources and in the output targets of the simulation.
-\throw EDLUTException If something wrong happens.
-\throw ConnectionException If the connection haven't been able to be stablished.
-\throw ParameterException If the parameters are wrong.
-
-
-\returns a simulation object, holding the state of simulation. */
-
-Simulation * CreateAndInitializeSimulation(int count, char *parameters[]) throw (EDLUTException, ConnectionException, ParameterException);
-
-
 #endif /*SIMULATION_H_*/

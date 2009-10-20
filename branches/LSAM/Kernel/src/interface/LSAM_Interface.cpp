@@ -20,6 +20,7 @@
 #include "../../include/simulation/Simulation.h"
 #include "../../include/simulation/ParameterException.h"
 #include "../../include/simulation/EventQueue.h"
+#include "../../include/simulation/ParamReader.h"
 
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Neuron.h"
@@ -34,8 +35,8 @@ Simulation * InitializeAndCatch(int ac, char *av[]) {
         Simulation * Simul;
 
 	try {
-	        Simul = CreateAndInitializeSimulation(ac,av);
-
+		ParamReader Reader(ac, av);
+	        Simul = Reader.CreateAndInitializeSimulation();
 	} catch (ParameterException Exc){
 		cerr << Exc << endl;
 		cerr << av[0] << " -time Simulation_Time -nf Network_File -wf Weights_File";

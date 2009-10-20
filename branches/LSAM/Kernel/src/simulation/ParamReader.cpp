@@ -31,7 +31,10 @@
 
 #include "../../include/communication/ConnectionException.h"
 
+#include "../../include/spike/Network.h"
+
 #include "../../include/simulation/ParameterException.h"
+#include "../../include/simulation/Simulation.h"
  
 void ParamReader::ParseArguments(int Number, char ** Arguments) throw (ParameterException, ConnectionException) {
 	for (int i=1; i<Number; ++i){
@@ -308,5 +311,45 @@ vector<OutputSpikeDriver *> ParamReader::GetMonitorDrivers(){
 
 vector<OutputWeightDriver *> ParamReader::GetOutputWeightDrivers(){
 	return this->OutputWeightDrivers;
+}
+
+Simulation * ParamReader::CreateAndInitializeSimulation() throw (EDLUTException, ConnectionException){
+	Simulation * Simul = NULL;
+
+	Simul = new Simulation(this->GetNetworkFile(),
+                         this->GetWeightsFile(),
+                         this->GetSimulationTime(),
+                         this->GetSimulationStepTime(),
+			 this->GetSaveWeightStepTime());
+        
+	for (unsigned int i=0; i<this->GetInputSpikeDrivers().size(); ++i){
+		Simul->AddInputSpikeDriver(this->GetInputSpikeDrivers()[i]);
+	}
+			
+	for (unsigned int i=0; i<this->GetOutputSpikeDrivers().size(); ++i){
+		Simul->AddOutputSpikeDriver(this->GetOutputSpikeDrivers()[i]);
+	}
+		
+	for (unsigned int i=0; i<this->GetMonitorDrivers().size(); ++i){
+		Simul->AddMonitorActivityDriver(this->GetMonitorDrivers()[i]);
+	}
+		
+	for (unsigned int i=0; i<this->GetOutputWeightDrivers().size(); ++i){
+		Simul->AddOutputWeightDriver(this->GetOutputWeightDrivers()[i]);
+	}
+					
+	if(this->CheckInfo()){
+		//Simul.GetNetwork()->tables_info();
+		//neutypes_info();
+		Simul->GetNetwork()->NetInfo();
+	}
+			
+	// Reset total spike counter
+        Simul->SetTotalSpikeCounter(0);
+
+	// Get the external initial inputs
+	Simul->GetInput();
+
+	return Simul;		
 }
 
