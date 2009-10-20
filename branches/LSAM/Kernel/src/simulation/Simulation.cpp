@@ -95,7 +95,33 @@ double Simulation::GetFinalSimulationTime(){
 }
 		
 void Simulation::RunSimulation()  throw (EDLUTException){
-       this->RunSimulationSlot(this->Totsimtime);
+       while(!this->EndOfSimulation){
+		Event * NewEvent;
+		
+		NewEvent=this->Queue->RemoveEvent();
+			
+		if(NewEvent->GetTime() == -1){
+			break;
+		}
+		
+		Updates++;
+		Heapoc+=Queue->Size();
+			
+		if(NewEvent->GetTime() - this->CurrentSimulationTime < -0.0001){
+			cerr << 
+                        "Internal error: Bad spike time. Spike: " <<
+                        NewEvent->GetTime() <<
+                        " Current: " <<
+                        this->CurrentSimulationTime <<
+                        endl;
+		}
+			
+		this->CurrentSimulationTime=NewEvent->GetTime(); // only for checking
+
+                NewEvent->ProcessEvent(this);
+		
+		delete NewEvent;
+       }
 }
 
 void Simulation::RunSimulationSlot(double preempt_time)  throw (EDLUTException){
