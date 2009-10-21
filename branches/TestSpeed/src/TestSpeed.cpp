@@ -1,7 +1,7 @@
 /***************************************************************************
- *                           EDLUTKernel.cpp                               *
+ *                           TestSpeed.cpp                                 *
  *                           -------------------                           *
- * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
+ * copyright            : (C) 2009 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
  ***************************************************************************/
 
