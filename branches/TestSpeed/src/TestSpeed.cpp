@@ -57,21 +57,34 @@ int main(int ac, char *av[]) {
 	clock_t startt, endt;
 	cout << "Loading tables..." << endl;
    
-        Simulation * Simul = InitializeAndCatch(ac, av);        // Initialize simulation
-        if (Simul == NULL) return 1;                            // Return 1 if there was an error
+    int number_of_executions = 100000;
+    double total_events = 0, total_time = 0, total_spikes = 0;
+    
+   
+    for (int i=0; i<number_of_executions; ++i){
+    	Simulation * Simul = InitializeAndCatch(ac, av);        // Initialize simulation
+    	if (Simul == NULL) return 1;                            // Return 1 if there was an error
 
- 	cout << "Simulating network..." << endl;
+ 		cout << "Simulating network " << i+1 << endl;
 		
-	startt = clock();					// Simulate network and catch errors
-        result = SimulateSlotAndCatch(Simul,Simul->GetFinalSimulationTime());
-	endt = clock();
+		startt = clock();					// Simulate network and catch errors
+    	result = SimulateSlotAndCatch(Simul,Simul->GetFinalSimulationTime());
+		endt = clock();
          
-	cout << "Oky doky" << endl;     
-
-	cout << "Elapsed time: " << (endt-startt)/(float)CLOCKS_PER_SEC << " sec" << endl;
-	cout << "Number of updates: " << Simul->GetSimulationUpdates() << endl;
-	cout << "Mean number of spikes in heap: " << Simul->GetHeapAcumSize()/(float)Simul->GetSimulationUpdates() << endl;
-	cout << "Updates per second: " << Simul->GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
-	cout << "Total spikes handled: " << Simul->GetTotalSpikeCounter() << endl;
-        return result;
+		cout << "Oky doky" << endl;
+		
+		cout << "Elapsed time: " << (endt-startt)/(float)CLOCKS_PER_SEC << " sec" << endl;
+		
+		total_time += (endt-startt)/(float)CLOCKS_PER_SEC;
+		total_events += Simul->GetSimulationUpdates();
+		total_spikes += Simul->GetTotalSpikeCounter();
+		
+		delete Simul;
+    }
+    
+    cout << "Mean time per simulation: " << total_time/number_of_executions << " seconds" << endl;
+    cout << "Events per second: " << total_events/total_time << endl;
+    cout << "Spikes per second: " << total_spikes/total_time << endl;
+    
+    return result;
 }

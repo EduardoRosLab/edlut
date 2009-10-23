@@ -176,9 +176,10 @@ void NeuronType::LoadNeuronType(char * neutype) throw (EDLUTFileException){
 		}else{
 			throw EDLUTFileException(13,34,3,1,Currentline);
 		}
+		fclose(fh);
 	}else{
 		throw EDLUTFileException(13,25,13,0,Currentline);
-	}
+	}	
 }	
 		
 		
