@@ -61,6 +61,8 @@ int main(int ac, char *av[]) {
    
 	clock_t startt,endt;
 	cout << "Loading tables..." << endl;
+
+	srand ( time(NULL) );
    
 	try {
    		ParamReader Reader(ac, av);
