@@ -50,7 +50,7 @@ long long EventQueue::Size() const{
 Event * EventQueue::RemoveEvent(void){
 	unsigned int c,p;
    	
-   	Event * first;
+   	Event * first = 0;
    	if(Size()>0){
    		first=Events[1];
       
@@ -70,9 +70,7 @@ Event * EventQueue::RemoveEvent(void){
       
       	if(c==Size() && Events[p]->GetTime() > Events[c]->GetTime())
         	SwapEvents(p, c);
-	} else {
-		first->SetTime(-1);
-    }
+	}
     
     return(first);
 }
