@@ -1,4 +1,4 @@
-output=load('output.dat');
+output=load('Register.dat');
 lx=max(output(:,1));
 
 spk=sort(output(:,2)');

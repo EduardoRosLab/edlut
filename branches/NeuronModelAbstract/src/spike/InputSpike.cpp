@@ -17,7 +17,13 @@
 #include "../../include/spike/InputSpike.h"
 
 #include "../../include/spike/Neuron.h"
+#include "../../include/spike/PropagatedSpike.h"
+#include "../../include/spike/Interconnection.h"
+
+#include "../../include/simulation/EventQueue.h"
 #include "../../include/simulation/Simulation.h"
+
+#include "../../include/neuron_model/NeuronState.h"
 
 #include "../../include/communication/OutputSpikeDriver.h"
 
@@ -36,10 +42,12 @@ void InputSpike::ProcessEvent(Simulation * CurrentSimulation){
     
     CurrentSimulation->WriteSpike(this);
 	
-	CurrentSimulation->WritePotential(neuron->GetLastUpdate(), this->GetSource(), neuron->GetStateVarAt(1));
+	CurrentSimulation->WritePotential(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource(), neuron->GetNeuronState()->GetStateVariableAt(1));
 		
-    //spike.time+=Net.inters[neuron->outconind].delay;
-	neuron->GenerateOutputActivity((Spike *) this,CurrentSimulation->GetQueue());
+    if (neuron->IsOutputConnected()){
+		PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
+		CurrentSimulation->GetQueue()->InsertEvent(spike);
+	}
 }
 
    	

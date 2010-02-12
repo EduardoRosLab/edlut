@@ -16,11 +16,15 @@
 
 #include "../../include/neuron_model/NeuronModel.h"
 
-NeuronModel::NeuronModel() {
+NeuronModel::NeuronModel(string NeuronModelID): ModelID(NeuronModelID) {
 	// TODO Auto-generated constructor stub
 
 }
 
 NeuronModel::~NeuronModel() {
 	// TODO Auto-generated destructor stub
+}
+
+string NeuronModel::GetModelID(){
+	return this->ModelID;
 }

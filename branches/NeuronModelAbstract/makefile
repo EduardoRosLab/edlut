@@ -152,16 +152,22 @@ spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
                            $(srcdir)/spike/MultiplicativeWeightChange.cpp \
                            $(srcdir)/spike/Network.cpp \
                            $(srcdir)/spike/Neuron.cpp \
-                           $(srcdir)/spike/NeuronModelTable.cpp \
-                           $(srcdir)/spike/NeuronType.cpp \
                            $(srcdir)/spike/PropagatedSpike.cpp \
                            $(srcdir)/spike/Spike.cpp \
                            $(srcdir)/spike/WeightChange.cpp \
                            $(srcdir)/spike/SinWeightChange.cpp
+                           
+neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
+						   $(srcdir)/neuron_model/NeuronModel.cpp \
+                           $(srcdir)/neuron_model/NeuronState.cpp \
+                           $(srcdir)/neuron_model/SRMModel.cpp \
+                           $(srcdir)/spike/NeuronModelTable.cpp \
+                           $(srcdir)/neuron_model/TableBasedModel.cpp                 
                           
 sources     := $(communication-sources) \
                $(simulation-sources) \
-               $(spike-sources)
+               $(spike-sources) \
+               $(neuron_model-sources)
 
 
 ################################################################################

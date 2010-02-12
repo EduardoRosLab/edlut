@@ -34,7 +34,7 @@
 #include "./EDLUTFileException.h"
 
 class Interconnection;
-class NeuronType;
+class NeuronModel;
 class Neuron;
 class WeightChange;
 class EventQueue;
@@ -67,7 +67,7 @@ class Network{
    		/*!
    		 * \brief Neuron types.
    		 */
-   		NeuronType *neutypes;
+   		NeuronModel ** neutypes;
    
    		/*!
    		 * \brief Neuron types number.
@@ -152,7 +152,7 @@ class Network{
    		 * \return The loaded (or existing) neuron type.
    		 * \throw EDLUTException If the neuron model file hasn't been able to be correctly readed. 
    		 */
-   		NeuronType * LoadNetTypes(char *neutype) throw (EDLUTException);
+   		NeuronModel * LoadNetTypes(string neutype) throw (EDLUTException);
    		
    		/*!
    		 * \brief It inits the spikes predictions of every neuron in the network.
@@ -188,18 +188,6 @@ class Network{
    		 * \throw EDLUTFileException If the weights file hasn't been able to be correctly readed.
    		 */
    		void LoadWeights(const char *wfile) throw (EDLUTFileException);
-   		
-   		/*!
-   		 * \brief It loads the neuron model tables of this network.
-   		 * 
-   		 * It loads all the neuron model tables of this network.
-   		 * 
-   		 * \pre The neuron types have been loaded before.
-   		 * 
-   		 * \throw EDLUTException If the neuron model table file hasn't been able to be correctly readed.
-   		 */
-   		void LoadNeuronTypeTables() throw (EDLUTException);
-   		
    		   		
    	public:
    	

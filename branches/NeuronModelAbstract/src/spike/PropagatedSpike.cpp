@@ -15,11 +15,13 @@
  ***************************************************************************/
 
 #include "../../include/spike/PropagatedSpike.h"
-
 #include "../../include/spike/Interconnection.h"
 #include "../../include/spike/Neuron.h"
 
+#include "../../include/neuron_model/NeuronModel.h"
+
 #include "../../include/simulation/Simulation.h"
+#include "../../include/simulation/EventQueue.h"
 
 PropagatedSpike::PropagatedSpike():Spike() {
 }
@@ -41,16 +43,25 @@ void PropagatedSpike::SetTarget (int NewTarget){
 void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
 	
 	Interconnection * inter = this->source->GetOutputConnectionAt(this->target);
-	Neuron * neuron = inter->GetTarget();  // target of the spike
-	neuron->ProcessInputSynapticActivity(this);
+	Neuron * target = inter->GetTarget();  // target of the spike
+	Neuron * source = inter->GetSource();
 	
-	CurrentSimulation->WritePotential(this->GetTime(), inter->GetTarget(), neuron->GetStateVarAt(1));
-	//CurrentSimulation->WriteSpike(this);
+	InternalSpike * Generated = target->GetNeuronModel()->ProcessInputSpike(*this);
+
+	if (Generated!=0){
+		CurrentSimulation->GetQueue()->InsertEvent(Generated);
+	}
+
+	CurrentSimulation->WritePotential(this->GetTime(), inter->GetTarget(), target->GetNeuronState()->GetStateVariableAt(1));
 	
-	neuron->GenerateInputActivity(CurrentSimulation->GetQueue());
-	
-	this->source->PropagateOutputSpike(this, CurrentSimulation->GetQueue());
-	            
+	// Propagate received spike to the next connection
+	if(source->GetOutputNumber() > this->GetTarget()+1){
+		Interconnection * NewConnection = source->GetOutputConnectionAt(this->GetTarget()+1);
+		PropagatedSpike * nextspike = new PropagatedSpike(this->GetTime()-source->GetOutputConnectionAt(this->GetTarget())->GetDelay()+NewConnection->GetDelay(),source,this->GetTarget()+1);
+		CurrentSimulation->GetQueue()->InsertEvent(nextspike);
+	}
+
+	// If learning, change weights
     if(inter->GetWeightChange() != 0){
     	inter->ChangeWeights(this->time);
     }

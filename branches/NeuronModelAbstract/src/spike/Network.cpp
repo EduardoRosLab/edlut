@@ -18,10 +18,12 @@
 
 #include "../../include/spike/Interconnection.h"
 #include "../../include/spike/Neuron.h"
-#include "../../include/spike/NeuronType.h"
 #include "../../include/spike/MultiplicativeWeightChange.h"
 #include "../../include/spike/AdditiveWeightChange.h"
 #include "../../include/spike/SinWeightChange.h"
+
+#include "../../include/neuron_model/NeuronModel.h"
+#include "../../include/neuron_model/TableBasedModel.h"
 
 #include "../../include/simulation/Utils.h"
 #include "../../include/simulation/Configuration.h"
@@ -70,42 +72,29 @@ void Network::FindInConnections(){
 	}
 }
 
-void Network::TablesInfo(){
-    int ntype,ntable;
-    for(ntype=0;ntype<this->nneutypes;ntype++){
-        for(ntable=0;ntable<this->neutypes[ntype].GetTableNumber();ntable++){
-        	this->neutypes[ntype].GetTableAt(ntable)->TableInfo();
-        }
-    }
-}
-
-
 void Network::TypesInfo(){
     int ntype;
     for(ntype=0;ntype<this->nneutypes;ntype++){
-        this->neutypes[ntype].TypeInfo();
+        this->neutypes[ntype]->GetModelInfo();
     }
 }
 
 void Network::NetInfo(){
 	
-	this->TablesInfo();
-	this->TypesInfo();
-	
-    int ind,ind2,wneu=0;
-    printf("Neuron types:\n");
-    for(ind=0;ind<this->nneutypes && ind < MAXINFOLINES;ind++){
-        printf("- Type: %i state vars: %i tables: %i\n",ind,this->neutypes[ind].GetStateVarsNumber(),this->neutypes[ind].GetTableNumber());
-    }
+	int ind,ind2,wneu=0;
+    //printf("Neuron types:\n");
+    //for(ind=0;ind<this->nneutypes && ind < MAXINFOLINES;ind++){
+    //    printf("- Type: %i state vars: %i tables: %i\n",ind,this->neutypes[ind].GetStateVarsNumber(),this->neutypes[ind].GetTableNumber());
+    //}
    
-    if(ind < this->nneutypes){
-        printf("...%i\n",this->nneutypes-1);
-    }
+    //if(ind < this->nneutypes){
+    //    printf("...%i\n",this->nneutypes-1);
+    //}
    
     printf("Neurons:\n");
    
-    for(ind=0;ind<this->nneurons && ind < MAXINFOLINES;ind++){
-        printf("- Neuron: %i typ: %s v0: %g v1: %g lastup: %g predsp:%g (%i)%s\n",ind,this->neurons[ind].GetNeuronType()->GetId(),this->neurons[ind].GetStateVarAt(1),this->neurons[ind].GetStateVarAt(2),this->neurons[ind].GetLastUpdate(),this->neurons[ind].GetPredictedSpike(),this->neurons[ind].GetOutputNumber(),(this->neurons[ind].IsOutput()?"o":""));
+    /*for(ind=0;ind<this->nneurons && ind < MAXINFOLINES;ind++){
+        printf("- Neuron: %i typ: %s v0: %g v1: %g lastup: %g predsp:%g (%i)%s\n",ind,this->neurons[ind].GetNeuronModel()->GetModelID(),this->neurons[ind].GetStateVarAt(1),this->neurons[ind].GetStateVarAt(2),this->neurons[ind].GetLastUpdate(),this->neurons[ind].GetPredictedSpike(),this->neurons[ind].GetOutputNumber(),(this->neurons[ind].IsOutput()?"o":""));
         wneu=0;
         for(ind2=0;ind2<this->ninters && this->inters[ind2].GetTarget()!=this->neurons+ind && this->inters[ind2].GetSource()!=this->neurons+ind ;ind2++);
         if(ind2 == this->ninters)
@@ -136,40 +125,36 @@ void Network::NetInfo(){
 
     if(ind < this->ninters){
         printf("...%i\n",this->ninters-1);
-    }
+    }*/
 }
 
-NeuronType * Network::LoadNetTypes(char *neutype) throw (EDLUTException){
+NeuronModel * Network::LoadNetTypes(string neutype) throw (EDLUTException){
 	int ni;
-   	NeuronType * type;
+   	NeuronModel * type;
    	
-   	for(ni=0;ni<nneutypes && strcmp(neutypes[ni].GetId(),neutype);ni++);
+   	for(ni=0;ni<nneutypes && neutypes[ni]!=0 && neutypes[ni]->GetModelID()!=neutype;ni++);
    
-	if(ni<nneutypes){
-		type=neutypes+ni;
-	}else{
-		for(ni=0;ni<nneutypes && neutypes[ni].GetId()[0] != '\0';ni++);
-		
-		if(ni<nneutypes){
-			neutypes[ni].LoadNeuronType(neutype);
-			type=neutypes+ni;		
-		}else{
-			throw EDLUTException(13,44,20,0);
-		}
-	}	
+   	if (ni<nneutypes && neutypes[ni]==0){
+   		neutypes[ni] = (TableBasedModel *) new TableBasedModel(neutype);
+   		type = neutypes[ni];
+   	} else if (ni<nneutypes) {
+   		type = neutypes[ni];
+   	} else {
+   		throw EDLUTException(13,44,20,0);
+   	}
+
 	return(type);
 }
 
 void Network::InitNetPredictions(EventQueue * Queue){
 	int nneu;
 	for(nneu=0;nneu<nneurons;nneu++)
-		(neurons+nneu)->InitNeuronPrediction(Queue);
+		neurons[nneu].GetNeuronModel()->GenerateInitialActivity(neurons[nneu]);
 }
 
 Network::Network(const char * netfile, const char * wfile, EventQueue * Queue) throw (EDLUTException): inters(0), ninters(0), neutypes(0), nneutypes(0), neurons(0), nneurons(0), wchanges(0), nwchanges(0), wordination(0){
 	this->LoadNet(netfile);	
 	this->LoadWeights(wfile);
-	this->LoadNeuronTypeTables();
 	this->InitNetPredictions(Queue);	
 }
    		
@@ -198,16 +183,16 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
 		Currentline=1L;
 		skip_comments(fh, Currentline);
 		if(fscanf(fh,"%i",&(this->nneutypes))==1){
-			this->neutypes=(NeuronType *) new NeuronType [this->nneutypes];
+			this->neutypes=(NeuronModel **) new NeuronModel * [this->nneutypes];
 			if(this->neutypes){
 				int ni;
 				for(ni=0;ni<this->nneutypes;ni++){
-					this->neutypes[ni].ClearNeuronType();
+					this->neutypes[ni]=0;
 				}
             	skip_comments(fh, Currentline);
             	if(fscanf(fh,"%i",&(this->nneurons))==1){
             		int tind,nind,nn,outn,monit;
-            		NeuronType * type;
+            		NeuronModel * type;
             		char ident[MAXIDSIZE+1];
             		this->neurons=(Neuron *) new Neuron [this->nneurons];
             		if(this->neurons){
@@ -454,28 +439,22 @@ void Network::SaveWeights(const char *wfile) throw (EDLUTException){
 	
 }
 
-void Network::LoadNeuronTypeTables() throw (EDLUTException){
-	int ntype;
-	for(ntype=0;ntype<this->nneutypes;ntype++){
-		this->neutypes[ntype].LoadTables();
-	}
-}
-
 ostream & Network::GetNetInfo(ostream & out) const{
 	int ind,ind2,wneu=0;
-	out << "Neuron types:" << endl;
-	for(ind=0;ind<this->nneutypes;ind++){
-		out << "- Type: " << ind << " state vars: " << this->neutypes[ind].GetStateVarsNumber() << " tables: " << this->neutypes[ind].GetTableNumber() << endl;
-	}
+	//out << "Neuron types:" << endl;
+	//for(ind=0;ind<this->nneutypes;ind++){
+	//	out << "- Type: " << ind << " state vars: " << this->neutypes[ind].GetStateVarsNumber() << " tables: " << this->neutypes[ind].GetTableNumber() << endl;
+	//}
    
-	if(ind < this->nneutypes){
-		out << "..." << this->nneutypes-1 << endl;
-	}
+	//if(ind < this->nneutypes){
+	//	out << "..." << this->nneutypes-1 << endl;
+	//}
    
    	out << "Neurons:" << endl;
    	
+   	/*
    	for(ind=0;ind<this->nneurons;ind++){
-		out << "- Neuron: " << ind << " typ: " << this->neurons[ind].GetNeuronType()->GetId() << " v0: " << this->neurons[ind].GetStateVarAt(1) << " v1: " << this->neurons[ind].GetStateVarAt(2) << " lastup: " << this->neurons[ind].GetLastUpdate() << " predsp: " << this->neurons[ind].GetPredictedSpike() << " " << this->neurons[ind].GetOutputNumber() << " " << (this->neurons[ind].IsMonitored()?"o":"") << endl;
+		out << "- Neuron: " << ind << " typ: " << this->neurons[ind].GetNeuronModel()->GetModelID() << " v0: " << this->neurons[ind].GetStateVarAt(1) << " v1: " << this->neurons[ind].GetStateVarAt(2) << " lastup: " << this->neurons[ind].GetLastUpdate() << " predsp: " << this->neurons[ind].GetPredictedSpike() << " " << this->neurons[ind].GetOutputNumber() << " " << (this->neurons[ind].IsMonitored()?"o":"") << endl;
 		wneu=0;
       	for(ind2=0;ind2<this->ninters && this->inters[ind2].GetTarget() != this->neurons+ind && this->inters[ind2].GetSource() != this->neurons+ind ;ind2++);
 		if(ind2 == this->ninters)
@@ -506,7 +485,7 @@ ostream & Network::GetNetInfo(ostream & out) const{
 
 	if(ind < this->ninters){
 		out << "..." << this->ninters-1 << endl;
-	}
+	}*/
 	
 	return out;
 }

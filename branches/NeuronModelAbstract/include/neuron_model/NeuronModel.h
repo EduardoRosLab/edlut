@@ -26,6 +26,16 @@
  * This file declares a class which abstracts a spiking neuron behavior.
  */
 
+#include "../spike/Interconnection.h"
+#include "../spike/InternalSpike.h"
+#include "../spike/PropagatedSpike.h"
+#include "../spike/Neuron.h"
+#include "./NeuronState.h"
+
+#include <string>
+
+using namespace std;
+
 
 /*!
  * \class NeuronModel
@@ -42,15 +52,23 @@
  * \date February 2010
  */
 class NeuronModel {
+	private:
+
+		/*!
+		 * \brief Neuron model ID.
+		 */
+		string ModelID;
 
 	public:
 
 		/*!
-		 * \brief Default constructor without parameters.
+		 * \brief Default constructor with parameters.
 		 *
 		 * It generates a new neuron model object without being initialized.
+		 *
+		 * \param NeuronModelID Neuron model identificator.
 		 */
-		NeuronModel();
+		NeuronModel(string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
@@ -66,37 +84,76 @@ class NeuronModel {
 		 *
 		 * \param State Cell current state.
 		 */
-		virtual void InitializeState(NeuronState & State) = 0;
+		virtual NeuronState * InitializeState() = 0;
 
 		/*!
-		 * \brief It updates the neuron state after the evolution of the time.
+		 * \brief It generates the first spike (if any) in a cell.
 		 *
-		 * It updates the neuron state after the evolution of the time.
+		 * It generates the first spike (if any) in a cell.
 		 *
-		 * \param State Cell current state.
-		 * \param ElapsedTime Time elapsed from the previous update.
+		 * \param Cell The cell to check if activity is generated.
+		 *
+		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual void UpdateState(NeuronState & State, double ElapsedTime) = 0;
+		virtual InternalSpike * GenerateInitialActivity(Neuron &  Cell) = 0;
 
 		/*!
-		 * \brief It abstracts the effect of an input spike in the cell.
+		 * \brief It processes a propagated spike (input spike in the cell).
 		 *
-		 * It abstracts the effect of an input spike in the cell.
+		 * It processes a propagated spike (input spike in the cell).
 		 *
-		 * \param State Cell current state.
-		 * \param InputConnection Input connection from which the input spike has got the cell.
+		 * \note This function doesn't generate the next propagated spike. It must be externally done.
+		 *
+		 * \param InputSpike The spike happened.
+		 *
+		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual void SynapsisEffect(NeuronState & State, const Interconnection * InputConnection) = 0;
+		virtual InternalSpike * ProcessInputSpike(PropagatedSpike &  InputSpike) = 0;
 
 		/*!
-		 * \brief It returns the next spike time.
+		 * \brief It processes an internal spike (generated spike in the cell).
 		 *
-		 * It returns the next spike time.
+		 * It processes an internal spike (generated spike in the cell).
 		 *
-		 * \param State Cell current state.
-		 * \return The next firing spike time. -1 if no spike is predicted.
+		 * \note This function doesn't generate the next propagated (output) spike. It must be externally done.
+		 * \note Before generating next spike, you should check if this spike must be discard.
+		 *
+		 * \see DiscardSpike
+		 *
+		 * \param OutputSpike The spike happened.
+		 *
+		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual double NextFiringPrediction(NeuronState & State) = 0;
+		virtual InternalSpike * GenerateNextSpike(const InternalSpike &  OutputSpike) = 0;
+
+		/*!
+		 * \brief Check if the spike must be discard.
+		 *
+		 * Check if the spike must be discard. A spike must be discard if there are discrepancies between
+		 * the next predicted spike and the spike time.
+		 *
+		 * \param OutputSpike The spike happened.
+		 *
+		 * \return True if the spike must be discard. False in otherwise.
+		 */
+		virtual bool DiscardSpike(InternalSpike &  OutputSpike) = 0;
+
+		/*!
+		 * \brief It prints information about the load type.
+		 *
+		 * It prints information about the load type.
+		 *
+		 */
+		virtual void GetModelInfo() = 0;
+
+		/*!
+		 * \brief It gets the neuron model ID.
+		 *
+		 * It gets the neuron model ID.
+		 *
+		 * \return The identificator of the neuron model.
+		 */
+		string GetModelID();
 
 };
 

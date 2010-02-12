@@ -16,10 +16,12 @@
 
 #include "../../include/spike/InternalSpike.h"
 
-#include <list>
 #include "../../include/spike/Neuron.h"
 
+#include "../../include/neuron_model/NeuronModel.h"
+
 #include "../../include/simulation/Simulation.h"
+#include "../../include/simulation/EventQueue.h"
 
 #include "../../include/communication/OutputSpikeDriver.h"
 
@@ -36,19 +38,18 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 	
 	Neuron * neuron=this->source;  // source of the spike
 	
-	if(neuron->GetPredictedSpike()==this->time){
-		
-		neuron->ProcessInputActivity(this);
-			
-		// Not needed for only one spike per input
-		neuron->GenerateAutoActivity(CurrentSimulation->GetQueue());
-		// Not-needed end (can be replaced by neuron->predictedspike=0)
+	if(!neuron->GetNeuronModel()->DiscardSpike(*this)){
+		// If it is a valid spike (not discard), generate the next spike in this cell.
+		neuron->GetNeuronModel()->GenerateNextSpike(*this);
 		
 		CurrentSimulation->WriteSpike(this);
-		CurrentSimulation->WritePotential(neuron->GetLastUpdate(), this->GetSource(), neuron->GetStateVarAt(1));
+		CurrentSimulation->WritePotential(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource(), neuron->GetNeuronState()->GetStateVariableAt(1));
 		
-		//spike.time+=Net.inters[neuron->outconind].delay;
-    	neuron->GenerateOutputActivity(this,CurrentSimulation->GetQueue());
+		// Generate the output activity
+		if (neuron->IsOutputConnected()){
+			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
+			CurrentSimulation->GetQueue()->InsertEvent(spike);
+		}
     }
 }
 

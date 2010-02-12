@@ -38,9 +38,11 @@
 #include <stdint.h>
 
 
-#include "./EDLUTFileException.h"
+#include "../spike/EDLUTFileException.h"
 
 #include "../simulation/Configuration.h"
+
+class NeuronState;
 
 /*!
  * \class NeuronModelTable
@@ -281,7 +283,7 @@ class NeuronModelTable {
   		 * 
   		 * \return The value of the table (with or without interpolation).
   		 */
-  		float TableAccess(float *statevars);
+  		float TableAccess(NeuronState & statevars);
    		
   		
 	private:
@@ -289,7 +291,7 @@ class NeuronModelTable {
 		/*!
 		 * Function used in function arrays.
 		 */
-		typedef float (NeuronModelTable::*function) (float statevars[MAXSTATEVARS]);
+		typedef float (NeuronModelTable::*function) (NeuronState & statevars);
    		
    		/*!
    		 * Elements of the table.
@@ -309,7 +311,7 @@ class NeuronModelTable {
    		/*!
    		 * Table dimensions.
    		 */
-   		TableDimension dims[MAXSTATEVARS];
+   		TableDimension * dims;
    		
    		/*!
    		 * Interpolation of some dimension.
@@ -340,7 +342,7 @@ class NeuronModelTable {
    		 * 
    		 * \return The table value with that state.
    		 */
-   		float TableAccessDirect(float statevars[MAXSTATEVARS]);
+   		float TableAccessDirect(NeuronState & statevars);
    		
    		/*!
    		 * \brief It gets a table value with bilinear interpolation.
@@ -351,7 +353,7 @@ class NeuronModelTable {
    		 * 
    		 * \return The table value with that state.
    		 */
-   		float TableAccessInterpBi(float statevars[MAXSTATEVARS]);
+   		float TableAccessInterpBi(NeuronState & statevars);
    		
    		/*!
    		 * \brief It gets a table value with linear interpolation.
@@ -362,7 +364,7 @@ class NeuronModelTable {
    		 * 
    		 * \return The table value with that state.
    		 */
-   		float TableAccessInterpLi(float statevars[MAXSTATEVARS]);
+   		float TableAccessInterpLi(NeuronState & statevars);
    		
    		/*!
    		 * \brief It gets a table value with linear-ex interpolation.
@@ -373,7 +375,7 @@ class NeuronModelTable {
    		 * 
    		 * \return The table value with that state.
    		 */
-   		float TableAccessInterpLiEx(float statevars[MAXSTATEVARS]);
+   		float TableAccessInterpLiEx(NeuronState & statevars);
    		
    		/*!
    		 * \brief It gets a table value with linear interpolation from 2 different positions.
@@ -384,7 +386,7 @@ class NeuronModelTable {
    		 * 
    		 * \return The table value with that state.
    		 */
-   		float TableAccessInterp2Li(float statevars[MAXSTATEVARS]);
+   		float TableAccessInterp2Li(NeuronState & statevars);
    		
    		/*!
    		 * \brief It gets a table value with linear interpolation from n different positions.
@@ -395,7 +397,7 @@ class NeuronModelTable {
    		 * 
    		 * \return The table value with that state.
    		 */
-   		float TableAccessInterpNLi(float statevars[MAXSTATEVARS]);
+   		float TableAccessInterpNLi(NeuronState & statevars);
    	
 };
 
