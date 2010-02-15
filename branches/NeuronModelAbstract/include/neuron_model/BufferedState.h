@@ -78,6 +78,7 @@ class BufferedState: public NeuronState {
 		 */
 		unsigned int LastIndex;
 
+
 	public:
 		/*!
 		 * \brief Default constructor with parameters.
@@ -89,6 +90,15 @@ class BufferedState: public NeuronState {
 		 * \param MaxSize Maximum number of elements which can be simultaneously stored.
 		 */
 		BufferedState(unsigned int NumVariables, float BufferAmpl, unsigned int MaxSize);
+
+		/*!
+		 * \brief Copies constructor.
+		 *
+		 * It generates a new objects which copies the parameter.
+		 *
+		 * \param OldState State being copied.
+		 */
+		BufferedState(const BufferedState & OldState);
 
 		/*!
 		 * \brief It adds a new input spike into the buffer of activity.
@@ -114,7 +124,7 @@ class BufferedState: public NeuronState {
 		 *
 		 * \param ElapsedTime The time since the last update.
 		 */
-		void AddElapsedTime(float ElapsedTime);
+		virtual void AddElapsedTime(float ElapsedTime);
 
 		/*!
 		 * \brief Class destructor.

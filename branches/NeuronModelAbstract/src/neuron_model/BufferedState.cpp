@@ -1,9 +1,18 @@
-/*
- * BufferedState.cpp
- *
- *  Created on: 09/02/2010
- *      Author: jesus
- */
+/***************************************************************************
+ *                           BufferedState.cpp                             *
+ *                           -------------------                           *
+ * copyright            : (C) 2010 by Jesus Garrido                        *
+ * email                : jgarrido@atc.ugr.es                              *
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "../../include/neuron_model/BufferedState.h"
 
@@ -11,7 +20,15 @@ BufferedState::BufferedState(unsigned int NumVariables, float BufferAmpl, unsign
 	NeuronState(NumVariables), MaximumSize(MaxSize), FirstIndex(0), LastIndex(0){
 	// TODO Auto-generated constructor stub
 	this->ActivityBuffer = (InputActivity *) new InputActivity [this->MaximumSize+1];
+}
 
+BufferedState::BufferedState(const BufferedState & OldState): NeuronState(OldState), BufferAmplitude(OldState.BufferAmplitude),
+		MaximumSize(OldState.MaximumSize), FirstIndex(OldState.FirstIndex), LastIndex(OldState.LastIndex) {
+	this->ActivityBuffer = (InputActivity *) new InputActivity [this->MaximumSize+1];
+
+	for (unsigned int i=0; i<this->MaximumSize+1; ++i){
+		this->ActivityBuffer[i] = OldState.ActivityBuffer[i];
+	}
 }
 
 BufferedState::~BufferedState() {

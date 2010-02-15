@@ -46,6 +46,95 @@
  */
 class SRMModel: public NeuronModel {
 
+	private:
+		/*!
+		 * \brief Decay time constant of the EPSP
+		 */
+		double tau;
+
+		/*!
+		 * \brief Resting potential
+		 */
+		double vr;
+
+		/*!
+		 * \brief Synaptic efficacy
+		 */
+		double W;
+
+		/*!
+		 * \brief Spontaneous firing rate
+		 */
+		double r0;
+
+		/*!
+		 * \brief Probabilistic threshold potential
+		 */
+		double v0;
+
+		/*!
+		 * \brief Gain factor
+		 */
+		double vf;
+
+		/*!
+		 * \brief Absolute refractory period
+		 */
+		double tauabs;
+
+		/*!
+		 * \brief Relative refractory period
+		 */
+		double taurel;
+
+		/*!
+		 * \brief Time step in simulation
+		 */
+		float timestep;
+
+
+	protected:
+		/*!
+		 * \brief It loads the neuron model description.
+		 *
+		 * It loads the neuron type description from the file .cfg.
+		 *
+		 * \param ConfigFile Name of the neuron description file (*.cfg).
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
+		 */
+		void LoadNeuronModel(string ConfigFile) throw (EDLUTFileException);
+
+		/*!
+		 * \brief It updates the neuron state after the evolution of the time.
+		 *
+		 * It updates the neuron state after the evolution of the time.
+		 *
+		 * \param State Cell current state.
+		 * \param CurrentTime Current simulation time.
+		 */
+		virtual void UpdateState(NeuronState & State, double CurrentTime);
+
+		/*!
+		 * \brief It abstracts the effect of an input spike in the cell.
+		 *
+		 * It abstracts the effect of an input spike in the cell.
+		 *
+		 * \param State Cell current state.
+		 * \param InputConnection Input connection from which the input spike has got the cell.
+		 */
+		virtual void SynapsisEffect(NeuronState & State, const Interconnection * InputConnection);
+
+		/*!
+		 * \brief It returns the next spike time.
+		 *
+		 * It returns the next spike time.
+		 *
+		 * \param State Cell current state.
+		 * \return The next firing spike time. -1 if no spike is predicted.
+		 */
+		virtual double NextFiringPrediction(NeuronState & State);
+
 	public:
 		/*!
 		 * \brief Default constructor with parameters.
@@ -73,34 +162,64 @@ class SRMModel: public NeuronModel {
 		virtual BufferedState * InitializeState();
 
 		/*!
-		 * \brief It updates the neuron state after the evolution of the time.
+		 * \brief It generates the first spike (if any) in a cell.
 		 *
-		 * It updates the neuron state after the evolution of the time.
+		 * It generates the first spike (if any) in a cell.
 		 *
-		 * \param State Cell current state.
-		 * \param ElapsedTime Time elapsed from the previous update.
+		 * \param Cell The cell to check if activity is generated.
+		 *
+		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual void UpdateState(BufferedState & State, double ElapsedTime);
+		virtual InternalSpike * GenerateInitialActivity(Neuron &  Cell);
 
 		/*!
-		 * \brief It abstracts the effect of an input spike in the cell.
+		 * \brief It processes a propagated spike (input spike in the cell).
 		 *
-		 * It abstracts the effect of an input spike in the cell.
-		 *TableBased
-		 * \param State Cell current state.
-		 * \param InputConnection Input connection from which the input spike has got the cell.
+		 * It processes a propagated spike (input spike in the cell).
+		 *
+		 * \note This function doesn't generate the next propagated spike. It must be externally done.
+		 *
+		 * \param InputSpike The spike happened.
+		 *
+		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual void SynapsisEffect(BufferedState & State, const Interconnection * InputConnection);
+		virtual InternalSpike * ProcessInputSpike(PropagatedSpike &  InputSpike);
 
-		/*!TableBased
-		 * \brief It returns the next spike time.
+		/*!
+		 * \brief It processes an internal spike (generated spike in the cell).
 		 *
-		 * It returns the next spike time.
+		 * It processes an internal spike (generated spike in the cell).
 		 *
-		 * \param State Cell current state.
-		 * \return The next firing spike time. -1 if no spike is predicted.
+		 * \note This function doesn't generate the next propagated (output) spike. It must be externally done.
+		 * \note Before generating next spike, you should check if this spike must be discard.
+		 *
+		 * \see DiscardSpike
+		 *
+		 * \param OutputSpike The spike happened.
+		 *
+		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual double NextFiringPrediction(BufferedState & State);
+		virtual InternalSpike * GenerateNextSpike(const InternalSpike &  OutputSpike);
+
+		/*!
+		 * \brief Check if the spike must be discard.
+		 *
+		 * Check if the spike must be discard. A spike must be discard if there are discrepancies between
+		 * the next predicted spike and the spike time.
+		 *
+		 * \param OutputSpike The spike happened.
+		 *
+		 * \return True if the spike must be discard. False in otherwise.
+		 */
+		virtual bool DiscardSpike(InternalSpike &  OutputSpike);
+
+		/*!
+		 * \brief It prints information about the load type.
+		 *
+		 * It prints information about the load type.
+		 *
+		 */
+		virtual void GetModelInfo();
 };
 
 #endif /* SRMMODEL_H_ */

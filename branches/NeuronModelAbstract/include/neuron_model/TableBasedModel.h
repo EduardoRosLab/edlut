@@ -74,11 +74,6 @@ class TableBasedModel: public NeuronModel {
 		unsigned int * StateVarOrder;
 
 		/*!
-		 * \brief Initial state of this neuron model
-		 */
-		NeuronState * InitialState;
-
-		/*!
 		 * \brief Table which calculates each state variable.
 		 */
 		NeuronModelTable ** StateVarTable;
