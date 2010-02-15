@@ -158,6 +158,7 @@ spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
                            $(srcdir)/spike/SinWeightChange.cpp
                            
 neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
+						   $(srcdir)/neuron_model/SRMState.cpp \
 						   $(srcdir)/neuron_model/NeuronModel.cpp \
                            $(srcdir)/neuron_model/NeuronState.cpp \
                            $(srcdir)/neuron_model/SRMModel.cpp \

@@ -16,6 +16,12 @@
 
 #include "../../include/neuron_model/SRMModel.h"
 
+#include "../../include/neuron_model/SRMState.h"
+
+#include "../../include/spike/EDLUTFileException.h"
+
+#include "../../include/simulation/Utils.h"
+
 void SRMModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 	FILE *fh;
 	long Currentline = 0L;
@@ -23,28 +29,28 @@ void SRMModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 	if(fh){
 		Currentline=1L;
 		skip_comments(fh,Currentline);
-		if(fscanf(fh,"%i",&this->tau)==1){
+		if(fscanf(fh,"%f",&this->tau)==1){
 			skip_comments(fh,Currentline);
 
-			if(fscanf(fh,"%i",&this->vr)==1){
+			if(fscanf(fh,"%f",&this->vr)==1){
 				skip_comments(fh,Currentline);
 
-				if(fscanf(fh,"%i",&this->W)==1){
+				if(fscanf(fh,"%f",&this->W)==1){
 					skip_comments(fh,Currentline);
 
-					if(fscanf(fh,"%i",&this->r0)==1){
+					if(fscanf(fh,"%f",&this->r0)==1){
 						skip_comments(fh,Currentline);
 
-						if(fscanf(fh,"%i",&this->v0)==1){
+						if(fscanf(fh,"%f",&this->v0)==1){
 							skip_comments(fh,Currentline);
 
-							if(fscanf(fh,"%i",&this->tauabs)==1){
+							if(fscanf(fh,"%f",&this->tauabs)==1){
 								skip_comments(fh,Currentline);
 
-								if(fscanf(fh,"%i",&this->taurel)==1){
+								if(fscanf(fh,"%f",&this->taurel)==1){
 									skip_comments(fh,Currentline);
 
-									if(fscanf(fh,"%i",&this->timestep)==1){
+									if(fscanf(fh,"%f",&this->timestep)==1){
 										this->InitialState = (SRMState *) new SRMState(0,8*this->tau,30);
 
 										this->InitialState->SetLastUpdateTime(0);
@@ -83,14 +89,14 @@ void SRMModel::UpdateState(SRMState & State, double CurrentTime){
 	State.SetLastUpdateTime(CurrentTime);
 }
 
-void SRMModel::SynapsisEffect(SRMState & State, const Interconnection * InputConnection){
+void SRMModel::SynapsisEffect(SRMState & State, Interconnection * InputConnection){
 	State.AddActivity(InputConnection);
 }
 
 double SRMModel::PotentialIncrement(SRMState & State, double CurrentTime){
 	double Increment = 0;
 
-	for (int i=0; i<State.GetNumberOfSpikes(); ++i){
+	for (unsigned int i=0; i<State.GetNumberOfSpikes(); ++i){
 		double TimeDifference = CurrentTime - State.GetLastUpdateTime() + State.GetSpikeTimeAt(i);
 		double Weight = State.GetInterconnectionAt(i)->GetWeight();
 
@@ -107,7 +113,7 @@ bool SRMModel::CheckSpikeAt(SRMState & State, double CurrentTime){
 	if (CurrentTime-State.GetLastSpikeTime()<=this->tauabs){
 		return false;
 	} else {
-		double Potential = this->vr + this->PotentialIncrement(State,Time);
+		double Potential = this->vr + this->PotentialIncrement(State,CurrentTime);
 		double FiringRate = this->r0 * log(1+exp((Potential-this->v0)/this->vf));
 
 		double Aux = CurrentTime-State.GetLastSpikeTime()-this->tauabs;
@@ -115,12 +121,11 @@ bool SRMModel::CheckSpikeAt(SRMState & State, double CurrentTime){
 
 		double Probability = 1 - exp(-FiringRate*Refractoriness);
 
-		return rand()<Probability();
+		return rand()<Probability;
 	}
 }
 
-double SRMModel::NextFiringPrediction(NeuronState & State){
-	double Spike = -1;
+double SRMModel::NextFiringPrediction(SRMState & State){
 	double time = State.GetLastUpdateTime()+this->tauabs+this->timestep;
 
 	while(!CheckSpikeAt(State,time)){
@@ -130,7 +135,7 @@ double SRMModel::NextFiringPrediction(NeuronState & State){
 	return time-State.GetLastUpdateTime();
 }
 
-SRMModel::SRMModel(string NeuronModelID): tau(0), vr(0), W(0), r0(0), v0(0), vf(0),
+SRMModel::SRMModel(string NeuronModelID): NeuronModel(NeuronModelID), tau(0), vr(0), W(0), r0(0), v0(0), vf(0),
 		tauabs(0), taurel(0), timestep(0) {
 	this->LoadNeuronModel(NeuronModelID + ".cfg");
 }
@@ -139,12 +144,12 @@ SRMModel::~SRMModel(){
 
 }
 
-SRMState * SRMModel::InitializeState(){
+NeuronState * SRMModel::InitializeState(){
 	return (SRMState *) new SRMState(*(this->InitialState));
 }
 
 InternalSpike * SRMModel::GenerateInitialActivity(Neuron &  Cell){
-	double Predicted = this->NextFiringPrediction(*(Cell.GetNeuronState()));
+	double Predicted = this->NextFiringPrediction(*((SRMState *)Cell.GetNeuronState()));
 
 	InternalSpike * spike = 0;
 
@@ -165,15 +170,15 @@ InternalSpike * SRMModel::ProcessInputSpike(PropagatedSpike &  InputSpike){
 	NeuronState * CurrentState = TargetCell->GetNeuronState();
 
 	// Update the neuron state until the current time
-	this->UpdateState(*CurrentState,InputSpike.GetTime());
+	this->UpdateState(*((SRMState *)CurrentState),InputSpike.GetTime());
 
 	// Add the effect of the input spike
-	this->SynapsisEffect(*CurrentState,inter);
+	this->SynapsisEffect(*((SRMState *)CurrentState),inter);
 
 	InternalSpike * GeneratedSpike = 0;
 
 	// Check if an spike will be fired
-	double NextSpike = this->NextFiringPrediction(*CurrentState);
+	double NextSpike = this->NextFiringPrediction(*((SRMState *)CurrentState));
 
 	NextSpike += CurrentState->GetLastUpdateTime();
 
@@ -191,11 +196,11 @@ InternalSpike * SRMModel::GenerateNextSpike(const InternalSpike &  OutputSpike){
 
 	InternalSpike * NextSpike = 0;
 
-	this->UpdateState(*CurrentState,OutputSpike.GetTime());
+	this->UpdateState(*((SRMState *)CurrentState),OutputSpike.GetTime());
 
-	double PredictedSpike = this->NextFiringPrediction(*CurrentState);
+	double PredictedSpike = this->NextFiringPrediction(*((SRMState *)CurrentState));
 
-	PredictedSpike += CurrentState->LastUpdate;
+	PredictedSpike += CurrentState->GetLastUpdateTime();
 
 	NextSpike = new InternalSpike(PredictedSpike,SourceCell);
 

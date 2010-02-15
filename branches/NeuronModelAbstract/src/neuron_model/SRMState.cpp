@@ -24,6 +24,10 @@ SRMState::~SRMState(){
 
 }
 
+SRMState::SRMState(const SRMState & OldState): BufferedState(OldState), LastSpikeTime(OldState.LastSpikeTime){
+
+}
+
 void SRMState::AddElapsedTime(float ElapsedTime){
 	this->LastSpikeTime += ElapsedTime;
 

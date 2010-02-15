@@ -24,6 +24,7 @@
 
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/TableBasedModel.h"
+#include "../../include/neuron_model/SRMModel.h"
 
 #include "../../include/simulation/Utils.h"
 #include "../../include/simulation/Configuration.h"
@@ -128,20 +129,24 @@ void Network::NetInfo(){
     }*/
 }
 
-NeuronModel * Network::LoadNetTypes(string neutype) throw (EDLUTException){
+NeuronModel * Network::LoadNetTypes(string ident_type, string neutype) throw (EDLUTException){
 	int ni;
    	NeuronModel * type;
    	
    	for(ni=0;ni<nneutypes && neutypes[ni]!=0 && neutypes[ni]->GetModelID()!=neutype;ni++);
-   
+
    	if (ni<nneutypes && neutypes[ni]==0){
-   		neutypes[ni] = (TableBasedModel *) new TableBasedModel(neutype);
+   		if (ident_type=="SRMTimeDriven"){
+   			neutypes[ni] = (SRMModel *) new SRMModel(neutype);
+   		} else if (ident_type=="TableBasedModel"){
+   			neutypes[ni] = (TableBasedModel *) new TableBasedModel(neutype);
+		}
    		type = neutypes[ni];
    	} else if (ni<nneutypes) {
-   		type = neutypes[ni];
-   	} else {
-   		throw EDLUTException(13,44,20,0);
-   	}
+		type = neutypes[ni];
+	} else {
+		throw EDLUTException(13,44,20,0);
+	}
 
 	return(type);
 }
@@ -194,18 +199,19 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
             		int tind,nind,nn,outn,monit;
             		NeuronModel * type;
             		char ident[MAXIDSIZE+1];
+            		char ident_type[MAXIDSIZE+1];
             		this->neurons=(Neuron *) new Neuron [this->nneurons];
             		if(this->neurons){
             			for(tind=0;tind<this->nneurons;tind+=nn){
                      		skip_comments(fh,Currentline);
-                     		if(fscanf(fh,"%i",&nn)==1 && fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident)==1 && fscanf(fh,"%i",&outn)==1 && fscanf(fh,"%i",&monit)==1){
+                     		if(fscanf(fh,"%i",&nn)==1 && fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident_type)==1 && fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident)==1 && fscanf(fh,"%i",&outn)==1 && fscanf(fh,"%i",&monit)==1){
                      			if(tind+nn>this->nneurons){
                      				throw EDLUTFileException(4,7,6,1,Currentline);
                      				break;
                      			}
                         
                         		savedcurrentline=Currentline;
-                        		type=LoadNetTypes(ident);
+                        		type=LoadNetTypes(ident_type, ident);
                         		Currentline=savedcurrentline;
                         
                         		for(nind=0;nind<nn;nind++){

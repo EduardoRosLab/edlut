@@ -147,12 +147,13 @@ class Network{
    		 * It checks if the neuron type has been loaded, and in other case,
    		 * it loads the characteristics from the neuron type files.
    		 * 
+   		 * \param ident_type Type of the neuron model. At this moment, only "SRMModel" and "TableBasedModel" are implemented.
    		 * \param neutype The name of the neuron type to load.
    		 * 
    		 * \return The loaded (or existing) neuron type.
    		 * \throw EDLUTException If the neuron model file hasn't been able to be correctly readed. 
    		 */
-   		NeuronModel * LoadNetTypes(string neutype) throw (EDLUTException);
+   		NeuronModel * LoadNetTypes(string ident_type, string neutype) throw (EDLUTException);
    		
    		/*!
    		 * \brief It inits the spikes predictions of every neuron in the network.

@@ -98,6 +98,11 @@ class TableBasedModel: public NeuronModel {
 		 */
 		NeuronModelTable * Tables;
 
+		/*!
+		 * \brief Initial state of this neuron model
+		 */
+		NeuronState * InitialState;
+
 	protected:
 
 		/*!

@@ -59,12 +59,6 @@ class NeuronModel {
 		 */
 		string ModelID;
 
-	protected:
-		/*!
-		 * \brief Initial state of this neuron model
-		 */
-		NeuronState * InitialState;
-
 	public:
 
 		/*!

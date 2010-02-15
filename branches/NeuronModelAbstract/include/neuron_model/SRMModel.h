@@ -30,6 +30,10 @@
 #include "./NeuronModel.h"
 #include "./BufferedState.h"
 
+#include "../spike/EDLUTFileException.h"
+
+class SRMState;
+
 
 /*!
  * \class SRMModel
@@ -50,50 +54,79 @@ class SRMModel: public NeuronModel {
 		/*!
 		 * \brief Decay time constant of the EPSP
 		 */
-		double tau;
+		float tau;
 
 		/*!
 		 * \brief Resting potential
 		 */
-		double vr;
+		float vr;
 
 		/*!
 		 * \brief Synaptic efficacy
 		 */
-		double W;
+		float W;
 
 		/*!
 		 * \brief Spontaneous firing rate
 		 */
-		double r0;
+		float r0;
 
 		/*!
 		 * \brief Probabilistic threshold potential
 		 */
-		double v0;
+		float v0;
 
 		/*!
 		 * \brief Gain factor
 		 */
-		double vf;
+		float vf;
 
 		/*!
 		 * \brief Absolute refractory period
 		 */
-		double tauabs;
+		float tauabs;
 
 		/*!
 		 * \brief Relative refractory period
 		 */
-		double taurel;
+		float taurel;
 
 		/*!
 		 * \brief Time step in simulation
 		 */
 		float timestep;
 
+		/*!
+		 * \brief Initial state of this neuron model
+		 */
+		SRMState * InitialState;
+
 
 	protected:
+		/*!
+		 * \brief It calculates the potential difference between resting and the potential in the defined time.
+		 *
+		 * It calculates the potential difference between resting and the potential in the defined time.
+		 *
+		 * \param State Cell current state.
+		 * \param CurrentTime Current simulation time.
+		 *
+		 * \return The potential difference between resting and the potential in the defined time.
+		 */
+		double PotentialIncrement(SRMState & State, double CurrentTime);
+
+		/*!
+		 * \brief It checks if an spike is fired in the defined time.
+		 *
+		 * It checks if an spike is fired in the defined time.
+		 *
+		 * \param State Cell current state.
+		 * \param CurrentTime Current simulation time.
+		 *
+		 * \return True if an spike is fired in the defined time. False in otherwise.
+		 */
+		bool CheckSpikeAt(SRMState & State, double CurrentTime);
+
 		/*!
 		 * \brief It loads the neuron model description.
 		 *
@@ -113,7 +146,7 @@ class SRMModel: public NeuronModel {
 		 * \param State Cell current state.
 		 * \param CurrentTime Current simulation time.
 		 */
-		virtual void UpdateState(NeuronState & State, double CurrentTime);
+		virtual void UpdateState(SRMState & State, double CurrentTime);
 
 		/*!
 		 * \brief It abstracts the effect of an input spike in the cell.
@@ -123,7 +156,7 @@ class SRMModel: public NeuronModel {
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(NeuronState & State, const Interconnection * InputConnection);
+		virtual void SynapsisEffect(SRMState & State, Interconnection * InputConnection);
 
 		/*!
 		 * \brief It returns the next spike time.
@@ -133,7 +166,7 @@ class SRMModel: public NeuronModel {
 		 * \param State Cell current state.
 		 * \return The next firing spike time. -1 if no spike is predicted.
 		 */
-		virtual double NextFiringPrediction(NeuronState & State);
+		virtual double NextFiringPrediction(SRMState & State);
 
 	public:
 		/*!
@@ -159,7 +192,7 @@ class SRMModel: public NeuronModel {
 		 *
 		 * \param State Cell current state.
 		 */
-		virtual BufferedState * InitializeState();
+		virtual NeuronState * InitializeState();
 
 		/*!
 		 * \brief It generates the first spike (if any) in a cell.
