@@ -101,8 +101,20 @@ class SRMModel: public NeuronModel {
 		 */
 		SRMState * InitialState;
 
+		/*!
+		 * \brief EPSP pre-calculated vector
+		 */
+		double * EPSP;
+
 
 	protected:
+		/*!
+		 * \brief It precalculates the EPSP values.
+		 *
+		 * It precalculates the EPSP values.
+		 */
+		void PrecalculateEPSP();
+
 		/*!
 		 * \brief It calculates the potential difference between resting and the potential in the defined time.
 		 *

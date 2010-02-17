@@ -26,6 +26,7 @@
 #include "../../include/neuron_model/TableBasedModel.h"
 #include "../../include/neuron_model/SRMModel.h"
 
+#include "../../include/simulation/EventQueue.h"
 #include "../../include/simulation/Utils.h"
 #include "../../include/simulation/Configuration.h"
 
@@ -153,8 +154,13 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype) throw (ED
 
 void Network::InitNetPredictions(EventQueue * Queue){
 	int nneu;
-	for(nneu=0;nneu<nneurons;nneu++)
-		neurons[nneu].GetNeuronModel()->GenerateInitialActivity(neurons[nneu]);
+	for(nneu=0;nneu<nneurons;nneu++){
+		InternalSpike * spike = neurons[nneu].GetNeuronModel()->GenerateInitialActivity(neurons[nneu]);
+		if (spike!=0){
+			Queue->InsertEvent(spike);
+		}
+	}
+
 }
 
 Network::Network(const char * netfile, const char * wfile, EventQueue * Queue) throw (EDLUTException): inters(0), ninters(0), neutypes(0), nneutypes(0), neurons(0), nneurons(0), wchanges(0), nwchanges(0), wordination(0){

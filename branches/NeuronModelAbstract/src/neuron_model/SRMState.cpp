@@ -31,7 +31,7 @@ SRMState::SRMState(const SRMState & OldState): BufferedState(OldState), LastSpik
 void SRMState::AddElapsedTime(float ElapsedTime){
 	this->LastSpikeTime += ElapsedTime;
 
-	((BufferedState *) this)->AddElapsedTime(ElapsedTime);
+	BufferedState::AddElapsedTime(ElapsedTime);
 }
 
 void SRMState::NewFiredSpike(){

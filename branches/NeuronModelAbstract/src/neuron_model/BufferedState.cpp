@@ -51,15 +51,15 @@ void BufferedState::CheckActivity(){
 	unsigned int index = (this->LastIndex+1)%(this->MaximumSize+1);
 	while (this->FirstIndex!=this->LastIndex && this->ActivityBuffer[index].first>this->BufferAmplitude){
 		this->LastIndex = index;
-		index = (this->LastIndex+1)%(this->MaximumSize+1);
+		index = (index+1)%(this->MaximumSize+1);
 	}
 }
 
 void BufferedState::AddElapsedTime(float ElapsedTime){
-	unsigned int index = (this->LastIndex+1)%(this->MaximumSize+1);
+	unsigned int index = this->FirstIndex;
 	while (index!=this->LastIndex){
 		this->ActivityBuffer[index].first += ElapsedTime;
-		index = (this->LastIndex+1)%(this->MaximumSize+1);
+		index = (index-1)%(this->MaximumSize+1);
 	}
 }
 
@@ -68,9 +68,9 @@ unsigned int BufferedState::GetNumberOfSpikes(){
 }
 
 double BufferedState::GetSpikeTimeAt(unsigned int Position){
-	return this->ActivityBuffer[(this->LastIndex+Position)%(this->MaximumSize+1)].first;
+	return this->ActivityBuffer[(this->FirstIndex-Position)%(this->MaximumSize+1)].first;
 }
 
 Interconnection * BufferedState::GetInterconnectionAt(unsigned int Position){
-	return this->ActivityBuffer[(this->LastIndex+Position)%(this->MaximumSize+1)].second;
+	return this->ActivityBuffer[(this->FirstIndex-Position)%(this->MaximumSize+1)].second;
 }
