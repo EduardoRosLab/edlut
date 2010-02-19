@@ -46,7 +46,7 @@ void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
 	Neuron * target = inter->GetTarget();  // target of the spike
 	Neuron * source = inter->GetSource();
 	
-	InternalSpike * Generated = target->GetNeuronModel()->ProcessInputSpike(*this);
+	InternalSpike * Generated = target->GetNeuronModel()->ProcessInputSpike(this);
 
 	if (Generated!=0){
 		CurrentSimulation->GetQueue()->InsertEvent(Generated);

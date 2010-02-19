@@ -102,21 +102,21 @@ void SRMModel::PrecalculateEPSP(){
 
 
 
-void SRMModel::UpdateState(SRMState & State, double CurrentTime){
-	State.AddElapsedTime(CurrentTime-State.GetLastUpdateTime());
-	State.SetLastUpdateTime(CurrentTime);
+void SRMModel::UpdateState(SRMState * State, double CurrentTime){
+	State->AddElapsedTime(CurrentTime-State->GetLastUpdateTime());
+	State->SetLastUpdateTime(CurrentTime);
 }
 
-void SRMModel::SynapsisEffect(SRMState & State, Interconnection * InputConnection){
-	State.AddActivity(InputConnection);
+void SRMModel::SynapsisEffect(SRMState * State, Interconnection * InputConnection){
+	State->AddActivity(InputConnection);
 }
 
-double SRMModel::PotentialIncrement(SRMState & State, double CurrentTime){
+double SRMModel::PotentialIncrement(SRMState * State, double CurrentTime){
 	double Increment = 0;
 
-	for (unsigned int i=0; i<State.GetNumberOfSpikes(); ++i){
-		double TimeDifference = CurrentTime - State.GetLastUpdateTime() + State.GetSpikeTimeAt(i);
-		double Weight = State.GetInterconnectionAt(i)->GetWeight();
+	for (unsigned int i=0; i<State->GetNumberOfSpikes(); ++i){
+		double TimeDifference = CurrentTime - State->GetLastUpdateTime() + State->GetSpikeTimeAt(i);
+		double Weight = State->GetInterconnectionAt(i)->GetWeight();
 
 		Increment += Weight*this->W*EPSP[(int) (TimeDifference*1000)];
 	}
@@ -124,8 +124,8 @@ double SRMModel::PotentialIncrement(SRMState & State, double CurrentTime){
 	return Increment;
 }
 
-bool SRMModel::CheckSpikeAt(SRMState & State, double CurrentTime){
-	double TimeSinceSpike = CurrentTime-State.GetLastUpdateTime()+State.GetLastSpikeTime();
+bool SRMModel::CheckSpikeAt(SRMState * State, double CurrentTime){
+	double TimeSinceSpike = CurrentTime-State->GetLastUpdateTime()+State->GetLastSpikeTime();
 	if (TimeSinceSpike<=this->tauabs){
 		return false;
 	} else {
@@ -141,16 +141,16 @@ bool SRMModel::CheckSpikeAt(SRMState & State, double CurrentTime){
 	}
 }
 
-double SRMModel::NextFiringPrediction(SRMState & State){
-	double time = State.GetLastUpdateTime()+this->timestep;
+double SRMModel::NextFiringPrediction(SRMState * State){
+	double time = State->GetLastUpdateTime()+this->timestep;
 	bool spike = false;
 
-	for (;time<State.GetLastUpdateTime()+this->tau*8 && !spike; time+=this->timestep){
+	for (;time<State->GetLastUpdateTime()+this->tau*8 && !spike; time+=this->timestep){
 		spike = CheckSpikeAt(State,time);
 	}
 
 	if (spike){
-		return time-State.GetLastUpdateTime();
+		return time-State->GetLastUpdateTime();
 	} else {
 		return NO_SPIKE_PREDICTED;
 	}
@@ -158,88 +158,96 @@ double SRMModel::NextFiringPrediction(SRMState & State){
 
 SRMModel::SRMModel(string NeuronModelID): NeuronModel(NeuronModelID), tau(0), vr(0), W(0), r0(0), v0(0), vf(0),
 		tauabs(0), taurel(0), timestep(0), EPSP(0) {
-	this->LoadNeuronModel(NeuronModelID + ".cfg");
 
-	this->PrecalculateEPSP();
 }
 
 SRMModel::~SRMModel(){
 
 }
 
-NeuronState * SRMModel::InitializeState(){
-	return (SRMState *) new SRMState(*(this->InitialState));
+void SRMModel::LoadNeuronModel() throw (EDLUTFileException) {
+
+	this->LoadNeuronModel(this->GetModelID() + ".cfg");
+
+	this->PrecalculateEPSP();
+
 }
 
-InternalSpike * SRMModel::GenerateInitialActivity(Neuron &  Cell){
-	double Predicted = this->NextFiringPrediction(*((SRMState *)Cell.GetNeuronState()));
+NeuronState * SRMModel::InitializeState(){
+	return (SRMState *) new SRMState(*((SRMState *) this->InitialState));
+}
+
+InternalSpike * SRMModel::GenerateInitialActivity(Neuron *  Cell){
+	double Predicted = this->NextFiringPrediction((SRMState *) Cell->GetNeuronState());
 
 	InternalSpike * spike = 0;
 
 	if (Predicted!=NO_SPIKE_PREDICTED){
-		Predicted += Cell.GetNeuronState()->GetLastUpdateTime();
+		Predicted += Cell->GetNeuronState()->GetLastUpdateTime();
 
-		spike = new InternalSpike(Predicted,&Cell);
+		spike = new InternalSpike(Predicted,Cell);
 
-		Cell.GetNeuronState()->SetNextPredictedSpikeTime(Predicted);
+		Cell->GetNeuronState()->SetNextPredictedSpikeTime(Predicted);
 	}
 
 	return spike;
 }
 
-InternalSpike * SRMModel::ProcessInputSpike(PropagatedSpike &  InputSpike){
-	Interconnection * inter = InputSpike.GetSource()->GetOutputConnectionAt(InputSpike.GetTarget());
+InternalSpike * SRMModel::ProcessInputSpike(PropagatedSpike *  InputSpike){
+	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(InputSpike->GetTarget());
 
 	Neuron * TargetCell = inter->GetTarget();
 
 	NeuronState * CurrentState = TargetCell->GetNeuronState();
 
 	// Update the neuron state until the current time
-	this->UpdateState(*((SRMState *)CurrentState),InputSpike.GetTime());
+	this->UpdateState((SRMState *)CurrentState,InputSpike->GetTime());
 
 	// Add the effect of the input spike
-	this->SynapsisEffect(*((SRMState *)CurrentState),inter);
+	this->SynapsisEffect((SRMState *)CurrentState,inter);
 
 	InternalSpike * GeneratedSpike = 0;
 
 	// Check if an spike will be fired
-	double NextSpike = this->NextFiringPrediction(*((SRMState *)CurrentState));
+	double NextSpike = this->NextFiringPrediction((SRMState *) CurrentState);
 
 	if (NextSpike!=NO_SPIKE_PREDICTED){
 		NextSpike += CurrentState->GetLastUpdateTime();
 
 		GeneratedSpike = new InternalSpike(NextSpike,TargetCell);
-
-		TargetCell->GetNeuronState()->SetNextPredictedSpikeTime(NextSpike);
 	}
+
+	TargetCell->GetNeuronState()->SetNextPredictedSpikeTime(NextSpike);
 
 	return GeneratedSpike;
 }
 
-InternalSpike * SRMModel::GenerateNextSpike(const InternalSpike &  OutputSpike){
-	Neuron * SourceCell = OutputSpike.GetSource();
+InternalSpike * SRMModel::GenerateNextSpike(InternalSpike *  OutputSpike){
+	Neuron * SourceCell = OutputSpike->GetSource();
 
 	NeuronState * CurrentState = SourceCell->GetNeuronState();
 
 	InternalSpike * NextSpike = 0;
 
-	this->UpdateState(*((SRMState *)CurrentState),OutputSpike.GetTime());
+	this->UpdateState((SRMState *) CurrentState,OutputSpike->GetTime());
 
-	double PredictedSpike = this->NextFiringPrediction(*((SRMState *)CurrentState));
+	((SRMState *) CurrentState)->NewFiredSpike();
+
+	double PredictedSpike = this->NextFiringPrediction((SRMState *) CurrentState);
 
 	if (PredictedSpike!=NO_SPIKE_PREDICTED){
 		PredictedSpike += CurrentState->GetLastUpdateTime();
 
 		NextSpike = new InternalSpike(PredictedSpike,SourceCell);
-
-		SourceCell->GetNeuronState()->SetNextPredictedSpikeTime(PredictedSpike);
 	}
+
+	SourceCell->GetNeuronState()->SetNextPredictedSpikeTime(PredictedSpike);
 
 	return NextSpike;
 }
 
-bool SRMModel::DiscardSpike(InternalSpike &  OutputSpike){
-	return (OutputSpike.GetSource()->GetNeuronState()->GetNextPredictedSpikeTime()!=OutputSpike.GetTime());
+bool SRMModel::DiscardSpike(InternalSpike *  OutputSpike){
+	return (OutputSpike->GetSource()->GetNeuronState()->GetNextPredictedSpikeTime()!=OutputSpike->GetTime());
 }
 
 void SRMModel::GetModelInfo(){

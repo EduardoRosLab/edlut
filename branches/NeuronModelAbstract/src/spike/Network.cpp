@@ -25,6 +25,7 @@
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/TableBasedModel.h"
 #include "../../include/neuron_model/SRMModel.h"
+#include "../../include/neuron_model/SRMTableBasedModel.h"
 
 #include "../../include/simulation/EventQueue.h"
 #include "../../include/simulation/Utils.h"
@@ -141,8 +142,11 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype) throw (ED
    			neutypes[ni] = (SRMModel *) new SRMModel(neutype);
    		} else if (ident_type=="TableBasedModel"){
    			neutypes[ni] = (TableBasedModel *) new TableBasedModel(neutype);
+		} else if (ident_type=="SRMTableBasedModel"){
+			neutypes[ni] = (SRMTableBasedModel *) new SRMTableBasedModel(neutype);
 		}
    		type = neutypes[ni];
+   		type->LoadNeuronModel();
    	} else if (ni<nneutypes) {
 		type = neutypes[ni];
 	} else {
@@ -155,7 +159,7 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype) throw (ED
 void Network::InitNetPredictions(EventQueue * Queue){
 	int nneu;
 	for(nneu=0;nneu<nneurons;nneu++){
-		InternalSpike * spike = neurons[nneu].GetNeuronModel()->GenerateInitialActivity(neurons[nneu]);
+		InternalSpike * spike = neurons[nneu].GetNeuronModel()->GenerateInitialActivity(neurons+nneu);
 		if (spike!=0){
 			Queue->InsertEvent(spike);
 		}

@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           TableBasedModel.h                             *
+ *                           SRMTableBasedModel.h                          *
  *                           -------------------                           *
  * copyright            : (C) 2010 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,11 +14,11 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef TABLEBASEDMODEL_H_
-#define TABLEBASEDMODEL_H_
+#ifndef SRMTABLEBASEDMODEL_H_
+#define SRMTABLEBASEDMODEL_H_
 
 /*!
- * \file TableBasedModel.h
+ * \file SRMTableBasedModel.h
  *
  * \author Jesus Garrido
  * \date February 2010
@@ -27,76 +27,32 @@
  * look-up tables.
  */
 
-#include "NeuronModel.h"
-
-#include "../spike/EDLUTFileException.h"
-
-class NeuronModelTable;
+#include "TableBasedModel.h"
 
 /*!
  * \class TableBasedModel
  *
- * \brief Spiking neuron model based in look-up tables
+ * \brief SRM (Spike-Response model) Spiking neuron model based in look-up tables
  *
- * This class implements the behavior of a neuron in a spiking neural network.
- * It includes internal model functions which define the behavior of the model
+ * This class implements the behavior of a SRM neuron. The firing time is calculated in
+ * an stochastic way. It includes internal model functions which define the behavior of the model
  * (initialization, update of the state, synapses effect, next firing prediction...).
  * This behavior is calculated based in precalculated look-up tables.
  *
  * \author Jesus Garrido
  * \date February 2010
  */
-class TableBasedModel: public NeuronModel {
+class SRMTableBasedModel: public TableBasedModel {
 	protected:
 		/*!
-		 * \brief Number of state variables (no include time).
+		 * \brief Number of the seed variable
 		 */
-		unsigned int NumStateVar;
+		unsigned int SeedVar;
 
 		/*!
-		 * \brief Number of time dependent state variables.
+		 * \brief Last spike time variable
 		 */
-		unsigned int NumTimeDependentStateVar;
-
-		/*!
-		 * \brief Number of synaptic variables.
-		 */
-		unsigned int NumSynapticVar;
-
-		/*!
-		 * \brief Index of synaptic variables.
-		 */
-		unsigned int * SynapticVar;
-
-		/*!
-		 * \brief Order of state variables.
-		 */
-		unsigned int * StateVarOrder;
-
-		/*!
-		 * \brief Table which calculates each state variable.
-		 */
-		NeuronModelTable ** StateVarTable;
-
-		/*!
-		 * \brief Firing time table
-		 */
-		NeuronModelTable * FiringTable;
-
-		/*!
-		 * \brief End firing time table
-		 */
-		NeuronModelTable * EndFiringTable;
-
-		/*!
-		 * \brief Number of tables
-		 */
-		unsigned int NumTables;
-
-		/*!
-		 * \brief Precalculated tables
-		 */
-		NeuronModelTable * Tables;
+		unsigned int LastSpikeVar;
 
 		/*!
 		 * \brief It loads the neuron model description.
@@ -110,18 +66,14 @@ class TableBasedModel: public NeuronModel {
 		virtual void LoadNeuronModel(string ConfigFile) throw (EDLUTFileException);
 
 		/*!
-		 * \brief It loads the neuron model tables.
+		 * \brief It abstracts the effect of an input spike in the cell.
 		 *
-		 * It loads the neuron model tables from his .dat associated file.
+		 * It abstracts the effect of an input spike in the cell.
 		 *
-		 * \pre The neuron model must be previously initialized or loaded
-		 *
-		 * \param TableFile Name of the table file (*.dat).
-		 *
-		 * \see LoadNeuronModel()
-		 * \throw EDLUTException If something wrong has happened in the tables loads.
+		 * \param State Cell current state.
+		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void LoadTables(string TableFile) throw (EDLUTException);
+		virtual void SynapsisEffect(NeuronState * State, Interconnection * InputConnection);
 
 		/*!
 		 * \brief It returns the end of the refractory period.
@@ -144,16 +96,6 @@ class TableBasedModel: public NeuronModel {
 		virtual void UpdateState(NeuronState * State, double CurrentTime);
 
 		/*!
-		 * \brief It abstracts the effect of an input spike in the cell.
-		 *
-		 * It abstracts the effect of an input spike in the cell.
-		 *
-		 * \param State Cell current state.
-		 * \param InputConnection Input connection from which the input spike has got the cell.
-		 */
-		virtual void SynapsisEffect(NeuronState * State, const Interconnection * InputConnection);
-
-		/*!
 		 * \brief It returns the next spike time.
 		 *
 		 * It returns the next spike time.
@@ -164,6 +106,7 @@ class TableBasedModel: public NeuronModel {
 		virtual double NextFiringPrediction(NeuronState * State);
 
 	public:
+
 		/*!
 		 * \brief Default constructor with parameters.
 		 *
@@ -172,21 +115,14 @@ class TableBasedModel: public NeuronModel {
 		 *
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		TableBasedModel(string NeuronModelID);
+		SRMTableBasedModel(string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
 		 *
 		 * It destroys an object of this class.
 		 */
-		~TableBasedModel();
-
-		/*!
-		 * \brief It loads the neuron model description and tables (if necessary).
-		 *
-		 * It loads the neuron model description and tables (if necessary).
-		 */
-		virtual void LoadNeuronModel() throw (EDLUTFileException);
+		~SRMTableBasedModel();
 
 		/*!
 		 * \brief It creates the neuron state and initializes to defined values.
@@ -196,30 +132,6 @@ class TableBasedModel: public NeuronModel {
 		 * \return A new object with the neuron state.
 		 */
 		virtual NeuronState * InitializeState();
-
-		/*!
-		 * \brief It generates the first spike (if any) in a cell.
-		 *
-		 * It generates the first spike (if any) in a cell.
-		 *
-		 * \param Cell The cell to check if activity is generated.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * GenerateInitialActivity(Neuron *  Cell);
-
-		/*!
-		 * \brief It processes a propagated spike (input spike in the cell).
-		 *
-		 * It processes a propagated spike (input spike in the cell).
-		 *
-		 * \note This function doesn't generate the next propagated spike. It must be externally done.
-		 *
-		 * \param InputSpike The spike happened.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
 
 		/*!
 		 * \brief It processes an internal spike (generated spike in the cell).
@@ -236,27 +148,6 @@ class TableBasedModel: public NeuronModel {
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
 		virtual InternalSpike * GenerateNextSpike(InternalSpike *  OutputSpike);
-
-		/*!
-		 * \brief Check if the spike must be discard.
-		 *
-		 * Check if the spike must be discard. A spike must be discard if there are discrepancies between
-		 * the next predicted spike and the spike time.
-		 *
-		 * \param OutputSpike The spike happened.
-		 *
-		 * \return True if the spike must be discard. False in otherwise.
-		 */
-		virtual bool DiscardSpike(InternalSpike *  OutputSpike);
-
-		/*!
-		 * \brief It prints information about the load type.
-		 *
-		 * It prints information about the load type.
-		 *
-		 */
-		virtual void GetModelInfo();
-
 };
 
-#endif /* TABLEBASEDMODEL_H_ */
+#endif /* SRMTABLEBASEDMODEL_H_ */

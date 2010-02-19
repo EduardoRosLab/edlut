@@ -97,11 +97,6 @@ class SRMModel: public NeuronModel {
 		float timestep;
 
 		/*!
-		 * \brief Initial state of this neuron model
-		 */
-		SRMState * InitialState;
-
-		/*!
 		 * \brief EPSP pre-calculated vector
 		 */
 		double * EPSP;
@@ -125,7 +120,7 @@ class SRMModel: public NeuronModel {
 		 *
 		 * \return The potential difference between resting and the potential in the defined time.
 		 */
-		double PotentialIncrement(SRMState & State, double CurrentTime);
+		double PotentialIncrement(SRMState * State, double CurrentTime);
 
 		/*!
 		 * \brief It checks if an spike is fired in the defined time.
@@ -137,7 +132,7 @@ class SRMModel: public NeuronModel {
 		 *
 		 * \return True if an spike is fired in the defined time. False in otherwise.
 		 */
-		bool CheckSpikeAt(SRMState & State, double CurrentTime);
+		bool CheckSpikeAt(SRMState * State, double CurrentTime);
 
 		/*!
 		 * \brief It loads the neuron model description.
@@ -158,7 +153,7 @@ class SRMModel: public NeuronModel {
 		 * \param State Cell current state.
 		 * \param CurrentTime Current simulation time.
 		 */
-		virtual void UpdateState(SRMState & State, double CurrentTime);
+		virtual void UpdateState(SRMState * State, double CurrentTime);
 
 		/*!
 		 * \brief It abstracts the effect of an input spike in the cell.
@@ -168,7 +163,7 @@ class SRMModel: public NeuronModel {
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(SRMState & State, Interconnection * InputConnection);
+		virtual void SynapsisEffect(SRMState * State, Interconnection * InputConnection);
 
 		/*!
 		 * \brief It returns the next spike time.
@@ -178,7 +173,7 @@ class SRMModel: public NeuronModel {
 		 * \param State Cell current state.
 		 * \return The next firing spike time. -1 if no spike is predicted.
 		 */
-		virtual double NextFiringPrediction(SRMState & State);
+		virtual double NextFiringPrediction(SRMState * State);
 
 	public:
 		/*!
@@ -198,6 +193,13 @@ class SRMModel: public NeuronModel {
 		~SRMModel();
 
 		/*!
+		 * \brief It loads the neuron model description and tables (if necessary).
+		 *
+		 * It loads the neuron model description and tables (if necessary).
+		 */
+		virtual void LoadNeuronModel() throw (EDLUTFileException);
+
+		/*!
 		 * \brief It initializes the neuron state to defined values.
 		 *
 		 * It initializes the neuron state to defined values.
@@ -215,7 +217,7 @@ class SRMModel: public NeuronModel {
 		 *
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual InternalSpike * GenerateInitialActivity(Neuron &  Cell);
+		virtual InternalSpike * GenerateInitialActivity(Neuron *  Cell);
 
 		/*!
 		 * \brief It processes a propagated spike (input spike in the cell).
@@ -228,7 +230,7 @@ class SRMModel: public NeuronModel {
 		 *
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual InternalSpike * ProcessInputSpike(PropagatedSpike &  InputSpike);
+		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
 
 		/*!
 		 * \brief It processes an internal spike (generated spike in the cell).
@@ -244,7 +246,7 @@ class SRMModel: public NeuronModel {
 		 *
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual InternalSpike * GenerateNextSpike(const InternalSpike &  OutputSpike);
+		virtual InternalSpike * GenerateNextSpike(InternalSpike *  OutputSpike);
 
 		/*!
 		 * \brief Check if the spike must be discard.
@@ -256,7 +258,7 @@ class SRMModel: public NeuronModel {
 		 *
 		 * \return True if the spike must be discard. False in otherwise.
 		 */
-		virtual bool DiscardSpike(InternalSpike &  OutputSpike);
+		virtual bool DiscardSpike(InternalSpike *  OutputSpike);
 
 		/*!
 		 * \brief It prints information about the load type.

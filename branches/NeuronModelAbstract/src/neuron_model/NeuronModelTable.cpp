@@ -293,7 +293,7 @@ int NeuronModelTable::GetFirstInterpolation() const{
 	return this->firstintdim;
 }
 
-float NeuronModelTable::TableAccessDirect(NeuronState & statevars){
+float NeuronModelTable::TableAccessDirect(NeuronState * statevars){
 	unsigned int idim,tind;
 	float elem;
 	void **cpointer;
@@ -303,17 +303,17 @@ float NeuronModelTable::TableAccessDirect(NeuronState & statevars){
 	cpointer=(void **)tab->elems;
 	for(idim=0;idim<tab->ndims-1;idim++){
 		dim=&tab->dims[idim];
-		tind=table_indcomp2(dim,statevars.GetStateVariableAt(dim->statevar));
+		tind=table_indcomp2(dim,statevars->GetStateVariableAt(dim->statevar));
 		cpointer=(void **)cpointer[tind];
 	}
 	dim=&tab->dims[idim];
-	tind=table_indcomp2(dim,statevars.GetStateVariableAt(dim->statevar));
+	tind=table_indcomp2(dim,statevars->GetStateVariableAt(dim->statevar));
 	elem=((float *)cpointer)[tind];
 	return(elem);
 }
 
 // Bilineal interpolation
-float NeuronModelTable::TableAccessInterpBi(NeuronState & statevars){
+float NeuronModelTable::TableAccessInterpBi(NeuronState * statevars){
 	unsigned int idim;
 	float elem,coord,*coords;
 	NeuronModelTable *tab;
@@ -329,7 +329,7 @@ float NeuronModelTable::TableAccessInterpBi(NeuronState & statevars){
 
 	for(idim=0;idim<tab->ndims;idim++){
 		dim=&tab->dims[idim];
-		coord=statevars.GetStateVariableAt(dim->statevar);
+		coord=statevars->GetStateVariableAt(dim->statevar);
 		if(dim->interp){
 			coords=dim->coord;
 			if(coord>last_coord(dim)){
@@ -372,7 +372,7 @@ float NeuronModelTable::TableAccessInterpBi(NeuronState & statevars){
 }
 
 // Lineal interpolation
-float NeuronModelTable::TableAccessInterpLi(NeuronState & statevars){
+float NeuronModelTable::TableAccessInterpLi(NeuronState * statevars){
 	unsigned int idim,iidim;
 	float elem,elemi,elem0,coord,*coords;
 	NeuronModelTable *tab;
@@ -386,7 +386,7 @@ float NeuronModelTable::TableAccessInterpLi(NeuronState & statevars){
 
 	for(idim=0;idim<tab->ndims;idim++){
 		dim=&tab->dims[idim];
-		coord=statevars.GetStateVariableAt(dim->statevar);
+		coord=statevars->GetStateVariableAt(dim->statevar);
 		if(dim->interp){
 			coords=dim->coord;
 			if(coord>last_coord(dim)){
@@ -425,7 +425,7 @@ float NeuronModelTable::TableAccessInterpLi(NeuronState & statevars){
 }
 
 // Lineal interpolation-extrapolation
-float NeuronModelTable::TableAccessInterpLiEx(NeuronState & statevars){
+float NeuronModelTable::TableAccessInterpLiEx(NeuronState * statevars){
 	unsigned int idim,iidim;
 	float elem,elemi,elem0,coord,*coords;
 	NeuronModelTable *tab;
@@ -439,7 +439,7 @@ float NeuronModelTable::TableAccessInterpLiEx(NeuronState & statevars){
 
 	for(idim=0;idim<tab->ndims;idim++){
 		dim=&tab->dims[idim];
-		coord=statevars.GetStateVariableAt(dim->statevar);
+		coord=statevars->GetStateVariableAt(dim->statevar);
 		if(dim->interp){
 			coords=dim->coord;
 			if(coord>last_coord(dim)){
@@ -477,7 +477,7 @@ float NeuronModelTable::TableAccessInterpLiEx(NeuronState & statevars){
 }
 
 // 2-position lineal interpolation
-float NeuronModelTable::TableAccessInterp2Li(NeuronState & statevars){
+float NeuronModelTable::TableAccessInterp2Li(NeuronState * statevars){
 	unsigned int idim,iidim,nintdims,zpos;
 	float elem,elemi,elem0,avepos,coord,*coords;
 	NeuronModelTable *tab;
@@ -493,7 +493,7 @@ float NeuronModelTable::TableAccessInterp2Li(NeuronState & statevars){
 	nintdims=0;
 	for(idim=0;idim<tab->ndims;idim++){
 		dim=&tab->dims[idim];
-		coord=statevars.GetStateVariableAt(dim->statevar);
+		coord=statevars->GetStateVariableAt(dim->statevar);
 		if(dim->interp){
 			coords=dim->coord;
 			if(coord>last_coord(dim)){
@@ -545,7 +545,7 @@ float NeuronModelTable::TableAccessInterp2Li(NeuronState & statevars){
 }
 
 // n-position lineal interpolation
-float NeuronModelTable::TableAccessInterpNLi(NeuronState & statevars){
+float NeuronModelTable::TableAccessInterpNLi(NeuronState * statevars){
 	int idim,iidim;
 	float elem,elemi,elem0,coord,*coords;
 	NeuronModelTable *tab;
@@ -560,7 +560,7 @@ float NeuronModelTable::TableAccessInterpNLi(NeuronState & statevars){
 
 	for(idim=0;idim<tab->ndims;idim++){
 		dim=&tab->dims[idim];
-		coord=statevars.GetStateVariableAt(dim->statevar);
+		coord=statevars->GetStateVariableAt(dim->statevar);
 		if(dim->interp){
 			coords=dim->coord;
 			if(coord>last_coord(dim)){
@@ -607,7 +607,7 @@ float NeuronModelTable::TableAccessInterpNLi(NeuronState & statevars){
 	return(elemi);
 }
 
-float NeuronModelTable::TableAccess(NeuronState & statevars){
+float NeuronModelTable::TableAccess(NeuronState * statevars){
 	function funcArr1[] = {
 		&NeuronModelTable::TableAccessDirect,
       	&NeuronModelTable::TableAccessInterpBi,

@@ -16,7 +16,7 @@
 
 #include "../../include/neuron_model/NeuronModel.h"
 
-NeuronModel::NeuronModel(string NeuronModelID): ModelID(NeuronModelID) {
+NeuronModel::NeuronModel(string NeuronModelID): ModelID(NeuronModelID), InitialState(0) {
 	// TODO Auto-generated constructor stub
 
 }

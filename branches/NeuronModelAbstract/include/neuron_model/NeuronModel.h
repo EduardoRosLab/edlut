@@ -32,6 +32,8 @@
 #include "../spike/Neuron.h"
 #include "./NeuronState.h"
 
+#include "../spike/EDLUTFileException.h"
+
 #include <string>
 
 using namespace std;
@@ -59,6 +61,12 @@ class NeuronModel {
 		 */
 		string ModelID;
 
+	protected:
+		/*!
+		 * \brief Initial state of this neuron model
+		 */
+		NeuronState * InitialState;
+
 	public:
 
 		/*!
@@ -78,6 +86,13 @@ class NeuronModel {
 		virtual ~NeuronModel();
 
 		/*!
+		 * \brief It loads the neuron model description and tables (if necessary).
+		 *
+		 * It loads the neuron model description and tables (if necessary).
+		 */
+		virtual void LoadNeuronModel() throw (EDLUTFileException) = 0;
+
+		/*!
 		 * \brief It initializes the neuron state to defined values.
 		 *
 		 * It initializes the neuron state to defined values.
@@ -95,7 +110,7 @@ class NeuronModel {
 		 *
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual InternalSpike * GenerateInitialActivity(Neuron &  Cell) = 0;
+		virtual InternalSpike * GenerateInitialActivity(Neuron *  Cell) = 0;
 
 		/*!
 		 * \brief It processes a propagated spike (input spike in the cell).
@@ -108,7 +123,7 @@ class NeuronModel {
 		 *
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual InternalSpike * ProcessInputSpike(PropagatedSpike &  InputSpike) = 0;
+		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike) = 0;
 
 		/*!
 		 * \brief It processes an internal spike (generated spike in the cell).
@@ -124,7 +139,7 @@ class NeuronModel {
 		 *
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual InternalSpike * GenerateNextSpike(const InternalSpike &  OutputSpike) = 0;
+		virtual InternalSpike * GenerateNextSpike(InternalSpike *  OutputSpike) = 0;
 
 		/*!
 		 * \brief Check if the spike must be discard.
@@ -136,7 +151,7 @@ class NeuronModel {
 		 *
 		 * \return True if the spike must be discard. False in otherwise.
 		 */
-		virtual bool DiscardSpike(InternalSpike &  OutputSpike) = 0;
+		virtual bool DiscardSpike(InternalSpike *  OutputSpike) = 0;
 
 		/*!
 		 * \brief It prints information about the load type.
