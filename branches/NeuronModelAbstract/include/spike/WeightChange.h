@@ -17,6 +17,8 @@
 #ifndef WEIGHTCHANGE_H_
 #define WEIGHTCHANGE_H_
 
+#include "../simulation/PrintableObject.h"
+
 /*!
  * \file WeightChange.h
  *
@@ -40,7 +42,7 @@ class Interconnection;
  * \author Richard Carrillo
  * \date August 2008
  */ 
-class WeightChange{
+class WeightChange : public PrintableObject {
 	
 	private:
 		/*!
@@ -170,24 +172,6 @@ class WeightChange{
    		void SetA2PrePre(float NewA2PrePre);
    		
    		/*!
-   		 * \brief It gets the sigma parameter.
-   		 * 
-   		 * It gets the sigma parameter.
-   		 * 
-   		 * \return The sigma parameter.
-   		 */
-   		float GetSigma() const;
-   		
-   		/*!
-   		 * \brief It sets the sigma parameter.
-   		 * 
-   		 * It sets the sigma parameter.
-   		 * 
-   		 * \param NewSigma The sigma parameter.
-   		 */
-   		void SetSigma(float NewSigma);
-   		
-   		/*!
    		 * \brief It applys the weight change function.
    		 * 
    		 * It applys the weight change function.
@@ -197,6 +181,17 @@ class WeightChange{
    		 */
    		virtual void ApplyWeightChange(Interconnection * Connection,double SpikeTime) = 0;
    		
+   		/*!
+		 * \brief It prints the learning rule info.
+		 *
+		 * It prints the current learning rule characteristics.
+		 *
+		 * \param out The stream where it prints the information.
+		 *
+		 * \return The stream after the printer.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
+
 };
 
 #endif /*WEIGHTCHANGE_H_*/

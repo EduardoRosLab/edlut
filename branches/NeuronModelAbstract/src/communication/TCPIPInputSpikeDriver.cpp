@@ -49,3 +49,10 @@ void TCPIPInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw 
 		}
 	}
 }
+
+ostream & TCPIPInputSpikeDriver::PrintInfo(ostream & out){
+
+	out << "- TCP/IP Input Spike Driver" << endl;
+
+	return out;
+}

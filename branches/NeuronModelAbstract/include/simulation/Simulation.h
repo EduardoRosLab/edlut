@@ -31,6 +31,8 @@
 
 #include "../spike/EDLUTException.h"
 
+#include "./PrintableObject.h"
+
 class Network;
 class EventQueue;
 class InputSpikeDriver;
@@ -53,7 +55,7 @@ class Neuron;
  * \author Richard Carrillo
  * \date August 2008
  */
-class Simulation{
+class Simulation : public PrintableObject{
 	
 	private:
 		/*!
@@ -311,9 +313,8 @@ class Simulation{
 		 * 
 		 * \param time The event time.
 		 * \param neuron The neuron of the event.
-		 * \param value The value of the potential.
 		 */
-		void WritePotential(float time, Neuron * neuron, float value);
+		void WriteState(float time, Neuron * neuron);
 		
 		/*!
 		 * \brief It saves the current synaptic weights in the output weights driver.
@@ -380,6 +381,16 @@ class Simulation{
 		 * \return The number of acumulated event queue sizes.
 		 */
 		long long GetHeapAcumSize() const;		
+
+		/*!
+		 * \brief It prints the information of the object.
+		 *
+		 * It prints the information of the object.
+		 *
+		 * \param out The output stream where it prints the object to.
+		 * \return The output stream.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
 	
 };
 

@@ -151,7 +151,7 @@ class TableBasedModel: public NeuronModel {
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(NeuronState * State, const Interconnection * InputConnection);
+		virtual void SynapsisEffect(NeuronState * State, Interconnection * InputConnection);
 
 		/*!
 		 * \brief It returns the next spike time.
@@ -250,12 +250,15 @@ class TableBasedModel: public NeuronModel {
 		virtual bool DiscardSpike(InternalSpike *  OutputSpike);
 
 		/*!
-		 * \brief It prints information about the load type.
+		 * \brief It prints the table based model info.
 		 *
-		 * It prints information about the load type.
+		 * It prints the current table based model characteristics.
 		 *
+		 * \param out The stream where it prints the information.
+		 *
+		 * \return The stream after the printer.
 		 */
-		virtual void GetModelInfo();
+		virtual ostream & PrintInfo(ostream & out);
 
 };
 

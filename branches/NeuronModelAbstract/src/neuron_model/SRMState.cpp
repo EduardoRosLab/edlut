@@ -41,3 +41,15 @@ void SRMState::NewFiredSpike(){
 double SRMState::GetLastSpikeTime(){
 	return this->LastSpikeTime;
 }
+
+unsigned int SRMState::GetNumberOfPrintableValues(){
+	return BufferedState::GetNumberOfPrintableValues()+1;
+}
+
+double SRMState::GetPrintableValuesAt(unsigned int position){
+	if (position<BufferedState::GetNumberOfPrintableValues()){
+		return BufferedState::GetStateVariableAt(position);
+	} else if (position==BufferedState::GetNumberOfPrintableValues()) {
+		return this->GetLastSpikeTime();
+	} else return -1;
+}

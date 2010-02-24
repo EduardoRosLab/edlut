@@ -52,7 +52,7 @@ void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
 		CurrentSimulation->GetQueue()->InsertEvent(Generated);
 	}
 
-	CurrentSimulation->WritePotential(this->GetTime(), inter->GetTarget(), target->GetNeuronState()->GetStateVariableAt(1));
+	CurrentSimulation->WriteState(this->GetTime(), inter->GetTarget());
 	
 	// Propagate received spike to the next connection
 	if(source->GetOutputNumber() > this->GetTarget()+1){

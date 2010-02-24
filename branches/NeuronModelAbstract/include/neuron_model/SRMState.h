@@ -98,6 +98,24 @@ class SRMState: public BufferedState {
 		 * \return The time since the last spike fired.
 		 */
 		double GetLastSpikeTime();
+
+		/*!
+		 * \brief It gets the number of variables that you can print in this state.
+		 *
+		 * It gets the number of variables that you can print in this state.
+		 *
+		 * \return The number of variables that you can print in this state.
+		 */
+		virtual unsigned int GetNumberOfPrintableValues();
+
+		/*!
+		 * \brief It gets a value to be printed from this state.
+		 *
+		 * It gets a value to be printed from this state.
+		 *
+		 * \return The value at position-th position in this state.
+		 */
+		virtual double GetPrintableValuesAt(unsigned int position);
 };
 
 #endif /* SRMSTATE_H_ */

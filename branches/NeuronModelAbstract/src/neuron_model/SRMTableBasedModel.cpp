@@ -82,12 +82,12 @@ void SRMTableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 
 					skip_comments(fh,Currentline);
 					if(fscanf(fh,"%i",&this->LastSpikeVar)!=1){
-
+						throw EDLUTFileException(13,46,3,1,Currentline);
 					}
 
 					skip_comments(fh,Currentline);
 					if(fscanf(fh,"%i",&this->SeedVar)!=1){
-
+						throw EDLUTFileException(13,47,3,1,Currentline);
 					}
 
 					skip_comments(fh,Currentline);
@@ -139,26 +139,22 @@ void SRMTableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 	}else{
 		throw EDLUTFileException(13,25,13,0,Currentline);
 	}
-
-
 }
 
 void SRMTableBasedModel::UpdateState(NeuronState * State, double CurrentTime){
 	((SRMState *) State)->AddElapsedTime(CurrentTime-State->GetLastUpdateTime());
 
 	TableBasedModel::UpdateState(State, CurrentTime);
-
-
 }
 
 void SRMTableBasedModel::SynapsisEffect(NeuronState * State, Interconnection * InputConnection){
 	float Value = State->GetStateVariableAt(this->SynapticVar[InputConnection->GetType()]+1);
-	State->SetStateVariableAt(this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight());
+	State->SetStateVariableAt(this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*exp(1));
 }
 
 double SRMTableBasedModel::NextFiringPrediction(NeuronState * State){
 	State->SetStateVariableAt(this->LastSpikeVar+1,((SRMState *) State)->GetLastSpikeTime());
-	State->SetStateVariableAt(this->SeedVar+1,time(NULL)%10);
+	State->SetStateVariableAt(this->SeedVar+1,rand()%10);
 	return this->FiringTable->TableAccess(State);
 }
 

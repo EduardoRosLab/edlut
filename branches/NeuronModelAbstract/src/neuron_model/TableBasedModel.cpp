@@ -228,7 +228,7 @@ void TableBasedModel::UpdateState(NeuronState * State, double CurrentTime){
 	delete [] vars;
 }
 
-void TableBasedModel::SynapsisEffect(NeuronState * State, const Interconnection * InputConnection){
+void TableBasedModel::SynapsisEffect(NeuronState * State, Interconnection * InputConnection){
 	float Value = State->GetStateVariableAt(this->SynapticVar[InputConnection->GetType()]+1);
 	State->SetStateVariableAt(this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*WEIGHTSCALE);
 }
@@ -330,21 +330,17 @@ bool TableBasedModel::DiscardSpike(InternalSpike *  OutputSpike){
 	return (OutputSpike->GetSource()->GetNeuronState()->GetNextPredictedSpikeTime()!=OutputSpike->GetTime());
 }
 
+ostream & TableBasedModel::PrintInfo(ostream & out) {
+	out << "- Table-Based Model: " << this->GetModelID() << endl;
 
-void TableBasedModel::GetModelInfo() {
-	unsigned long idim,itab;
+	for(unsigned int itab=0;itab<this->NumTables;itab++){
+		cout << this->Tables[itab].GetDimensionNumber() << " " << this->Tables[itab].GetInterpolation() << " (" << this->Tables[itab].GetFirstInterpolation() << ")\t";
 
-	printf("Ident: %s\n",this->GetModelID());
+		for(unsigned int idim=0;idim<this->Tables[itab].GetDimensionNumber();idim++){
+			cout << this->Tables[itab].GetDimensionAt(idim)->statevar << " " << this->Tables[itab].GetDimensionAt(idim)->interp << " (" << this->Tables[itab].GetDimensionAt(idim)->nextintdim << ")\t";
+		}
+	}
 
-	for(itab=0;itab<this->NumTables;itab++){
-
-		printf("%lu %i(%+i)   ",this->Tables[itab].GetDimensionNumber(),this->Tables[itab].GetInterpolation(),this->Tables[itab].GetFirstInterpolation());
-
-		for(idim=0;idim<this->Tables[itab].GetDimensionNumber();idim++){
-        	printf("%i %i(%i)  ",this->Tables[itab].GetDimensionAt(idim)->statevar,this->Tables[itab].GetDimensionAt(idim)->interp,this->Tables[itab].GetDimensionAt(idim)->nextintdim);
-        }
-
-		printf("\n");
-     }
+	cout << endl;
 }
 

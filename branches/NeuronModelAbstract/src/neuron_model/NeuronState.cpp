@@ -70,3 +70,19 @@ double NeuronState::GetNextPredictedSpikeTime(){
 double NeuronState::GetEndRefractoryPeriod(){
 	return this->PredictionEnd;
 }
+
+unsigned int NeuronState::GetNumberOfPrintableValues(){
+	return this->GetNumberOfVariables()+3;
+}
+
+double NeuronState::GetPrintableValuesAt(unsigned int position){
+	if (position<this->GetNumberOfVariables()){
+		return this->GetStateVariableAt(position);
+	} else if (position==this->GetNumberOfVariables()) {
+		return this->GetLastUpdateTime();
+	} else if (position==this->GetNumberOfVariables()+1){
+		return this->GetNextPredictedSpikeTime();
+	} else if (position==this->GetNumberOfVariables()+2){
+		return this->GetEndRefractoryPeriod();
+	} else return -1;
+}

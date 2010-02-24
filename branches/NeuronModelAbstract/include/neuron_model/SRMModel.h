@@ -57,6 +57,11 @@ class SRMModel: public NeuronModel {
 		float tau;
 
 		/*!
+		 * \brief EPSP Step time
+		 */
+		float EPSPStep;
+
+		/*!
 		 * \brief Resting potential
 		 */
 		float vr;
@@ -261,12 +266,15 @@ class SRMModel: public NeuronModel {
 		virtual bool DiscardSpike(InternalSpike *  OutputSpike);
 
 		/*!
-		 * \brief It prints information about the load type.
+		 * \brief It prints the time-driven model info.
 		 *
-		 * It prints information about the load type.
+		 * It prints the current time-driven model characteristics.
 		 *
+		 * \param out The stream where it prints the information.
+		 *
+		 * \return The stream after the printer.
 		 */
-		virtual void GetModelInfo();
+		virtual ostream & PrintInfo(ostream & out);
 };
 
 #endif /* SRMMODEL_H_ */

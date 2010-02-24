@@ -61,3 +61,20 @@ void WeightChange::SetA2PrePre(float NewA2PrePre){
 	this->a2prepre = NewA2PrePre;
 }
 
+ostream & WeightChange::PrintInfo(ostream & out) {
+	out << "- Weight Change: " << endl;
+
+	out << "\tMaximum Value in " << this->GetMaxPos() << "s" << endl;
+
+	out << "\tNumber of state variables: " << this->GetNumberOfVar() << endl;
+
+   	out << "\tNumber of registers: " << this->GetNumExps() << endl;
+
+   	out << "\tA1 parameter value: " << this->GetA1Pre() << endl;
+
+   	out << "\tA2 parameter value: " << this->GetA2PrePre() << endl;
+
+   	if (this->GetTrigger()) out << "\tTrigger" << endl;
+   	else out << "\tNon-trigger" << endl;
+}
+

@@ -97,4 +97,21 @@ NeuronModel * Neuron::GetNeuronModel() const{
 	return this->type;
 }
 
+ostream & Neuron::PrintInfo(ostream & out) {
+
+	out << "- Neuron: " << this->index << endl;
+
+	out << "\tType: " << this->type->GetModelID() << endl;
+
+	out << "\tInput Connections: " << this->InputConnections.size() << endl;
+
+   	out << "\tOutput Connections: " << this->OutputConnections.size() << endl;
+
+   	if (this->monitored) out << "\tMonitored" << endl;
+   	else out << "\tNon-monitored" << endl;
+
+   	if (this->isOutput) out << "\tOutput" << endl;
+   	else out << "\tNon-output" << endl;
+}
+
 

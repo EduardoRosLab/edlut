@@ -88,7 +88,7 @@ int main(int ac, char *av[]) {
 		if(Reader.CheckInfo()){
 			//Simul.GetNetwork()->tables_info();
 			//neutypes_info();
-			Simul.GetNetwork()->NetInfo();
+			Simul.PrintInfo(cout);
 		}
 			
 		cout << "Simulating network..." << endl;

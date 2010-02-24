@@ -154,14 +154,6 @@ class NeuronModel {
 		virtual bool DiscardSpike(InternalSpike *  OutputSpike) = 0;
 
 		/*!
-		 * \brief It prints information about the load type.
-		 *
-		 * It prints information about the load type.
-		 *
-		 */
-		virtual void GetModelInfo() = 0;
-
-		/*!
 		 * \brief It gets the neuron model ID.
 		 *
 		 * It gets the neuron model ID.
@@ -169,6 +161,17 @@ class NeuronModel {
 		 * \return The identificator of the neuron model.
 		 */
 		string GetModelID();
+
+		/*!
+		 * \brief It prints the neuron model info.
+		 *
+		 * It prints the current neuron model characteristics.
+		 *
+		 * \param out The stream where it prints the information.
+		 *
+		 * \return The stream after the printer.
+		 */
+		virtual ostream & PrintInfo(ostream & out) = 0;
 
 };
 

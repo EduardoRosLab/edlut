@@ -27,6 +27,8 @@
  * This file declares a class for getting external input spikes.
  */
 #include "../spike/EDLUTException.h"
+
+#include "../simulation/PrintableObject.h"
  
 class EventQueue;
 class Network;
@@ -43,7 +45,7 @@ class Network;
  * \author Richard Carrillo
  * \date August 2008
  */
-class InputSpikeDriver {
+class InputSpikeDriver : public PrintableObject{
 	
 	protected:
 	

@@ -145,3 +145,28 @@ void Interconnection::SetLastSpikeTime(double NewTime){
 void Interconnection::ChangeWeights(double stime){
 	this->wchange->ApplyWeightChange(this,stime);
 }
+
+ostream & Interconnection::PrintInfo(ostream & out) {
+	out << "- Interconnection: " << this->index << endl;
+
+	out << "\tSource: " << this->source->GetIndex() << endl;
+
+	out << "\tTarget: " << this->target->GetIndex() << endl;
+
+   	out << "\tDelay: " << this->GetDelay() << "s" << endl;
+
+   	out << "\tConnection Type: " << this->GetType() << endl;
+
+   	out << "\tCurrent Weight: " << this->GetWeight() << endl;
+
+   	out << "\tMaximum Weight: " << this->GetMaxWeight() << endl;
+
+   	out << "\tWeight Change: ";
+
+   	if (this->GetWeightChange()!=0) this->GetWeightChange()->PrintInfo(out);
+   	else out << "None" << endl;
+
+   	out << "\tLast Spike Time: " << this->GetLastSpikeTime() << endl;
+
+   	return out;
+}

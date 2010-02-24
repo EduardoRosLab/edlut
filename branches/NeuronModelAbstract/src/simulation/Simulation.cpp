@@ -108,7 +108,9 @@ void Simulation::WriteSpike(const Spike * spike){
     
     if(neuron->IsMonitored()){
 		for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
-			(*it)->WriteSpike(spike);
+			if (!(*it)->IsWritePotentialCapable()){
+				(*it)->WriteSpike(spike);
+			}
 		}
 	}
 	   	
@@ -119,19 +121,11 @@ void Simulation::WriteSpike(const Spike * spike){
 	}		
 }
 
-void Simulation::WritePotential(float time, Neuron * neuron, float value){
+void Simulation::WriteState(float time, Neuron * neuron){
 	if(neuron->IsMonitored()){
 		for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
 			if ((*it)->IsWritePotentialCapable()){
-				(*it)->WritePotential(time, neuron, value);
-			}
-		}
-	}
-	   	
-	if(neuron->IsOutput()){
-		for (list<OutputSpikeDriver *>::iterator it=this->OutputSpike.begin(); it!=this->OutputSpike.end(); ++it){
-			if ((*it)->IsWritePotentialCapable()){
-				(*it)->WritePotential(time, neuron, value);
+				(*it)->WriteState(time, neuron);
 			}
 		}
 	}		
@@ -213,4 +207,47 @@ void Simulation::AddOutputWeightDriver(OutputWeightDriver * NewOutput){
 		
 void Simulation::RemoveOutputWeightDriver(OutputWeightDriver * NewOutput){
 	this->OutputWeight.remove(NewOutput);
+}
+
+ostream & Simulation::PrintInfo(ostream & out) {
+	out << "- Simulation:" << endl;
+
+	out << "  * End simulation time: " << this->GetTotalSimulationTime() << " s."<< endl;
+
+	out << "  * Saving weight step time: " << this->GetSaveStep() << " s." << endl;
+
+	out << "  * Communication step time: " << this->GetSimulationStep() << " s." << endl;
+
+	out << "  * Total simulation time: " << this->GetTotalSimulationTime() << " s." << endl;
+
+	this->GetNetwork()->PrintInfo(out);
+
+	out << "  * Input spike channels: " << this->InputSpike.size() << endl;
+
+	for (list<InputSpikeDriver *>::iterator it=this->InputSpike.begin(); it!=this->InputSpike.end(); ++it){
+		(*it)->PrintInfo(out);
+	}
+
+	out << "  * Output spike channels: " << this->OutputSpike.size() << endl;
+
+	for (list<OutputSpikeDriver *>::iterator it=this->OutputSpike.begin(); it!=this->OutputSpike.end(); ++it){
+		(*it)->PrintInfo(out);
+	}
+
+	out << "  * Monitor spike channels: " << this->MonitorSpike.size() << endl;
+
+	for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
+		(*it)->PrintInfo(out);
+	}
+
+	out << "  * Saving weight channels: " << this->OutputWeight.size() << endl;
+
+	for (list<OutputWeightDriver *>::iterator it=this->OutputWeight.begin(); it!=this->OutputWeight.end(); ++it){
+		(*it)->PrintInfo(out);
+	}
+
+	out << "  * Network description:" << endl;
+	this->GetNetwork()->PrintInfo(out);
+
+	return out;
 }

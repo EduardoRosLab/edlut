@@ -26,6 +26,8 @@
  *
  * This file declares a class which abstracts a spiking neural network connection.
  */
+
+#include "../simulation/PrintableObject.h"
  
 
 class Neuron;
@@ -44,7 +46,7 @@ class ActivityRegister;
  * \author Richard Carrillo
  * \date August 2008
  */
-class Interconnection {
+class Interconnection : public PrintableObject {
 	
 	private:
 		/*!
@@ -322,6 +324,17 @@ class Interconnection {
 		 * \param stime The current time in the simulation.
 		 */
 		void ChangeWeights(double stime);
+
+		/*!
+		 * \brief It prints the interconnection info.
+		 *
+		 * It prints the current interconnection characteristics.
+		 *
+		 * \param out The stream where it prints the information.
+		 *
+		 * \return The stream after the printer.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
 };
   
 #endif /*INTERCONNECTION_H_*/

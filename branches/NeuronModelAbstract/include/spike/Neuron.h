@@ -30,6 +30,8 @@
 #include <vector>
 
 #include "../simulation/Configuration.h"
+
+#include "../simulation/PrintableObject.h"
  
 using namespace std;
 
@@ -56,7 +58,7 @@ class Spike;
  * \author Richard Carrillo
  * \date August 2008
  */
-class Neuron{
+class Neuron : public PrintableObject {
 	private:
 	
 		/*!
@@ -249,6 +251,17 @@ class Neuron{
    		 * \return The neuron type of the current object.
    		 */
 		NeuronModel * GetNeuronModel() const;
+
+		/*!
+		 * \brief It prints the neuron info.
+		 *
+		 * It prints the current neuron characteristics.
+		 *
+		 * \param out The stream where it prints the information.
+		 *
+		 * \return The stream after the printer.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
    		  		
 };
   

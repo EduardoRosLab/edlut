@@ -33,6 +33,8 @@
 
 #include "./EDLUTFileException.h"
 
+#include "../simulation/PrintableObject.h"
+
 class Interconnection;
 class NeuronModel;
 class Neuron;
@@ -51,7 +53,7 @@ class EventQueue;
  * \author Richard Carrillo
  * \date August 2008
  */
-class Network{
+class Network : public PrintableObject{
 	private:
 	
 		/*!
@@ -62,7 +64,7 @@ class Network{
    		/*!
    		 * \brief Number of interconnections.
    		 */
-   		int ninters;
+   		long int ninters;
    
    		/*!
    		 * \brief Neuron types.
@@ -216,14 +218,6 @@ class Network{
    		~Network();
    		
    		/*!
-  		 * \brief It prints information about load network.
-  		 * 
-  		 * It prints information about load network.
-  		 * 
-  		 */
-   		void NetInfo();
-   		
-   		/*!
    		 * \brief It gets a neuron by the index.
    		 * 
    		 * It returns a neuron from the index.
@@ -263,11 +257,8 @@ class Network{
    		 * 
    		 * \return The stream after the printer.
    		 */
-   		ostream & GetNetInfo(ostream & out) const;
+   		virtual ostream & PrintInfo(ostream & out);
    		
-   		/*const char * GetTablesInfo();
-   		
-   		const char * GetNeuronTypesInfo();*/
 };
 
 /*!

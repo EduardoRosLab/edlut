@@ -43,7 +43,7 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 		neuron->GetNeuronModel()->GenerateNextSpike(this);
 		
 		CurrentSimulation->WriteSpike(this);
-		CurrentSimulation->WritePotential(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource(), neuron->GetNeuronState()->GetStateVariableAt(1));
+		CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource());
 
 		// Generate the output activity
 		if (neuron->IsOutputConnected()){
