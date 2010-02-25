@@ -56,10 +56,12 @@ void BufferedState::CheckActivity(){
 }
 
 void BufferedState::AddElapsedTime(float ElapsedTime){
-	unsigned int index = this->FirstIndex;
+	int index = this->FirstIndex;
 	while (index!=this->LastIndex){
 		this->ActivityBuffer[index].first += ElapsedTime;
-		index = (index-1)%(this->MaximumSize+1);
+		index -= 1;
+		index = (index<0) ? this->MaximumSize : index;
+		//index = (index-1)%(this->MaximumSize+1);
 	}
 }
 
