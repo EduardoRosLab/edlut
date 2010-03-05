@@ -16,13 +16,13 @@
 
 #include "../../include/neuron_model/NeuronState.h"
 
-NeuronState::NeuronState(unsigned int NumVariables): NumberOfVariables(NumVariables){
+NeuronState::NeuronState(unsigned int NumVariables): NumberOfVariables(NumVariables), LastSpikeTime(100){
 	// TODO Auto-generated constructor stub
 	this->StateVars = (float *) new float [NumVariables];
 }
 
 NeuronState::NeuronState(const NeuronState & OldState): NumberOfVariables(OldState.NumberOfVariables),
-		LastUpdate(OldState.LastUpdate), PredictedSpike(OldState.PredictedSpike), PredictionEnd(OldState.PredictionEnd) {
+		LastUpdate(OldState.LastUpdate), PredictedSpike(OldState.PredictedSpike), PredictionEnd(OldState.PredictionEnd), LastSpikeTime(OldState.LastSpikeTime) {
 	this->StateVars = (float *) new float [this->NumberOfVariables];
 
 	for (unsigned int i=0; i<this->NumberOfVariables; ++i){
@@ -86,3 +86,19 @@ double NeuronState::GetPrintableValuesAt(unsigned int position){
 		return this->GetEndRefractoryPeriod();
 	} else return -1;
 }
+
+double NeuronState::GetLastSpikeTime(){
+	return this->LastSpikeTime;
+}
+
+void NeuronState::NewFiredSpike(){
+	this->LastSpikeTime = 0;
+}
+
+void NeuronState::AddElapsedTime(float ElapsedTime){
+
+	this->LastSpikeTime += ElapsedTime;
+}
+
+
+

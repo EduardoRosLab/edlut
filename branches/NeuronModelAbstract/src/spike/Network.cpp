@@ -18,9 +18,11 @@
 
 #include "../../include/spike/Interconnection.h"
 #include "../../include/spike/Neuron.h"
-#include "../../include/spike/MultiplicativeWeightChange.h"
-#include "../../include/spike/AdditiveWeightChange.h"
-#include "../../include/spike/SinWeightChange.h"
+
+#include "../../include/learning_rules/MultiplicativeKernelChange.h"
+#include "../../include/learning_rules/AdditiveKernelChange.h"
+#include "../../include/learning_rules/SinWeightChange.h"
+#include "../../include/learning_rules/STDPWeightChange.h"
 
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/TableBasedModel.h"
@@ -195,42 +197,28 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
             	
             	skip_comments(fh,Currentline);
         		if(fscanf(fh,"%i",&(this->nwchanges))==1){
-        			float maxpos,a1pre,a2prepre;
-        			int trigger;
-        			int multiplicative;
         			int wcind;
-        			this->wchanges=new WeightChange * [this->nwchanges];
+        			this->wchanges=new LearningRule * [this->nwchanges];
         			if(this->wchanges){
         				for(wcind=0;wcind<this->nwchanges;wcind++){
-        					int indexp;
-        					static float explpar[]={30.1873,60.3172,5.9962};
-        					static float expcpar[]={-5.2410,3.1015,2.2705};
-        					int grade;
+        					char ident_type[MAXIDSIZE+1];
         					skip_comments(fh,Currentline);
-        					if(fscanf(fh,"%i",&trigger)==1 && fscanf(fh,"%f",&maxpos)==1 && fscanf(fh,"%f",&a1pre)==1 && fscanf(fh,"%f",&a2prepre)==1 && fscanf(fh,"%i",&grade)==1 && fscanf(fh,"%i",&multiplicative)==1){
-        						if(a1pre < -1.0 || a1pre > 1.0){
-        							throw EDLUTFileException(4,27,22,1,Currentline);
-        							break;
+        					string LearningModel;
+        					if(fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident_type)==1){
+        						if (string(ident_type)==string("AdditiveKernel")){
+        							this->wchanges[wcind] = new AdditiveKernelChange();
+        						} else if (string(ident_type)==string("MultiplicativeKernel")){
+        							this->wchanges[wcind] = new MultiplicativeKernelChange();
+        						} else if (string(ident_type)==string("SinAdditiveKernel")){
+        							this->wchanges[wcind] = new SinWeightChange();
+        						} else if (string(ident_type)==string("STDP")){
+        							this->wchanges[wcind] = new STDPWeightChange();
+        						} else {
+                           			throw EDLUTFileException(4,28,23,1,Currentline);
         						}
-        						if (multiplicative==1){
-        							this->wchanges[wcind] = new MultiplicativeWeightChange();
-        							
-        							for(indexp=0;indexp<this->wchanges[wcind]->GetNumExps();indexp++){
-                       					((MultiplicativeWeightChange *) this->wchanges[wcind])->SetLparAt(indexp,(maxpos == 0)?0:(0.1/maxpos)*explpar[indexp]);
-                       					((MultiplicativeWeightChange *) this->wchanges[wcind])->SetCparAt(indexp,expcpar[indexp]);
-                       				}
-        						} else if (multiplicative==2){
-        							this->wchanges[wcind] = new SinWeightChange(grade);
-        						} else{
-        							this->wchanges[wcind] = new AdditiveWeightChange();
-        						}
-        						this->wchanges[wcind]->SetTrigger(trigger);
-                       			this->wchanges[wcind]->SetMaxPos(maxpos);
-                       			this->wchanges[wcind]->SetNumExps(3);
-                       			
-                       			
-                       			this->wchanges[wcind]->SetA1Pre(a1pre);
-                       			this->wchanges[wcind]->SetA2PrePre(a2prepre);
+
+        						this->wchanges[wcind]->LoadLearningRule(fh,Currentline);
+
                        		}else{
                        			throw EDLUTFileException(4,28,23,1,Currentline);
                        			break;
@@ -289,7 +277,7 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         										this->inters[posc].SetWeightChange(this->wchanges[wchange]);
         									}
                                 
-                                			this->inters[posc].SetLastSpikeTime(0); // -1.0/0.0; // -Infinite not needed if last activity=0
+                                			this->inters[posc].SetLastSpikeTime(-100); // -1.0/0.0; // -Infinite not needed if last activity=0
                                 		}
         							}
         						}

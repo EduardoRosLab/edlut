@@ -56,6 +56,8 @@ void BufferedState::CheckActivity(){
 }
 
 void BufferedState::AddElapsedTime(float ElapsedTime){
+	NeuronState::AddElapsedTime(ElapsedTime);
+
 	int index = this->FirstIndex;
 	while (index!=this->LastIndex){
 		this->ActivityBuffer[index].first += ElapsedTime;

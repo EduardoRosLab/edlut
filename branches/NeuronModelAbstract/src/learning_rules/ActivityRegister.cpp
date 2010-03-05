@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/spike/ActivityRegister.h"
+#include "../../include/learning_rules/ActivityRegister.h"
 
 
 ActivityRegister::ActivityRegister(int VarNumber): numvar(VarNumber) {

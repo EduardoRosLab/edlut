@@ -40,11 +40,6 @@
  * \date February 2010
  */
 class SRMState: public BufferedState {
-	private:
-		/*!
-		 * \brief Time since last spike fired.
-		 */
-		double LastSpikeTime;
 
 	public:
 		/*!
@@ -73,31 +68,6 @@ class SRMState: public BufferedState {
 		 * It destroys an object of this class.
 		 */
 		virtual ~SRMState();
-
-		/*!
-		 * \brief Add elapsed time to spikes.
-		 *
-		 * It adds the elapsed time to spikes.
-		 *
-		 * \param ElapsedTime The time since the last update.
-		 */
-		virtual void AddElapsedTime(float ElapsedTime);
-
-		/*!
-		 * \brief It adds a new fired spike to the state.
-		 *
-		 * It adds a new fired spike to the state.
-		 */
-		void NewFiredSpike();
-
-		/*!
-		 * \brief It gets the time since the last spike was fired.
-		 *
-		 * It gets the time since the last spike was fired.
-		 *
-		 * \return The time since the last spike fired.
-		 */
-		double GetLastSpikeTime();
 
 		/*!
 		 * \brief It gets the number of variables that you can print in this state.

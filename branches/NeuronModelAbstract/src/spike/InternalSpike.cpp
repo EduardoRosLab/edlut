@@ -25,6 +25,8 @@
 
 #include "../../include/communication/OutputSpikeDriver.h"
 
+#include "../../include/learning_rules/LearningRule.h"
+
 InternalSpike::InternalSpike():Spike() {
 }
    	
@@ -39,6 +41,7 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 	Neuron * neuron=this->source;  // source of the spike
 	
 	if(!neuron->GetNeuronModel()->DiscardSpike(this)){
+		neuron->GetNeuronState()->NewFiredSpike();
 		// If it is a valid spike (not discard), generate the next spike in this cell.
 		neuron->GetNeuronModel()->GenerateNextSpike(this);
 		
@@ -49,6 +52,14 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 		if (neuron->IsOutputConnected()){
 			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
 			CurrentSimulation->GetQueue()->InsertEvent(spike);
+		}
+
+		for (int i=0; i<neuron->GetInputNumber(); ++i){
+			Interconnection * inter = neuron->GetInputConnectionAt(i);
+
+			if(inter->GetWeightChange() != 0){
+				inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
+			}
 		}
     }
 }

@@ -31,7 +31,7 @@
  
 
 class Neuron;
-class WeightChange;
+class LearningRule;
 class ActivityRegister;
 
 /*!
@@ -87,7 +87,7 @@ class Interconnection : public PrintableObject {
 		/*!
 		 * \brief The learning (or weight change) rule of the connection.
 		 */
-		WeightChange* wchange;
+		LearningRule* wchange;
 		
 		/*!
 		 * \brief The activity register of the connection.
@@ -124,7 +124,7 @@ class Interconnection : public PrintableObject {
 		 * \param NewActivity Last activity register of this connection.
 		 * \param NewLastSpikeTime Time of the last propagated spike in this connection.
 		 */
-		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, WeightChange* NewWeightChange, float NewLastSpikeTime);
+		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, float NewLastSpikeTime);
 		
 		/*!
 		 * \brief It gets the connection index.
@@ -259,7 +259,7 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
-		WeightChange * GetWeightChange() const;
+		LearningRule * GetWeightChange() const;
 		
 		/*!
 		 * \brief It sets the learning rule of this connection.
@@ -268,7 +268,7 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \param NewWeightChange The new learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
-		void SetWeightChange(WeightChange * NewWeightChange);
+		void SetWeightChange(LearningRule * NewWeightChange);
 		
 		/*!
 		 * \brief It clears the activity register of this connection.
@@ -316,15 +316,6 @@ class Interconnection : public PrintableObject {
 		 */
 		void SetLastSpikeTime(double NewTime);
 		
-		/*!
-		 * \brief It modifies the synaptic weight of this connection.
-		 * 
-		 * It modifies the synaptic weight of this connection according to its learning rule.
-		 * 
-		 * \param stime The current time in the simulation.
-		 */
-		void ChangeWeights(double stime);
-
 		/*!
 		 * \brief It prints the interconnection info.
 		 *

@@ -141,34 +141,35 @@ simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            $(srcdir)/simulation/Simulation.cpp \
                            $(srcdir)/simulation/Utils.cpp
                            
-spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
-						   $(srcdir)/spike/ActivityRegister.cpp \
-                           $(srcdir)/spike/ActivityRegister.cpp \
-                           $(srcdir)/spike/EDLUTException.cpp \
+spike-sources			:= $(srcdir)/spike/EDLUTException.cpp \
                            $(srcdir)/spike/EDLUTFileException.cpp \
                            $(srcdir)/spike/InputSpike.cpp \
                            $(srcdir)/spike/Interconnection.cpp \
                            $(srcdir)/spike/InternalSpike.cpp \
-                           $(srcdir)/spike/MultiplicativeWeightChange.cpp \
                            $(srcdir)/spike/Network.cpp \
                            $(srcdir)/spike/Neuron.cpp \
                            $(srcdir)/spike/PropagatedSpike.cpp \
-                           $(srcdir)/spike/Spike.cpp \
-                           $(srcdir)/spike/WeightChange.cpp \
-                           $(srcdir)/spike/SinWeightChange.cpp
+                           $(srcdir)/spike/Spike.cpp
                            
 neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
 						   $(srcdir)/neuron_model/SRMState.cpp \
 						   $(srcdir)/neuron_model/NeuronModel.cpp \
                            $(srcdir)/neuron_model/NeuronState.cpp \
                            $(srcdir)/neuron_model/SRMModel.cpp \
-                           $(srcdir)/spike/NeuronModelTable.cpp \
-                           $(srcdir)/neuron_model/TableBasedModel.cpp                 
+                           $(srcdir)/neuron_model/NeuronModelTable.cpp \
+                           $(srcdir)/neuron_model/TableBasedModel.cpp
+                           
+learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
+                           $(srcdir)/learning_rules/AdditiveKernelChange.cpp \
+						   $(srcdir)/learning_rules/MultiplicativeKernelChange.cpp \
+						   $(srcdir)/learning_rules/SinWeightChange.cpp \
+						   $(srcdir)/learning_rules/STDPWeightChange.cpp 
                           
 sources     := $(communication-sources) \
                $(simulation-sources) \
                $(spike-sources) \
-               $(neuron_model-sources)
+               $(neuron_model-sources) \
+               $(learning_rules-sources)
 
 
 ################################################################################

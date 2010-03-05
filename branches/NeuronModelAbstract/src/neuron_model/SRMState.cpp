@@ -16,7 +16,7 @@
 
 #include "../../include/neuron_model/SRMState.h"
 
-SRMState::SRMState(unsigned int NumVariables, float BufferAmpl, unsigned int MaxSize): BufferedState(NumVariables,BufferAmpl,MaxSize), LastSpikeTime(100){
+SRMState::SRMState(unsigned int NumVariables, float BufferAmpl, unsigned int MaxSize): BufferedState(NumVariables,BufferAmpl,MaxSize){
 
 }
 
@@ -24,22 +24,8 @@ SRMState::~SRMState(){
 
 }
 
-SRMState::SRMState(const SRMState & OldState): BufferedState(OldState), LastSpikeTime(OldState.LastSpikeTime){
+SRMState::SRMState(const SRMState & OldState): BufferedState(OldState){
 
-}
-
-void SRMState::AddElapsedTime(float ElapsedTime){
-	this->LastSpikeTime += ElapsedTime;
-
-	BufferedState::AddElapsedTime(ElapsedTime);
-}
-
-void SRMState::NewFiredSpike(){
-	this->LastSpikeTime = 0;
-}
-
-double SRMState::GetLastSpikeTime(){
-	return this->LastSpikeTime;
 }
 
 unsigned int SRMState::GetNumberOfPrintableValues(){

@@ -38,7 +38,7 @@
 class Interconnection;
 class NeuronModel;
 class Neuron;
-class WeightChange;
+class LearningRule;
 class EventQueue;
 
 /*!
@@ -89,7 +89,7 @@ class Network : public PrintableObject{
    		/*!
    		 * \brief Learning rules.
    		 */
-   		WeightChange ** wchanges;
+   		LearningRule ** wchanges;
    
    		/*!
    		 * \brief Number of learning rules.

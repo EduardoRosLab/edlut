@@ -23,6 +23,8 @@
 #include "../../include/simulation/Simulation.h"
 #include "../../include/simulation/EventQueue.h"
 
+#include "../../include/learning_rules/LearningRule.h"
+
 PropagatedSpike::PropagatedSpike():Spike() {
 }
    	
@@ -61,9 +63,11 @@ void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
 		CurrentSimulation->GetQueue()->InsertEvent(nextspike);
 	}
 
+	inter->SetLastSpikeTime(this->time);
+
 	// If learning, change weights
     if(inter->GetWeightChange() != 0){
-    	inter->ChangeWeights(this->time);
+    	inter->GetWeightChange()->ApplyPreSynapticSpike(inter,this->time);
     }
 }
 
