@@ -364,9 +364,9 @@ void Network::SaveWeights(const char *wfile) throw (EDLUTException){
 		weight=0.0; // just to avoid compiler warning messages
 		
 		// Write the number of weights
-		if(fprintf(fh,"%li\n",this->ninters) <= 0){
-			throw EDLUTException(12,33,4,0);
-		}
+		//if(fprintf(fh,"%li\n",this->ninters) <= 0){
+		//	throw EDLUTException(12,33,4,0);
+		//}
 					
 		for(connind=0;connind<=this->ninters;connind++){
 			if(connind < this->ninters){
