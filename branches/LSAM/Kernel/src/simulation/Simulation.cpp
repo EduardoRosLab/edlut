@@ -32,12 +32,12 @@
 #include "../../include/communication/InputSpikeDriver.h"
 #include "../../include/communication/OutputWeightDriver.h"
 
-#include "../include/simulation/ParameterException.h"
+#include "../../include/simulation/ParameterException.h"
 
-#include "../include/communication/ConnectionException.h"
+#include "../../include/communication/ConnectionException.h"
 
-#include "../include/spike/EDLUTFileException.h"
-#include "../include/spike/EDLUTException.h"
+#include "../../include/spike/EDLUTFileException.h"
+#include "../../include/spike/EDLUTException.h"
 
 
 		

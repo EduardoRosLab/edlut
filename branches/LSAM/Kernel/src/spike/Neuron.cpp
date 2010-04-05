@@ -122,7 +122,7 @@ void Neuron::ProcessInputActivity(InternalSpike * InputSpike){
 		this->predictionend += InputSpike->GetTime();
 	}else{
 		this->predictionend = InputSpike->GetTime()+DEF_REF_PERIOD;
-		cerr << "Warning: firing table and firing-end table discrepance (using default ref period)" << endl;
+		// cerr << "Warning: firing table and firing-end table discrepance (using default ref period)" << endl;
 	}
 }
    		
