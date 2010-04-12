@@ -32,12 +32,12 @@
 #include "../../include/communication/InputSpikeDriver.h"
 #include "../../include/communication/OutputWeightDriver.h"
 
-#include "../include/simulation/ParameterException.h"
+#include "../../include/simulation/ParameterException.h"
 
-#include "../include/communication/ConnectionException.h"
+#include "../../include/communication/ConnectionException.h"
 
-#include "../include/spike/EDLUTFileException.h"
-#include "../include/spike/EDLUTException.h"
+#include "../../include/spike/EDLUTFileException.h"
+#include "../../include/spike/EDLUTException.h"
 
 
 		
@@ -64,26 +64,6 @@ Simulation::Simulation(const Simulation & ant):Net(ant.Net), Queue(ant.Queue), I
 }
 
 Simulation::~Simulation(){
-	cout << "Deleting simulation" << endl;
-	delete Queue;
-	delete Net;
-	
-	for (list<InputSpikeDriver *>::iterator it=this->InputSpike.begin(); it!=this->InputSpike.end(); ++it){
-		delete (*it);
-	}
-	
-	for (list<OutputSpikeDriver *>::iterator it=this->OutputSpike.begin(); it!=this->OutputSpike.end(); ++it){
-		delete (*it);
-	}
-	
-	for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
-		delete (*it);
-	}
-	
-	for (list<OutputWeightDriver *>::iterator it=this->OutputWeight.begin(); it!=this->OutputWeight.end(); ++it){
-		delete (*it);
-	}	
-	
 }
 
 void Simulation::EndSimulation(){

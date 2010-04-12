@@ -36,7 +36,7 @@ Simulation * InitializeAndCatch(int ac, char *av[]) {
 
 	try {
 		ParamReader Reader(ac, av);
-	    Simul = Reader.CreateAndInitializeSimulation();
+	        Simul = Reader.CreateAndInitializeSimulation();
 	} catch (ParameterException Exc){
 		cerr << Exc << endl;
 		cerr << av[0] << " -time Simulation_Time -nf Network_File -wf Weights_File";

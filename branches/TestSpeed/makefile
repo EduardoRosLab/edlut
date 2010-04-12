@@ -32,7 +32,7 @@ installdir  := $(HOME)/usr
 # this is the name of the package. i.e if it is 'cvlab' the executable
 # will be named as 'cvlab' and if this is a library its name will be
 # 'libcvlab.a'
-packagename := TestSpeed
+packagename := EDLUTKernel
 
 version     := 0.1
 author      := $(FULL_USER_NAME)
@@ -110,7 +110,7 @@ includedir  := ./include
 bindir		:= ./bin
 
 # default file to be included when the executable build is required
-exe-source-file := ${srcdir}/TestSpeed.cpp
+exe-source-file := ${srcdir}/EDLUTKernel.cpp
 
 # what to compile ? include .cpp and .c files here in your project
 # if you don't have a main() function in one of the sources, you'll get an error
@@ -144,7 +144,6 @@ simulation-sources	:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            
 spike-sources		:= $(srcdir)/spike/AdditiveWeightChange.cpp \
 			   $(srcdir)/spike/ActivityRegister.cpp \
-                           $(srcdir)/spike/ActivityRegister.cpp \
                            $(srcdir)/spike/EDLUTException.cpp \
                            $(srcdir)/spike/EDLUTFileException.cpp \
                            $(srcdir)/spike/InputSpike.cpp \

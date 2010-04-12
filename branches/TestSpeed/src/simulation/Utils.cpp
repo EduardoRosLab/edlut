@@ -18,7 +18,7 @@
 
 int skip_spaces(FILE *fh, long & Currentline){
 	int ch;
-	while((ch=fgetc(fh)) == ' ' || ch=='\n') // take all spaces
+	while((ch=fgetc(fh)) == ' ' || ch=='\r' || ch=='\n') // take all spaces
 		if(ch=='\n')
 			Currentline++;
 			
