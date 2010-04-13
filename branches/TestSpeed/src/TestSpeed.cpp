@@ -57,7 +57,7 @@ int main(int ac, char *av[]) {
 	clock_t startt, endt;
 	cout << "Loading tables..." << endl;
    
-    int number_of_executions = 100000;
+    int number_of_executions = 10;
     double total_events = 0, total_time = 0, total_spikes = 0;
     
    
