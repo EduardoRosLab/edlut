@@ -157,7 +157,8 @@ neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
                            $(srcdir)/neuron_model/NeuronState.cpp \
                            $(srcdir)/neuron_model/SRMModel.cpp \
                            $(srcdir)/neuron_model/NeuronModelTable.cpp \
-                           $(srcdir)/neuron_model/TableBasedModel.cpp
+                           $(srcdir)/neuron_model/TableBasedModel.cpp \
+                           $(srcdir)/neuron_model/SRMTableBasedModel.cpp
                            
 learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
                            $(srcdir)/learning_rules/AdditiveKernelChange.cpp \
