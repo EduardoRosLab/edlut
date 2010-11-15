@@ -352,12 +352,12 @@ float NeuronModelTable::TableAccessDirectInterp(float statevars[MAXSTATEVARS]){
            		}
         	} else {
 			tind=table_indcomp2(dim,coord);
-      			if(idim < tab->ndims-1){
-				cpointer=(void **)cpointer[tind];
-			}else{
-				elem=((float *)cpointer)[tind];
+        	}
+			if(idim < tab->ndims-1){
+			cpointer=(void **)cpointer[tind];
+		}else{
+			elem=((float *)cpointer)[tind];
 			}
-		}
 	}
 	
 	return(elem);
@@ -373,7 +373,12 @@ int NeuronModelTable::CheckTableAccessInterpBi(float statevars[MAXSTATEVARS]){
 	int intstate[MAXSTATEVARS]={0};
 	int tableinds[MAXSTATEVARS];
    
+	float CopyStatevars[MAXSTATEVARS];
+
+	memcpy(CopyStatevars,statevars,MAXSTATEVARS*sizeof(float));
+
 	tab=this;
+
 
 	for(idim=0;idim<tab->ndims;idim++){
 		dim=&tab->dims[idim];
@@ -390,7 +395,7 @@ int NeuronModelTable::CheckTableAccessInterpBi(float statevars[MAXSTATEVARS]){
 				}
 			}
          
-			statevars[dim->statevar]=dim->coord[tableinds[idim]];
+			CopyStatevars[dim->statevar]=dim->coord[tableinds[idim]];
         	}else{
 			tableinds[idim]=table_indcomp2(dim,coord);
 		}
@@ -402,7 +407,7 @@ int NeuronModelTable::CheckTableAccessInterpBi(float statevars[MAXSTATEVARS]){
 
 		//pred_time=type->TableAccess(type->GetFiringTable(), this->statevars);
 	
-		if(this->OwnerType->TableAccess(this->OwnerType->GetFiringTable(), statevars)!=NOPREDICTION){
+		if(this->OwnerType->TableAccess(this->OwnerType->GetFiringTable(), CopyStatevars)!=NOPREDICTION){
 			ret=0;
 			break;
 		}
@@ -410,7 +415,7 @@ int NeuronModelTable::CheckTableAccessInterpBi(float statevars[MAXSTATEVARS]){
 		for(idim=tab->firstintdim;idim>=0;idim-=tab->dims[idim].nextintdim){
          		intstate[idim]=!intstate[idim];
          		dim=&tab->dims[idim];
-         		statevars[dim->statevar]=dim->coord[tableinds[idim]+intstate[idim]];
+         		CopyStatevars[dim->statevar]=dim->coord[tableinds[idim]+intstate[idim]];
          		if(intstate[idim]){
 				break;
 			}
