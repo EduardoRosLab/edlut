@@ -24,6 +24,9 @@
  * \author Richard Carrido
  * \date August 2008
  *
+ * * \note Modified on November 2010.
+ * - Modified calling to table access functions.
+ *
  * This file declares a class which abstracts a spiking neuron behaviour.
  */
 #include <math.h>

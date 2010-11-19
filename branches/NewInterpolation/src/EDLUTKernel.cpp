@@ -14,7 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-// Last compatible original version of EDLUT -> 2.6
+// Last compatible original version of EDLUT -> 2.6a
 
 #include <cstdlib>
 #include <cstdio>

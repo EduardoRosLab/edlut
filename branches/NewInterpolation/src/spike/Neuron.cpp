@@ -67,7 +67,7 @@ void Neuron::NeuronUpdate(double ElapsedTime){
 	this->statevars[0]=ElapsedTime;
 	for(ivar=0;ivar<type->GetTimeDependentStateVarsNumber();ivar++){
 		orderedvar=type->GetStateVarAt(ivar);
-		vars[orderedvar]=type->TableAccess(type->GetStateVarTableAt(orderedvar), this->statevars);
+		vars[orderedvar]=type->TableAccess(this->GetLastUpdate()+ElapsedTime,this, type->GetStateVarTableAt(orderedvar), this->statevars);
 	}
 	for(ivar=0;ivar<type->GetTimeDependentStateVarsNumber();ivar++){
 		orderedvar=type->GetStateVarAt(ivar);
@@ -75,7 +75,7 @@ void Neuron::NeuronUpdate(double ElapsedTime){
 	}
 	for(ivar=type->GetTimeDependentStateVarsNumber();ivar<type->GetStateVarsNumber();ivar++){
 		orderedvar=type->GetStateVarAt(ivar);
-		this->statevars[orderedvar+1]=type->TableAccess(type->GetStateVarAt(orderedvar), this->statevars);
+		this->statevars[orderedvar+1]=type->TableAccess(this->GetLastUpdate()+ElapsedTime,this, type->GetStateVarAt(orderedvar), this->statevars);
 	}
 }
 
@@ -89,7 +89,7 @@ double Neuron::FiringEndPrediction(){
 	NeuronType *type;
 	double pred_time;
 	type=this->type;
-	pred_time=type->TableAccess(type->GetFiringEndTable(), this->statevars);
+	pred_time=type->TableAccess(this->GetLastUpdate(),this, type->GetFiringEndTable(), this->statevars);
 	return(pred_time);
 }
 
@@ -97,7 +97,7 @@ double Neuron::FiringPrediction(){
 	NeuronType *type;
 	float pred_time;
 	type=this->type;
-	pred_time=type->TableAccess(type->GetFiringTable(), this->statevars);
+	pred_time=type->TableAccess(this->GetLastUpdate(),this, type->GetFiringTable(), this->statevars);
 	return(pred_time);
 }
 

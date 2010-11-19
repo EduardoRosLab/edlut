@@ -26,7 +26,7 @@
  *
  * \note 
  * Modified on November 2010.
- * Added TableAccessDirectInterp(float statevars[MAXSTATEVARS]) and CheckTableAccessInterpBi(float statevars[MAXSTATEVARS]).
+ * Added TableAccessDirectInterp(float statevars[MAXSTATEVARS]).
  * Added SetOwnerType and GetOwnerType functions.
  * Added OwnerType field to reach the neuron type owning this table.
  * Modified implementation of TableAccess including Direct interpolation and checking Bilinear interpolation.
@@ -50,6 +50,7 @@
 #include "../simulation/Configuration.h"
 
 class NeuronType;
+class Neuron;
 
 /*!
  * \class NeuronModelTable
@@ -304,11 +305,13 @@ class NeuronModelTable {
   		 * It gets the table value with concrete state variables and the 
   		 * current interpolation method.
   		 * 
+  		 * \param CurrentSimulationTime The current simulation time in order to use interpolation or not.
+  		 * \param neuron The current neuron being set.
   		 * \param statevars The current state variables of the neuron.
   		 * 
   		 * \return The value of the table (with or without interpolation).
   		 */
-  		float TableAccess(float *statevars);
+  		float TableAccess(double CurrentSimulationTime, Neuron * neuron, float *statevars);
    		
   		
 	private:
@@ -324,11 +327,6 @@ class NeuronModelTable {
 		typedef float (NeuronModelTable::*function) (float statevars[MAXSTATEVARS]);
 
 		/*!
-		 * Function used in function arrays.
-		 */
-		typedef int (NeuronModelTable::*intfunction) (float statevars[MAXSTATEVARS]);
-   		
-   		/*!
    		 * Elements of the table.
    		 */
    		void *elems;
@@ -390,17 +388,6 @@ class NeuronModelTable {
    		 */
 		float TableAccessDirectInterp(float statevars[MAXSTATEVARS]);
    		
-   		/*!
-   		 * \brief It checks if bilinear interpolation is more apropiated to this state.
-   		 * 
-   		 * It checks if bilinear interpolation is more apropiated to this state.
-   		 * 
-   		 * \param statevars State variables of the neuron.
-   		 * 
-   		 * \return 1 if bilinear interpolation is more apropiated, else 0.
-   		 */
-		int CheckTableAccessInterpBi(float statevars[MAXSTATEVARS]);
-
    		/*!
    		 * \brief It gets a table value with bilinear interpolation.
    		 * 

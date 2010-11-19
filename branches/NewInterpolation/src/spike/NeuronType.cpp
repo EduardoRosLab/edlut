@@ -208,8 +208,8 @@ void NeuronType::LoadTables() throw (EDLUTException){
 	}
 }
 
-float NeuronType::TableAccess(int ntab, float *statevars){
-	return this->tables[ntab].TableAccess(statevars);
+float NeuronType::TableAccess(double SimulationTime, Neuron * neuron, int ntab, float *statevars){
+	return this->tables[ntab].TableAccess(SimulationTime, neuron, statevars);
 }
 
 

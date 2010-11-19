@@ -17,6 +17,7 @@
 #include "../../include/spike/NeuronModelTable.h"
 
 #include "../../include/spike/NeuronType.h"
+#include "../../include/spike/Neuron.h"
 
 #include "../../include/simulation/Utils.h"
 
@@ -363,69 +364,6 @@ float NeuronModelTable::TableAccessDirectInterp(float statevars[MAXSTATEVARS]){
 	return(elem);
 }
 
-int NeuronModelTable::CheckTableAccessInterpBi(float statevars[MAXSTATEVARS]){
-	int idim,ret;
-	float coord,*coords;
-
-	NeuronModelTable *tab;
-	NeuronModelTable::TableDimension *dim;
-
-	int intstate[MAXSTATEVARS]={0};
-	int tableinds[MAXSTATEVARS];
-   
-	float CopyStatevars[MAXSTATEVARS];
-
-	memcpy(CopyStatevars,statevars,MAXSTATEVARS*sizeof(float));
-
-	tab=this;
-
-
-	for(idim=0;idim<tab->ndims;idim++){
-		dim=&tab->dims[idim];
-		coord=statevars[dim->statevar];
-		if(dim->interp){
-         		coords=dim->coord;
-         		if(coord>last_coord(dim)){
-            			tableinds[idim]=dim->size-2;
-         		}else{
-            			if(coord<dim->vfirst){
-					tableinds[idim]=0;
-				}else{
-					tableinds[idim]=table_ind_int(dim,coord);
-				}
-			}
-         
-			CopyStatevars[dim->statevar]=dim->coord[tableinds[idim]];
-        	}else{
-			tableinds[idim]=table_indcomp2(dim,coord);
-		}
-	}
-
-	idim=0;
-	ret=1;
-	do{
-
-		//pred_time=type->TableAccess(type->GetFiringTable(), this->statevars);
-	
-		if(this->OwnerType->TableAccess(this->OwnerType->GetFiringTable(), CopyStatevars)!=NOPREDICTION){
-			ret=0;
-			break;
-		}
-
-		for(idim=tab->firstintdim;idim>=0;idim-=tab->dims[idim].nextintdim){
-         		intstate[idim]=!intstate[idim];
-         		dim=&tab->dims[idim];
-         		CopyStatevars[dim->statevar]=dim->coord[tableinds[idim]+intstate[idim]];
-         		if(intstate[idim]){
-				break;
-			}
-		}
-      		//puts("");
-	}while(idim>=0);
-
-	return(ret);
-}
-
 // Bilineal interpolation
 float NeuronModelTable::TableAccessInterpBi(float statevars[MAXSTATEVARS]){
 	int idim;
@@ -721,7 +659,7 @@ float NeuronModelTable::TableAccessInterpNLi(float statevars[MAXSTATEVARS]){
 	return(elemi);
 }
 
-float NeuronModelTable::TableAccess(float *statevars){
+float NeuronModelTable::TableAccess(double CurrentSimulationTime, Neuron * neuron, float *statevars){
 	function funcArr1[] = {
 		&NeuronModelTable::TableAccessDirect,
       		&NeuronModelTable::TableAccessInterpBi,
@@ -730,21 +668,18 @@ float NeuronModelTable::TableAccess(float *statevars){
       		&NeuronModelTable::TableAccessInterp2Li,
       		&NeuronModelTable::TableAccessInterpNLi};
 	
-	intfunction funcArrCheck1[] = {
-		&NeuronModelTable::CheckTableAccessInterpBi,
-		&NeuronModelTable::CheckTableAccessInterpBi,
-		&NeuronModelTable::CheckTableAccessInterpBi,
-		&NeuronModelTable::CheckTableAccessInterpBi,
-		&NeuronModelTable::CheckTableAccessInterpBi,
-		&NeuronModelTable::CheckTableAccessInterpBi};
+	float firing_time=neuron->GetPredictedSpike();
+
+	float endfiring_time=neuron->GetPredictionEnd();
 
 	if (this->interp){
-		if ((this->*funcArrCheck1[this->interp])(statevars)){
-			return ((this->*funcArr1[this->interp])(statevars));
+		if (CurrentSimulationTime>firing_time && CurrentSimulationTime>endfiring_time){
+			return (this->*funcArr1[this->interp])(statevars);
 		} else {
 			return this->TableAccessDirectInterp(statevars);
 		}
 	} else {
 		return this->TableAccessDirect(statevars);
-	}	
+	}
+
 }

@@ -26,6 +26,7 @@
  *
  * \note Modified on November 2010.
  * - Set the Owner Type to created neuron model tables.
+ * - Add the simulation time parameter to TableAccess funcion.
  *
  * This file declares a class which abstracts a neuron model.
  */
@@ -278,11 +279,12 @@ class NeuronType{
    		 * 
    		 * \pre The tables must be previously loaded.
    		 * 
+   		 * \param SimulationTime The current simulation time in order to use interpolation or not.
+   		 * \param neuron The current neuron state to be set.
    		 * \param ntab Number of the table to get the value.
-   		 * 
    		 * \param statevars State variables values of the neuron.
    		 */
-   		float TableAccess(int ntab, float *statevars);
+   		float TableAccess(double SimulationTime, Neuron * neuron, int ntab, float *statevars);
 };
 
 #endif /*NEURONTYPE_H_*/
