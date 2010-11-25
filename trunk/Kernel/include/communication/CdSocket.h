@@ -17,17 +17,7 @@
 #ifndef CD_SOCKET_H
 #define CD_SOCKET_H
 
-//socket includes
-#include <sys/types.h>
-#include <sys/socket.h> 
-#include <sys/un.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h> // to set special server flags
-#include <unistd.h> // misc symbolic constants and types
-#include <netdb.h>
-#include <netinet/tcp.h>
-#define closesocket close
+#include <iostream>
 
 #include <fstream>
 #include <string>
@@ -47,6 +37,9 @@ using namespace std;
  * \brief A socket used to communicate with another program
  *
  * \author Christian Boucheny
+ * \author Jesús Garrido
+ *
+ * \note Modified on November 2010 to add windows socket compatibility.
  **/
 class CdSocket : public CommunicationDevice {
 public:
@@ -101,12 +94,32 @@ protected:
    **/
   void initializeSocket();
 
+#ifdef _WIN32
+  // Windows Variables
+  /*!
+   *
+   * Number of socket instances in order to load or unload the windows socket library.
+   *
+   */
+  static unsigned int SocketInstances = 0;
+
+  /*!
+   *
+   * Socket identification.
+   *
+   */
+  SOCKET socket_fd = INVALID_SOCKET;
+
+#else
+
   /*!
    *
    * The socket itself
    * 
    **/
   int socket_fd;
+
+#endif
 
   /*!
    *
