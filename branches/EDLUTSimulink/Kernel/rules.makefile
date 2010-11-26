@@ -2,8 +2,9 @@
 ################################ - MAKEFILE RULES - ############################
 ################################################################################
 
-compiler := g++
-CXX := ${compiler}
+compiler	:= g++
+mex			:= mex
+CXX 		:= ${compiler}
 
 .PHONY         : $(exetarget)
 $(exetarget) : $(exe-objects)
@@ -13,6 +14,20 @@ $(exetarget) : $(exe-objects)
 	@echo
 	@mkdir -p $(bindir)
 	$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+.PHONY		: mex
+mex	: $(mextarget) 
+	@echo
+	@echo ------------------ making mex file $(mextarget)
+	@echo
+
+$(mextarget)	: $(mex-objects)
+	@echo compiler path = ${mex}
+	@echo
+	@echo ------------------ making mexfile
+	@echo
+	@mkdir -p $(mexdir)
+	$(mex) $(MEXFLAGS) $^ $(LDFLAGS) -o $@
 
 .PHONY  : library
 library : $(libtarget)
@@ -206,6 +221,7 @@ flags :
 	@echo
 	@echo ldflags  = $(LDFLAGS)
 	@echo cxxflags = $(CXXFLAGS)
+	@echo mexflags = $(MEXFLAGS)
 	@echo sources = ${sources}
 	@echo objects = ${exe-objects}
 

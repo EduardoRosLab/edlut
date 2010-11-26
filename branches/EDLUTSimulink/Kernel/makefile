@@ -46,7 +46,25 @@ licence     := GPL v3.0 or higher distributed by FSF
 # the external libraries and sources are managed (included, linked)
 # using the pkg-config program. if you don't have it, you cannot use
 # this template to include/link libraries. get it from
-# http://pkg-config.freedesktop.org/wiki/
+# http://pkg-config.freedesktop.org/wiki
+
+# if matlab support -> Matlab paths, includes and flags.
+matlabsupport	:= true
+
+# matlab root dir : Folder where Matlab is installed. The root folder
+# in order to find the matlab include folder.If you don't need matlab 
+# compatibility (mex files), this option won't be used.
+matlabrootdir	:= /usr/local/matlabR2009b
+
+# matlab include folder : Path where matlab include files are stored.
+# If you don't need matlab compatibility (mex files), this option won't
+# be used.
+matlabinclude	:= ${matlabrootdir}/extern/include
+
+# matlab mex file suffix : Suffix of generated mex files. E.g. mexglx in Linux, mexw32
+# in windows 32 bits, mexw64 in windows 64 bits... See mex documentation for more
+# detailed information.
+mexsuffix	:= mexglx
 
 # external sources : uses pkg-config as " pkg-config --cflags ${external_sources} "
 # if you don't need any source, set it to 'none'
@@ -104,13 +122,17 @@ profile := true
 # srcdir      := src
 # includedir  := include
 # If you'd like to have everything in the main directory
-libdir      := ./lib
-srcdir      := ./src
-includedir  := ./include
-bindir		:= ./bin
+libdir      	:= ./lib
+srcdir      	:= ./src
+includedir  	:= ./include
+bindir			:= ./bin
+mexdir			:= ./mex
 
 # default file to be included when the executable build is required
 exe-source-file := ${srcdir}/EDLUTKernel.cpp
+
+# default file to be included when the mex build is required
+mex-source-file := ${srcdir}/EDLUTMatlab.cpp
 
 # what to compile ? include .cpp and .c files here in your project
 # if you don't have a main() function in one of the sources, you'll get an error

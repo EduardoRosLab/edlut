@@ -44,6 +44,12 @@ ifeq ($(profile),true)
   CXXFLAGS+= -pg
 endif
 
+ifeq ($(matlabsupport),true)
+  CXXFLAGS	+= -I$(matlabinclude) -fPIC -ansi -pthread -DMATLAB_MEX_FILE
+  MEXFLAGS	+= -cxx CC='$(compiler)' CXX='$(compiler)' LD='$(compiler)'
+  LDFLAGS	+= 
+endif
+
 CXXFLAGS += -fno-strict-aliasing
 
 ARFLAGS = ruv
