@@ -137,7 +137,9 @@ mex-source-file := ${srcdir}/EDLUTMatlab.cpp
 # what to compile ? include .cpp and .c files here in your project
 # if you don't have a main() function in one of the sources, you'll get an error
 # if you're building an executable. for a library, it won't complain for anything.
-communication-sources	:= $(srcdir)/communication/CdSocket.cpp \
+communication-sources	:= $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
+                           $(srcdir)/communication/ArrayOutputSpikeDriver.cpp \
+						   $(srcdir)/communication/CdSocket.cpp \
                            $(srcdir)/communication/ClientSocket.cpp \
                            $(srcdir)/communication/CommunicationDevice.cpp \
                            $(srcdir)/communication/ConnectionException.cpp \

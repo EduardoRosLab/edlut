@@ -24,12 +24,12 @@
 
 #include "mex.h"
 
-#include "../include/simulation/ParamReader.h"
 #include "../include/simulation/Simulation.h"
 
-#include "../include/simulation/ParameterException.h"
-
-#include "../include/communication/ConnectionException.h"
+#include "../include/communication/FileInputSpikeDriver.h"
+#include "../include/communication/FileOutputSpikeDriver.h"
+#include "../include/communication/ArrayInputSpikeDriver.h"
+#include "../include/communication/ArrayOutputSpikeDriver.h"
 
 #include "../include/spike/EDLUTFileException.h"
 #include "../include/spike/EDLUTException.h"
@@ -70,12 +70,15 @@ using namespace std;
 extern void _main();
 
 const int numInputArgs  = 5;
-const int numOutputArgs = 1;
+const int numOutputArgs = 2;
 
 // Function declarations.
 // -----------------------------------------------------------------
-double  getMatlabScalar    (const mxArray* ptr);
-double& createMatlabScalar (mxArray*& ptr);
+double  getMatlabScalar(const mxArray* ptr);
+char * getMatlabString(const mxArray* ptr);
+double& createMatlabScalar(mxArray*& ptr);
+double*& createMatlabDoubleArray(mxArray*& ptr,int OutputNumber);
+int*& createMatlabIntArray(mxArray*& ptr,int OutputNumber);
 
 // Function definitions.
 // -----------------------------------------------------------------
@@ -83,22 +86,81 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
 	// Check to see if we have the correct number of input and output
 	// arguments.
-	if (nrhs != numInputArgs)
+	if (nrhs != numInputArgs){
 		mexErrMsgTxt("Incorrect number of input arguments");
+		mexErrMsgTxt("Use: [SpikeTimes, CellNumbers] = EDLUTKernel(SimulationTime,NetworkFile,WeightFile,InputFile,LogFile)");
+	}
 
-	if (nlhs != numOutputArgs)
+	if (nlhs != numOutputArgs){
 		mexErrMsgTxt("Incorrect number of output arguments");
+		mexErrMsgTxt("[SpikeTimes, CellNumbers] = EDLUTKernel(SimulationTime,NetworkFile,WeightFile,InputFile,LogFile)");
+	}
 
 	// Get the inputs.
-	double x  = getMatlabScalar(prhs[0]);
-	double mu = getMatlabScalar(prhs[1]);
-	double v  = getMatlabScalar(prhs[2]);
+	double SimulationTime  = getMatlabScalar(prhs[0]);
+	char * NetworkFile = getMatlabString(prhs[1]);
+	char * WeightFile  = getMatlabString(prhs[2]);
+	char * InputFile = getMatlabString(prhs[3]);
+	char * LogFile = getMatlabString(prhs[4]);
 
-	// Create the output. It is also a double-precision scalar.
-	double& p = createMatlabScalar(plhs[0]);
+	clock_t startt,endt;
 
-	// Compute the value of the univariate Normal at x.
-	p = exp(-(x-mu)*(x-mu)/(2*v)) / sqrt(2*pi*v);
+	double * OutputSpikeTimes;
+	long int * OutputSpikeCells;
+
+
+	cout << "Int size: " << sizeof(int) << endl;
+	cout << "Long int size: " << sizeof(long int) << endl;
+
+	srand ( time(NULL) );
+
+	try {
+		Simulation Simul(NetworkFile, WeightFile, SimulationTime, 0);
+
+		// Create a new input object to add input spikes
+		// ArrayInputSpikeDriver * InputDriver = new ArrayInputSpikeDriver();
+		//Simul->AddInputSpikeDriver(InputDriver);
+
+		// Create a new output object to get output spikes
+		ArrayOutputSpikeDriver * OutputDriver = new ArrayOutputSpikeDriver();
+		Simul->AddOutputSpikeDriver(OutputDriver);
+
+		Simul.AddInputSpikeDriver(new FileInputSpikeDriver(InputFile));
+		Simul.AddMonitorActivityDriver(new FileOutputSpikeDriver(LogFile,false));
+
+		cout << "Simulating network..." << endl;
+
+		startt=clock();
+		Simul.RunSimulation();
+		endt=clock();
+
+		// Get outputs and print them
+		int OutputNumber = OutputDriver->GetBufferedSpikes(OutputSpikeTimes,OutputSpikeCells);
+
+		// Create the output. It is also a double-precision scalar.
+		double*& SpikeTimes = createMatlabDoubleArray(plhs[0],OutputNumber);
+		long int*& SpikeCells = createMatlabIntArray(plhs[1],OutputNumber);
+
+		if (OutputNumber>0){
+			memcpy(SpikeTimes, OutputSpikeTimes, OutputNumber*sizeof(double));
+			memcpy(SpikeCells, OutputSpikeCells, OutputNumber*sizeof(long int));
+
+			delete [] OutputSpikeTimes;
+			delete [] OutputSpikeCells;
+		}
+
+		cout << "Oky doky" << endl;
+
+		cout << "Elapsed time: " << (endt-startt)/(float)CLOCKS_PER_SEC << " sec" << endl;
+		cout << "Number of updates: " << Simul.GetSimulationUpdates() << endl;
+		cout << "Mean number of spikes in heap: " << Simul.GetHeapAcumSize()/(float)Simul.GetSimulationUpdates() << endl;
+		cout << "Updates per second: " << Simul.GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
+	} catch (EDLUTFileException Exc){
+		cerr << Exc << ": " << Exc.GetErrorNum() << endl;
+	} catch (EDLUTException Exc){
+		cerr << Exc << ": " << Exc.GetErrorNum() << endl;
+	}
+
 }
 
 double getMatlabScalar (const mxArray* ptr) {
@@ -110,71 +172,28 @@ double getMatlabScalar (const mxArray* ptr) {
 	return *mxGetPr(ptr);
 }
 
+char * getMatlabString (const mxArray* ptr) {
+
+	// Make sure the input argument is a scalar in double-precision.
+	if (!mxIsChar(ptr))
+		mexErrMsgTxt("The input argument must be a string");
+
+	return mxArrayToString (ptr);
+}
+
 double& createMatlabScalar (mxArray*& ptr) {
 	ptr = mxCreateDoubleMatrix(1,1,mxREAL);
 	return *mxGetPr(ptr);
 }
 
-int main(int ac, char *av[]) {
-   
-	clock_t startt,endt;
-	cout << "Loading tables..." << endl;
-
-	srand ( time(NULL) );
-   
-	try {
-   		ParamReader Reader(ac, av);
-			
-		Simulation Simul(Reader.GetNetworkFile(), Reader.GetWeightsFile(), Reader.GetSimulationTime(), Reader.GetSimulationStepTime());
-		for (unsigned int i=0; i<Reader.GetInputSpikeDrivers().size(); ++i){
-			Simul.AddInputSpikeDriver(Reader.GetInputSpikeDrivers()[i]);
-		}
-			
-		for (unsigned int i=0; i<Reader.GetOutputSpikeDrivers().size(); ++i){
-			Simul.AddOutputSpikeDriver(Reader.GetOutputSpikeDrivers()[i]);
-		}
-		
-		for (unsigned int i=0; i<Reader.GetMonitorDrivers().size(); ++i){
-			Simul.AddMonitorActivityDriver(Reader.GetMonitorDrivers()[i]);
-		}
-		
-		for (unsigned int i=0; i<Reader.GetOutputWeightDrivers().size(); ++i){
-			Simul.AddOutputWeightDriver(Reader.GetOutputWeightDrivers()[i]);
-		}
-		Simul.SetSaveStep(Reader.GetSaveWeightStepTime());
-					
-		if(Reader.CheckInfo()){
-			//Simul.GetNetwork()->tables_info();
-			//neutypes_info();
-			Simul.GetNetwork()->NetInfo();
-		}
-			
-		cout << "Simulating network..." << endl;
-		
-		startt=clock();
-		Simul.RunSimulation();
-		endt=clock();
-         
-		cout << "Oky doky" << endl;     
-
-		cout << "Elapsed time: " << (endt-startt)/(float)CLOCKS_PER_SEC << " sec" << endl;
-		cout << "Number of updates: " << Simul.GetSimulationUpdates() << endl;
-		cout << "Mean number of spikes in heap: " << Simul.GetHeapAcumSize()/(float)Simul.GetSimulationUpdates() << endl;
-		cout << "Updates per second: " << Simul.GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
-	} catch (ParameterException Exc){
-		cerr << Exc << endl;
-		cerr << av[0] << " -time Simulation_Time -nf Network_File -wf Weights_File";
-		cerr << " [-info] [-sf Final_Weights_File] [-wt Save_Weight_Step] [-st Simulation_Step_Time] [-log Activity_Register_File] [-if Input_File] ";
-		cerr << "[-ic IPAddress:Port Server|Client] [-of Output_File] [-oc IPAddress:Port Server|Client] [-ioc IPAddress:Port Server|Client]" << endl;	
-	} catch (ConnectionException Exc){
-		cerr << Exc << endl;
-		return 1;
-	} catch (EDLUTFileException Exc){
-		cerr << Exc << endl;
-		return Exc.GetErrorNum();
-	} catch (EDLUTException Exc){
-		cerr << Exc << endl;
-		return Exc.GetErrorNum();
-	}
-	return 0;
+double*& createMatlabDoubleArray(mxArray*& ptr,int OutputNumber){
+	ptr = mxCreateDoubleMatrix(OutputNumber,1,mxREAL);
+	return *mxGetPr(ptr);
 }
+
+int*& createMatlabIntArray(mxArray*& ptr,int OutputNumber){
+	ptr = mxCreateNumericMatrix(OutputNumber,1,mxINT32_CLASS,mxREAL);
+	return *mxGetPr(ptr);
+}
+
+
