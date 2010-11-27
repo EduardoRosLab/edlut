@@ -77,8 +77,8 @@ const int numOutputArgs = 2;
 double  getMatlabScalar(const mxArray* ptr);
 char * getMatlabString(const mxArray* ptr);
 double& createMatlabScalar(mxArray*& ptr);
-double*& createMatlabDoubleArray(mxArray*& ptr,int OutputNumber);
-int*& createMatlabIntArray(mxArray*& ptr,int OutputNumber);
+double* createMatlabDoubleArray(mxArray*& ptr,int OutputNumber);
+long int* createMatlabIntArray(mxArray*& ptr,int OutputNumber);
 
 // Function definitions.
 // -----------------------------------------------------------------
@@ -97,7 +97,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	}
 
 	// Get the inputs.
-	double SimulationTime  = getMatlabScalar(prhs[0]);
+	double SimulationTime = getMatlabScalar(prhs[0]);
 	char * NetworkFile = getMatlabString(prhs[1]);
 	char * WeightFile  = getMatlabString(prhs[2]);
 	char * InputFile = getMatlabString(prhs[3]);
@@ -123,7 +123,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
 		// Create a new output object to get output spikes
 		ArrayOutputSpikeDriver * OutputDriver = new ArrayOutputSpikeDriver();
-		Simul->AddOutputSpikeDriver(OutputDriver);
+		Simul.AddOutputSpikeDriver(OutputDriver);
 
 		Simul.AddInputSpikeDriver(new FileInputSpikeDriver(InputFile));
 		Simul.AddMonitorActivityDriver(new FileOutputSpikeDriver(LogFile,false));
@@ -138,8 +138,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		int OutputNumber = OutputDriver->GetBufferedSpikes(OutputSpikeTimes,OutputSpikeCells);
 
 		// Create the output. It is also a double-precision scalar.
-		double*& SpikeTimes = createMatlabDoubleArray(plhs[0],OutputNumber);
-		long int*& SpikeCells = createMatlabIntArray(plhs[1],OutputNumber);
+		double* SpikeTimes = createMatlabDoubleArray(plhs[0],OutputNumber);
+		long int* SpikeCells = createMatlabIntArray(plhs[1],OutputNumber);
 
 		if (OutputNumber>0){
 			memcpy(SpikeTimes, OutputSpikeTimes, OutputNumber*sizeof(double));
@@ -186,14 +186,14 @@ double& createMatlabScalar (mxArray*& ptr) {
 	return *mxGetPr(ptr);
 }
 
-double*& createMatlabDoubleArray(mxArray*& ptr,int OutputNumber){
+double* createMatlabDoubleArray(mxArray*& ptr,int OutputNumber){
 	ptr = mxCreateDoubleMatrix(OutputNumber,1,mxREAL);
-	return *mxGetPr(ptr);
+	return mxGetPr(ptr);
 }
 
-int*& createMatlabIntArray(mxArray*& ptr,int OutputNumber){
+long int* createMatlabIntArray(mxArray*& ptr,int OutputNumber){
 	ptr = mxCreateNumericMatrix(OutputNumber,1,mxINT32_CLASS,mxREAL);
-	return *mxGetPr(ptr);
+	return (long int *) mxGetData(ptr);
 }
 
 

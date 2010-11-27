@@ -131,6 +131,9 @@ mexdir			:= ./mex
 # default file to be included when the executable build is required
 exe-source-file := ${srcdir}/EDLUTKernel.cpp
 
+# default file to be included when the mex build is required
+mex-source-file := ${srcdir}/EDLUTMatlab.cpp
+
 # what to compile ? include .cpp and .c files here in your project
 # if you don't have a main() function in one of the sources, you'll get an error
 # if you're building an executable. for a library, it won't complain for anything.
