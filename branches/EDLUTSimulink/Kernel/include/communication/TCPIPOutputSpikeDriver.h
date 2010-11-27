@@ -117,11 +117,10 @@ class TCPIPOutputSpikeDriver: public OutputSpikeDriver {
 		 * 
 		 * \param Time Time of the event (potential value).
 		 * \param Source Source neuron of the potential.
-		 * \param Value Membrane potential value.
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */		
-		void WritePotential(float Time, Neuron * Source, float Value) throw (EDLUTException);
+		void WriteState(float Time, Neuron * Source) throw (EDLUTException);
 		
 		/*!
 		 * \brief It checks if the current output driver is buffered.
@@ -149,6 +148,16 @@ class TCPIPOutputSpikeDriver: public OutputSpikeDriver {
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
 		 void FlushBuffers() throw (EDLUTException);
+
+		/*!
+		 * \brief It prints the information of the object.
+		 *
+		 * It prints the information of the object.
+		 *
+		 * \param out The output stream where it prints the object to.
+		 * \return The output stream.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
 };
 
 #endif /*TCPIPOUTPUTDRIVER_H_*/

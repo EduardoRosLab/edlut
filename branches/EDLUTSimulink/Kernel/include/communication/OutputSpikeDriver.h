@@ -29,6 +29,8 @@
  
 #include "../spike/EDLUTException.h"
 
+#include "../simulation/PrintableObject.h"
+
 class Neuron;
 class Spike;
  
@@ -45,7 +47,7 @@ class Spike;
  * \author Richard Carrillo
  * \date August 2008
  */
-class OutputSpikeDriver {
+class OutputSpikeDriver : public PrintableObject {
 
 	public:
 	
@@ -68,17 +70,16 @@ class OutputSpikeDriver {
 		virtual void WriteSpike(const Spike * NewSpike) throw (EDLUTException) = 0;
 
 		/*!
-		 * \brief It communicates the membrane potential to the external system.
+		 * \brief It communicates the neuron state to the external system.
 		 * 
-		 * This method introduces the membrane potential to the output target (file, tcpip system...).
+		 * This method introduces the neuron state to the output target (file, tcpip system...).
 		 * 
 		 * \param Time Time of the event (potential value).
 		 * \param Source Source neuron of the potential.
-		 * \param Value Membrane potential value.
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */		
-		virtual void WritePotential(float Time, Neuron * Source, float Value) throw (EDLUTException) = 0;
+		virtual void WriteState(float Time, Neuron * Source) throw (EDLUTException) = 0;
 		
 		/*!
 		 * \brief It checks if the current output driver is buffered.

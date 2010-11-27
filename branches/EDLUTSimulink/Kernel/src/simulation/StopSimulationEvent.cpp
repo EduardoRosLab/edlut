@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           ActivityRegister.cpp                          *
+ *                           StopSimulationEvent.cpp                        *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,34 +14,22 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/spike/ActivityRegister.h"
+#include "../../include/simulation/StopSimulationEvent.h"
 
+#include "../../include/simulation/Simulation.h"
 
-ActivityRegister::ActivityRegister(int VarNumber): numvar(VarNumber) {
-	if (VarNumber>0){
-		values = new float[VarNumber];			
-	}else{
-		values = 0;
-	}
+StopSimulationEvent::StopSimulationEvent():Event(0){
+}
+   	
+StopSimulationEvent::StopSimulationEvent(double NewTime): Event(NewTime){
+}
+   		
+StopSimulationEvent::~StopSimulationEvent(){
 }
 
-ActivityRegister::~ActivityRegister(){
-	if (values!=0){
-		delete [] values;
-	}	
+void StopSimulationEvent::ProcessEvent(Simulation * CurrentSimulation){
+	CurrentSimulation->StopSimulation();		
 }
+   	
 
-int ActivityRegister::GetVarNumber() const{
-	return numvar;
-}
 
-float ActivityRegister::GetVarValueAt(unsigned int index) const{
-	return values[index];
-}
-		
-void ActivityRegister::SetVarValueAt(unsigned int index, float value){
-	values[index]=value;
-}
-		
-		
-		

@@ -34,7 +34,7 @@ installdir  := $(HOME)/usr
 # 'libcvlab.a'
 packagename := EDLUTKernel
 
-version     := 0.1
+version     := 0.4
 author      := $(FULL_USER_NAME)
 
 # you can write a short description here about the package
@@ -131,15 +131,10 @@ mexdir			:= ./mex
 # default file to be included when the executable build is required
 exe-source-file := ${srcdir}/EDLUTKernel.cpp
 
-# default file to be included when the mex build is required
-mex-source-file := ${srcdir}/EDLUTMatlab.cpp
-
 # what to compile ? include .cpp and .c files here in your project
 # if you don't have a main() function in one of the sources, you'll get an error
 # if you're building an executable. for a library, it won't complain for anything.
-communication-sources	:= $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
-                           $(srcdir)/communication/ArrayOutputSpikeDriver.cpp \
-						   $(srcdir)/communication/CdSocket.cpp \
+communication-sources	:= $(srcdir)/communication/CdSocket.cpp \
                            $(srcdir)/communication/ClientSocket.cpp \
                            $(srcdir)/communication/CommunicationDevice.cpp \
                            $(srcdir)/communication/ConnectionException.cpp \
@@ -153,10 +148,13 @@ communication-sources	:= $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
                            $(srcdir)/communication/TCPIPInputOutputSpikeDriver.cpp \
                            $(srcdir)/communication/TCPIPInputSpikeDriver.cpp \
                            $(srcdir)/communication/TCPIPOutputSpikeDriver.cpp \
+                           $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
+                           $(srcdir)/communication/ArrayOutputSpikeDriver.cpp \
                            $(srcdir)/communication/Timer.cpp
                            
 simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            $(srcdir)/simulation/EndSimulationEvent.cpp \
+                           $(srcdir)/simulation/StopSimulationEvent.cpp \
                            $(srcdir)/simulation/Event.cpp \
                            $(srcdir)/simulation/EventQueue.cpp \
                            $(srcdir)/simulation/ParameterException.cpp \
@@ -165,27 +163,39 @@ simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            $(srcdir)/simulation/Simulation.cpp \
                            $(srcdir)/simulation/Utils.cpp
                            
-spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
-						   $(srcdir)/spike/ActivityRegister.cpp \
-                           $(srcdir)/spike/ActivityRegister.cpp \
-                           $(srcdir)/spike/EDLUTException.cpp \
+spike-sources			:= $(srcdir)/spike/EDLUTException.cpp \
                            $(srcdir)/spike/EDLUTFileException.cpp \
                            $(srcdir)/spike/InputSpike.cpp \
                            $(srcdir)/spike/Interconnection.cpp \
                            $(srcdir)/spike/InternalSpike.cpp \
-                           $(srcdir)/spike/MultiplicativeWeightChange.cpp \
                            $(srcdir)/spike/Network.cpp \
                            $(srcdir)/spike/Neuron.cpp \
-                           $(srcdir)/spike/NeuronModelTable.cpp \
-                           $(srcdir)/spike/NeuronType.cpp \
                            $(srcdir)/spike/PropagatedSpike.cpp \
-                           $(srcdir)/spike/Spike.cpp \
-                           $(srcdir)/spike/WeightChange.cpp \
-                           $(srcdir)/spike/SinWeightChange.cpp
+                           $(srcdir)/spike/Spike.cpp
+                           
+neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
+			   			   $(srcdir)/neuron_model/SRMState.cpp \
+			   			   $(srcdir)/neuron_model/NeuronModel.cpp \
+                           $(srcdir)/neuron_model/NeuronState.cpp \
+                           $(srcdir)/neuron_model/SRMModel.cpp \
+                           $(srcdir)/neuron_model/NeuronModelTable.cpp \
+                           $(srcdir)/neuron_model/TableBasedModel.cpp \
+			   			   $(srcdir)/neuron_model/SRMTableBasedModel.cpp
+                           
+learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
+                           $(srcdir)/learning_rules/AdditiveKernelChange.cpp \
+						   $(srcdir)/learning_rules/MultiplicativeKernelChange.cpp \
+						   $(srcdir)/learning_rules/SinWeightChange.cpp \
+						   $(srcdir)/learning_rules/STDPWeightChange.cpp 
+						   
+interface-sources		:= $(srcdir)/interface/C_Interface.cpp
                           
 sources     := $(communication-sources) \
                $(simulation-sources) \
-               $(spike-sources)
+               $(spike-sources) \
+               $(neuron_model-sources) \
+               $(interface-sources) \
+               $(learning_rules-sources)
 
 
 ################################################################################

@@ -28,7 +28,7 @@
  * This file declares a class which abstracts a exponential-sinuidal additive learning rule.
  */
  
-#include "./AdditiveWeightChange.h"
+#include "./AdditiveKernelChange.h"
  
 /*!
  * \class SinWeightChange
@@ -42,7 +42,7 @@
  * \author Richard Carrillo
  * \date July 2009
  */ 
-class SinWeightChange: public AdditiveWeightChange{
+class SinWeightChange: public AdditiveKernelChange{
 	private:
 		/*!
 		 * Precalculated terms.
@@ -54,6 +54,7 @@ class SinWeightChange: public AdditiveWeightChange{
 		 */
 		int exponent;
 		
+	protected:
 		/*!
    		 * \brief It updates the previous activity in the connection.
    		 * 
@@ -72,9 +73,21 @@ class SinWeightChange: public AdditiveWeightChange{
 		 * 
 		 * Default constructor. It creates a new sinusoidal additive learning-rule
 		 * with the parameter exponent.
-		 * \param NewExponent Exponent for the learning rule. e^(-x)*Sin(x)^Exponent.
 		 */
-		SinWeightChange(int NewExponent);
+		SinWeightChange();
+
+		/*!
+		 * \brief It loads the learning rule properties.
+		 *
+		 * It loads the learning rule properties.
+		 *
+		 * \param fh A file handler placed where the Learning rule properties are defined.
+		 * \param Currentline The file line where the handler is placed.
+		 *
+		 * \throw EDLUTFileException If something wrong happens in reading the learning rule properties.
+		 */
+		virtual void LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException);
+
 	
 		/*!
 		 * \brief It gets the number of state variables that this learning rule needs.

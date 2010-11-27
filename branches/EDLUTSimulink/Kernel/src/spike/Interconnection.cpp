@@ -17,15 +17,16 @@
 #include "../../include/spike/Interconnection.h"
 
 #include <math.h>
-#include "../../include/spike/ActivityRegister.h"
-#include "../../include/spike/WeightChange.h"
+#include "../../include/learning_rules/ActivityRegister.h"
 #include "../../include/spike/Neuron.h"
 
-Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), activity(0), lastspiketime(0){
+#include "../../include/learning_rules/LearningRule.h"
+
+Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), activity(0), lastspiketime(-100){
 	
 }
 
-Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, WeightChange* NewWeightChange, float NewLastSpikeTime):
+Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, float NewLastSpikeTime):
 	source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), weight(NewWeight), maxweight(NewMaxWeight), wchange(NewWeightChange), lastspiketime(NewLastSpikeTime) {
 	if (NewWeightChange->GetNumberOfVar()>0){
 		activity = new ActivityRegister(NewWeightChange->GetNumberOfVar());	
@@ -90,11 +91,11 @@ void Interconnection::SetMaxWeight(float NewMaxWeight){
 	this->maxweight = NewMaxWeight;
 }
 		
-WeightChange * Interconnection::GetWeightChange() const{
+LearningRule * Interconnection::GetWeightChange() const{
 	return this->wchange;
 }
 		
-void Interconnection::SetWeightChange(WeightChange * NewWeightChange){
+void Interconnection::SetWeightChange(LearningRule * NewWeightChange){
 	if (this->wchange==0){
 		if (NewWeightChange->GetNumberOfVar()>0){
 			activity = new ActivityRegister(NewWeightChange->GetNumberOfVar());
@@ -142,6 +143,27 @@ void Interconnection::SetLastSpikeTime(double NewTime){
 	this->lastspiketime = NewTime;
 }
 
-void Interconnection::ChangeWeights(double stime){
-	this->wchange->ApplyWeightChange(this,stime);
+ostream & Interconnection::PrintInfo(ostream & out) {
+	out << "- Interconnection: " << this->index << endl;
+
+	out << "\tSource: " << this->source->GetIndex() << endl;
+
+	out << "\tTarget: " << this->target->GetIndex() << endl;
+
+   	out << "\tDelay: " << this->GetDelay() << "s" << endl;
+
+   	out << "\tConnection Type: " << this->GetType() << endl;
+
+   	out << "\tCurrent Weight: " << this->GetWeight() << endl;
+
+   	out << "\tMaximum Weight: " << this->GetMaxWeight() << endl;
+
+   	out << "\tWeight Change: ";
+
+   	if (this->GetWeightChange()!=0) this->GetWeightChange()->PrintInfo(out);
+   	else out << "None" << endl;
+
+   	out << "\tLast Spike Time: " << this->GetLastSpikeTime() << endl;
+
+   	return out;
 }

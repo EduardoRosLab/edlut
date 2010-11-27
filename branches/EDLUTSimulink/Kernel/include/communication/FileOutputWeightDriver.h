@@ -98,6 +98,16 @@ class FileOutputWeightDriver: public OutputWeightDriver {
 		 */
 		void WriteWeights(Network * Net) throw (EDLUTException);
 		
+		/*!
+		 * \brief It prints the information of the object.
+		 *
+		 * It prints the information of the object.
+		 *
+		 * \param out The output stream where it prints the object to.
+		 * \return The output stream.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
+
 };
 
 #endif /*FILEOUTPUTDRIVER_H_*/

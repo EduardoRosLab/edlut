@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           AdditiveWeightChange.cpp                      *
+ *                           SinWeightChange.cpp                           *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -15,7 +15,7 @@
  ***************************************************************************/
 
 
-#include "../../include/spike/SinWeightChange.h"
+#include "../../include/learning_rules/SinWeightChange.h"
 
 #include "../../include/spike/Interconnection.h"
 
@@ -35,7 +35,7 @@ const float SinWeightChange::terms[11][11]  = {{1,0,0,0,0,0,0,0,0,0,0},
 	{12155./128.*pow(A,9),-21879./128.*pow(A,9),1989./16.*pow(A,9),-4641./64.*pow(A,9),1071./32.*pow(A,9),-765./64.*pow(A,9),51./16.*pow(A,9),-153./256.*pow(A,9),9./128.*pow(A,9),-1./256.*pow(A,9),0},
 	{46189./256.*pow(A,10),-20995./64.*pow(A,10),62985./256.*pow(A,10),-4845./32.*pow(A,10),4845./64.*pow(A,10),-969./32.*pow(A,10),4845./512.*pow(A,10),-285./128.*pow(A,10),95./256.*pow(A,10),-5./128.*pow(A,10),1./512.*pow(A,10)}};
 	
-SinWeightChange::SinWeightChange(int NewExponent):exponent(NewExponent){
+SinWeightChange::SinWeightChange():exponent(0){
 }
 
 int SinWeightChange::GetNumberOfVar() const{
@@ -50,7 +50,7 @@ void SinWeightChange::update_activity(double time,Interconnection * Connection,b
 	// CHANGED
 	// VERSION USING ANALYTICALLY SOLVED EQUATIONS
 	float delta_t = (time-Connection->GetLastSpikeTime());
-	float tau = this->GetMaxPos()/atan(exponent);
+	float tau = this->maxpos/atan(exponent);
 	float factor = 1./(exp(-atan(this->exponent))*pow(sin(atan(this->exponent)),this->exponent));
 	
 	if (tau==0){
@@ -90,3 +90,12 @@ void SinWeightChange::update_activity(double time,Interconnection * Connection,b
 	
 	Connection->SetActivityAt(0,NewActivity);
 }
+
+void SinWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException){
+	AdditiveKernelChange::LoadLearningRule(fh,Currentline);
+
+	if(!(fscanf(fh,"%i",&this->exponent)==1)){
+		throw EDLUTFileException(4,28,23,1,Currentline);
+	}
+}
+

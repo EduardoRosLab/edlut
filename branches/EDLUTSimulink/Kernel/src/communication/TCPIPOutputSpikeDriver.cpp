@@ -35,7 +35,7 @@ void TCPIPOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTExce
 	this->OutputBuffer.push_back(spike);	
 }
 		
-void TCPIPOutputSpikeDriver::WritePotential(float Time, Neuron * Source, float Value) throw (EDLUTException){
+void TCPIPOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){
 	return;	
 }
 		
@@ -65,3 +65,10 @@ void TCPIPOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
 		this->OutputBuffer.clear();
 	}
 }		
+
+ostream & TCPIPOutputSpikeDriver::PrintInfo(ostream & out){
+
+	out << "- TCP/IP Output Spike Driver" << endl;
+
+	return out;
+}
