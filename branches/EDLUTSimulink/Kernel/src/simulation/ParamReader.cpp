@@ -19,16 +19,14 @@
 
 #include "../../include/spike/Network.h"
 
+#include "../../include/communication/TCPIPConnectionType.h"
+
 #include "../../include/communication/FileInputSpikeDriver.h"
 #include "../../include/communication/TCPIPInputSpikeDriver.h"
 
 #include "../../include/communication/FileOutputSpikeDriver.h"
 #include "../../include/communication/TCPIPOutputSpikeDriver.h"
-
 #include "../../include/communication/TCPIPInputOutputSpikeDriver.h"
-
-#include "../../include/communication/ServerSocket.h"
-#include "../../include/communication/ClientSocket.h"
 
 #include "../../include/communication/FileOutputWeightDriver.h"
 
@@ -117,12 +115,15 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 				
 				TCPIPInputSpikeDriver * Driver;
 				
+				enum TCPIPConnectionType Type;
+
 				if (type == string("Server")){
 					istringstream ss(host);
 					if (!(ss >> port)){
 	     				throw ParameterException(Arguments[i+1], "Invalid connection port");
 					}
-					Driver = new TCPIPInputSpikeDriver (new ServerSocket(port));
+					Type = SERVER;
+
 				}else if (type == string("Client")){
 					string::size_type pos = host.find(":",0);
 					if ( pos != string::npos ){
@@ -134,12 +135,14 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 						// Output error
 						throw ParameterException(Arguments[i+1],"Invalid output connection. Check the address and the port.");	
 					}
-					Driver = new TCPIPInputSpikeDriver (new ClientSocket(address,port));
+					Type = CLIENT;
 				} else {
 					// Output error
 					throw ParameterException(Arguments[i+2],"Invalid output connection type. Only Server and Client are allowed");
 				}
 				
+				Driver = new TCPIPInputSpikeDriver (Type,address,port);
+
 				i += 2;
 				this->InputDrivers.push_back(Driver);
 				
@@ -167,6 +170,7 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 				string host = Arguments[i+1];
 				string address = "";
 				unsigned short port = 0;
+				enum TCPIPConnectionType Type;
 				
 				string type = Arguments[i+2];
 				
@@ -177,7 +181,8 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 					if (!(ss >> port)){
 	     				throw ParameterException(Arguments[i], "Invalid connection port");
 					}
-					Driver = new TCPIPOutputSpikeDriver (new ServerSocket(port));
+					Type = SERVER;
+
 				}else if (type == string("Client")){
 					string::size_type pos = host.find(":",0);
 					if ( pos != string::npos ){
@@ -189,12 +194,14 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 						// Output error
 						throw ParameterException(Arguments[i],"Invalid output connection. Check the address and the port.");	
 					}
-					Driver = new TCPIPOutputSpikeDriver (new ClientSocket(address,port));
+					Type = CLIENT;
 				} else {
 					// Output error
 					throw ParameterException(Arguments[i],"Invalid output connection type. Only Server and Client are allowed");
 				}
 				
+				Driver = new TCPIPOutputSpikeDriver (Type,address,port);
+
 				i += 2;
 				
 				this->OutputDrivers.push_back(Driver);
@@ -206,6 +213,7 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 				string host = Arguments[i+1];
 				string address = "";
 				unsigned short port = 0;
+				enum TCPIPConnectionType Type;
 				
 				string type = Arguments[i+2];
 				
@@ -216,7 +224,7 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 					if (!(ss >> port)){
 	     				throw ParameterException(Arguments[i], "Invalid connection port");
 					}
-					Driver = new TCPIPInputOutputSpikeDriver (new ServerSocket(port));
+					Type = SERVER;
 				}else if (type == string("Client")){
 					string::size_type pos = host.find(":",0);
 					if ( pos != string::npos ){
@@ -228,12 +236,14 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 						// Output error
 						throw ParameterException(Arguments[i],"Invalid input-output connection. Check the address and the port.");	
 					}
-					Driver = new TCPIPInputOutputSpikeDriver (new ClientSocket(address,port));
+					Type = CLIENT;
 				} else {
 					// Output error
 					throw ParameterException(Arguments[i],"Invalid input-output connection type. Only Server and Client are allowed");
 				}
 				
+				Driver = new TCPIPInputOutputSpikeDriver (Type,address,port);
+
 				i += 2;
 				
 				this->InputDrivers.push_back(Driver);

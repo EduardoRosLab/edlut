@@ -15,18 +15,25 @@
  ***************************************************************************/
 
 #include "../../include/communication/TCPIPOutputSpikeDriver.h"
-#include "../../include/communication/CdSocket.h"
+
+#include "../../include/communication/ServerSocket.h"
+#include "../../include/communication/ClientSocket.h"
 
 #include "../../include/spike/Spike.h"
 #include "../../include/spike/Neuron.h"
 
 
-TCPIPOutputSpikeDriver::TCPIPOutputSpikeDriver(CdSocket * NewSocket):Socket(NewSocket){
-	
+TCPIPOutputSpikeDriver::TCPIPOutputSpikeDriver(enum TCPIPConnectionType Type, string server_address,unsigned short tcp_port){
+	if (Type == SERVER){
+		this->Socket = new ServerSocket(tcp_port);
+	} else {
+		this->Socket = new ClientSocket(server_address,tcp_port);
+	}
 }
 		
 TCPIPOutputSpikeDriver::~TCPIPOutputSpikeDriver(){
-	
+	cout << "Estamos en el destructor de TCPIP" << endl;
+	delete this->Socket;
 }
 	
 void TCPIPOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){

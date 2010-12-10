@@ -25,7 +25,7 @@
 //( Cd_Socket
 
 
-CdSocket::CdSocket(unsigned short status, string server_address,unsigned short tcp_port)
+CdSocket::CdSocket(enum TCPIPConnectionType status, string server_address,unsigned short tcp_port)
 {
 //  WORD wVersionRequested = MAKEWORD(1,1);
 //  WSADATA wsaData;

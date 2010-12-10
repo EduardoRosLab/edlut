@@ -36,10 +36,10 @@
 
 #include "./CommunicationDevice.h"
 
-using namespace std;
+#include "./TCPIPConnectionType.h"
 
-#define CLIENT 0
-#define SERVER 1
+
+using namespace std;
 
 //( Cd_Socket
 
@@ -59,7 +59,7 @@ public:
    * \param tcp_port tcp_port to connect
    *
    **/
-  CdSocket(unsigned short status, string server_address,unsigned short tcp_port);
+  CdSocket(enum TCPIPConnectionType status, string server_address,unsigned short tcp_port);
 
   /*!
    * \brief Default destructor

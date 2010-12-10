@@ -44,6 +44,13 @@ class PrintableObject {
 	public:
 
 		/*!
+		 * \brief Default destructor
+		 *
+		 * Virtual function. It has to be implemented in every inherited class.
+		 */
+		virtual ~PrintableObject() {};
+
+		/*!
 		 * \brief It prints the information of the object.
 		 *
 		 * It prints the information of the object.

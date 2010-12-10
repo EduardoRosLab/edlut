@@ -29,6 +29,8 @@
  
 #include "./InputSpikeDriver.h"
 
+#include "./TCPIPConnectionType.h"
+
 #include "../spike/EDLUTFileException.h"
 
 class CdSocket;
@@ -78,12 +80,14 @@ class TCPIPInputSpikeDriver: public InputSpikeDriver {
 		/*!
 		 * \brief Class constructor.
 		 * 
-		 * It creates a new object from the socket.
+		 * It creates a new object from the socket data.
 		 * 
-		 * \param NewSocket The socket connection to send the spikes.
+		 * \param Type Client or Server
+		 * \param server_address address of the server host. If Type==Server, server_address is not used.
+		 * \param tcp_port tcp_port to connect
 		 * 
 		 */
-		TCPIPInputSpikeDriver(CdSocket * NewSocket);
+		TCPIPInputSpikeDriver(enum TCPIPConnectionType Type, string server_address,unsigned short tcp_port);
 		
 		/*!
 		 * \brief Class desctructor.

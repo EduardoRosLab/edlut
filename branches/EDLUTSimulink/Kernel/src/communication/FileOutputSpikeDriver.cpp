@@ -30,6 +30,7 @@ FileOutputSpikeDriver::FileOutputSpikeDriver(const char * NewFileName, bool Writ
 }
 		
 FileOutputSpikeDriver::~FileOutputSpikeDriver(){
+	cout << "Estamos en el destructor de file" << endl;
 	fclose(this->Handler);
 }
 

@@ -4,6 +4,7 @@
 
 exe-sources   := ${sources} ${exe-source-file}
 mex-sources   := ${sources} ${mex-source-file}
+sfunction-sources := ${sources} ${sfunction-source-file}
 
 objects       := $(filter %.o,$(subst   .c,.o,$(sources)))
 objects       += $(filter %.o,$(subst  .cc,.o,$(sources)))
@@ -20,6 +21,11 @@ mex-objects       += $(filter %.o,$(subst  .cc,.o,$(mex-sources)))
 mex-objects       += $(filter %.o,$(subst .cpp,.o,$(mex-sources)))
 mex-dependencies  := $(subst .o,.d,$(mex-objects))
 
+sfunction-objects       := $(filter %.o,$(subst   .c,.o,$(sfunction-sources)))
+sfunction-objects       += $(filter %.o,$(subst  .cc,.o,$(sfunction-sources)))
+sfunction-objects       += $(filter %.o,$(subst .cpp,.o,$(sfunction-sources)))
+sfunction-dependencies  := $(subst .o,.d,$(sfunction-objects))
+
 ifeq ($(parallelize),true)
 # parallel compilation variables
    libtarget     := $(libdir)/lib$(packagename).a
@@ -32,5 +38,7 @@ else
 endif
 
 mextarget		 := $(mexdir)/$(packagename).$(mexsuffix)
+
+sfunctiontarget	 := $(sfunctiondir)/$(packagename).$(mexsuffix)
 
 automakefile := make.auto

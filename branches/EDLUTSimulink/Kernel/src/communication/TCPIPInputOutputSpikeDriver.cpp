@@ -16,7 +16,8 @@
 
 #include "../../include/communication/TCPIPInputOutputSpikeDriver.h"
 
-#include "../../include/communication/CdSocket.h"
+#include "../../include/communication/ServerSocket.h"
+#include "../../include/communication/ClientSocket.h"
 
 #include "../../include/simulation/EventQueue.h"
 
@@ -24,12 +25,17 @@
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Neuron.h"
 
-TCPIPInputOutputSpikeDriver::TCPIPInputOutputSpikeDriver(CdSocket * NewSocket):Socket(NewSocket){
+TCPIPInputOutputSpikeDriver::TCPIPInputOutputSpikeDriver(enum TCPIPConnectionType Type, string server_address,unsigned short tcp_port){
+	if (Type == SERVER){
+		this->Socket = new ServerSocket(tcp_port);
+	} else {
+		this->Socket = new ClientSocket(server_address,tcp_port);
+	}
 	this->Finished = false;	
 }
 		
 TCPIPInputOutputSpikeDriver::~TCPIPInputOutputSpikeDriver(){
-	
+	delete this->Socket;
 }
 
 void TCPIPInputOutputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException){

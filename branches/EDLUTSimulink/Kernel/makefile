@@ -61,6 +61,14 @@ matlabrootdir	:= /usr/local/matlabR2009b
 # be used.
 matlabinclude	:= ${matlabrootdir}/extern/include
 
+# if simulink support -> Simulink paths, includes and flags.
+simulinksupport	:= true
+
+# simulink include folder : Path where simulink include files are stored.
+# If you don't need simulink compatibility (simulink files), this option won't
+# be used.
+simulinkinclude	:= ${matlabrootdir}/simulink/include
+
 # matlab mex file suffix : Suffix of generated mex files. E.g. mexglx in Linux, mexw32
 # in windows 32 bits, mexw64 in windows 64 bits... See mex documentation for more
 # detailed information.
@@ -127,12 +135,16 @@ srcdir      	:= ./src
 includedir  	:= ./include
 bindir			:= ./bin
 mexdir			:= ./mex
+sfunctiondir	:= ./sfunction
 
 # default file to be included when the executable build is required
 exe-source-file := ${srcdir}/EDLUTKernel.cpp
 
 # default file to be included when the mex build is required
 mex-source-file := ${srcdir}/EDLUTMatlab.cpp
+
+# default file to be included when the sfunction build is required
+sfunction-source-file := ${srcdir}/EDLUTSfunction.cpp
 
 # what to compile ? include .cpp and .c files here in your project
 # if you don't have a main() function in one of the sources, you'll get an error

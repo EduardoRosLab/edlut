@@ -31,6 +31,8 @@
 
 #include "./OutputSpikeDriver.h"
 
+#include "./TCPIPConnectionType.h"
+
 class CdSocket;
 
 /*!
@@ -78,16 +80,17 @@ class TCPIPOutputSpikeDriver: public OutputSpikeDriver {
 		vector<OutputSpike> OutputBuffer;
 
 	public:
-	
 		/*!
 		 * \brief Class constructor.
 		 * 
-		 * It creates a new object from the socket.
+		 * It creates a new object from the socket data.
 		 * 
-		 * \param NewSocket The socket connection to send the spikes.
+		 * \param Type Client or Server
+		 * \param server_address address of the server host. If Type==Server, server_address is not used.
+		 * \param tcp_port tcp_port to connect
 		 * 
 		 */
-		TCPIPOutputSpikeDriver(CdSocket * NewSocket);
+		TCPIPOutputSpikeDriver(enum TCPIPConnectionType Type, string server_address,unsigned short tcp_port);
 		
 		/*!
 		 * \brief Class desctructor.

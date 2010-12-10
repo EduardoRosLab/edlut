@@ -28,6 +28,20 @@ $(mextarget)	: $(mex-objects)
 	@echo
 	@mkdir -p $(mexdir)
 	$(mex) $(MEXFLAGS) $^ $(LDFLAGS) -o $@
+	
+.PHONY		: sfunction
+sfunction	: $(sfunctiontarget) 
+	@echo
+	@echo ------------------ making sfunction file $(sfunctiontarget)
+	@echo
+
+$(sfunctiontarget)	: $(sfunction-objects)
+	@echo compiler path = ${mex}
+	@echo
+	@echo ------------------ making sfunction file
+	@echo
+	@mkdir -p $(sfunctiondir)
+	$(mex) $(MEXFLAGS) $^ $(LDFLAGS) -o $@
 
 .PHONY  : library
 library : $(libtarget)
@@ -68,14 +82,14 @@ distclean  :
 	@echo
 	@echo ------------------ cleaning everything
 	@echo
-	@rm -f $(pkgconfigfile) $(libtarget) $(packagename) $(objects) ${exetarget}.exe ${exe-objects} $(dependencies) ${exe-dependencies} TAGS gmon.out
+	@rm -f $(pkgconfigfile) $(libtarget) $(packagename) $(objects) ${exetarget}.exe ${exe-objects} $(dependencies) ${exe-dependencies} ${mextarget} ${mex-objects} {mex-dependencies} ${sfunctiontarget} ${sfunction-objects} {sfunction-dependencies} TAGS gmon.out
 
 .PHONY : clean
 clean  :
 	@echo
 	@echo ------------------ cleaning *.o exe lib
 	@echo
-	@rm -f $(objects) ${exe-objects} ${libtarget} ${exetarget}.exe TAGS gmon.out
+	@rm -f $(objects) ${exe-objects} ${libtarget} ${exetarget}.exe ${mextarget} ${mex-objects} ${sfunctiontarget} ${sfunction-objects} TAGS gmon.out
 
 .PHONY : clear
 clear :
