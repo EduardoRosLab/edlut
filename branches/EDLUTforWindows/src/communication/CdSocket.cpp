@@ -14,14 +14,13 @@
  *                                                                         *
  ***************************************************************************/
 
-
-
-
 #include "../../include/communication/CdSocket.h"
 
 #ifdef _WIN32
 	#include <windows.h>
 	#include <winsock2.h>
+
+	#pragma comment(lib, "ws2_32.lib")
 
 	unsigned int CdSocket::SocketInstances = 0;
 
