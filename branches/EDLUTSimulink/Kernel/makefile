@@ -165,6 +165,8 @@ communication-sources	:= $(srcdir)/communication/CdSocket.cpp \
                            $(srcdir)/communication/TCPIPOutputSpikeDriver.cpp \
                            $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
                            $(srcdir)/communication/ArrayOutputSpikeDriver.cpp \
+                           $(srcdir)/communication/InputBooleanArrayDriver.cpp \
+                           $(srcdir)/communication/OutputBooleanArrayDriver.cpp \
                            $(srcdir)/communication/Timer.cpp
                            
 simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
@@ -204,7 +206,7 @@ learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
 						   $(srcdir)/learning_rules/STDPWeightChange.cpp 
 						   
 interface-sources		:= $(srcdir)/interface/C_Interface.cpp
-                          
+
 sources     := $(communication-sources) \
                $(simulation-sources) \
                $(spike-sources) \

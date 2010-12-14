@@ -64,6 +64,7 @@ class ArrayOutputSpikeDriver: public OutputSpikeDriver {
 			OutputSpike(int NewNeuron, float NewTime):Neuron(NewNeuron), Time(NewTime){};
 		};
 
+	protected:
 		/*!
 		 * Spike buffer
 		 */

@@ -32,13 +32,13 @@ InputBooleanArrayDriver::InputBooleanArrayDriver(unsigned int NumInputLines, int
 }
 
 InputBooleanArrayDriver::~InputBooleanArrayDriver() {
-	delete AssociatedCells [];
+	delete [] AssociatedCells;
 }
 
 void InputBooleanArrayDriver::LoadInputs(EventQueue * Queue, Network * Net, int NumInputLines, bool * InputLines, double CurrentTime) throw (EDLUTFileException){
 	for (int i=0; i<NumInputLines; ++i){
 		if (InputLines[i]){
-			InputSpike * NewSpike = new InputSpike(CurrentTime, AssociatedCells[i]));
+			InputSpike * NewSpike = new InputSpike(CurrentTime, Net->GetNeuronAt(this->AssociatedCells[i]));
 
 			Queue->InsertEvent(NewSpike);
 		}

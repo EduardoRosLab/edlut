@@ -43,7 +43,7 @@ void OutputBooleanArrayDriver::GetBufferedSpikes(int NumOutputLines, bool * Outp
 		for (int i=0; i<size; ++i){
 			int CellNumber = this->OutputBuffer[i].Neuron;
 
-			for (int j=0; j<OutputLines; ++j){
+			for (int j=0; j<NumOutputLines; ++j){
 				if (CellNumber==OutputLines[j]){
 					OutputLines[j] = true;
 				}
