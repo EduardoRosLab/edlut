@@ -169,11 +169,27 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\include\spike\ActivityRegister.h"
+				RelativePath=".\include\learning_rules\ActivityRegister.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\spike\AdditiveWeightChange.h"
+				RelativePath=".\include\learning_rules\AdditiveKernelChange.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\communication\ArrayInputSpikeDriver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\communication\ArrayOutputSpikeDriver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\neuron_model\BufferedState.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\interface\C_Interface.h"
 				>
 			</File>
 			<File
@@ -233,6 +249,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\communication\InputBooleanArrayDriver.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\spike\InputSpike.h"
 				>
 			</File>
@@ -249,7 +269,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\spike\MultiplicativeWeightChange.h"
+				RelativePath=".\include\learning_rules\LearningRule.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\learning_rules\MultiplicativeKernelChange.h"
 				>
 			</File>
 			<File
@@ -261,11 +285,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\spike\NeuronModelTable.h"
+				RelativePath=".\include\neuron_model\NeuronModel.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\spike\NeuronType.h"
+				RelativePath=".\include\neuron_model\NeuronModelTable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\neuron_model\NeuronState.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\communication\OutputBooleanArrayDriver.h"
 				>
 			</File>
 			<File
@@ -285,6 +317,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\simulation\PrintableObject.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\spike\PropagatedSpike.h"
 				>
 			</File>
@@ -301,11 +337,43 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\spike\SinWeightChange.h"
+				RelativePath=".\include\interface\simulink\SimulinkBlockInterface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\learning_rules\SinWeightChange.h"
 				>
 			</File>
 			<File
 				RelativePath=".\include\spike\Spike.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\neuron_model\SRMModel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\neuron_model\SRMState.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\neuron_model\SRMTableBasedModel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\learning_rules\STDPWeightChange.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\simulation\StopSimulationEvent.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\neuron_model\TableBasedModel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\communication\TCPIPConnectionType.h"
 				>
 			</File>
 			<File
@@ -341,11 +409,27 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\src\spike\ActivityRegister.cpp"
+				RelativePath=".\src\learning_rules\ActivityRegister.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\spike\AdditiveWeightChange.cpp"
+				RelativePath=".\src\learning_rules\AdditiveKernelChange.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\communication\ArrayInputSpikeDriver.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\communication\ArrayOutputSpikeDriver.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\neuron_model\BufferedState.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\interface\C_Interface.cpp"
 				>
 			</File>
 			<File
@@ -405,6 +489,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\communication\InputBooleanArrayDriver.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\spike\InputSpike.cpp"
 				>
 			</File>
@@ -421,7 +509,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\spike\MultiplicativeWeightChange.cpp"
+				RelativePath=".\src\learning_rules\MultiplicativeKernelChange.cpp"
 				>
 			</File>
 			<File
@@ -433,11 +521,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\spike\NeuronModelTable.cpp"
+				RelativePath=".\src\neuron_model\NeuronModel.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\spike\NeuronType.cpp"
+				RelativePath=".\src\neuron_model\NeuronModelTable.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\neuron_model\NeuronState.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\communication\OutputBooleanArrayDriver.cpp"
 				>
 			</File>
 			<File
@@ -473,11 +569,35 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\spike\SinWeightChange.cpp"
+				RelativePath=".\src\learning_rules\SinWeightChange.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\src\spike\Spike.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\neuron_model\SRMModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\neuron_model\SRMState.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\neuron_model\SRMTableBasedModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\learning_rules\STDPWeightChange.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\simulation\StopSimulationEvent.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\neuron_model\TableBasedModel.cpp"
 				>
 			</File>
 			<File
@@ -494,10 +614,6 @@
 			</File>
 			<File
 				RelativePath=".\src\simulation\Utils.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\spike\WeightChange.cpp"
 				>
 			</File>
 		</Filter>

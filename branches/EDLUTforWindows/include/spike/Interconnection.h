@@ -26,10 +26,12 @@
  *
  * This file declares a class which abstracts a spiking neural network connection.
  */
+
+#include "../simulation/PrintableObject.h"
  
 
 class Neuron;
-class WeightChange;
+class LearningRule;
 class ActivityRegister;
 
 /*!
@@ -44,7 +46,7 @@ class ActivityRegister;
  * \author Richard Carrillo
  * \date August 2008
  */
-class Interconnection {
+class Interconnection : public PrintableObject {
 	
 	private:
 		/*!
@@ -85,7 +87,7 @@ class Interconnection {
 		/*!
 		 * \brief The learning (or weight change) rule of the connection.
 		 */
-		WeightChange* wchange;
+		LearningRule* wchange;
 		
 		/*!
 		 * \brief The activity register of the connection.
@@ -122,7 +124,7 @@ class Interconnection {
 		 * \param NewActivity Last activity register of this connection.
 		 * \param NewLastSpikeTime Time of the last propagated spike in this connection.
 		 */
-		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, WeightChange* NewWeightChange, float NewLastSpikeTime);
+		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, float NewLastSpikeTime);
 		
 		/*!
 		 * \brief It gets the connection index.
@@ -257,7 +259,7 @@ class Interconnection {
 		 * 
 		 * \return The learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
-		WeightChange * GetWeightChange() const;
+		LearningRule * GetWeightChange() const;
 		
 		/*!
 		 * \brief It sets the learning rule of this connection.
@@ -266,7 +268,7 @@ class Interconnection {
 		 * 
 		 * \param NewWeightChange The new learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
-		void SetWeightChange(WeightChange * NewWeightChange);
+		void SetWeightChange(LearningRule * NewWeightChange);
 		
 		/*!
 		 * \brief It clears the activity register of this connection.
@@ -315,13 +317,15 @@ class Interconnection {
 		void SetLastSpikeTime(double NewTime);
 		
 		/*!
-		 * \brief It modifies the synaptic weight of this connection.
-		 * 
-		 * It modifies the synaptic weight of this connection according to its learning rule.
-		 * 
-		 * \param stime The current time in the simulation.
+		 * \brief It prints the interconnection info.
+		 *
+		 * It prints the current interconnection characteristics.
+		 *
+		 * \param out The stream where it prints the information.
+		 *
+		 * \return The stream after the printer.
 		 */
-		void ChangeWeights(double stime);
+		virtual ostream & PrintInfo(ostream & out);
 };
   
 #endif /*INTERCONNECTION_H_*/

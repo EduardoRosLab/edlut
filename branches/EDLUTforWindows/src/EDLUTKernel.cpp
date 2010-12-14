@@ -28,6 +28,9 @@
 #include "../include/simulation/ParameterException.h"
 
 #include "../include/communication/ConnectionException.h"
+#include "../include/communication/InputSpikeDriver.h"
+#include "../include/communication/OutputSpikeDriver.h"
+#include "../include/communication/OutputWeightDriver.h"
 
 #include "../include/spike/EDLUTFileException.h"
 #include "../include/spike/EDLUTException.h"
@@ -88,7 +91,7 @@ int main(int ac, char *av[]) {
 		if(Reader.CheckInfo()){
 			//Simul.GetNetwork()->tables_info();
 			//neutypes_info();
-			Simul.GetNetwork()->NetInfo();
+			Simul.PrintInfo(cout);
 		}
 			
 		cout << "Simulating network..." << endl;
@@ -96,6 +99,27 @@ int main(int ac, char *av[]) {
 		startt=clock();
 		Simul.RunSimulation();
 		endt=clock();
+
+		// Closing simulation connections
+		for (unsigned int i=0; i<Reader.GetInputSpikeDrivers().size(); ++i){
+			InputSpikeDriver * Input = Reader.GetInputSpikeDrivers()[i];
+			delete Input;
+		}
+
+		for (unsigned int i=0; i<Reader.GetOutputSpikeDrivers().size(); ++i){
+			OutputSpikeDriver * Output = Reader.GetOutputSpikeDrivers()[i];
+			delete Output;
+		}
+
+		for (unsigned int i=0; i<Reader.GetMonitorDrivers().size(); ++i){
+			OutputSpikeDriver * Monitor = Reader.GetMonitorDrivers()[i];
+			delete Monitor;
+		}
+
+		for (unsigned int i=0; i<Reader.GetOutputWeightDrivers().size(); ++i){
+			OutputWeightDriver * Weights = Reader.GetOutputWeightDrivers()[i];
+			delete Weights;
+		}
          
 		cout << "Oky doky" << endl;     
 

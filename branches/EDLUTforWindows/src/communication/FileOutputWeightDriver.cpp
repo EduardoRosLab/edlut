@@ -41,3 +41,10 @@ void FileOutputWeightDriver::WriteWeights(Network * Net) throw (EDLUTException){
 	Net->SaveWeights(FileName);
 }	
 
+ostream & FileOutputWeightDriver::PrintInfo(ostream & out){
+
+	out << "- File Output Weight Driver: " << this->FileName << endl;
+
+	return out;
+}
+

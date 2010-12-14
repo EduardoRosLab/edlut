@@ -34,7 +34,7 @@ installdir  := $(HOME)/usr
 # 'libcvlab.a'
 packagename := EDLUTKernel
 
-version     := 0.1
+version     := 0.4
 author      := $(FULL_USER_NAME)
 
 # you can write a short description here about the package
@@ -46,7 +46,33 @@ licence     := GPL v3.0 or higher distributed by FSF
 # the external libraries and sources are managed (included, linked)
 # using the pkg-config program. if you don't have it, you cannot use
 # this template to include/link libraries. get it from
-# http://pkg-config.freedesktop.org/wiki/
+# http://pkg-config.freedesktop.org/wiki
+
+# if matlab support -> Matlab paths, includes and flags.
+matlabsupport	:= true
+
+# matlab root dir : Folder where Matlab is installed. The root folder
+# in order to find the matlab include folder.If you don't need matlab 
+# compatibility (mex files), this option won't be used.
+matlabrootdir	:= /usr/local/matlabR2009b
+
+# matlab include folder : Path where matlab include files are stored.
+# If you don't need matlab compatibility (mex files), this option won't
+# be used.
+matlabinclude	:= ${matlabrootdir}/extern/include
+
+# if simulink support -> Simulink paths, includes and flags.
+simulinksupport	:= true
+
+# simulink include folder : Path where simulink include files are stored.
+# If you don't need simulink compatibility (simulink files), this option won't
+# be used.
+simulinkinclude	:= ${matlabrootdir}/simulink/include
+
+# matlab mex file suffix : Suffix of generated mex files. E.g. mexglx in Linux, mexw32
+# in windows 32 bits, mexw64 in windows 64 bits... See mex documentation for more
+# detailed information.
+mexsuffix	:= mexglx
 
 # external sources : uses pkg-config as " pkg-config --cflags ${external_sources} "
 # if you don't need any source, set it to 'none'
@@ -104,13 +130,21 @@ profile := true
 # srcdir      := src
 # includedir  := include
 # If you'd like to have everything in the main directory
-libdir      := ./lib
-srcdir      := ./src
-includedir  := ./include
-bindir		:= ./bin
+libdir      	:= ./lib
+srcdir      	:= ./src
+includedir  	:= ./include
+bindir			:= ./bin
+mexdir			:= ./mex
+sfunctiondir	:= ./sfunction
 
 # default file to be included when the executable build is required
 exe-source-file := ${srcdir}/EDLUTKernel.cpp
+
+# default file to be included when the mex build is required
+mex-source-file := ${srcdir}/EDLUTMatlab.cpp
+
+# default file to be included when the sfunction build is required
+sfunction-source-file := ${srcdir}/EDLUTSfunction.cpp
 
 # what to compile ? include .cpp and .c files here in your project
 # if you don't have a main() function in one of the sources, you'll get an error
@@ -129,10 +163,15 @@ communication-sources	:= $(srcdir)/communication/CdSocket.cpp \
                            $(srcdir)/communication/TCPIPInputOutputSpikeDriver.cpp \
                            $(srcdir)/communication/TCPIPInputSpikeDriver.cpp \
                            $(srcdir)/communication/TCPIPOutputSpikeDriver.cpp \
+                           $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
+                           $(srcdir)/communication/ArrayOutputSpikeDriver.cpp \
+                           $(srcdir)/communication/InputBooleanArrayDriver.cpp \
+                           $(srcdir)/communication/OutputBooleanArrayDriver.cpp \
                            $(srcdir)/communication/Timer.cpp
                            
 simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            $(srcdir)/simulation/EndSimulationEvent.cpp \
+                           $(srcdir)/simulation/StopSimulationEvent.cpp \
                            $(srcdir)/simulation/Event.cpp \
                            $(srcdir)/simulation/EventQueue.cpp \
                            $(srcdir)/simulation/ParameterException.cpp \
@@ -141,27 +180,39 @@ simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            $(srcdir)/simulation/Simulation.cpp \
                            $(srcdir)/simulation/Utils.cpp
                            
-spike-sources			:= $(srcdir)/spike/AdditiveWeightChange.cpp \
-						   $(srcdir)/spike/ActivityRegister.cpp \
-                           $(srcdir)/spike/ActivityRegister.cpp \
-                           $(srcdir)/spike/EDLUTException.cpp \
+spike-sources			:= $(srcdir)/spike/EDLUTException.cpp \
                            $(srcdir)/spike/EDLUTFileException.cpp \
                            $(srcdir)/spike/InputSpike.cpp \
                            $(srcdir)/spike/Interconnection.cpp \
                            $(srcdir)/spike/InternalSpike.cpp \
-                           $(srcdir)/spike/MultiplicativeWeightChange.cpp \
                            $(srcdir)/spike/Network.cpp \
                            $(srcdir)/spike/Neuron.cpp \
-                           $(srcdir)/spike/NeuronModelTable.cpp \
-                           $(srcdir)/spike/NeuronType.cpp \
                            $(srcdir)/spike/PropagatedSpike.cpp \
-                           $(srcdir)/spike/Spike.cpp \
-                           $(srcdir)/spike/WeightChange.cpp \
-                           $(srcdir)/spike/SinWeightChange.cpp
-                          
+                           $(srcdir)/spike/Spike.cpp
+                           
+neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
+			   			   $(srcdir)/neuron_model/SRMState.cpp \
+			   			   $(srcdir)/neuron_model/NeuronModel.cpp \
+                           $(srcdir)/neuron_model/NeuronState.cpp \
+                           $(srcdir)/neuron_model/SRMModel.cpp \
+                           $(srcdir)/neuron_model/NeuronModelTable.cpp \
+                           $(srcdir)/neuron_model/TableBasedModel.cpp \
+			   			   $(srcdir)/neuron_model/SRMTableBasedModel.cpp
+                           
+learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
+                           $(srcdir)/learning_rules/AdditiveKernelChange.cpp \
+						   $(srcdir)/learning_rules/MultiplicativeKernelChange.cpp \
+						   $(srcdir)/learning_rules/SinWeightChange.cpp \
+						   $(srcdir)/learning_rules/STDPWeightChange.cpp 
+						   
+interface-sources		:= $(srcdir)/interface/C_Interface.cpp
+
 sources     := $(communication-sources) \
                $(simulation-sources) \
-               $(spike-sources)
+               $(spike-sources) \
+               $(neuron_model-sources) \
+               $(interface-sources) \
+               $(learning_rules-sources)
 
 
 ################################################################################

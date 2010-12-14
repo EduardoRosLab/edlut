@@ -33,10 +33,12 @@
 
 #include "./EDLUTFileException.h"
 
+#include "../simulation/PrintableObject.h"
+
 class Interconnection;
-class NeuronType;
+class NeuronModel;
 class Neuron;
-class WeightChange;
+class LearningRule;
 class EventQueue;
 
 /*!
@@ -51,7 +53,7 @@ class EventQueue;
  * \author Richard Carrillo
  * \date August 2008
  */
-class Network{
+class Network : public PrintableObject{
 	private:
 	
 		/*!
@@ -62,12 +64,12 @@ class Network{
    		/*!
    		 * \brief Number of interconnections.
    		 */
-   		int ninters;
+   		long int ninters;
    
    		/*!
    		 * \brief Neuron types.
    		 */
-   		NeuronType *neutypes;
+   		NeuronModel ** neutypes;
    
    		/*!
    		 * \brief Neuron types number.
@@ -87,7 +89,7 @@ class Network{
    		/*!
    		 * \brief Learning rules.
    		 */
-   		WeightChange ** wchanges;
+   		LearningRule ** wchanges;
    
    		/*!
    		 * \brief Number of learning rules.
@@ -147,12 +149,13 @@ class Network{
    		 * It checks if the neuron type has been loaded, and in other case,
    		 * it loads the characteristics from the neuron type files.
    		 * 
+   		 * \param ident_type Type of the neuron model. At this moment, only "SRMTimeDriven" and "TableBasedModel" are implemented.
    		 * \param neutype The name of the neuron type to load.
    		 * 
    		 * \return The loaded (or existing) neuron type.
    		 * \throw EDLUTException If the neuron model file hasn't been able to be correctly readed. 
    		 */
-   		NeuronType * LoadNetTypes(char *neutype) throw (EDLUTException);
+   		NeuronModel * LoadNetTypes(string ident_type, string neutype) throw (EDLUTException);
    		
    		/*!
    		 * \brief It inits the spikes predictions of every neuron in the network.
@@ -188,18 +191,6 @@ class Network{
    		 * \throw EDLUTFileException If the weights file hasn't been able to be correctly readed.
    		 */
    		void LoadWeights(const char *wfile) throw (EDLUTFileException);
-   		
-   		/*!
-   		 * \brief It loads the neuron model tables of this network.
-   		 * 
-   		 * It loads all the neuron model tables of this network.
-   		 * 
-   		 * \pre The neuron types have been loaded before.
-   		 * 
-   		 * \throw EDLUTException If the neuron model table file hasn't been able to be correctly readed.
-   		 */
-   		void LoadNeuronTypeTables() throw (EDLUTException);
-   		
    		   		
    	public:
    	
@@ -227,14 +218,6 @@ class Network{
    		~Network();
    		
    		/*!
-  		 * \brief It prints information about load network.
-  		 * 
-  		 * It prints information about load network.
-  		 * 
-  		 */
-   		void NetInfo();
-   		
-   		/*!
    		 * \brief It gets a neuron by the index.
    		 * 
    		 * It returns a neuron from the index.
@@ -255,6 +238,26 @@ class Network{
    		int GetNeuronNumber() const;
    		
    		/*!
+		 * \brief It gets a learning rule by the index.
+		 *
+		 * It returns a learning rule from the index.
+		 *
+		 * \param index The index of the learning rule to get.
+		 *
+		 * \return The rule whose index is the parameter.
+		 */
+		LearningRule * GetLearningRuleAt(int index) const;
+
+		/*!
+		 * \brief It gets the number of learning rules in the network.
+		 *
+		 * It gets the number of learning rules in the network.
+		 *
+		 * \return The number of learning rules.
+		 */
+		int GetLearningRuleNumber() const;
+
+   		/*!
    		 * \brief It saves the weights in a file.
    		 * 
    		 * It saves the network weights in a file.
@@ -274,11 +277,8 @@ class Network{
    		 * 
    		 * \return The stream after the printer.
    		 */
-   		ostream & GetNetInfo(ostream & out) const;
+   		virtual ostream & PrintInfo(ostream & out);
    		
-   		/*const char * GetTablesInfo();
-   		
-   		const char * GetNeuronTypesInfo();*/
 };
 
 /*!

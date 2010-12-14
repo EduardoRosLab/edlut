@@ -98,6 +98,16 @@ class FileInputSpikeDriver: public InputSpikeDriver {
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
 		void LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException);
+
+		/*!
+		 * \brief It prints the information of the object.
+		 *
+		 * It prints the information of the object.
+		 *
+		 * \param out The output stream where it prints the object to.
+		 * \return The output stream.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
 	
 };
 
