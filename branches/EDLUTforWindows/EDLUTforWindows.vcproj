@@ -642,7 +642,15 @@
 			>
 		</File>
 		<File
+			RelativePath=".\makefileStep"
+			>
+		</File>
+		<File
 			RelativePath=".\noout.m"
+			>
+		</File>
+		<File
+			RelativePath=".\QUICK_GUIDE"
 			>
 		</File>
 		<File
