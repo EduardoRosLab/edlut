@@ -501,6 +501,46 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\AUTHORS.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\COPYING.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\Doxyfile"
+			>
+		</File>
+		<File
+			RelativePath=".\flags.makefile"
+			>
+		</File>
+		<File
+			RelativePath=".\INSTALL"
+			>
+		</File>
+		<File
+			RelativePath=".\makefile"
+			>
+		</File>
+		<File
+			RelativePath=".\noout.m"
+			>
+		</File>
+		<File
+			RelativePath=".\README"
+			>
+		</File>
+		<File
+			RelativePath=".\rules.makefile"
+			>
+		</File>
+		<File
+			RelativePath=".\static-variables.makefile"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
