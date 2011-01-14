@@ -20,6 +20,8 @@
 #include "../../../include/communication/OutputBooleanArrayDriver.h"
 #include "../../../include/communication/FileOutputSpikeDriver.h"
 
+#include <ctime>
+
 // Define input parameters
 #define PARAMNET ssGetSFcnParam(S,0) 	// Network description file
 #define PARAMWEIGHT ssGetSFcnParam(S,1) 	// Weight description file
@@ -58,85 +60,90 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 	try {
 		this->Simul = new Simulation(NetworkFile, WeightFile, SimulationTime, 0);
 
-		int_T * InputCells = (int_T *)mxGetData(PARAMINPUT);
+		real_T * InputCells = (real_T *)mxGetData(PARAMINPUT);
 		unsigned int NumberOfElements = (unsigned int) mxGetNumberOfElements(PARAMINPUT);
 		int * IntInputCells = new int [NumberOfElements];
 
 		for (unsigned int i=0; i<NumberOfElements; ++i){
-			IntInputCells[i] = (int) (InputCells[i]);
+			IntInputCells[i] = (int)(InputCells[i]);
 		}
 
 		// Create a new input object to add input spikes
 		this->InputDriver = new InputBooleanArrayDriver(NumberOfElements, IntInputCells);
 		this->Simul->AddInputSpikeDriver(this->InputDriver);
 
-		int_T * OutputCells = (int_T *) mxGetData(PARAMOUTPUT);
+		real_T * OutputCells = (real_T *) mxGetData(PARAMOUTPUT);
 		unsigned int NumberOfElementsOut = (unsigned int) mxGetNumberOfElements(PARAMOUTPUT);
 		int * IntOutputCells = new int [NumberOfElementsOut];
 
-		for (unsigned int i=0; i<NumberOfElements; ++i){
+		for (unsigned int i=0; i<NumberOfElementsOut; ++i){
 			IntOutputCells[i] = (int) OutputCells[i];
 		}
 
 		// Create a new output object to get output spike
-		this->OutputDriver = new OutputBooleanArrayDriver(NumberOfElements, IntOutputCells);
+		this->OutputDriver = new OutputBooleanArrayDriver(NumberOfElementsOut, IntOutputCells);
 		this->Simul->AddOutputSpikeDriver(this->OutputDriver);
 
 		Simul->AddMonitorActivityDriver(new FileOutputSpikeDriver(LogFile,false));
 
 	} catch (EDLUTFileException Exc){
-		ssSetErrorStatus(S, "Error in creating output log file");
-		cerr << Exc << ": " << Exc.GetErrorNum() << endl;
+		ssPrintf("Error %li: %s in %s\n",Exc.GetErrorNum(),Exc.GetErrorMsg(),Exc.GetTaskMsg());
+		ssPrintf("Try %s\n",Exc.GetRepairMsg());
+		ssSetErrorStatus(S, "File error in initializing simulation object");
 	} catch (EDLUTException Exc){
+		ssPrintf("Error %li: %s in %s\n",Exc.GetErrorNum(),Exc.GetErrorMsg(),Exc.GetTaskMsg());
+		ssPrintf("Try %s\n",Exc.GetRepairMsg());
 		ssSetErrorStatus(S, "Error in initializing simulation object");
-		cerr << Exc << ": " << Exc.GetErrorNum() << endl;
+		return;
 	}
 }
 
 void SimulinkBlockInterface::SimulateStep(SimStruct *S, int_T tid){
 
-	ssPrintf("Getting number of elements\n");
+	if (ssIsSampleHit(S,0,tid)){
+		ssPrintf("Getting number of elements\n");
 
-	unsigned int NumberOfElements = (unsigned int) mxGetNumberOfElements(PARAMINPUT);
+		unsigned int NumberOfElements = (unsigned int) mxGetNumberOfElements(PARAMINPUT);
 
-	ssPrintf("Found %i input signals\n",NumberOfElements);
+		ssPrintf("Found %i input signals\n",NumberOfElements);
 
-	bool * InputSignals = new bool [NumberOfElements];
+		bool * InputSignals = new bool [NumberOfElements];
 
-	InputPtrsType      u     = ssGetInputPortSignalPtrs(S,0);
-	InputBooleanPtrsType uPtrs = (InputBooleanPtrsType)u;
+		InputPtrsType      u     = ssGetInputPortSignalPtrs(S,0);
+		InputBooleanPtrsType uPtrs = (InputBooleanPtrsType)u;
 
-	ssPrintf("Input pointer obtained\n");
+		ssPrintf("Input pointer obtained\n");
 
-	for (unsigned int i=0; i<NumberOfElements; ++i){
-		boolean_T value = *uPtrs[i];
-		InputSignals[i] = value;
-		ssPrintf("Input signal %i: Value %i\n",i,value);
+		for (unsigned int i=0; i<NumberOfElements; ++i){
+			boolean_T value = *uPtrs[i];
+			InputSignals[i] = value;
+			ssPrintf("Input signal %i: Value %i\n",i,value);
+		}
+
+		// Get current simulation time
+		double StepTime = ssGetSampleTime(S, 0);
+		double CurrentTime = (double) ssGetT(S);
+		double NextTime = CurrentTime+StepTime;
+
+		ssPrintf("Current time is %f and next time is %f\n",CurrentTime,NextTime);
+
+		this->InputDriver->LoadInputs(Simul->GetQueue(),Simul->GetNetwork(), (bool *) InputSignals, CurrentTime);
+
+		ssPrintf("Input signals obtained\n");
+
+		Simul->RunSimulationSlot(NextTime);
+
+		ssPrintf("Simulation step finished\n");
+
+		delete [] InputSignals;
 	}
-
-	// Get current simulation time
-	double StepTime = ssGetSampleTime(S, 0);
-	double CurrentTime = (double) ssGetT(S)/(double) 1000;
-	double NextTime = CurrentTime+StepTime;
-
-	ssPrintf("Current time is %f and next time is %f\n",CurrentTime,NextTime);
-
-	this->InputDriver->LoadInputs(Simul->GetQueue(),Simul->GetNetwork(),NumberOfElements,(bool *) InputSignals, CurrentTime);
-
-	ssPrintf("Input signals obtained\n");
-
-	Simul->RunSimulationSlot(NextTime);
-
-	ssPrintf("Simulation step finished\n");
-
-	delete [] InputSignals;
 }
 
 void SimulinkBlockInterface::AssignOutputs(SimStruct *S){
 	unsigned int NumberOfElements = (unsigned int) mxGetNumberOfElements(PARAMOUTPUT);
 
 	bool * OutputSignals = new bool [NumberOfElements];
-	this->OutputDriver->GetBufferedSpikes(NumberOfElements,OutputSignals);
+	this->OutputDriver->GetBufferedSpikes(OutputSignals);
 
 	boolean_T * u = (boolean_T *) ssGetOutputPortSignal(S,0);
 
