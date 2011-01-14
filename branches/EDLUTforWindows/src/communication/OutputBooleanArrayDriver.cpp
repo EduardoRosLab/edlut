@@ -19,10 +19,10 @@
 #include "../../include/spike/InputSpike.h"
 #include "../../include/spike/Network.h"
 
-OutputBooleanArrayDriver::OutputBooleanArrayDriver(unsigned int NumOutputLines, int * Associated):AssociatedCells(0){
-	AssociatedCells = new int [NumOutputLines];
+OutputBooleanArrayDriver::OutputBooleanArrayDriver(unsigned int OutputLines, int * Associated):AssociatedCells(0),NumOutputLines(OutputLines){
+	AssociatedCells = new int [this->NumOutputLines];
 
-	for (int i=0; i<NumOutputLines; ++i){
+	for (int i=0; i<this->NumOutputLines; ++i){
 		AssociatedCells[i] = Associated[i];
 	}
 
@@ -33,8 +33,8 @@ OutputBooleanArrayDriver::~OutputBooleanArrayDriver() {
 	delete [] AssociatedCells;
 }
 
-void OutputBooleanArrayDriver::GetBufferedSpikes(int NumOutputLines, bool * OutputLines){
-	memset(OutputLines,0,NumOutputLines*sizeof(bool));
+void OutputBooleanArrayDriver::GetBufferedSpikes(bool * OutputLines){
+	memset(OutputLines,0,this->NumOutputLines*sizeof(bool));
 
 	int size = this->OutputBuffer.size();
 
@@ -43,8 +43,8 @@ void OutputBooleanArrayDriver::GetBufferedSpikes(int NumOutputLines, bool * Outp
 		for (int i=0; i<size; ++i){
 			int CellNumber = this->OutputBuffer[i].Neuron;
 
-			for (int j=0; j<NumOutputLines; ++j){
-				if (CellNumber==OutputLines[j]){
+			for (int j=0; j<this->NumOutputLines; ++j){
+				if (CellNumber==this->AssociatedCells[j]){
 					OutputLines[j] = true;
 				}
 			}

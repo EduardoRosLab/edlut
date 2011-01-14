@@ -52,6 +52,11 @@ class OutputBooleanArrayDriver: public ArrayOutputSpikeDriver {
 		 */
 		int * AssociatedCells;
 
+		/*!
+		 * Number of output lines.
+		 */
+		unsigned int NumOutputLines;
+
 	public:
 
 		/*!
@@ -59,7 +64,7 @@ class OutputBooleanArrayDriver: public ArrayOutputSpikeDriver {
 		 *
 		 * It creates a new object to send spikes.
 		 */
-		OutputBooleanArrayDriver(unsigned int NumOutputLines, int * Associated);
+		OutputBooleanArrayDriver(unsigned int OutputLines, int * Associated);
 
 		/*!
 		 * \brief Class destructor.
@@ -73,10 +78,9 @@ class OutputBooleanArrayDriver: public ArrayOutputSpikeDriver {
 		 *
 		 * This method sends spikes from arrays to a boolean array.
 		 *
-		 * \param NumOutputLines The number of output lines of this block.
-		 * \param OutputLines An array of boolean values (true->Output spikes to associated neuron).
+		 * \param OutputLines An array of NumOutputLines boolean values (true->Output spikes to associated neuron).
 		 */
-		void GetBufferedSpikes(int NumOutputLines, bool * OutputLines);
+		void GetBufferedSpikes(bool * OutputLines);
 
 
 		/*!

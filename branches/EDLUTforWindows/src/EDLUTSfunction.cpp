@@ -18,7 +18,7 @@
  * You must specify the S_FUNCTION_NAME as the name of your S-function.
  */
 
-#define S_FUNCTION_NAME  EDLUTKernel
+#define S_FUNCTION_NAME  EDLUTSfunction
 #define S_FUNCTION_LEVEL 2
 
 /*
@@ -124,15 +124,32 @@ static void mdlInitializeSizes(SimStruct *S)
     // 4th parameter -> Input array map. Unsigned int array.
     ssPrintf("Setting input cells as int parameter\n");
     DTypeId  dtype4 = ssGetDTypeIdFromMxArray(PARAMINPUT);
-    //if (!(dtype4 == SS_UINT8 || dtype4 == SS_UINT16 || dtype4 == SS_UINT32))
-    //	return;
-
+	if (!(dtype4 == SS_UINT8 || dtype4 == SS_UINT16 || dtype4 == SS_UINT32)){
+		real_T * InputCells = (real_T *)mxGetData(PARAMINPUT);
+		unsigned int NumberOfElements = (unsigned int) mxGetNumberOfElements(PARAMINPUT);
+		
+		for (unsigned int i=0; i<NumberOfElements; ++i){
+			if ((int)InputCells[i] != InputCells[i] || InputCells[i]<0){
+				ssSetErrorStatus(S, "Invalid input cell map - Real type");
+				return;
+			}
+		}		
+	}
+    
     // 5th parameter -> Output array map. Unsigned int array.
     ssPrintf("Setting output cells as int parameter\n");
-    //DTypeId  dtype5 = ssGetDTypeIdFromMxArray(PARAMOUTPUT);
-	//if (!(dtype5 == SS_UINT8 || dtype5 == SS_UINT16 || dtype5 == SS_UINT32))
-	//	return;
-
+    DTypeId  dtype5 = ssGetDTypeIdFromMxArray(PARAMOUTPUT);
+	if (!(dtype5 == SS_UINT8 || dtype5 == SS_UINT16 || dtype5 == SS_UINT32)){
+		real_T * OutputCells = (real_T *)mxGetData(PARAMOUTPUT);
+		unsigned int NumberOfElements = (unsigned int) mxGetNumberOfElements(PARAMOUTPUT);
+		
+		for (unsigned int i=0; i<NumberOfElements; ++i){
+			if ((int)OutputCells[i] != OutputCells[i] || OutputCells[i] < 0 ){
+				ssSetErrorStatus(S, "Invalid output cell map - Real type");
+				return;
+			}
+		}		
+	}
 
     /* Register the number and type of states the S-Function uses */
     ssPrintf("Setting continuous and discrete states\n");
@@ -150,7 +167,7 @@ static void mdlInitializeSizes(SimStruct *S)
     ssSetInputPortWidth(S, inputPortIdx, mxGetNumberOfElements(PARAMINPUT));
 
     // Set input port memory area as contiguo
-    ssSetInputPortRequiredContiguous(S, inputPortIdx, 1);;
+    ssSetInputPortRequiredContiguous(S, inputPortIdx, 0);;
 
     // Set input port as boolean
     if(!ssSetInputPortDataType(S, 0, SS_BOOLEAN)) return;
@@ -210,7 +227,7 @@ static void mdlInitializeSizes(SimStruct *S)
      *   ssSetOptions(S, (SS_OPTION_name1 | SS_OPTION_name2))
      */
 
-    //ssSetOptions(S, SS_OPTION_EXCEPTION_FREE_CODE);
+    ssSetOptions(S, SS_OPTION_EXCEPTION_FREE_CODE);
     ssPrintf("Initialization finished\n");
 
 } /* end mdlInitializeSizes */
@@ -428,10 +445,15 @@ static void mdlInitializeSampleTimes(SimStruct *S)
   {
 	  ssPrintf("Initializing simulation\n");
 	  if (ssIsFirstInitCond(S)){
-
+		  SimulinkBlockInterface * Simul = new SimulinkBlockInterface();
+		  ssPrintf("Saving simulation interface pointer\n");
+		  ssSetPWorkValue(S, 0, Simul);
+		  ssPrintf("Initializing simulation interface object\n");
+		  Simul->InitializeSimulation(S);
+		  ssPrintf("Simulation interface object inicialized\n");
 	  } else {
 		  // Reset simulation
-
+		  
 	  }
 	  ssPrintf("Simulation initialized\n");
   }
@@ -448,13 +470,7 @@ static void mdlInitializeSampleTimes(SimStruct *S)
    */
   static void mdlStart(SimStruct *S)
   {
-	  ssPrintf("Starting simulation\n");
-	  SimulinkBlockInterface * Simul = new SimulinkBlockInterface();
-	  ssPrintf("Saving simulation interface pointer\n");
-	  ssSetPWorkValue(S, 0, Simul);
-	  ssPrintf("Initializing simulation interface object\n");
-	  Simul->InitializeSimulation(S);
-	  ssPrintf("Simulation interface object inicialized\n");
+	  ssPrintf("Starting simulation\n");	  
   }
 #endif /*  MDL_START */
 
@@ -515,7 +531,7 @@ static void mdlTerminate(SimStruct *S)
 {
 	ssPrintf("Finishing simulation\n");
 	SimulinkBlockInterface * Simul = (SimulinkBlockInterface *) ssGetPWorkValue(S,0);
-	delete Simul;
+	delete (SimulinkBlockInterface *) Simul;
 	ssPrintf("Simulation finished\n");
 }
 

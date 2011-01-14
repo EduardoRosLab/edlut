@@ -21,10 +21,10 @@
 #include "../../include/spike/InputSpike.h"
 #include "../../include/spike/Network.h"
 
-InputBooleanArrayDriver::InputBooleanArrayDriver(unsigned int NumInputLines, int * Associated):AssociatedCells(0){
+InputBooleanArrayDriver::InputBooleanArrayDriver(unsigned int InputLines, int * Associated):AssociatedCells(0),NumInputLines(InputLines){
 	AssociatedCells = new int [NumInputLines];
 
-	for (int i=0; i<NumInputLines; ++i){
+	for (int i=0; i<this->NumInputLines; ++i){
 		AssociatedCells[i] = Associated[i];
 	}
 
@@ -35,7 +35,7 @@ InputBooleanArrayDriver::~InputBooleanArrayDriver() {
 	delete [] AssociatedCells;
 }
 
-void InputBooleanArrayDriver::LoadInputs(EventQueue * Queue, Network * Net, int NumInputLines, bool * InputLines, double CurrentTime) throw (EDLUTFileException){
+void InputBooleanArrayDriver::LoadInputs(EventQueue * Queue, Network * Net, bool * InputLines, double CurrentTime) throw (EDLUTFileException){
 	for (int i=0; i<NumInputLines; ++i){
 		if (InputLines[i]){
 			InputSpike * NewSpike = new InputSpike(CurrentTime, Net->GetNeuronAt(this->AssociatedCells[i]));

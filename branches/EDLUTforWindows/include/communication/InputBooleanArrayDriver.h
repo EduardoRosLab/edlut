@@ -49,13 +49,18 @@ class InputBooleanArrayDriver: public ArrayInputSpikeDriver {
 		 */
 		int * AssociatedCells;
 
+		/*!
+		 * Number of input lines
+		 */
+		unsigned int NumInputLines;
+
 	public:
 		/*!
 		 * \brief Class constructor.
 		 *
 		 * It creates a new object to introduce spikes.
 		 */
-		InputBooleanArrayDriver(unsigned int NumInputLines, int * Associated);
+		InputBooleanArrayDriver(unsigned int InputLines, int * Associated);
 
 		/*!
 		 * \brief Class desctructor.
@@ -71,13 +76,12 @@ class InputBooleanArrayDriver: public ArrayInputSpikeDriver {
 		 *
 		 * \param Queue The event queue where the input spikes are inserted.
 		 * \param Net The network associated to the input spikes.
-		 * \param NumInputLines The number of input lines to this block.
-		 * \param InputLines An array of boolean values (true->Input spikes to associated neuron).
+		 * \param InputLines An array of NumInputLines boolean values (true->Input spikes to associated neuron).
 		 * \param CurrentTime The current simulation time. Every spike will be inserted in this time.
 		 *
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
-		void LoadInputs(EventQueue * Queue, Network * Net, int NumInputLines, bool * InputLines, double CurrentTime) throw (EDLUTFileException);
+		void LoadInputs(EventQueue * Queue, Network * Net, bool * InputLines, double CurrentTime) throw (EDLUTFileException);
 
 		/*!
 		 * \brief It prints the information of the object.
