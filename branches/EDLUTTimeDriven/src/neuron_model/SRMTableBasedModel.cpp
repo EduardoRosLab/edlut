@@ -15,9 +15,11 @@
  ***************************************************************************/
 
 #include "../../include/neuron_model/SRMTableBasedModel.h"
-
 #include "../../include/neuron_model/NeuronModelTable.h"
 #include "../../include/neuron_model/SRMState.h"
+
+#include "../../include/spike/InternalSpike.h"
+#include "../../include/spike/Neuron.h"
 
 #include "../../include/simulation/Utils.h"
 

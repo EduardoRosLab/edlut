@@ -24,6 +24,9 @@
  * \author Richard Carrido
  * \date August 2008
  *
+ * \note Modified on January 2011 in order to include time-driven simulation support.
+ * New state variables (ntimedrivenneurons and timedrivenneurons)
+ *
  * This file declares a class which abstracts a spiking neural network.
  */
 
@@ -85,6 +88,16 @@ class Network : public PrintableObject{
    		 * \brief Number of neurons.
    		 */
    		int nneurons;
+
+		/*!
+		 * \brief Time-driven cell (model) array.
+		 */
+		Neuron ** timedrivenneurons;
+
+		/*!
+   		 * \brief Number of time-driven neurons.
+   		 */
+		int ntimedrivenneurons;
    		
    		/*!
    		 * \brief Learning rules.
@@ -236,6 +249,29 @@ class Network : public PrintableObject{
    		 * \return The number of neurons.
    		 */
    		int GetNeuronNumber() const;
+
+		/*!
+   		 * \brief It gets a time-driven neuron by the index.
+   		 * 
+   		 * It returns a time-driven neuron from the index.
+   		 * 
+   		 * \param index The index of the time-driven neuron to get.
+		 *
+		 * \note The param index is not the neuron index. It is the index
+		 * including only time-driven cells.
+   		 * 
+   		 * \return The time-driven neuron whose index is the parameter.
+   		 */
+   		Neuron * GetTimeDrivenNeuronAt(int index) const;
+   		
+   		/*!
+   		 * \brief It gets the number of time-driven neurons in the network.
+   		 * 
+   		 * It gets the number of time-driven neurons in the network.
+   		 * 
+   		 * \return The number of time-driven neurons.
+   		 */
+   		int GetTimeDrivenNeuronNumber() const;
    		
    		/*!
 		 * \brief It gets a learning rule by the index.

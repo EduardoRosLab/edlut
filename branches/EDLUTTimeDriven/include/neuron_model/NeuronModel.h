@@ -1,7 +1,7 @@
 /***************************************************************************
  *                           NeuronModel.h                                 *
  *                           -------------------                           *
- * copyright            : (C) 2010 by Jesus Garrido                        *
+ * copyright            : (C) 2011 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
  ***************************************************************************/
 
@@ -21,23 +21,21 @@
  * \file NeuronModel.h
  *
  * \author Jesus Garrido
- * \date February 2010
+ * \date January 2011
  *
- * This file declares a class which abstracts a spiking neuron behavior.
+ * This file declares a class which abstracts an spiking neural model.
  */
-
-#include "../spike/Interconnection.h"
-#include "../spike/InternalSpike.h"
-#include "../spike/PropagatedSpike.h"
-#include "../spike/Neuron.h"
-#include "./NeuronState.h"
-
-#include "../spike/EDLUTFileException.h"
 
 #include <string>
 
 using namespace std;
 
+class NeuronState;
+class InternalSpike;
+class PropagatedSpike;
+class EDLUTFileException;
+
+enum NeuronModelType {TIME_DRIVEN_MODEL, EVENT_DRIVEN_MODEL};
 
 /*!
  * \class NeuronModel
@@ -46,12 +44,12 @@ using namespace std;
  *
  * This class abstracts the behavior of a neuron in a spiking neural network.
  * It includes internal model functions which define the behavior of the model
- * (initialization, update of the state, synapses effect, next firing prediction...).
+ * (initialization, update of the state, synapses effect...).
  * This is only a virtual function (an interface) which defines the functions of the
  * inherited classes.
  *
  * \author Jesus Garrido
- * \date February 2010
+ * \date January 2011
  */
 class NeuronModel {
 	private:
@@ -102,17 +100,6 @@ class NeuronModel {
 		virtual NeuronState * InitializeState() = 0;
 
 		/*!
-		 * \brief It generates the first spike (if any) in a cell.
-		 *
-		 * It generates the first spike (if any) in a cell.
-		 *
-		 * \param Cell The cell to check if activity is generated.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * GenerateInitialActivity(Neuron *  Cell) = 0;
-
-		/*!
 		 * \brief It processes a propagated spike (input spike in the cell).
 		 *
 		 * It processes a propagated spike (input spike in the cell).
@@ -126,34 +113,6 @@ class NeuronModel {
 		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike) = 0;
 
 		/*!
-		 * \brief It processes an internal spike (generated spike in the cell).
-		 *
-		 * It processes an internal spike (generated spike in the cell).
-		 *
-		 * \note This function doesn't generate the next propagated (output) spike. It must be externally done.
-		 * \note Before generating next spike, you should check if this spike must be discard.
-		 *
-		 * \see DiscardSpike
-		 *
-		 * \param OutputSpike The spike happened.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * GenerateNextSpike(InternalSpike *  OutputSpike) = 0;
-
-		/*!
-		 * \brief Check if the spike must be discard.
-		 *
-		 * Check if the spike must be discard. A spike must be discard if there are discrepancies between
-		 * the next predicted spike and the spike time.
-		 *
-		 * \param OutputSpike The spike happened.
-		 *
-		 * \return True if the spike must be discard. False in otherwise.
-		 */
-		virtual bool DiscardSpike(InternalSpike *  OutputSpike) = 0;
-
-		/*!
 		 * \brief It gets the neuron model ID.
 		 *
 		 * It gets the neuron model ID.
@@ -161,6 +120,15 @@ class NeuronModel {
 		 * \return The identificator of the neuron model.
 		 */
 		string GetModelID();
+
+		/*!
+		 * \brief It gets the neuron model type (event-driven or time-driven).
+		 *
+		 * It gets the neuron model type (event-driven or time-driven).
+		 *
+		 * \return The type of the neuron model.
+		 */
+		virtual enum NeuronModelType GetModelType() = 0;
 
 		/*!
 		 * \brief It prints the neuron model info.

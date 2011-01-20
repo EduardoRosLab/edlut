@@ -25,6 +25,10 @@
 
 #include "../../include/simulation/EventQueue.h"
 
+#include <string>
+
+using namespace std;
+
 Neuron::Neuron(){
 }
 

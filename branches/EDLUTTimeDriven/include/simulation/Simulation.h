@@ -97,6 +97,11 @@ class Simulation : public PrintableObject{
 		 * Simulation step
 		 */
 		double SimulationStep;
+
+		/*!
+		 * Simulation step
+		 */
+		double TimeDrivenStep;
 		
 		/*!
 		 * Save weight step
@@ -217,6 +222,24 @@ class Simulation : public PrintableObject{
 		 * \return The simulation step time (in seconds). 0 values don't simulate by step.
 		 */
 		double GetSimulationStep();
+
+		/*!
+		 * \brief It sets the time-driven model step.
+		 * 
+		 * It sets the time-driven model step.
+		 * 
+		 * \param NewTimeDrivenStep The time-driven model step time (in seconds). 0 values represents variable step (not implemented yet).
+		 */
+		void SetTimeDrivenStep(double NewTimeDrivenStep);
+		
+		/*!
+		 * \brief It gets the simulation step time.
+		 * 
+		 * It gets the simulation step time.
+		 * 
+		 * \return The simulation step time (in seconds). 0 values don't simulate by step.
+		 */
+		double GetTimeDrivenStep();
 		
 		/*!
 		 * \brief It ends the simulation before the next event.

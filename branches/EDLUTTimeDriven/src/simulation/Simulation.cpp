@@ -16,6 +16,7 @@
 
 #include "../../include/simulation/Simulation.h"
 #include "../../include/simulation/StopSimulationEvent.h"
+#include "../../include/simulation/TimeEvent.h"
 
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Spike.h"
@@ -65,6 +66,14 @@ double Simulation::GetSimulationStep(){
 	return this->SimulationStep;	
 }
 
+void Simulation::SetTimeDrivenStep(double NewTimeDrivenStep){
+	this->TimeDrivenStep = NewTimeDrivenStep;		
+}
+		
+double Simulation::GetTimeDrivenStep(){
+	return this->TimeDrivenStep;	
+}
+
 void Simulation::InitSimulation() throw (EDLUTException){
 	this->CurrentSimulationTime = 0.0;
 
@@ -83,6 +92,11 @@ void Simulation::InitSimulation() throw (EDLUTException){
 	if (this->SimulationStep>0.0F){
 		this->Queue->InsertEvent(new CommunicationEvent(this->SimulationStep));		
 	}	
+
+	// Add the time-driven simulation event
+	if (this->TimeDrivenStep>0.0F){
+		this->Queue->InsertEvent(new TimeEvent(this->TimeDrivenStep));
+	}
 
 }
 

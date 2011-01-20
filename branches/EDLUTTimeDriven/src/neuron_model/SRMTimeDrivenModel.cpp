@@ -1,7 +1,7 @@
 /***************************************************************************
- *                           SRMModel.cpp                                  *
+ *                           SRMTimeDrivenModel.cpp                        *
  *                           -------------------                           *
- * copyright            : (C) 2010 by Jesus Garrido                        *
+ * copyright            : (C) 2011 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
  ***************************************************************************/
 
@@ -18,8 +18,9 @@
 #include <cmath>
 #include <string>
 
-#include "../../include/neuron_model/SRMModel.h"
+#include "../../include/neuron_model/SRMTimeDrivenModel.h"
 #include "../../include/neuron_model/SRMState.h"
+#include "../../include/neuron_model/NeuronState.h"
 
 #include "../../include/spike/EDLUTFileException.h"
 #include "../../include/spike/Neuron.h"
@@ -30,8 +31,7 @@
 
 using namespace std;
 
-
-void SRMModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
+void SRMTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 	FILE *fh;
 	long Currentline = 0L;
 	fh=fopen(ConfigFile.c_str(),"rt");
@@ -65,18 +65,14 @@ void SRMModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 										if(fscanf(fh,"%f",&this->taurel)==1){
 											skip_comments(fh,Currentline);
 
-											if(fscanf(fh,"%f",&this->timestep)==1){
-												this->InitialState = (SRMState *) new SRMState(4,8*this->tau,30);
+											this->InitialState = (SRMState *) new SRMState(4,8*this->tau,30);
 
-												for (unsigned int i=0; i<=4; ++i){
-													this->InitialState->SetStateVariableAt(i,0.0);
-												}
-
-												this->InitialState->SetLastUpdateTime(0);
-												this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
-											} else {
-												throw EDLUTFileException(13,49,3,1,Currentline);
+											for (unsigned int i=0; i<=4; ++i){
+												this->InitialState->SetStateVariableAt(i,0.0);
 											}
+
+											this->InitialState->SetLastUpdateTime(0);
+											this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 										} else {
 											throw EDLUTFileException(13,50,3,1,Currentline);
 										}
@@ -107,7 +103,7 @@ void SRMModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 	}
 }
 
-void SRMModel::PrecalculateEPSP(){
+void SRMTimeDrivenModel::PrecalculateEPSP(){
 	unsigned int EPSPWindowSize = this->tau*8/this->EPSPStep;
 
 	this->EPSP = (double *) new double [EPSPWindowSize];
@@ -117,9 +113,74 @@ void SRMModel::PrecalculateEPSP(){
 	}
 }
 
+void SRMTimeDrivenModel::SynapsisEffect(SRMState * State, Interconnection * InputConnection){
+	State->AddActivity(InputConnection);
+}
 
+double SRMTimeDrivenModel::PotentialIncrement(SRMState * State, double CurrentTime){
+	double Increment = 0;
 
-void SRMModel::UpdateState(SRMState * State, double CurrentTime){
+	for (unsigned int i=0; i<State->GetNumberOfSpikes(); ++i){
+		double TimeDifference = CurrentTime - State->GetLastUpdateTime() + State->GetSpikeTimeAt(i);
+		double Weight = State->GetInterconnectionAt(i)->GetWeight();
+
+		Increment += Weight*this->W*EPSP[(int) (TimeDifference/this->EPSPStep)];
+	}
+
+	return Increment;
+}
+
+bool SRMTimeDrivenModel::CheckSpikeAt(SRMState * State, double CurrentTime){
+	double TimeSinceSpike = CurrentTime-State->GetLastUpdateTime()+State->GetLastSpikeTime();
+	if (TimeSinceSpike<=this->tauabs){
+		return false;
+	} else {
+		double Potential = this->vr + this->PotentialIncrement(State,CurrentTime);
+		double FiringRate = this->r0 * log(1+exp((Potential-this->v0)/this->vf));
+
+		double Aux = TimeSinceSpike-this->tauabs;
+		double Refractoriness = 1./(1.+(this->taurel*this->taurel)/(Aux*Aux));
+
+		double Probability = 1 - exp(-FiringRate*Refractoriness);
+
+		return (((double) rand())/RAND_MAX<Probability);
+	}
+}
+
+SRMTimeDrivenModel::SRMTimeDrivenModel(string NeuronModelID): TimeDrivenNeuronModel(NeuronModelID), tau(0), EPSPStep(0), vr(0), W(0), r0(0), v0(0), vf(0),
+		tauabs(0), taurel(0), EPSP(0) {
+
+}
+
+SRMTimeDrivenModel::~SRMTimeDrivenModel(){
+
+}
+
+void SRMTimeDrivenModel::LoadNeuronModel() throw (EDLUTFileException) {
+
+	this->LoadNeuronModel(this->GetModelID() + ".cfg");
+
+	this->PrecalculateEPSP();
+}
+
+NeuronState * SRMTimeDrivenModel::InitializeState(){
+	return (SRMState *) new SRMState(*((SRMState *) this->InitialState));
+}
+
+InternalSpike * SRMTimeDrivenModel::ProcessInputSpike(PropagatedSpike *  InputSpike){
+	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(InputSpike->GetTarget());
+
+	Neuron * TargetCell = inter->GetTarget();
+
+	NeuronState * CurrentState = TargetCell->GetNeuronState();
+
+	// Add the effect of the input spike
+	this->SynapsisEffect((SRMState *)CurrentState,inter);
+
+	return 0;
+}
+
+bool SRMTimeDrivenModel::UpdateState(SRMState * State, double CurrentTime){
 
 	double Potential = this->vr + this->PotentialIncrement(State,CurrentTime);
 	State->SetStateVariableAt(1,Potential);
@@ -138,156 +199,20 @@ void SRMModel::UpdateState(SRMState * State, double CurrentTime){
 	State->AddElapsedTime(CurrentTime-State->GetLastUpdateTime());
 	State->SetLastUpdateTime(CurrentTime);
 
+	State->NewFiredSpike();
 
-}
-
-void SRMModel::SynapsisEffect(SRMState * State, Interconnection * InputConnection){
-	State->AddActivity(InputConnection);
-}
-
-double SRMModel::PotentialIncrement(SRMState * State, double CurrentTime){
-	double Increment = 0;
-
-	for (unsigned int i=0; i<State->GetNumberOfSpikes(); ++i){
-		double TimeDifference = CurrentTime - State->GetLastUpdateTime() + State->GetSpikeTimeAt(i);
-		double Weight = State->GetInterconnectionAt(i)->GetWeight();
-
-		Increment += Weight*this->W*EPSP[(int) (TimeDifference/this->EPSPStep)];
+	if (this->CheckSpikeAt(State, CurrentTime)){
+		State->NewFiredSpike();
+		return true;
 	}
 
-	return Increment;
+	return false;
 }
 
-bool SRMModel::CheckSpikeAt(SRMState * State, double CurrentTime){
-	double TimeSinceSpike = CurrentTime-State->GetLastUpdateTime()+State->GetLastSpikeTime();
-	if (TimeSinceSpike<=this->tauabs){
-		return false;
-	} else {
-		double Potential = this->vr + this->PotentialIncrement(State,CurrentTime);
-		double FiringRate = this->r0 * log(1+exp((Potential-this->v0)/this->vf));
-
-		double Aux = TimeSinceSpike-this->tauabs;
-		double Refractoriness = 1./(1.+(this->taurel*this->taurel)/(Aux*Aux));
-
-		double Probability = 1 - exp(-FiringRate*Refractoriness);
-
-		return (((double) rand())/RAND_MAX<Probability);
-	}
-}
-
-double SRMModel::NextFiringPrediction(SRMState * State){
-	double time = State->GetLastUpdateTime()+this->timestep;
-	bool spike = false;
-
-	for (;time<State->GetLastUpdateTime()+this->tau*8 && !spike; time+=this->timestep){
-		spike = CheckSpikeAt(State,time);
-	}
-
-	if (spike){
-		return time-State->GetLastUpdateTime();
-	} else {
-		return NO_SPIKE_PREDICTED;
-	}
-}
-
-SRMModel::SRMModel(string NeuronModelID): EventDrivenNeuronModel(NeuronModelID), tau(0), EPSPStep(0), vr(0), W(0), r0(0), v0(0), vf(0),
-		tauabs(0), taurel(0), timestep(0), EPSP(0) {
-
-}
-
-SRMModel::~SRMModel(){
-
-}
-
-void SRMModel::LoadNeuronModel() throw (EDLUTFileException) {
-
-	this->LoadNeuronModel(this->GetModelID() + ".cfg");
-
-	this->PrecalculateEPSP();
-
-}
-
-NeuronState * SRMModel::InitializeState(){
-	return (SRMState *) new SRMState(*((SRMState *) this->InitialState));
-}
-
-InternalSpike * SRMModel::GenerateInitialActivity(Neuron *  Cell){
-	double Predicted = this->NextFiringPrediction((SRMState *) Cell->GetNeuronState());
-
-	InternalSpike * spike = 0;
-
-	if (Predicted!=NO_SPIKE_PREDICTED){
-		Predicted += Cell->GetNeuronState()->GetLastUpdateTime();
-
-		spike = new InternalSpike(Predicted,Cell);
-
-		Cell->GetNeuronState()->SetNextPredictedSpikeTime(Predicted);
-	}
-
-	return spike;
-}
-
-InternalSpike * SRMModel::ProcessInputSpike(PropagatedSpike *  InputSpike){
-	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(InputSpike->GetTarget());
-
-	Neuron * TargetCell = inter->GetTarget();
-
-	NeuronState * CurrentState = TargetCell->GetNeuronState();
-
-	// Update the neuron state until the current time
-	this->UpdateState((SRMState *)CurrentState,InputSpike->GetTime());
-
-	// Add the effect of the input spike
-	this->SynapsisEffect((SRMState *)CurrentState,inter);
-
-	InternalSpike * GeneratedSpike = 0;
-
-	// Check if an spike will be fired
-	double NextSpike = this->NextFiringPrediction((SRMState *) CurrentState);
-
-	if (NextSpike!=NO_SPIKE_PREDICTED){
-		NextSpike += CurrentState->GetLastUpdateTime();
-
-		GeneratedSpike = new InternalSpike(NextSpike,TargetCell);
-	}
-
-	TargetCell->GetNeuronState()->SetNextPredictedSpikeTime(NextSpike);
-
-	return GeneratedSpike;
-}
-
-InternalSpike * SRMModel::GenerateNextSpike(InternalSpike *  OutputSpike){
-	Neuron * SourceCell = OutputSpike->GetSource();
-
-	NeuronState * CurrentState = SourceCell->GetNeuronState();
-
-	InternalSpike * NextSpike = 0;
-
-	this->UpdateState((SRMState *) CurrentState,OutputSpike->GetTime());
-
-	((SRMState *) CurrentState)->NewFiredSpike();
-
-	double PredictedSpike = this->NextFiringPrediction((SRMState *) CurrentState);
-
-	if (PredictedSpike!=NO_SPIKE_PREDICTED){
-		PredictedSpike += CurrentState->GetLastUpdateTime();
-
-		NextSpike = new InternalSpike(PredictedSpike,SourceCell);
-	}
-
-	SourceCell->GetNeuronState()->SetNextPredictedSpikeTime(PredictedSpike);
-
-	return NextSpike;
-}
-
-bool SRMModel::DiscardSpike(InternalSpike *  OutputSpike){
-	return (OutputSpike->GetSource()->GetNeuronState()->GetNextPredictedSpikeTime()!=OutputSpike->GetTime());
-}
-
-ostream & SRMModel::PrintInfo(ostream & out) {
+ostream & SRMTimeDrivenModel::PrintInfo(ostream & out) {
 	out << "- SRM Time-Driven Model: " << this->GetModelID() << endl;
 
-	out << "\tTau: " << this->tau << "s\tTime Step: " << this->timestep << "s\tEPSP Step: " << this->EPSPStep << "s\tVresting: " << this->vr << endl;
+	out << "\tTau: " << this->tau << "s\tEPSP Step: " << this->EPSPStep << "s\tVresting: " << this->vr << endl;
 
 	out << "\tWeight Scale: " << this->W << "\tFiring Rate: " << this->r0 << "Hz\tVthreshold: " << this->v0 << "V" << endl;
 
@@ -295,4 +220,3 @@ ostream & SRMModel::PrintInfo(ostream & out) {
 
 	return out;
 }
-

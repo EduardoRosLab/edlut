@@ -15,12 +15,18 @@
  ***************************************************************************/
 
 #include "../../include/neuron_model/TableBasedModel.h"
-
 #include "../../include/neuron_model/NeuronModelTable.h"
+#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/NeuronModel.h"
 
 #include "../../include/spike/InternalSpike.h"
+#include "../../include/spike/Neuron.h"
+#include "../../include/spike/Interconnection.h"
+#include "../../include/spike/PropagatedSpike.h"
 
 #include "../../include/simulation/Utils.h"
+
+#include <string>
 
 void TableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 	FILE *fh;
@@ -152,7 +158,7 @@ void TableBasedModel::LoadTables(string TableFile) throw (EDLUTException){
 	}
 }
 
-TableBasedModel::TableBasedModel(string NeuronModelID): NeuronModel(NeuronModelID),
+TableBasedModel::TableBasedModel(string NeuronModelID): EventDrivenNeuronModel(NeuronModelID),
 		NumStateVar(0), NumTimeDependentStateVar(0), NumSynapticVar(0), SynapticVar(0),
 		StateVarOrder(0), StateVarTable(0), FiringTable(0), EndFiringTable(0),
 		NumTables(0), Tables(0) {

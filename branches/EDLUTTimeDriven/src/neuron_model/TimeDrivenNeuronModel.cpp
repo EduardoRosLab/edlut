@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           NeuronModel.cpp                               *
+ *                           TimeDrivenNeuronModel.cpp                    *
  *                           -------------------                           *
  * copyright            : (C) 2011 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,17 +14,20 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 #include "../../include/neuron_model/NeuronModel.h"
 
-NeuronModel::NeuronModel(string NeuronModelID): ModelID(NeuronModelID), InitialState(0) {
+#include <string>
+
+TimeDrivenNeuronModel::TimeDrivenNeuronModel(string NeuronModelID): NeuronModel(NeuronModelID) {
 	// TODO Auto-generated constructor stub
 
 }
 
-NeuronModel::~NeuronModel() {
+TimeDrivenNeuronModel::~TimeDrivenNeuronModel() {
 	// TODO Auto-generated destructor stub
 }
 
-string NeuronModel::GetModelID(){
-	return this->ModelID;
+enum NeuronModelType TimeDrivenNeuronModel::GetModelType(){
+	return TIME_DRIVEN_MODEL;
 }

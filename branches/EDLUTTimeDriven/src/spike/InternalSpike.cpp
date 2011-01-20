@@ -15,10 +15,14 @@
  ***************************************************************************/
 
 #include "../../include/spike/InternalSpike.h"
+#include "../../include/spike/Interconnection.h"
 
 #include "../../include/spike/Neuron.h"
+#include "../../include/spike/PropagatedSpike.h"
 
+#include "../../include/neuron_model/NeuronState.h"
 #include "../../include/neuron_model/NeuronModel.h"
+#include "../../include/neuron_model/EventDrivenNeuronModel.h"
 
 #include "../../include/simulation/Simulation.h"
 #include "../../include/simulation/EventQueue.h"
@@ -40,11 +44,31 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 	
 	Neuron * neuron=this->source;  // source of the spike
 	
-	if(!neuron->GetNeuronModel()->DiscardSpike(this)){
-		neuron->GetNeuronState()->NewFiredSpike();
-		// If it is a valid spike (not discard), generate the next spike in this cell.
-		neuron->GetNeuronModel()->GenerateNextSpike(this);
-		
+	if (neuron->GetNeuronModel()->GetModelType() == EVENT_DRIVEN_MODEL){
+		EventDrivenNeuronModel * Model = (EventDrivenNeuronModel *) neuron->GetNeuronModel();
+		if(!Model->DiscardSpike(this)){
+			neuron->GetNeuronState()->NewFiredSpike();
+			// If it is a valid spike (not discard), generate the next spike in this cell.
+			Model->GenerateNextSpike(this);
+			
+			CurrentSimulation->WriteSpike(this);
+			CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource());
+
+			// Generate the output activity
+			if (neuron->IsOutputConnected()){
+				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
+				CurrentSimulation->GetQueue()->InsertEvent(spike);
+			}
+
+			for (int i=0; i<neuron->GetInputNumber(); ++i){
+				Interconnection * inter = neuron->GetInputConnectionAt(i);
+
+				if(inter->GetWeightChange() != 0){
+					inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
+				}
+			}
+		}
+	} else { // Time-driven model (no check nor update needed
 		CurrentSimulation->WriteSpike(this);
 		CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource());
 
@@ -61,7 +85,8 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 				inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
 			}
 		}
-    }
+		
+	}
 }
 
    	

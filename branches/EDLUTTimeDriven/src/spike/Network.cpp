@@ -15,9 +15,9 @@
  ***************************************************************************/
 
 #include "../../include/spike/Network.h"
-
 #include "../../include/spike/Interconnection.h"
 #include "../../include/spike/Neuron.h"
+#include "../../include/spike/InternalSpike.h"
 
 #include "../../include/learning_rules/MultiplicativeKernelChange.h"
 #include "../../include/learning_rules/AdditiveKernelChange.h"
@@ -25,6 +25,8 @@
 #include "../../include/learning_rules/STDPWeightChange.h"
 
 #include "../../include/neuron_model/NeuronModel.h"
+#include "../../include/neuron_model/TimeDrivenNeuronModel.h"
+#include "../../include/neuron_model/EventDrivenNeuronModel.h"
 #include "../../include/neuron_model/TableBasedModel.h"
 #include "../../include/neuron_model/SRMModel.h"
 #include "../../include/neuron_model/SRMTableBasedModel.h"
@@ -84,7 +86,9 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype) throw (ED
    	for(ni=0;ni<nneutypes && neutypes[ni]!=0 && neutypes[ni]->GetModelID()!=neutype;ni++);
 
    	if (ni<nneutypes && neutypes[ni]==0){
-   		if (ident_type=="SRMTimeDriven"){
+		if (ident_type=="TimeDriven"){
+		//	neutypes[ni] = (TimeDrivenNeuronModel *) new TimeDrivenModel(neutype);
+		}else if (ident_type=="SRMTimeDriven"){
    			neutypes[ni] = (SRMModel *) new SRMModel(neutype);
    		} else if (ident_type=="TableBasedModel"){
    			neutypes[ni] = (TableBasedModel *) new TableBasedModel(neutype);
@@ -107,15 +111,18 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype) throw (ED
 void Network::InitNetPredictions(EventQueue * Queue){
 	int nneu;
 	for(nneu=0;nneu<nneurons;nneu++){
-		InternalSpike * spike = neurons[nneu].GetNeuronModel()->GenerateInitialActivity(neurons+nneu);
-		if (spike!=0){
-			Queue->InsertEvent(spike);
+		if (neurons[nneu].GetNeuronModel()->GetModelType()==EVENT_DRIVEN_MODEL){
+			EventDrivenNeuronModel * Model = (EventDrivenNeuronModel *) neurons[nneu].GetNeuronModel();
+			InternalSpike * spike = Model->GenerateInitialActivity(neurons+nneu);
+			if (spike!=0){
+				Queue->InsertEvent(spike);
+			}
 		}
 	}
 
 }
 
-Network::Network(const char * netfile, const char * wfile, EventQueue * Queue) throw (EDLUTException): inters(0), ninters(0), neutypes(0), nneutypes(0), neurons(0), nneurons(0), wchanges(0), nwchanges(0), wordination(0){
+Network::Network(const char * netfile, const char * wfile, EventQueue * Queue) throw (EDLUTException): inters(0), ninters(0), neutypes(0), nneutypes(0), neurons(0), nneurons(0), timedrivenneurons(0), ntimedrivenneurons(0), wchanges(0), nwchanges(0), wordination(0){
 	this->LoadNet(netfile);	
 	this->LoadWeights(wfile);
 	this->InitNetPredictions(Queue);	
@@ -125,6 +132,7 @@ Network::~Network(){
 	if (inters!=0) delete [] inters;
    	if (neutypes!=0) delete [] neutypes;
 	if (neurons!=0) delete [] neurons;
+	if (timedrivenneurons!=0) delete [] timedrivenneurons;
 	if (wchanges!=0) delete [] wchanges;
 	if (wordination!=0) delete [] wordination;
 }
@@ -135,6 +143,14 @@ Neuron * Network::GetNeuronAt(int index) const{
    		
 int Network::GetNeuronNumber() const{
 	return this->nneurons;	
+}
+
+Neuron * Network::GetTimeDrivenNeuronAt(int index) const{
+	return this->timedrivenneurons[index];
+}
+   		
+int Network::GetTimeDrivenNeuronNumber() const{
+	return this->ntimedrivenneurons;
 }
 
 LearningRule * Network::GetLearningRuleAt(int index) const{
@@ -167,6 +183,8 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
             		char ident[MAXIDSIZE+1];
             		char ident_type[MAXIDSIZE+1];
             		this->neurons=(Neuron *) new Neuron [this->nneurons];
+
+					int * time_driven_index = new int [this->nneurons];
             		if(this->neurons){
             			for(tind=0;tind<this->nneurons;tind+=nn){
                      		skip_comments(fh,Currentline);
@@ -182,12 +200,29 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
                         
                         		for(nind=0;nind<nn;nind++){
                         			neurons[nind+tind].InitNeuron(nind+tind, type,(bool) monit, (bool)outn);
+
+									if (ident_type=="TimeDrivenModel"){
+										time_driven_index[this->ntimedrivenneurons] = nind+tind;
+										this->ntimedrivenneurons++;
+									}
                         		}
                         	}else{
                         		throw EDLUTFileException(4,8,7,1,Currentline);
                         		break;
                         	}
                      	}
+
+						// Create the time-driven cell array
+						if (this->ntimedrivenneurons>0){
+							this->timedrivenneurons=(Neuron **) new Neuron * [this->ntimedrivenneurons];
+
+							for (int i=0; i<this->ntimedrivenneurons; ++i){
+								this->timedrivenneurons[i] = &(this->neurons[time_driven_index[i]]);
+							}
+
+							delete [] time_driven_index;
+						}
+
             		}else{
             			throw EDLUTFileException(4,5,28,0,Currentline);
             		}

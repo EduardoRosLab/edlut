@@ -17,6 +17,7 @@
 #include "../../include/spike/PropagatedSpike.h"
 #include "../../include/spike/Interconnection.h"
 #include "../../include/spike/Neuron.h"
+#include "../../include/spike/InternalSpike.h"
 
 #include "../../include/neuron_model/NeuronModel.h"
 

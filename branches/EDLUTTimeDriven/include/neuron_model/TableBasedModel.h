@@ -27,11 +27,12 @@
  * look-up tables.
  */
 
-#include "NeuronModel.h"
+#include "EventDrivenNeuronModel.h"
 
 #include "../spike/EDLUTFileException.h"
 
 class NeuronModelTable;
+class Interconnection;
 
 /*!
  * \class TableBasedModel
@@ -46,7 +47,7 @@ class NeuronModelTable;
  * \author Jesus Garrido
  * \date February 2010
  */
-class TableBasedModel: public NeuronModel {
+class TableBasedModel: public EventDrivenNeuronModel {
 	protected:
 		/*!
 		 * \brief Number of state variables (no include time).

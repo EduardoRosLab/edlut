@@ -1,7 +1,7 @@
 /***************************************************************************
- *                           SRMModel.h                                    *
+ *                           SRMTimeDrivenModel.h                          *
  *                           -------------------                           *
- * copyright            : (C) 2010 by Jesus Garrido                        *
+ * copyright            : (C) 2011 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
  ***************************************************************************/
 
@@ -14,20 +14,20 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef SRMMODEL_H_
-#define SRMMODEL_H_
+#ifndef SRMTIMEDRIVENMODEL_H_
+#define SRMTIMEDRIVENMODEL_H_
 
 /*!
- * \file SRMModel.h
+ * \file SRMTimeDrivenModel.h
  *
  * \author Jesus Garrido
- * \date February 2010
+ * \date January 2011
  *
- * This file declares a class which implements a SRM (Spike response model) neuron
+ * This file declares a class which implements a SRM (Spike response model) time-driven neuron
  * model.
  */
 
-#include "./EventDrivenNeuronModel.h"
+#include "./TimeDrivenNeuronModel.h"
 
 #include "../spike/EDLUTFileException.h"
 
@@ -36,19 +36,19 @@ class BufferedState;
 class Interconnection;
 
 /*!
- * \class SRMModel
+ * \class SRMTimeDrivenModel
  *
- * \brief Spike Response neuron model non-based in look-up tables.
+ * \brief Spike Response time-driven neuron model non-based in look-up tables.
  *
  * This class implements the behavior of a neuron in a spiking neural network.
  * It includes internal model functions which define the behavior of the model
- * (initialization, update of the state, synapses effect, next firing prediction...).
+ * (initialization, update of the state, synapses effect...).
  * This behavior is calculated based in a buffer of activity.
  *
  * \author Jesus Garrido
- * \date February 2010
+ * \date January 2010
  */
-class SRMModel: public EventDrivenNeuronModel {
+class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 
 	private:
 		/*!
@@ -95,11 +95,6 @@ class SRMModel: public EventDrivenNeuronModel {
 		 * \brief Relative refractory period
 		 */
 		float taurel;
-
-		/*!
-		 * \brief Time step in simulation
-		 */
-		float timestep;
 
 		/*!
 		 * \brief EPSP pre-calculated vector
@@ -151,16 +146,6 @@ class SRMModel: public EventDrivenNeuronModel {
 		void LoadNeuronModel(string ConfigFile) throw (EDLUTFileException);
 
 		/*!
-		 * \brief It updates the neuron state after the evolution of the time.
-		 *
-		 * It updates the neuron state after the evolution of the time.
-		 *
-		 * \param State Cell current state.
-		 * \param CurrentTime Current simulation time.
-		 */
-		virtual void UpdateState(SRMState * State, double CurrentTime);
-
-		/*!
 		 * \brief It abstracts the effect of an input spike in the cell.
 		 *
 		 * It abstracts the effect of an input spike in the cell.
@@ -170,16 +155,6 @@ class SRMModel: public EventDrivenNeuronModel {
 		 */
 		virtual void SynapsisEffect(SRMState * State, Interconnection * InputConnection);
 
-		/*!
-		 * \brief It returns the next spike time.
-		 *
-		 * It returns the next spike time.
-		 *
-		 * \param State Cell current state.
-		 * \return The next firing spike time. -1 if no spike is predicted.
-		 */
-		virtual double NextFiringPrediction(SRMState * State);
-
 	public:
 		/*!
 		 * \brief Default constructor with parameters.
@@ -188,14 +163,14 @@ class SRMModel: public EventDrivenNeuronModel {
 		 *
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		SRMModel(string NeuronModelID);
+		SRMTimeDrivenModel(string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
 		 *
 		 * It destroys an object of this class.
 		 */
-		~SRMModel();
+		~SRMTimeDrivenModel();
 
 		/*!
 		 * \brief It loads the neuron model description and tables (if necessary).
@@ -214,17 +189,6 @@ class SRMModel: public EventDrivenNeuronModel {
 		virtual NeuronState * InitializeState();
 
 		/*!
-		 * \brief It generates the first spike (if any) in a cell.
-		 *
-		 * It generates the first spike (if any) in a cell.
-		 *
-		 * \param Cell The cell to check if activity is generated.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * GenerateInitialActivity(Neuron *  Cell);
-
-		/*!
 		 * \brief It processes a propagated spike (input spike in the cell).
 		 *
 		 * It processes a propagated spike (input spike in the cell).
@@ -238,32 +202,16 @@ class SRMModel: public EventDrivenNeuronModel {
 		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
 
 		/*!
-		 * \brief It processes an internal spike (generated spike in the cell).
+		 * \brief Update the neuron state variables.
 		 *
-		 * It processes an internal spike (generated spike in the cell).
+		 * It updates the neuron state variables.
 		 *
-		 * \note This function doesn't generate the next propagated (output) spike. It must be externally done.
-		 * \note Before generating next spike, you should check if this spike must be discard.
+		 * \param The current neuron state.
+		 * \param CurrentTime Current time.
 		 *
-		 * \see DiscardSpike
-		 *
-		 * \param OutputSpike The spike happened.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
+		 * \return True if an output spike have been fired. False in other case.
 		 */
-		virtual InternalSpike * GenerateNextSpike(InternalSpike *  OutputSpike);
-
-		/*!
-		 * \brief Check if the spike must be discard.
-		 *
-		 * Check if the spike must be discard. A spike must be discard if there are discrepancies between
-		 * the next predicted spike and the spike time.
-		 *
-		 * \param OutputSpike The spike happened.
-		 *
-		 * \return True if the spike must be discard. False in otherwise.
-		 */
-		virtual bool DiscardSpike(InternalSpike *  OutputSpike);
+		virtual bool UpdateState(SRMState * State, double CurrentTime);
 
 		/*!
 		 * \brief It prints the time-driven model info.

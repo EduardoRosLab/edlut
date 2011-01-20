@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           NeuronModel.cpp                               *
+ *                           EventDrivenNeuronModel.cpp                    *
  *                           -------------------                           *
  * copyright            : (C) 2011 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,17 +14,17 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/neuron_model/NeuronModel.h"
+#include "../../include/neuron_model/EventDrivenNeuronModel.h"
 
-NeuronModel::NeuronModel(string NeuronModelID): ModelID(NeuronModelID), InitialState(0) {
+EventDrivenNeuronModel::EventDrivenNeuronModel(string NeuronModelID): NeuronModel(NeuronModelID) {
 	// TODO Auto-generated constructor stub
 
 }
 
-NeuronModel::~NeuronModel() {
+EventDrivenNeuronModel::~EventDrivenNeuronModel() {
 	// TODO Auto-generated destructor stub
 }
 
-string NeuronModel::GetModelID(){
-	return this->ModelID;
+enum NeuronModelType EventDrivenNeuronModel::GetModelType(){
+	return EVENT_DRIVEN_MODEL;
 }
