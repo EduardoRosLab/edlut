@@ -105,8 +105,12 @@ class Simulation;
  		 * Simulation step time. 
  		 */
  		double SimulationStepTime;
- 		
- 		
+
+		/*!
+ 		 * Simulation time-driven step time. 
+ 		 */
+ 		double TimeDrivenStepTime;
+ 		 		
  		/*!
  		 * Input drivers.
  		 */ 	
@@ -224,6 +228,16 @@ class Simulation;
  		 * \return The simulation step time. -1 if this option isn't enabled. 
  		 */
  		double GetSimulationStepTime();
+
+		/*!
+ 		 * \brief It gets the simulation time-driven step time.
+ 		 * 
+ 		 * It gets the simulation time-driven step time. The argument indicator for simulation step time
+ 		 * is -ts, so it searchs -ts and returns the value as a float.
+ 		 * 
+ 		 * \return The simulation time-driven step time. -1 if this option isn't enabled. 
+ 		 */
+ 		double GetTimeDrivenStepTime();
  		
  		
  		/*!

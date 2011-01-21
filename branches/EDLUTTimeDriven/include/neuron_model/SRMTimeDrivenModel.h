@@ -211,7 +211,7 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		virtual bool UpdateState(SRMState * State, double CurrentTime);
+		virtual bool UpdateState(NeuronState * State, double CurrentTime);
 
 		/*!
 		 * \brief It prints the time-driven model info.

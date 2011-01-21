@@ -180,9 +180,9 @@ InternalSpike * SRMTimeDrivenModel::ProcessInputSpike(PropagatedSpike *  InputSp
 	return 0;
 }
 
-bool SRMTimeDrivenModel::UpdateState(SRMState * State, double CurrentTime){
+bool SRMTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
 
-	double Potential = this->vr + this->PotentialIncrement(State,CurrentTime);
+	double Potential = this->vr + this->PotentialIncrement((SRMState *) State,CurrentTime);
 	State->SetStateVariableAt(1,Potential);
 
 	double FiringRate = this->r0 * log(1+exp((Potential-this->v0)/this->vf));
@@ -201,7 +201,7 @@ bool SRMTimeDrivenModel::UpdateState(SRMState * State, double CurrentTime){
 
 	State->NewFiredSpike();
 
-	if (this->CheckSpikeAt(State, CurrentTime)){
+	if (this->CheckSpikeAt((SRMState *) State, CurrentTime)){
 		State->NewFiredSpike();
 		return true;
 	}

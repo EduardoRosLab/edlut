@@ -87,6 +87,10 @@ int main(int ac, char *av[]) {
 			Simul.AddOutputWeightDriver(Reader.GetOutputWeightDrivers()[i]);
 		}
 		Simul.SetSaveStep(Reader.GetSaveWeightStepTime());
+
+		if (Reader.GetTimeDrivenStepTime()!=-1){
+			Simul.SetTimeDrivenStep(Reader.GetTimeDrivenStepTime());
+		}
 					
 		if(Reader.CheckInfo()){
 			//Simul.GetNetwork()->tables_info();

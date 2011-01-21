@@ -644,7 +644,35 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\_romainSRMModified.cfg"
+			>
+		</File>
+		<File
+			RelativePath=".\_romainSRMModified.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\_SRMTimeDriven.cfg"
+			>
+		</File>
+		<File
+			RelativePath=".\_SRMTimeOverEventDriven.cfg"
+			>
+		</File>
+		<File
 			RelativePath=".\ClassDiagram1.cd"
+			>
+		</File>
+		<File
+			RelativePath=".\NetUPMC100Event10.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\NetUPMC100Time10.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\weightsInit10010.dat"
 			>
 		</File>
 	</Files>
