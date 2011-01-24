@@ -190,8 +190,6 @@ InternalSpike * SRMTableBasedModel::GenerateNextSpike(InternalSpike *  OutputSpi
 
 	this->UpdateState((SRMState *)CurrentState,OutputSpike->GetTime());
 
-	((SRMState *) CurrentState)->NewFiredSpike();
-
 	double PredictedSpike = this->NextFiringPrediction((SRMState *)CurrentState);
 
 	if (PredictedSpike!=NO_SPIKE_PREDICTED){

@@ -202,7 +202,7 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
                         		for(nind=0;nind<nn;nind++){
                         			neurons[nind+tind].InitNeuron(nind+tind, type,(bool) monit, (bool)outn);
 
-									if (ident_type=="TimeDrivenModel"){
+									if (type->GetModelType()==TIME_DRIVEN_MODEL){
 										time_driven_index[this->ntimedrivenneurons] = nind+tind;
 										this->ntimedrivenneurons++;
 									}

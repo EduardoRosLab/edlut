@@ -28,12 +28,13 @@
 
 #include <string>
 
+#include "../spike/EDLUTFileException.h"
+
 using namespace std;
 
 class NeuronState;
 class InternalSpike;
 class PropagatedSpike;
-class EDLUTFileException;
 
 enum NeuronModelType {TIME_DRIVEN_MODEL, EVENT_DRIVEN_MODEL};
 

@@ -65,14 +65,20 @@ void SRMTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 										if(fscanf(fh,"%f",&this->taurel)==1){
 											skip_comments(fh,Currentline);
 
-											this->InitialState = (SRMState *) new SRMState(4,8*this->tau,30);
+											if(fscanf(fh,"%f",&this->steptime)==1){
+												skip_comments(fh,Currentline);
 
-											for (unsigned int i=0; i<=4; ++i){
-												this->InitialState->SetStateVariableAt(i,0.0);
+												this->InitialState = (SRMState *) new SRMState(4,8*this->tau,30);
+
+												for (unsigned int i=0; i<=4; ++i){
+													this->InitialState->SetStateVariableAt(i,0.0);
+												}
+
+												this->InitialState->SetLastUpdateTime(0);
+												this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
+											} else {
+												 throw EDLUTFileException(13,49,3,1,Currentline);
 											}
-
-											this->InitialState->SetLastUpdateTime(0);
-											this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 										} else {
 											throw EDLUTFileException(13,50,3,1,Currentline);
 										}
@@ -131,20 +137,8 @@ double SRMTimeDrivenModel::PotentialIncrement(SRMState * State, double CurrentTi
 }
 
 bool SRMTimeDrivenModel::CheckSpikeAt(SRMState * State, double CurrentTime){
-	double TimeSinceSpike = CurrentTime-State->GetLastUpdateTime()+State->GetLastSpikeTime();
-	if (TimeSinceSpike<=this->tauabs){
-		return false;
-	} else {
-		double Potential = this->vr + this->PotentialIncrement(State,CurrentTime);
-		double FiringRate = this->r0 * log(1+exp((Potential-this->v0)/this->vf));
-
-		double Aux = TimeSinceSpike-this->tauabs;
-		double Refractoriness = 1./(1.+(this->taurel*this->taurel)/(Aux*Aux));
-
-		double Probability = 1 - exp(-FiringRate*Refractoriness);
-
-		return (((double) rand())/RAND_MAX<Probability);
-	}
+	double Probability = State->GetStateVariableAt(4);
+	return (((double) rand())/RAND_MAX<Probability);
 }
 
 SRMTimeDrivenModel::SRMTimeDrivenModel(string NeuronModelID): TimeDrivenNeuronModel(NeuronModelID), tau(0), EPSPStep(0), vr(0), W(0), r0(0), v0(0), vf(0),
@@ -193,13 +187,15 @@ bool SRMTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
 	double Refractoriness = 1./(1.+(this->taurel*this->taurel)/(Aux*Aux));
 	State->SetStateVariableAt(3,Refractoriness);
 
-	double Probability = 1 - exp(-FiringRate*Refractoriness);
+	double Probability = 0;
+
+	if (TimeSinceSpike>this->tauabs){
+		Probability = (1 - exp(-FiringRate*Refractoriness))*this->steptime/0.001;
+	}
 	State->SetStateVariableAt(4,Probability);
 
 	State->AddElapsedTime(CurrentTime-State->GetLastUpdateTime());
 	State->SetLastUpdateTime(CurrentTime);
-
-	State->NewFiredSpike();
 
 	if (this->CheckSpikeAt((SRMState *) State, CurrentTime)){
 		State->NewFiredSpike();

@@ -31,12 +31,12 @@
 #include "../../include/communication/InputSpikeDriver.h"
 #include "../../include/communication/OutputWeightDriver.h"
 
-Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep) throw (EDLUTException): Net(0), Queue(0), InputSpike(), OutputSpike(), OutputWeight(), Totsimtime(SimulationTime), SimulationStep(NewSimulationStep), SaveWeightStep(0), EndOfSimulation(false), Updates(0), Heapoc(0){
+Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep) throw (EDLUTException): Net(0), Queue(0), InputSpike(), OutputSpike(), OutputWeight(), Totsimtime(SimulationTime), TimeDrivenStep(0), SimulationStep(NewSimulationStep), SaveWeightStep(0), EndOfSimulation(false), Updates(0), Heapoc(0){
 	Queue = new EventQueue();
 	Net = new Network(NetworkFile, WeightsFile, this->Queue);
 }
 
-Simulation::Simulation(const Simulation & ant):Net(ant.Net), Queue(ant.Queue), InputSpike(ant.InputSpike), OutputSpike(ant.OutputSpike), OutputWeight(ant.OutputWeight), Totsimtime(ant.Totsimtime), SaveWeightStep(ant.SaveWeightStep), EndOfSimulation(ant.EndOfSimulation), Updates(ant.Updates), Heapoc(ant.Heapoc){
+Simulation::Simulation(const Simulation & ant):Net(ant.Net), Queue(ant.Queue), InputSpike(ant.InputSpike), OutputSpike(ant.OutputSpike), OutputWeight(ant.OutputWeight), Totsimtime(ant.Totsimtime), TimeDrivenStep(ant.TimeDrivenStep), SaveWeightStep(ant.SaveWeightStep), EndOfSimulation(ant.EndOfSimulation), Updates(ant.Updates), Heapoc(ant.Heapoc){
 }
 
 Simulation::~Simulation(){
@@ -224,7 +224,7 @@ long Simulation::GetTotalSpikeCounter(){
 	return this->TotalSpikeCounter;
 }
 
-void Simulation::SetTotalSpikeCounter(int value) {
+void Simulation::SetTotalSpikeCounter(long int value) {
 	this->TotalSpikeCounter = value;
 }
 

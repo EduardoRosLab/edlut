@@ -138,7 +138,7 @@ mexdir			:= ./mex
 sfunctiondir	:= ./sfunction
 
 # default file to be included when the executable build is required
-exe-source-file := ${srcdir}/EDLUTKernel.cpp
+exe-source-file := ${srcdir}/TestEventTime.cpp
 
 # default file to be included when the mex build is required
 mex-source-file := ${srcdir}/EDLUTMatlab.cpp
@@ -149,35 +149,56 @@ sfunction-source-file := ${srcdir}/EDLUTSfunction.cpp
 # what to compile ? include .cpp and .c files here in your project
 # if you don't have a main() function in one of the sources, you'll get an error
 # if you're building an executable. for a library, it won't complain for anything.
-communication-sources	:= $(srcdir)/communication/CdSocket.cpp \
+communication-sources	:= $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
+						   $(srcdir)/communication/ArrayOutputSpikeDriver.cpp \
+						   $(srcdir)/communication/CdSocket.cpp \
                            $(srcdir)/communication/ClientSocket.cpp \
                            $(srcdir)/communication/CommunicationDevice.cpp \
                            $(srcdir)/communication/ConnectionException.cpp \
                            $(srcdir)/communication/FileInputSpikeDriver.cpp \
                            $(srcdir)/communication/FileOutputSpikeDriver.cpp \
                            $(srcdir)/communication/FileOutputWeightDriver.cpp \
+                           $(srcdir)/communication/InputBooleanArrayDriver.cpp \
                            $(srcdir)/communication/InputSpikeDriver.cpp \
+                           $(srcdir)/communication/OutputBooleanArrayDriver.cpp \
                            $(srcdir)/communication/OutputSpikeDriver.cpp \
                            $(srcdir)/communication/OutputWeightDriver.cpp \
                            $(srcdir)/communication/ServerSocket.cpp \
                            $(srcdir)/communication/TCPIPInputOutputSpikeDriver.cpp \
                            $(srcdir)/communication/TCPIPInputSpikeDriver.cpp \
-                           $(srcdir)/communication/TCPIPOutputSpikeDriver.cpp \
-                           $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
-                           $(srcdir)/communication/ArrayOutputSpikeDriver.cpp \
-                           $(srcdir)/communication/InputBooleanArrayDriver.cpp \
-                           $(srcdir)/communication/OutputBooleanArrayDriver.cpp \
-                           $(srcdir)/communication/Timer.cpp
+                           $(srcdir)/communication/TCPIPOutputSpikeDriver.cpp
+
+interface-sources		:= $(srcdir)/interface/C_Interface.cpp
+
+learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
+                           $(srcdir)/learning_rules/AdditiveKernelChange.cpp \
+                           $(srcdir)/learning_rules/MultiplicativeKernelChange.cpp \
+                           $(srcdir)/learning_rules/SinWeightChange.cpp \
+                           $(srcdir)/learning_rules/STDPWeightChange.cpp
+
+neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
+                           $(srcdir)/neuron_model/EventDrivenNeuronModel.cpp \
+                           $(srcdir)/neuron_model/NeuronModel.cpp \
+                           $(srcdir)/neuron_model/NeuronModelTable.cpp \
+                           $(srcdir)/neuron_model/NeuronState.cpp \
+                           $(srcdir)/neuron_model/SRMModel.cpp \
+                           $(srcdir)/neuron_model/SRMState.cpp \
+                           $(srcdir)/neuron_model/SRMTableBasedModel.cpp \
+                           $(srcdir)/neuron_model/SRMTimeDrivenModel.cpp \
+                           $(srcdir)/neuron_model/TableBasedModel.cpp \
+                           $(srcdir)/neuron_model/TimeDrivenNeuronModel.cpp
+
                            
 simulation-sources		:= $(srcdir)/simulation/CommunicationEvent.cpp \
                            $(srcdir)/simulation/EndSimulationEvent.cpp \
-                           $(srcdir)/simulation/StopSimulationEvent.cpp \
                            $(srcdir)/simulation/Event.cpp \
                            $(srcdir)/simulation/EventQueue.cpp \
                            $(srcdir)/simulation/ParameterException.cpp \
                            $(srcdir)/simulation/ParamReader.cpp \
                            $(srcdir)/simulation/SaveWeightsEvent.cpp \
                            $(srcdir)/simulation/Simulation.cpp \
+                           $(srcdir)/simulation/StopSimulationEvent.cpp \
+                           $(srcdir)/simulation/TimeEvent.cpp \
                            $(srcdir)/simulation/Utils.cpp
                            
 spike-sources			:= $(srcdir)/spike/EDLUTException.cpp \
@@ -190,30 +211,14 @@ spike-sources			:= $(srcdir)/spike/EDLUTException.cpp \
                            $(srcdir)/spike/PropagatedSpike.cpp \
                            $(srcdir)/spike/Spike.cpp
                            
-neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
-			   			   $(srcdir)/neuron_model/SRMState.cpp \
-			   			   $(srcdir)/neuron_model/NeuronModel.cpp \
-                           $(srcdir)/neuron_model/NeuronState.cpp \
-                           $(srcdir)/neuron_model/SRMModel.cpp \
-                           $(srcdir)/neuron_model/NeuronModelTable.cpp \
-                           $(srcdir)/neuron_model/TableBasedModel.cpp \
-			   			   $(srcdir)/neuron_model/SRMTableBasedModel.cpp
-                           
-learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
-                           $(srcdir)/learning_rules/AdditiveKernelChange.cpp \
-						   $(srcdir)/learning_rules/MultiplicativeKernelChange.cpp \
-						   $(srcdir)/learning_rules/SinWeightChange.cpp \
-						   $(srcdir)/learning_rules/STDPWeightChange.cpp 
-						   
-interface-sources		:= $(srcdir)/interface/C_Interface.cpp
 
 sources     := $(communication-sources) \
-               $(simulation-sources) \
-               $(spike-sources) \
-               $(neuron_model-sources) \
                $(interface-sources) \
-               $(learning_rules-sources)
-
+               $(neuron_model-sources) \
+               $(learning_rules-sources) \
+               $(simulation-sources) \
+               $(spike-sources)
+               
 
 ################################################################################
 ####################### LOAD PRESET SETTINGS ###################################

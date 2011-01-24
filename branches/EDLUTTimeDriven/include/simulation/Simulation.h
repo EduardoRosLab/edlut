@@ -397,7 +397,7 @@ class Simulation : public PrintableObject{
 		 * Sets the total spike counter.
 		 * \param value is value to set the counter to.
 		 */
-		void SetTotalSpikeCounter(int value);
+		void SetTotalSpikeCounter(long int value);
 
 		/*!
 		 * \brief Get total spike count.

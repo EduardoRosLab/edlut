@@ -132,7 +132,7 @@ void SRMModel::UpdateState(SRMState * State, double CurrentTime){
 	double Refractoriness = 1./(1.+(this->taurel*this->taurel)/(Aux*Aux));
 	State->SetStateVariableAt(3,Refractoriness);
 
-	double Probability = 1 - exp(-FiringRate*Refractoriness);
+	double Probability = (1 - exp(-FiringRate*Refractoriness))*this->timestep/0.001;
 	State->SetStateVariableAt(4,Probability);
 
 	State->AddElapsedTime(CurrentTime-State->GetLastUpdateTime());

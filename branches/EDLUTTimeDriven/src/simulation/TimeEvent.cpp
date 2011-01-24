@@ -14,16 +14,16 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "..\..\include\simulation\TimeEvent.h"
-#include "..\..\include\simulation\Simulation.h"
-#include "..\..\include\simulation\EventQueue.h"
+#include "../../include/simulation/TimeEvent.h"
+#include "../../include/simulation/Simulation.h"
+#include "../../include/simulation/EventQueue.h"
 
-#include "..\..\include\neuron_model\NeuronModel.h"
-#include "..\..\include\neuron_model\TimeDrivenNeuronModel.h"
+#include "../../include/neuron_model/NeuronModel.h"
+#include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 
-#include "..\..\include\spike\InternalSpike.h"
-#include "..\..\include\spike\Network.h"
-#include "..\..\include\spike\Neuron.h"
+#include "../../include/spike/InternalSpike.h"
+#include "../../include/spike/Network.h"
+#include "../../include/spike/Neuron.h"
 
 TimeEvent::TimeEvent(double NewTime) : Event(NewTime) {
 

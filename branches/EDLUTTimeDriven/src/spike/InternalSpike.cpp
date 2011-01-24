@@ -47,9 +47,17 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 	if (neuron->GetNeuronModel()->GetModelType() == EVENT_DRIVEN_MODEL){
 		EventDrivenNeuronModel * Model = (EventDrivenNeuronModel *) neuron->GetNeuronModel();
 		if(!Model->DiscardSpike(this)){
+			// Add the spike to simulation spike counter
+			long int Spikes = CurrentSimulation->GetTotalSpikeCounter();
+			CurrentSimulation->SetTotalSpikeCounter(Spikes+1);
+
 			neuron->GetNeuronState()->NewFiredSpike();
 			// If it is a valid spike (not discard), generate the next spike in this cell.
-			Model->GenerateNextSpike(this);
+			InternalSpike * NextSpike = Model->GenerateNextSpike(this);
+
+			if (NextSpike!=0){
+				CurrentSimulation->GetQueue()->InsertEvent(NextSpike);
+			}
 			
 			CurrentSimulation->WriteSpike(this);
 			CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource());
@@ -69,6 +77,10 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 			}
 		}
 	} else { // Time-driven model (no check nor update needed
+		// Add the spike to simulation spike counter
+		long int Spikes = CurrentSimulation->GetTotalSpikeCounter();
+		CurrentSimulation->SetTotalSpikeCounter(Spikes+1);
+
 		CurrentSimulation->WriteSpike(this);
 		CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource());
 

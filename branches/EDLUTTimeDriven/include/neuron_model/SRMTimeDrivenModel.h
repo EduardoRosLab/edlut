@@ -97,6 +97,11 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		float taurel;
 
 		/*!
+		 * \brief Time-driven step time
+		 */
+		float steptime;
+
+		/*!
 		 * \brief EPSP pre-calculated vector
 		 */
 		double * EPSP;
