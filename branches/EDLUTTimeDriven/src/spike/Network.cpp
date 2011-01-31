@@ -26,6 +26,8 @@
 
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/SRMTimeDrivenModel.h"
+#include "../../include/neuron_model/LIFTimeDrivenModelRK.h"
+#include "../../include/neuron_model/LIFTimeDrivenModel.h"
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 #include "../../include/neuron_model/EventDrivenNeuronModel.h"
 #include "../../include/neuron_model/TableBasedModel.h"
@@ -87,9 +89,13 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype) throw (ED
    	for(ni=0;ni<nneutypes && neutypes[ni]!=0 && neutypes[ni]->GetModelID()!=neutype;ni++);
 
    	if (ni<nneutypes && neutypes[ni]==0){
-		if (ident_type=="SRMTimeDrivenModel"){
+		if (ident_type=="LIFTimeDrivenModelRK"){
+			neutypes[ni] = (LIFTimeDrivenModelRK *) new LIFTimeDrivenModelRK(neutype);
+		} else if (ident_type=="LIFTimeDrivenModel"){
+			neutypes[ni] = (LIFTimeDrivenModel *) new LIFTimeDrivenModel(neutype);
+		} else if (ident_type=="SRMTimeDrivenModel"){
 			neutypes[ni] = (SRMTimeDrivenModel *) new SRMTimeDrivenModel(neutype);
-		}else if (ident_type=="SRMTimeOverEvent"){
+		} else if (ident_type=="SRMTimeOverEvent"){
    			neutypes[ni] = (SRMModel *) new SRMModel(neutype);
    		} else if (ident_type=="TableBasedModel"){
    			neutypes[ni] = (TableBasedModel *) new TableBasedModel(neutype);

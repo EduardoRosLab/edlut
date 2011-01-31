@@ -98,7 +98,17 @@ const char * EDLUTException::Errormsgs[] ={
 	"Can't read the resting potential",
 	"Can't read the EPSP step time",
 	"Can't read the decay time constant parameter",
-	"Invalid type of the neuron model"
+	"Invalid type of the neuron model",
+
+	"Can't read the resting conductance",
+	"Can't read the refractory period",
+	"Can't read the GABA receptor time constant",
+	"Can't read the AMPA receptor time constant",
+	"Can't read the membrane capacitance",
+	"Can't read the firing threshold",
+	"Can't read the resting potential",
+	"Can't read the inhibitory reversal potential",
+	"Can't read the excitatory reversal potential"
 
 
 };

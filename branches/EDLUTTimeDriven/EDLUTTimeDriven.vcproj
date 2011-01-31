@@ -275,6 +275,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\neuron_model\LIFTimeDrivenModel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\neuron_model\LIFTimeDrivenModelRK.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\learning_rules\MultiplicativeKernelChange.h"
 				>
 			</File>
@@ -471,10 +479,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\EDLUTKernel.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\simulation\EndSimulationEvent.cpp"
 				>
 			</File>
@@ -523,6 +527,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\neuron_model\LIFTimeDrivenModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\neuron_model\LIFTimeDrivenModelRK.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\learning_rules\MultiplicativeKernelChange.cpp"
 				>
 			</File>
@@ -564,6 +576,10 @@
 			</File>
 			<File
 				RelativePath=".\src\simulation\ParamReader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\PrecisionTest.cpp"
 				>
 			</File>
 			<File
@@ -644,6 +660,38 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\_boris6iGolgiEC.cfg"
+			>
+		</File>
+		<File
+			RelativePath=".\_boris6iGolgiEC.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\_boris6iGranuleEC.cfg"
+			>
+		</File>
+		<File
+			RelativePath=".\_boris6iGranuleEC.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\_boris6iGranuleECNMDAGabb.cfg"
+			>
+		</File>
+		<File
+			RelativePath=".\_boris6iGranuleECNMDAGabb.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\_LIFTimeDrivenGoC.cfg"
+			>
+		</File>
+		<File
+			RelativePath=".\_LIFTimeDrivenGrC.cfg"
+			>
+		</File>
+		<File
 			RelativePath=".\_romainSRMModified.cfg"
 			>
 		</File>
@@ -664,6 +712,38 @@
 			>
 		</File>
 		<File
+			RelativePath=".\input.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\inputs.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\NetCerebellumTest.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\NetCerebellumTestED.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\NetCerebellumTestTD.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\NetCuneateCerebellumTestED.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\NetCuneateCerebellumTestTD.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\NetTimeTest.dat"
+			>
+		</File>
+		<File
 			RelativePath=".\NetUPMC100Event10.dat"
 			>
 		</File>
@@ -672,7 +752,31 @@
 			>
 		</File>
 		<File
+			RelativePath=".\times.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\TimesEDFrequency.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\TimesTDFrequencyRK01.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\WeightsCerebellumTest.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\WeightsCuneateCerebellumTest.dat"
+			>
+		</File>
+		<File
 			RelativePath=".\weightsInit10010.dat"
+			>
+		</File>
+		<File
+			RelativePath=".\weightsTimeTest.dat"
 			>
 		</File>
 	</Files>

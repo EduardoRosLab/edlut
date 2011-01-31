@@ -42,6 +42,7 @@ void TimeEvent::ProcessEvent(Simulation * CurrentSimulation){
 		if(NeuronModel->UpdateState(Cell->GetNeuronState(),this->GetTime())){
 			CurrentSimulation->GetQueue()->InsertEvent(new InternalSpike(this->GetTime(),CurrentSimulation->GetNetwork()->GetTimeDrivenNeuronAt(i)));
 		}
+		CurrentSimulation->WriteState(this->GetTime(), Cell);
 	}
 
 	if (CurrentSimulation->GetTimeDrivenStep()>0){
