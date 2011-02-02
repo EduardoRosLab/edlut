@@ -138,7 +138,7 @@ mexdir			:= ./mex
 sfunctiondir	:= ./sfunction
 
 # default file to be included when the executable build is required
-exe-source-file := ${srcdir}/TestEventTime.cpp
+exe-source-file := ${srcdir}/EDLUTKernel.cpp
 
 # default file to be included when the mex build is required
 mex-source-file := ${srcdir}/EDLUTMatlab.cpp
@@ -178,6 +178,8 @@ learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
 
 neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
                            $(srcdir)/neuron_model/EventDrivenNeuronModel.cpp \
+                           $(srcdir)/neuron_model/LIFTimeDrivenModel.cpp \
+                           $(srcdir)/neuron_model/LIFTimeDrivenModelRK.cpp \
                            $(srcdir)/neuron_model/NeuronModel.cpp \
                            $(srcdir)/neuron_model/NeuronModelTable.cpp \
                            $(srcdir)/neuron_model/NeuronState.cpp \
