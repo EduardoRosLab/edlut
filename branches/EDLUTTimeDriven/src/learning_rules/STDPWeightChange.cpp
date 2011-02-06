@@ -30,9 +30,9 @@ double STDPWeightChange::GetWeightChange(Interconnection * Connection, double Cu
 	double tpost = CurrentTime - target->GetNeuronState()->GetLastSpikeTime();
 
 	if (tpre<tpost){
-		return this->MaxChange*exp((tpre-tpost)/this->tau);
+		return this->MaxChangeLTP*exp((tpre-tpost)/this->tauLTP);
 	} else {
-		return -this->MaxChange*exp((tpost-tpre)/this->tau);
+		return -this->MaxChangeLTD*exp((tpost-tpre)/this->tauLTD);
 	}
 }
 
@@ -73,7 +73,7 @@ void STDPWeightChange::ApplyPostSynapticSpike(Interconnection * Connection,doubl
 void STDPWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException){
 	skip_comments(fh,Currentline);
 
-	if(!(fscanf(fh,"%f",&this->MaxChange)==1 && fscanf(fh,"%f",&this->tau)==1)){
+	if(!(fscanf(fh,"%f",&this->MaxChangeLTP)==1 && fscanf(fh,"%f",&this->tauLTP)==1 && fscanf(fh,"%f",&this->MaxChangeLTD)==1 && fscanf(fh,"%f",&this->tauLTD)==1)){
 		throw EDLUTFileException(4,28,23,1,Currentline);
 	}
 
@@ -81,7 +81,7 @@ void STDPWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (ED
 
 ostream & STDPWeightChange::PrintInfo(ostream & out){
 
-	out << "- STDP Learning Rule: " << this->MaxChange << "\t" << this->tau << endl;
+	out << "- STDP Learning Rule: LTD " << this->MaxChangeLTD << "\t" << this->tauLTD << "\tLTP " << this->MaxChangeLTP << "\t" << this->tauLTP << endl;
 
 	return out;
 }
@@ -90,11 +90,19 @@ int STDPWeightChange::GetNumberOfVar() const{
 	return 0;
 }
 
-float STDPWeightChange::GetMaxWeightChange() const{
-	return this->MaxChange;
+float STDPWeightChange::GetMaxWeightChangeLTP() const{
+	return this->MaxChangeLTP;
 }
 
-void STDPWeightChange::SetMaxWeightChange(float NewMaxChange){
-	this->MaxChange = NewMaxChange;
+void STDPWeightChange::SetMaxWeightChangeLTP(float NewMaxChange){
+	this->MaxChangeLTP = NewMaxChange;
+}
+
+float STDPWeightChange::GetMaxWeightChangeLTD() const{
+	return this->MaxChangeLTD;
+}
+
+void STDPWeightChange::SetMaxWeightChangeLTD(float NewMaxChange){
+	this->MaxChangeLTD = NewMaxChange;
 }
 

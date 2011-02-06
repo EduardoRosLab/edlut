@@ -57,11 +57,6 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		float tau;
 
 		/*!
-		 * \brief EPSP Step time
-		 */
-		float EPSPStep;
-
-		/*!
 		 * \brief Resting potential
 		 */
 		float vr;
@@ -96,36 +91,18 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 */
 		float taurel;
 
-		/*!
-		 * \brief Time-driven step time
-		 */
-		float steptime;
-
-		/*!
-		 * \brief EPSP pre-calculated vector
-		 */
-		double * EPSP;
-
 
 	protected:
-		/*!
-		 * \brief It precalculates the EPSP values.
-		 *
-		 * It precalculates the EPSP values.
-		 */
-		void PrecalculateEPSP();
-
 		/*!
 		 * \brief It calculates the potential difference between resting and the potential in the defined time.
 		 *
 		 * It calculates the potential difference between resting and the potential in the defined time.
 		 *
 		 * \param State Cell current state.
-		 * \param CurrentTime Current simulation time.
 		 *
 		 * \return The potential difference between resting and the potential in the defined time.
 		 */
-		double PotentialIncrement(SRMState * State, double CurrentTime);
+		double PotentialIncrement(SRMState * State);
 
 		/*!
 		 * \brief It checks if an spike is fired in the defined time.

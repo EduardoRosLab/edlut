@@ -44,14 +44,24 @@ class Interconnection;
 class STDPWeightChange: public LearningRule {
 	private:
 		/*!
-		 * \brief Decay parameter
+		 * \brief Decay parameter LTD
 		 */
-		float tau;
+		float tauLTD;
 
 		/*!
-		 * \brief Maximum weight change
+		 * \brief Maximum weight change LTD
 		 */
-		float MaxChange;
+		float MaxChangeLTD;
+
+		/*!
+		 * \brief Decay parameter for LTP
+		 */
+		float tauLTP;
+
+		/*!
+		 * \brief Maximum weight change for LTP
+		 */
+		float MaxChangeLTP;
 
 	protected:
 		/*!
@@ -77,22 +87,40 @@ class STDPWeightChange: public LearningRule {
 		virtual int GetNumberOfVar() const;
 
 		/*!
-		 * \brief It gets the maximum value of the weight change.
+		 * \brief It gets the maximum value of the weight change for LTD.
 		 *
-		 * It gets the maximum value of the weight change.
+		 * It gets the maximum value of the weight change for LTD.
 		 *
-		 * \return The maximum value of the weight change.
+		 * \return The maximum value of the weight change for LTD.
 		 */
-		float GetMaxWeightChange() const;
+		float GetMaxWeightChangeLTD() const;
 
 		/*!
-		 * \brief It sets the maximum value of the weight change.
+		 * \brief It sets the maximum value of the weight change for LTD.
 		 *
-		 * It sets the maximum value of the weight change.
+		 * It sets the maximum value of the weight change for LTD.
 		 *
-		 * \param NewMaxChange The new maximum value of the weight change.
+		 * \param NewMaxChange The new maximum value of the weight change for LTD.
 		 */
-		void SetMaxWeightChange(float NewMaxChange);
+		void SetMaxWeightChangeLTD(float NewMaxChange);
+
+		/*!
+		 * \brief It gets the maximum value of the weight change for LTP.
+		 *
+		 * It gets the maximum value of the weight change for LTP.
+		 *
+		 * \return The maximum value of the weight change for LTP.
+		 */
+		float GetMaxWeightChangeLTP() const;
+
+		/*!
+		 * \brief It sets the maximum value of the weight change for LTP.
+		 *
+		 * It sets the maximum value of the weight change for LTP.
+		 *
+		 * \param NewMaxChange The new maximum value of the weight change for LTP.
+		 */
+		void SetMaxWeightChangeLTP(float NewMaxChange);
 
 
 		/*!
