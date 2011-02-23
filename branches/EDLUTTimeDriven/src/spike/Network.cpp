@@ -137,10 +137,27 @@ Network::Network(const char * netfile, const char * wfile, EventQueue * Queue) t
    		
 Network::~Network(){
 	if (inters!=0) delete [] inters;
-   	if (neutypes!=0) delete [] neutypes;
-	if (neurons!=0) delete [] neurons;
-	if (timedrivenneurons!=0) delete [] timedrivenneurons;
-	if (wchanges!=0) delete [] wchanges;
+	if (neutypes!=0) {
+		for (int i=0; i<this->nneutypes; ++i){
+			delete this->neutypes[i];
+		}
+		delete [] neutypes;
+	}
+	
+	if (neurons!=0) {
+		delete [] neurons;
+	}
+
+	if (timedrivenneurons!=0) {
+		delete [] timedrivenneurons;
+	}
+
+	if (wchanges!=0) {
+		for (int i=0; i<this->nwchanges; ++i){
+			delete this->wchanges[i];
+		}
+		delete [] wchanges;
+	}
 	if (wordination!=0) delete [] wordination;
 }
    		

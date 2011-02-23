@@ -26,8 +26,9 @@
 #define PARAMNET ssGetSFcnParam(S,0) 	// Network description file
 #define PARAMWEIGHT ssGetSFcnParam(S,1) 	// Weight description file
 #define PARAMLOG ssGetSFcnParam(S,2) 	// Log activity output file
-#define PARAMINPUT ssGetSFcnParam(S,3) 	// Input map - Vector mapping each input line with an input cell
-#define PARAMOUTPUT ssGetSFcnParam(S,4) 	// Output map - Vector mapping each output line with an output cell
+#define PARAMTDSTEP ssGetSFcnParam(S,3)	// Time-driven simulation step
+#define PARAMINPUT ssGetSFcnParam(S,4) 	// Input map - Vector mapping each input line with an input cell
+#define PARAMOUTPUT ssGetSFcnParam(S,5) 	// Output map - Vector mapping each output line with an output cell
 
 SimulinkBlockInterface::SimulinkBlockInterface(): Simul(0), InputDriver(0), OutputDriver(0){
 
@@ -57,8 +58,16 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 
 	srand (time(NULL));
 
+	time_T Step = ssGetSampleTime(S, 0);
+
 	try {
 		this->Simul = new Simulation(NetworkFile, WeightFile, SimulationTime, 0);
+
+		real_T * TimeDrivenStep = (real_T *)mxGetData(PARAMTDSTEP);
+		double TDStep = (double) TimeDrivenStep[0];
+		if (TDStep!=0){
+			this->Simul->SetTimeDrivenStep(TDStep);
+		}
 
 		real_T * InputCells = (real_T *)mxGetData(PARAMINPUT);
 		unsigned int NumberOfElements = (unsigned int) mxGetNumberOfElements(PARAMINPUT);
@@ -85,6 +94,8 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 		this->Simul->AddOutputSpikeDriver(this->OutputDriver);
 
 		Simul->AddMonitorActivityDriver(new FileOutputSpikeDriver(LogFile,false));
+
+		this->Simul->InitSimulation();
 
 	} catch (EDLUTFileException Exc){
 		ssPrintf("Error %li: %s in %s\n",Exc.GetErrorNum(),Exc.GetErrorMsg(),Exc.GetTaskMsg());
@@ -121,7 +132,8 @@ void SimulinkBlockInterface::SimulateStep(SimStruct *S, int_T tid){
 		}
 
 		// Get current simulation time
-		double StepTime = ssGetSampleTime(S, 0);
+		time_T Step = ssGetSampleTime(S, 0);
+		double StepTime = (double) Step;
 		double CurrentTime = (double) ssGetT(S);
 		double NextTime = CurrentTime+StepTime;
 

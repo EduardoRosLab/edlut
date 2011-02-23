@@ -44,11 +44,14 @@
 #include "../include/interface/simulink/SimulinkBlockInterface.h"
 
 // Define input parameters
+// Define input parameters
 #define PARAMNET ssGetSFcnParam(S,0) 	// Network description file
 #define PARAMWEIGHT ssGetSFcnParam(S,1) 	// Weight description file
 #define PARAMLOG ssGetSFcnParam(S,2) 	// Log activity output file
-#define PARAMINPUT ssGetSFcnParam(S,3) 	// Input map - Vector mapping each input line with an input cell
-#define PARAMOUTPUT ssGetSFcnParam(S,4) 	// Output map - Vector mapping each output line with an output cell
+#define PARAMTDSTEP ssGetSFcnParam(S,3)	// Time-driven simulation step
+#define PARAMINPUT ssGetSFcnParam(S,4) 	// Input map - Vector mapping each input line with an input cell
+#define PARAMOUTPUT ssGetSFcnParam(S,5) 	// Output map - Vector mapping each output line with an output cell
+#define NUMBEROFPARAMETERS 6
 
 /*====================*
  * S-function methods *
@@ -88,10 +91,8 @@ static void mdlInitializeSizes(SimStruct *S)
     int_T inputPortIdx  = 0;
     int_T outputPortIdx = 0;
 
-    const int NumberOfParameters = 5;
-
     ssPrintf("Setting number of parameters\n");
-    ssSetNumSFcnParams(S, NumberOfParameters);  /* Number of expected parameters */
+    ssSetNumSFcnParams(S, NUMBEROFPARAMETERS);  /* Number of expected parameters */
     if (ssGetNumSFcnParams(S) != ssGetSFcnParamsCount(S)) {
         /*
          * If the the number of expected input parameters is not equal
@@ -115,7 +116,7 @@ static void mdlInitializeSizes(SimStruct *S)
      *
      */
     ssPrintf("Setting parameters as non-tuneable\n");
-    for (int i=0; i<NumberOfParameters; ++i){
+    for (int i=0; i<NUMBEROFPARAMETERS; ++i){
     	ssSetSFcnParamTunable(S, i, 0); // Set every parameter as non tuneable
     }
 
@@ -213,12 +214,12 @@ static void mdlInitializeSizes(SimStruct *S)
      * Set size of the work vectors.
      */
     ssPrintf("Setting static variables\n");
-    ssSetNumRWork(S, 0);   /* number of real work vector elements   */
-    ssSetNumIWork(S, 0);   /* number of integer work vector elements*/
+    ssSetNumRWork(S, DYNAMICALLY_SIZED);   /* number of real work vector elements   */
+    ssSetNumIWork(S, DYNAMICALLY_SIZED);   /* number of integer work vector elements*/
     // Pointer work vector element: Simulation object pointer
-    ssSetNumPWork(S, 1);   /* number of pointer work vector elements*/
-    ssSetNumModes(S, 0);   /* number of mode work vector elements   */
-    ssSetNumNonsampledZCs( S, 0);   /* number of nonsampled zero crossings   */
+    ssSetNumPWork(S, DYNAMICALLY_SIZED);   /* number of pointer work vector elements*/
+    ssSetNumModes(S, DYNAMICALLY_SIZED);   /* number of mode work vector elements   */
+    ssSetNumNonsampledZCs( S, DYNAMICALLY_SIZED);   /* number of nonsampled zero crossings   */
 
     /*
      * All options have the form SS_OPTION_<name> and are documented in
@@ -227,10 +228,48 @@ static void mdlInitializeSizes(SimStruct *S)
      *   ssSetOptions(S, (SS_OPTION_name1 | SS_OPTION_name2))
      */
 
+	ssSetOptions(S, SS_OPTION_DISALLOW_CONSTANT_SAMPLE_TIME);
     ssSetOptions(S, SS_OPTION_EXCEPTION_FREE_CODE);
     ssPrintf("Initialization finished\n");
 
 } /* end mdlInitializeSizes */
+
+#define MDL_SET_WORK_WIDTHS   /* Change to #undef to remove function */
+#if defined(MDL_SET_WORK_WIDTHS) && defined(MATLAB_MEX_FILE)
+  /* Function: mdlSetWorkWidths ===============================================
+   * Abstract:
+   *      The optional method, mdlSetWorkWidths is called after input port
+   *      width, output port width, and sample times of the S-function have
+   *      been determined to set any state and work vector sizes which are
+   *      a function of the input, output, and/or sample times. This method
+   *      is used to specify the nonzero work vector widths via the macros
+   *      ssNumContStates, ssSetNumDiscStates, ssSetNumRWork, ssSetNumIWork,
+   *      ssSetNumPWork, ssSetNumModes, and ssSetNumNonsampledZCs.
+   *
+   *      Run-time parameters are registered in this method using methods 
+   *      ssSetNumRunTimeParams, ssSetRunTimeParamInfo, and related methods.
+   *
+   *      If you are using mdlSetWorkWidths, then any work vectors you are
+   *      using in your S-function should be set to DYNAMICALLY_SIZED in
+   *      mdlInitializeSizes, even if the exact value is known at that point.
+   *      The actual size to be used by the S-function should then be specified
+   *      in mdlSetWorkWidths.
+   */
+  static void mdlSetWorkWidths(SimStruct *S)
+  {
+	  if (ssGetSampleTime(S, 0) == CONTINUOUS_SAMPLE_TIME) {
+		  ssSetErrorStatus(S,"This block cannot be assigned a continuous sample time\n");
+	  }
+
+	  ssPrintf("Setting static variables\n");
+	  ssSetNumRWork(S, 0);   /* number of real work vector elements   */
+      ssSetNumIWork(S, 0);   /* number of integer work vector elements*/
+      // Pointer work vector element: Simulation object pointer
+      ssSetNumPWork(S, 1);   /* number of pointer work vector elements*/
+      ssSetNumModes(S, 0);   /* number of mode work vector elements   */
+      ssSetNumNonsampledZCs( S, 0);   /* number of nonsampled zero crossings   */
+  }
+#endif /* MDL_SET_WORK_WIDTHS */
 
 
 /* Function: mdlInitializeSampleTimes =========================================
@@ -330,6 +369,8 @@ static void mdlInitializeSampleTimes(SimStruct *S)
 	ssPrintf("Initializing sample times\n");
 	ssSetSampleTime(S, 0, INHERITED_SAMPLE_TIME);
     ssSetOffsetTime(S, 0, 0.0);
+
+	time_T Step = ssGetSampleTime(S, 0);
 
     if (ssGetSampleTime(S, 0) == CONTINUOUS_SAMPLE_TIME) {
     	ssSetErrorStatus(S, "This block cannot be assigned a continuous sample time");
@@ -443,6 +484,8 @@ static void mdlInitializeSampleTimes(SimStruct *S)
    */
   static void mdlInitializeConditions(SimStruct *S)
   {
+
+
 	  ssPrintf("Initializing simulation\n");
 	  if (ssIsFirstInitCond(S)){
 		  SimulinkBlockInterface * Simul = new SimulinkBlockInterface();

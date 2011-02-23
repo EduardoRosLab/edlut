@@ -40,6 +40,13 @@ Simulation::Simulation(const Simulation & ant):Net(ant.Net), Queue(ant.Queue), I
 }
 
 Simulation::~Simulation(){
+	if (this->Net!=0){
+		delete this->Net;
+	}
+
+	if (this->Queue){
+		delete this->Queue;
+	}
 }
 
 void Simulation::EndSimulation(){
