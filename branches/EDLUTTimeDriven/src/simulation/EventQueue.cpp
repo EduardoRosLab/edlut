@@ -23,7 +23,9 @@ EventQueue::EventQueue() : Events(1,(Event *)0){
 }
    		
 EventQueue::~EventQueue(){
-
+	for (int i=0; i<Events.size(); ++i){
+		delete Events[i];
+	}
 }
 
 inline void EventQueue::SwapEvents(int c1, int c2){

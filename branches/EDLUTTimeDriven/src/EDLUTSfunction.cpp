@@ -43,6 +43,8 @@
 
 #include "../include/interface/simulink/SimulinkBlockInterface.h"
 
+// #include "vld.h"
+
 // Define input parameters
 // Define input parameters
 #define PARAMNET ssGetSFcnParam(S,0) 	// Network description file
@@ -526,10 +528,10 @@ static void mdlInitializeSampleTimes(SimStruct *S)
  */
 static void mdlOutputs(SimStruct *S, int_T tid)
 {
-	ssPrintf("Setting simulation outputs\n");
+	//ssPrintf("Setting simulation outputs\n");
 	SimulinkBlockInterface * Simul = (SimulinkBlockInterface *) ssGetPWorkValue(S,0);
 	Simul->AssignOutputs(S);
-	ssPrintf("Simulation outputs set\n");
+	//ssPrintf("Simulation outputs set\n");
 } /* end mdlOutputs */
 
 
@@ -544,10 +546,10 @@ static void mdlOutputs(SimStruct *S, int_T tid)
    */
   static void mdlUpdate(SimStruct *S, int_T tid)
   {
-	  ssPrintf("Updating simulation step\n");
+	  //ssPrintf("Updating simulation step\n");
 	  SimulinkBlockInterface * Simul = (SimulinkBlockInterface *) ssGetPWorkValue(S,0);
 	  Simul->SimulateStep(S,tid);
-	  ssPrintf("Simulation step updated\n");
+	  //ssPrintf("Simulation step updated\n");
   }
 #endif /* MDL_UPDATE */
 

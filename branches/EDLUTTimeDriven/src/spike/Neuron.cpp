@@ -36,6 +36,12 @@ Neuron::Neuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput){
 	InitNeuron(NewIndex,Type,Monitored,IsOutput);
 }
 
+Neuron::~Neuron(){
+	if (this->state!=0){
+		delete this->state;
+	}
+}
+
 void Neuron::InitNeuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput){
 
 	this->type = Type;

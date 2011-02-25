@@ -21,17 +21,24 @@
 #include "../../include/neuron_model/NeuronState.h"
 
 #include <cfloat>
+#include <cstdlib>
 
 NeuronModelTable::TableDimension::TableDimension(): size(0), coord(0), vindex(0), voffset(0), vscale(0), vfirst(0), statevar(0), interp(0), nextintdim(0) {
 	
 }
    				
 NeuronModelTable::TableDimension::~TableDimension(){
-	if (coord!=0) delete [] coord;
+	if (coord!=0) {
+		delete [] coord;
+	}
    			
-    if (vindex!=0) delete [] vindex;
+	if (vindex!=0) {
+		delete [] vindex;
+	}
     
-    if (voffset!=0) delete [] voffset;
+	if (voffset!=0) {
+		delete [] voffset;
+	}
 }
 
 NeuronModelTable::NeuronModelTable(): elems(0), ndims(0), dims(0), nelems(0), interp(0), firstintdim(0){
@@ -39,9 +46,13 @@ NeuronModelTable::NeuronModelTable(): elems(0), ndims(0), dims(0), nelems(0), in
 }
   		
 NeuronModelTable::~NeuronModelTable(){
-	if (elems!=0) delete [] (float *) elems;
+	if (elems!=0) {
+		free(elems);
+	}
 
-	if (dims!=0) delete [] dims;
+	if (dims!=0) {
+		delete [] dims;
+	}
 }
 
 void NeuronModelTable::GenerateVirtualCoordinates() throw (EDLUTException){

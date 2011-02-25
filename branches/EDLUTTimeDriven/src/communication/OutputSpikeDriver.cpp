@@ -17,5 +17,4 @@
 #include "../../include/communication/OutputSpikeDriver.h"
 
 OutputSpikeDriver::~OutputSpikeDriver(){
-	cout << "Estamos en el destructor" << endl;
 }

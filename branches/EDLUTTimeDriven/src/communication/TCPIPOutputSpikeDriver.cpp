@@ -32,7 +32,6 @@ TCPIPOutputSpikeDriver::TCPIPOutputSpikeDriver(enum TCPIPConnectionType Type, st
 }
 		
 TCPIPOutputSpikeDriver::~TCPIPOutputSpikeDriver(){
-	cout << "Estamos en el destructor de TCPIP" << endl;
 	delete this->Socket;
 }
 	

@@ -49,6 +49,7 @@ void TableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExcepti
 			for(nv=0;nv<this->NumStateVar;nv++){
 				if(fscanf(fh,"%i",&TablesIndex[nv])!=1){
 					throw EDLUTFileException(13,41,3,1,Currentline);
+					delete [] TablesIndex;
 				}
 			}
 
@@ -65,6 +66,7 @@ void TableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExcepti
        		for(nv=0;nv<this->NumStateVar;nv++){
        			if(fscanf(fh,"%f",&InitValue)!=1){
        				throw EDLUTFileException(13,42,3,1,Currentline);
+					delete [] TablesIndex;
        			} else {
        				this->InitialState->SetStateVariableAt(nv+1,InitValue);
        			}
@@ -84,6 +86,7 @@ void TableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExcepti
                			for(nv=0;nv<this->NumSynapticVar;nv++){
                   			if(fscanf(fh,"%i",&this->SynapticVar[nv])!=1){
                   				throw EDLUTFileException(13,40,3,1,Currentline);
+								delete [] TablesIndex;
                   			}
                   		}
 
@@ -124,16 +127,22 @@ void TableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExcepti
          					}
               			}else{
          					throw EDLUTFileException(13,37,3,1,Currentline);
+							delete [] TablesIndex;
       					}
       				}else{
        					throw EDLUTFileException(13,36,3,1,Currentline);
+						delete [] TablesIndex;
           			}
 				}else{
     				throw EDLUTFileException(13,43,3,1,Currentline);
+					delete [] TablesIndex;
           		}
 			}else{
  				throw EDLUTFileException(13,35,3,1,Currentline);
+				delete [] TablesIndex;
 			}
+
+			delete [] TablesIndex;
 		}else{
 			throw EDLUTFileException(13,34,3,1,Currentline);
 		}
@@ -166,19 +175,22 @@ TableBasedModel::TableBasedModel(string NeuronModelID): EventDrivenNeuronModel(N
 }
 
 TableBasedModel::~TableBasedModel() {
-	if (this->EndFiringTable!=0) delete [] this->EndFiringTable;
+	
+	if (this->StateVarOrder!=0) {
+		delete [] this->StateVarOrder;
+	}
 
-	if (this->FiringTable!=0) delete [] this->FiringTable;
+	if (this->StateVarTable!=0) {
+		delete [] this->StateVarTable;
+	}
 
-	if (this->InitialState!=0) delete this->InitialState;
+	if (this->SynapticVar!=0) {
+		delete [] this->SynapticVar;
+	}
 
-	if (this->StateVarOrder!=0) delete [] this->StateVarOrder;
-
-	if (this->StateVarTable!=0) delete [] this->StateVarTable;
-
-	if (this->SynapticVar!=0) delete [] this->SynapticVar;
-
-	if (this->Tables!=0) delete [] this->Tables;
+	if (this->Tables!=0) {
+		delete [] this->Tables;
+	}
 }
 
 void TableBasedModel::LoadNeuronModel() throw (EDLUTFileException){

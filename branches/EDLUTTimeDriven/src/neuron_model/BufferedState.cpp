@@ -33,6 +33,9 @@ BufferedState::BufferedState(const BufferedState & OldState): NeuronState(OldSta
 
 BufferedState::~BufferedState() {
 	// TODO Auto-generated destructor stub
+	if (this->ActivityBuffer!=0){
+		delete [] this->ActivityBuffer;
+	}
 }
 
 void BufferedState::AddActivity(Interconnection * InputConnection){

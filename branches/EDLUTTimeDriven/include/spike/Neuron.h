@@ -124,6 +124,13 @@ class Neuron : public PrintableObject {
 		 * \sa InitNeuron()
 		 */   	
    		Neuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput);
+
+		/*!
+		 * \brief Default destructor.
+		 *
+		 * It deletes a Neuron object (but not the associated neuron type).
+		 */
+   		~Neuron();
    		
    		/*!
 		 * \brief It initializes the neuron values.

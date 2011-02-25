@@ -136,10 +136,15 @@ Network::Network(const char * netfile, const char * wfile, EventQueue * Queue) t
 }
    		
 Network::~Network(){
-	if (inters!=0) delete [] inters;
+	if (inters!=0) {
+		delete [] inters;
+	}
+
 	if (neutypes!=0) {
 		for (int i=0; i<this->nneutypes; ++i){
-			delete this->neutypes[i];
+			if (this->neutypes[i]!=0){
+				delete this->neutypes[i];
+			}
 		}
 		delete [] neutypes;
 	}
@@ -242,14 +247,14 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
 
 							for (int i=0; i<this->ntimedrivenneurons; ++i){
 								this->timedrivenneurons[i] = &(this->neurons[time_driven_index[i]]);
-							}
-
-							delete [] time_driven_index;
+							}							
 						}
 
             		}else{
             			throw EDLUTFileException(4,5,28,0,Currentline);
             		}
+
+					delete [] time_driven_index;
 
             		/////////////////////////////////////////////////////////
             		// Check the number of neuron types

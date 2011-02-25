@@ -196,6 +196,9 @@ SRMModel::SRMModel(string NeuronModelID): EventDrivenNeuronModel(NeuronModelID),
 }
 
 SRMModel::~SRMModel(){
+	if (this->EPSP!=0){
+		delete [] this->EPSP;
+	}
 
 }
 

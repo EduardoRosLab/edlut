@@ -65,7 +65,7 @@ void LIFTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 
 											this->InitialState = (NeuronState *) new NeuronState(3);
 
-											for (unsigned int i=0; i<=3; ++i){
+											for (unsigned int i=0; i<3; ++i){
 												this->InitialState->SetStateVariableAt(i,0.0);
 											}
 

@@ -36,6 +36,8 @@
 #include "../include/spike/EDLUTException.h"
 #include "../include/spike/Network.h"
 
+#include "vld.h"
+
 
 using namespace std;
 

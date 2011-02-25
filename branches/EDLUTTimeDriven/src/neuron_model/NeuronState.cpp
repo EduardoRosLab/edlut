@@ -32,7 +32,9 @@ NeuronState::NeuronState(const NeuronState & OldState): NumberOfVariables(OldSta
 
 NeuronState::~NeuronState() {
 	// TODO Auto-generated destructor stub
-	delete this->StateVars;
+	if (this->StateVars!=0){
+		delete [] this->StateVars;
+	}
 }
 
 void NeuronState::SetStateVariableAt(unsigned int position,float NewValue){

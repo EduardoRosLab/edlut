@@ -112,23 +112,23 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 void SimulinkBlockInterface::SimulateStep(SimStruct *S, int_T tid){
 
 	if (ssIsSampleHit(S,0,tid)){
-		ssPrintf("Getting number of elements\n");
+		//ssPrintf("Getting number of elements\n");
 
 		unsigned int NumberOfElements = (unsigned int) mxGetNumberOfElements(PARAMINPUT);
 
-		ssPrintf("Found %i input signals\n",NumberOfElements);
+		//ssPrintf("Found %i input signals\n",NumberOfElements);
 
 		bool * InputSignals = new bool [NumberOfElements];
 
 		InputPtrsType      u     = ssGetInputPortSignalPtrs(S,0);
 		InputBooleanPtrsType uPtrs = (InputBooleanPtrsType)u;
 
-		ssPrintf("Input pointer obtained\n");
+		//ssPrintf("Input pointer obtained\n");
 
 		for (unsigned int i=0; i<NumberOfElements; ++i){
 			boolean_T value = *uPtrs[i];
 			InputSignals[i] = value;
-			ssPrintf("Input signal %i: Value %i\n",i,value);
+			//ssPrintf("Input signal %i: Value %i\n",i,value);
 		}
 
 		// Get current simulation time
@@ -141,11 +141,11 @@ void SimulinkBlockInterface::SimulateStep(SimStruct *S, int_T tid){
 
 		this->InputDriver->LoadInputs(Simul->GetQueue(),Simul->GetNetwork(), (bool *) InputSignals, CurrentTime);
 
-		ssPrintf("Input signals obtained\n");
+		//ssPrintf("Input signals obtained\n");
 
 		Simul->RunSimulationSlot(NextTime);
 
-		ssPrintf("Simulation step finished\n");
+		//ssPrintf("Simulation step finished\n");
 
 		delete [] InputSignals;
 	}
