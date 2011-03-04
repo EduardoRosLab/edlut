@@ -36,7 +36,7 @@
 #include "../include/spike/EDLUTException.h"
 #include "../include/spike/Network.h"
 
-#include "vld.h"
+//#include "vld.h"
 
 
 using namespace std;
@@ -68,7 +68,7 @@ int main(int ac, char *av[]) {
 	cout << "Loading tables..." << endl;
 
 	srand ( time(NULL) );
-   
+
 	try {
    		ParamReader Reader(ac, av);
 			

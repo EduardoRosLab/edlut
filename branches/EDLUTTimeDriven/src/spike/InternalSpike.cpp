@@ -60,7 +60,11 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 			}
 			
 			CurrentSimulation->WriteSpike(this);
-			CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource());
+
+			Neuron * Cell = this->GetSource();
+			if (Cell->IsMonitored()){
+				CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), Cell);
+			}
 
 			// Generate the output activity
 			if (neuron->IsOutputConnected()){
@@ -82,8 +86,12 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 		CurrentSimulation->SetTotalSpikeCounter(Spikes+1);
 
 		CurrentSimulation->WriteSpike(this);
-		CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource());
-
+		
+		Neuron * Cell = this->GetSource();
+		if (Cell->IsMonitored()){
+			CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), Cell);
+		}
+		
 		// Generate the output activity
 		if (neuron->IsOutputConnected()){
 			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);

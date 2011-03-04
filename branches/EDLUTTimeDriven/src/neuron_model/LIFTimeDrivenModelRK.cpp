@@ -45,6 +45,9 @@ bool LIFTimeDrivenModelRK::UpdateState(NeuronState * State, double CurrentTime){
 
 	bool spike = false;
 
+	float nextgexc = gexc * exp(-(elapsed_time/this->texc));
+	float nextginh = ginh * exp(-(elapsed_time/this->tinh));
+
 	if (last_spike > this->tref) {
 		// 4th order Runge-Kutta terms
 		// 1st term
@@ -57,14 +60,12 @@ bool LIFTimeDrivenModelRK::UpdateState(NeuronState * State, double CurrentTime){
 		float k2 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))/this->cm;
 
 		// 3rd term
-		gexcaux = gexc * exp(-((elapsed_time/2)/this->texc));
-		ginhaux = ginh * exp(-((elapsed_time/2)/this->tinh));
 		yaux = vm+(k2*elapsed_time/2);
 		float k3 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))/this->cm;
 
 		// 4rd term
-		gexcaux = gexc * exp(-(elapsed_time/2)/this->texc);
-		ginhaux = ginh * exp(-(elapsed_time/2)/this->tinh);
+		gexcaux = nextgexc;
+		ginhaux = nextginh;
 		yaux = vm+(k3*elapsed_time);
 		float k4 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))/this->cm;
 
@@ -76,8 +77,8 @@ bool LIFTimeDrivenModelRK::UpdateState(NeuronState * State, double CurrentTime){
 			vm = this->erest;
 		}
 	}
-	gexc = gexc * exp(-(elapsed_time/this->texc));
-	ginh = ginh * exp(-(elapsed_time/this->tinh));
+	gexc = nextgexc;
+	ginh = nextginh;
 
 	State->SetStateVariableAt(0,vm);
 	State->SetStateVariableAt(1,gexc);

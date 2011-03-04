@@ -316,11 +316,13 @@ float NeuronModelTable::TableAccessDirect(NeuronState * statevars){
 	cpointer=(void **)tab->elems;
 	for(idim=0;idim<tab->ndims-1;idim++){
 		dim=&tab->dims[idim];
-		tind=table_indcomp2(dim,statevars->GetStateVariableAt(dim->statevar));
+		float VarValue = statevars->GetStateVariableAt(dim->statevar);
+		tind=table_indcomp2(dim,VarValue);
 		cpointer=(void **)cpointer[tind];
 	}
 	dim=&tab->dims[idim];
-	tind=table_indcomp2(dim,statevars->GetStateVariableAt(dim->statevar));
+	float VarValue = statevars->GetStateVariableAt(dim->statevar);
+	tind=table_indcomp2(dim,VarValue);
 	elem=((float *)cpointer)[tind];
 	return(elem);
 }

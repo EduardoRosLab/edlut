@@ -56,7 +56,8 @@ Event * EventQueue::RemoveEvent(void){
    	if(Size()>0){
    		first=Events[1];
       
-      	Events[1]=Events.back();
+      	//Events[1]=Events.back();
+		Events[1]=Events[this->Size()];
       	Events.pop_back();
       
       	p=1;

@@ -45,7 +45,8 @@ void PropagatedSpike::SetTarget (int NewTarget){
 
 void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
 	
-	Interconnection * inter = this->source->GetOutputConnectionAt(this->target);
+	int TargetNum = this->GetTarget();
+	Interconnection * inter = this->source->GetOutputConnectionAt(TargetNum);
 	Neuron * target = inter->GetTarget();  // target of the spike
 	Neuron * source = inter->GetSource();
 	
@@ -55,20 +56,28 @@ void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
 		CurrentSimulation->GetQueue()->InsertEvent(Generated);
 	}
 
-	CurrentSimulation->WriteState(this->GetTime(), inter->GetTarget());
+	float CurrentTime = this->GetTime();
+
+	if (target->IsMonitored()){
+		CurrentSimulation->WriteState(CurrentTime, target);
+	}
 	
 	// Propagate received spike to the next connection
-	if(source->GetOutputNumber() > this->GetTarget()+1){
-		Interconnection * NewConnection = source->GetOutputConnectionAt(this->GetTarget()+1);
-		PropagatedSpike * nextspike = new PropagatedSpike(this->GetTime()-source->GetOutputConnectionAt(this->GetTarget())->GetDelay()+NewConnection->GetDelay(),source,this->GetTarget()+1);
+	if(source->GetOutputNumber() > TargetNum+1){
+		Interconnection * NewConnection = source->GetOutputConnectionAt(TargetNum+1);
+		float SourceTime = CurrentTime - inter->GetDelay();
+		float NextSpikeTime = SourceTime + NewConnection->GetDelay();
+		PropagatedSpike * nextspike = new PropagatedSpike(NextSpikeTime,source,TargetNum+1);
 		CurrentSimulation->GetQueue()->InsertEvent(nextspike);
 	}
 
-	inter->SetLastSpikeTime(this->time);
+	inter->SetLastSpikeTime(CurrentTime);
+
+	LearningRule * ConnectionRule = inter->GetWeightChange();
 
 	// If learning, change weights
-    if(inter->GetWeightChange() != 0){
-    	inter->GetWeightChange()->ApplyPreSynapticSpike(inter,this->time);
+    if(ConnectionRule != 0){
+    	ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
     }
 }
 

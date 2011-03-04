@@ -192,13 +192,11 @@ void Simulation::WriteSpike(const Spike * spike){
 }
 
 void Simulation::WriteState(float time, Neuron * neuron){
-	if(neuron->IsMonitored()){
-		for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
-			if ((*it)->IsWritePotentialCapable()){
-				(*it)->WriteState(time, neuron);
-			}
+	for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
+		if ((*it)->IsWritePotentialCapable()){
+			(*it)->WriteState(time, neuron);
 		}
-	}		
+	}
 }
 
 void Simulation::SaveWeights(){

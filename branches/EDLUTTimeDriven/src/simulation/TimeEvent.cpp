@@ -35,17 +35,28 @@ TimeEvent::~TimeEvent(){
 
 void TimeEvent::ProcessEvent(Simulation * CurrentSimulation){
 
+	Network * CurrentNetwork = CurrentSimulation->GetNetwork();
+
+	long int TDCells = CurrentNetwork->GetTimeDrivenNeuronNumber();
+
+	float CurrentTime = this->GetTime();
+
 	// Process the neuron state of all the time-driven cells.
-	for (int i=0; i<CurrentSimulation->GetNetwork()->GetTimeDrivenNeuronNumber(); ++i){
-		Neuron * Cell = CurrentSimulation->GetNetwork()->GetTimeDrivenNeuronAt(i);
+	for (int i=0; i<TDCells; ++i){
+		Neuron * Cell = CurrentNetwork->GetTimeDrivenNeuronAt(i);
 		TimeDrivenNeuronModel * NeuronModel = (TimeDrivenNeuronModel *) Cell->GetNeuronModel();
-		if(NeuronModel->UpdateState(Cell->GetNeuronState(),this->GetTime())){
-			CurrentSimulation->GetQueue()->InsertEvent(new InternalSpike(this->GetTime(),CurrentSimulation->GetNetwork()->GetTimeDrivenNeuronAt(i)));
+		if(NeuronModel->UpdateState(Cell->GetNeuronState(),CurrentTime)){
+			CurrentSimulation->GetQueue()->InsertEvent(new InternalSpike(CurrentTime,Cell));
 		}
-		CurrentSimulation->WriteState(this->GetTime(), Cell);
+
+		if (Cell->IsMonitored()){
+			CurrentSimulation->WriteState(CurrentTime, Cell);
+		}
 	}
 
-	if (CurrentSimulation->GetTimeDrivenStep()>0){
-		CurrentSimulation->GetQueue()->InsertEvent(new TimeEvent(this->GetTime()+CurrentSimulation->GetTimeDrivenStep()));
+	float TimeDrivenStep = CurrentSimulation->GetTimeDrivenStep();
+
+	if (TimeDrivenStep>0){
+		CurrentSimulation->GetQueue()->InsertEvent(new TimeEvent(CurrentTime+TimeDrivenStep));
 	}
 }
