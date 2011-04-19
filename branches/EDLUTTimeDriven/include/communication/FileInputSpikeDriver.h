@@ -27,6 +27,7 @@
  * This file declares a class for getting external input spikes from a file.
  */
 #include <cstdlib>
+#include <string>
 
 #include "./InputSpikeDriver.h"
 
@@ -60,7 +61,7 @@ class FileInputSpikeDriver: public InputSpikeDriver {
 		/*!
 		 * The file name.
 		 */
-		const char * FileName;
+		string FileName;
 		
 		/*!
 		 * The current line in the file.

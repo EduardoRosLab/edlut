@@ -30,6 +30,8 @@
 class Simulation;
 class InputBooleanArrayDriver;
 class OutputBooleanArrayDriver;
+class FileOutputSpikeDriver;
+class FileOutputWeightDriver;
 
 /*!
  * \class SimulinkBlockInterface
@@ -66,6 +68,18 @@ class SimulinkBlockInterface {
 		 * Output array driver.
 		 */
 		OutputBooleanArrayDriver * OutputDriver;
+
+		/*!
+		 * Log file driver.
+		 */
+		FileOutputSpikeDriver * FileDriver;
+
+		/*!
+		 * Output weight driver.
+		 */
+		FileOutputWeightDriver * WeightDriver;
+
+
 
 	public:
 		/*!

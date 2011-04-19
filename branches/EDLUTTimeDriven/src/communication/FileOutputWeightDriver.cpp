@@ -38,7 +38,7 @@ void FileOutputWeightDriver::WriteWeights(Network * Net, float SimulationTime) t
 }	
 
 void FileOutputWeightDriver::WriteWeights(Network * Net) throw (EDLUTException){
-	Net->SaveWeights(FileName);
+	Net->SaveWeights(FileName.c_str());
 }	
 
 ostream & FileOutputWeightDriver::PrintInfo(ostream & out){

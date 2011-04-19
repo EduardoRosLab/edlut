@@ -74,11 +74,14 @@ void SinWeightChange::update_activity(double time,Interconnection * Connection,b
 	for (int grade=2; grade<=this->exponent; grade+=2){
 		float OldVarCos = Connection->GetActivityAt(grade);
 		float OldVarSin = Connection->GetActivityAt(grade+1);
+
+		float SinVar = sin(grade*delta_t/tau);
+		float CosVar = cos(grade*delta_t/tau);
 		
-		NewActivity += factor*(expon*this->terms[this->exponent/2][grade/2]*(OldVarCos*cos(grade*delta_t/tau)-OldVarSin*sin(grade*delta_t/tau)));
+		NewActivity += factor*(expon*this->terms[this->exponent/2][grade/2]*(OldVarCos*CosVar-OldVarSin*SinVar));
 		
-		float NewVarCos = (OldVarCos*cos(grade*delta_t/tau)-OldVarSin*sin(grade*delta_t/tau))*expon;
-		float NewVarSin = (OldVarSin*cos(grade*delta_t/tau)+OldVarCos*sin(grade*delta_t/tau))*expon;
+		float NewVarCos = (OldVarCos*CosVar-OldVarSin*SinVar)*expon;
+		float NewVarSin = (OldVarSin*CosVar+OldVarCos*SinVar)*expon;
 		
 		if(spike){  // if spike, we need to increase the e1 variable
 			NewVarCos += 1;

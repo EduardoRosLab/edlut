@@ -27,6 +27,7 @@
  * This file declares a class for write output spikes in a file.
  */
 #include <cstdlib>
+#include <string>
  
 #include "./OutputSpikeDriver.h"
 
@@ -57,7 +58,7 @@ class FileOutputSpikeDriver: public OutputSpikeDriver {
 		/*!
 		 * The file name.
 		 */
-		const char * FileName;
+		string FileName;
 		
 		/*!
 		 * Write potential events.

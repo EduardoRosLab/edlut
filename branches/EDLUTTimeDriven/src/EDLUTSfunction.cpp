@@ -39,11 +39,11 @@
  *   matlabroot/rtw/c/libsrc/rt_matrx.h      - Macros for MATLAB API routines
  *
  */
+// #include "vld.h"
+
 #include "simstruc.h"
 
 #include "../include/interface/simulink/SimulinkBlockInterface.h"
-
-// #include "vld.h"
 
 // Define input parameters
 // Define input parameters
@@ -53,7 +53,9 @@
 #define PARAMTDSTEP ssGetSFcnParam(S,3)	// Time-driven simulation step
 #define PARAMINPUT ssGetSFcnParam(S,4) 	// Input map - Vector mapping each input line with an input cell
 #define PARAMOUTPUT ssGetSFcnParam(S,5) 	// Output map - Vector mapping each output line with an output cell
-#define NUMBEROFPARAMETERS 6
+#define PARAMSAVINGWEIGHTFILE ssGetSFcnParam(S,6)	// File where the synaptic weights will be stored.
+#define PARAMSAVINGWEIGHTTIME ssGetSFcnParam(S,7)	// Step time between consecutive weight saving.
+#define NUMBEROFPARAMETERS 8
 
 /*====================*
  * S-function methods *
@@ -491,10 +493,10 @@ static void mdlInitializeSampleTimes(SimStruct *S)
 	  ssPrintf("Initializing simulation\n");
 	  if (ssIsFirstInitCond(S)){
 		  SimulinkBlockInterface * Simul = new SimulinkBlockInterface();
-		  ssPrintf("Saving simulation interface pointer\n");
-		  ssSetPWorkValue(S, 0, Simul);
 		  ssPrintf("Initializing simulation interface object\n");
 		  Simul->InitializeSimulation(S);
+		  ssPrintf("Saving simulation interface pointer\n");
+		  ssSetPWorkValue(S, 0, Simul);
 		  ssPrintf("Simulation interface object inicialized\n");
 	  } else {
 		  // Reset simulation

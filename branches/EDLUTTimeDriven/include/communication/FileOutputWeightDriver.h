@@ -27,6 +27,8 @@
  */
 #include "./OutputWeightDriver.h"
 
+#include <string>
+
 class EDLUTException;
 class Network;
 
@@ -52,7 +54,7 @@ class FileOutputWeightDriver: public OutputWeightDriver {
 		/*!
 		 * The file name.
 		 */
-		const char * FileName;
+		string FileName;
 		
 	public:
 	
