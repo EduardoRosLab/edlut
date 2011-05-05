@@ -95,7 +95,7 @@ fortran77support := false
 # if optimized -> no debug info is produced --> applies -O3 flag if
 # set to true
 # optimize := true
-optimize    := false
+optimize    := true
 
 # this is for laptops and stuff with intel pentium M processors, if
 # you are not sure of your system, just set 'specialize' to false. if
@@ -121,7 +121,7 @@ sse-iset := false
 #      able to make measurements for those libraries.  
 # !!! after running your program, you can see the results with
 #      'make gflat' and 'make gcall'
-profile := true
+profile := false
 
 # do not change for linux /usr type directory structures. this structure means
 # .cpp .cc files reside in ./srcdir and .h files reside in ./include/$(packagename)/

@@ -42,6 +42,7 @@ endif
 
 ifeq ($(profile),true)
   CXXFLAGS+= -pg
+  LDFLAGS+= -lprofiler
 endif
 
 ifeq ($(matlabsupport),true)

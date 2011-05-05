@@ -18,7 +18,7 @@
  * You must specify the S_FUNCTION_NAME as the name of your S-function.
  */
 
-#define S_FUNCTION_NAME  EDLUTSfunction
+#define S_FUNCTION_NAME  EDLUTKernel
 #define S_FUNCTION_LEVEL 2
 
 /*
