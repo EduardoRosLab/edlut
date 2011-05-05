@@ -78,7 +78,7 @@ void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,do
 	else if(NewWeight<0.0)
 		NewWeight=0.0;
 
-	Connection->SetLastSpikeTime(SpikeTime);
+	//Connection->SetLastSpikeTime(SpikeTime);
 	Connection->SetWeight(NewWeight);
 
 	if(this->trigger == 1){

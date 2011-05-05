@@ -60,7 +60,7 @@ void MultiplicativeKernelChange::ApplyPreSynapticSpike(Interconnection * Connect
 		Connection->SetActivityAt(indexp,1+Connection->GetActivityAt(indexp)*exp((Connection->GetLastSpikeTime()-SpikeTime)*this->GetLparAt(indexp)));
 	}
 
-	Connection->SetLastSpikeTime(SpikeTime);
+	//Connection->SetLastSpikeTime(SpikeTime);
 	Connection->SetWeight(Connection->GetWeight() + this->a1pre*((this->a1pre > 0.0)?(Connection->GetMaxWeight()-Connection->GetWeight()):Connection->GetWeight()));
 
 	if(this->trigger == 1){

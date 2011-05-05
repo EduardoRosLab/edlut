@@ -345,8 +345,8 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         									this->inters[posc].SetWeight(maxweight);   //TODO: Use max interconnection conductance
         									this->inters[posc].SetMaxWeight(maxweight);
         									if(wchange >= 0){
-        										this->inters[posc].ClearActivity();
         										this->inters[posc].SetWeightChange(this->wchanges[wchange]);
+												this->inters[posc].ClearActivity();
         									}
                                 
                                 			this->inters[posc].SetLastSpikeTime(-100); // -1.0/0.0; // -Infinite not needed if last activity=0
@@ -460,7 +460,7 @@ void Network::SaveWeights(const char *wfile) throw (EDLUTException){
 			}
 		}
 		
-		fprintf(fh,"// end of written data\n");
+		// fprintf(fh,"// end of written data\n");
 		
 		fclose(fh);
 	}else{

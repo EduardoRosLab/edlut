@@ -71,14 +71,14 @@ void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
 		CurrentSimulation->GetQueue()->InsertEvent(nextspike);
 	}
 
-	inter->SetLastSpikeTime(CurrentTime);
-
 	LearningRule * ConnectionRule = inter->GetWeightChange();
 
 	// If learning, change weights
     if(ConnectionRule != 0){
     	ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
     }
+
+	inter->SetLastSpikeTime(CurrentTime);	
 }
 
    	
