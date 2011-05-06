@@ -19,6 +19,7 @@
 #include "../../../include/communication/InputBooleanArrayDriver.h"
 #include "../../../include/communication/OutputBooleanArrayDriver.h"
 #include "../../../include/communication/FileOutputSpikeDriver.h"
+#include "../../../include/communication/FileOutputWeightDriver.h"
 
 #include <ctime>
 
@@ -29,17 +30,44 @@
 #define PARAMTDSTEP ssGetSFcnParam(S,3)	// Time-driven simulation step
 #define PARAMINPUT ssGetSFcnParam(S,4) 	// Input map - Vector mapping each input line with an input cell
 #define PARAMOUTPUT ssGetSFcnParam(S,5) 	// Output map - Vector mapping each output line with an output cell
+#define PARAMSWFILE ssGetSFcnParam(S,6)	// File where the synaptic weights will be stored.
+#define PARAMSWTIME ssGetSFcnParam(S,7)	// Step time between consecutive weight saving.
 
-SimulinkBlockInterface::SimulinkBlockInterface(): Simul(0), InputDriver(0), OutputDriver(0){
+
+SimulinkBlockInterface::SimulinkBlockInterface(): Simul(0), InputDriver(0), OutputDriver(0), FileDriver(0), WeightDriver(0){
 
 }
 
 SimulinkBlockInterface::~SimulinkBlockInterface() {
 	if (this->Simul!=0){
-		delete Simul;
+		delete this->Simul;
 	}
 
-	Simul = 0;
+	this->Simul = 0;
+
+	if (this->InputDriver!=0){
+		delete this->InputDriver;
+	}
+
+	this->InputDriver = 0;
+
+	if (this->OutputDriver!=0){
+		delete this->OutputDriver;
+	}
+
+	this->OutputDriver = 0;
+
+	if (this->FileDriver!=0){
+		delete this->FileDriver;
+	}
+
+	this->FileDriver = 0;
+
+	if (this->WeightDriver!=0){
+		delete this->WeightDriver;
+	}
+
+	this->WeightDriver;
 }
 
 void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
@@ -56,6 +84,9 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 	char LogFile[128];
 	mxGetString(PARAMLOG, LogFile, 128);
 
+	char SavingWeightFile[128];
+	mxGetString(PARAMSWFILE, SavingWeightFile, 128);
+
 	srand (time(NULL));
 
 	time_T Step = ssGetSampleTime(S, 0);
@@ -63,6 +94,15 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 	try {
 		this->Simul = new Simulation(NetworkFile, WeightFile, SimulationTime, 0);
 
+		this->WeightDriver = new FileOutputWeightDriver (SavingWeightFile);
+		this->Simul->AddOutputWeightDriver(this->WeightDriver);
+		
+		real_T * SavingWeightStep = (real_T *)mxGetData(PARAMSWTIME);
+		double SWStep = (double) SavingWeightStep[0];
+		if (SWStep!=0){
+			this->Simul->SetSaveStep(SWStep);
+		}
+		
 		real_T * TimeDrivenStep = (real_T *)mxGetData(PARAMTDSTEP);
 		double TDStep = (double) TimeDrivenStep[0];
 		if (TDStep!=0){
@@ -93,7 +133,8 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 		this->OutputDriver = new OutputBooleanArrayDriver(NumberOfElementsOut, IntOutputCells);
 		this->Simul->AddOutputSpikeDriver(this->OutputDriver);
 
-		Simul->AddMonitorActivityDriver(new FileOutputSpikeDriver(LogFile,false));
+		this->FileDriver = new FileOutputSpikeDriver(LogFile,false);
+		Simul->AddMonitorActivityDriver(this->FileDriver);
 
 		this->Simul->InitSimulation();
 
@@ -137,7 +178,7 @@ void SimulinkBlockInterface::SimulateStep(SimStruct *S, int_T tid){
 		double CurrentTime = (double) ssGetT(S);
 		double NextTime = CurrentTime+StepTime;
 
-		ssPrintf("Current time is %f and next time is %f\n",CurrentTime,NextTime);
+		//ssPrintf("Current time is %f and next time is %f\n",CurrentTime,NextTime);
 
 		this->InputDriver->LoadInputs(Simul->GetQueue(),Simul->GetNetwork(), (bool *) InputSignals, CurrentTime);
 
