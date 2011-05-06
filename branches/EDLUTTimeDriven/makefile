@@ -72,7 +72,8 @@ simulinkinclude	:= ${matlabrootdir}/simulink/include
 # matlab mex file suffix : Suffix of generated mex files. E.g. mexglx in Linux, mexw32
 # in windows 32 bits, mexw64 in windows 64 bits... See mex documentation for more
 # detailed information.
-mexsuffix	:= mexglx
+mex32suffix	:= mexglx
+mex64suffix	:= mexa64
 
 # external sources : uses pkg-config as " pkg-config --cflags ${external_sources} "
 # if you don't need any source, set it to 'none'
@@ -121,7 +122,7 @@ sse-iset := false
 #      able to make measurements for those libraries.  
 # !!! after running your program, you can see the results with
 #      'make gflat' and 'make gcall'
-profile := false
+profile := true
 
 # do not change for linux /usr type directory structures. this structure means
 # .cpp .cc files reside in ./srcdir and .h files reside in ./include/$(packagename)/

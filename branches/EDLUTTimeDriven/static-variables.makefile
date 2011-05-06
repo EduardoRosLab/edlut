@@ -37,7 +37,11 @@ else
    pkgconfigfile := $(packagename).pc
 endif
 
-mextarget		 := $(mexdir)/$(packagename).$(mexsuffix)
+ARCH 		:= $(shell getconf LONG_BIT)
+
+mexsuffix 	:= $(mex$(ARCH)suffix)
+
+mextarget	:= $(mexdir)/$(packagename).$(mexsuffix)
 
 sfunctiontarget	 := $(sfunctiondir)/$(packagename).$(mexsuffix)
 
