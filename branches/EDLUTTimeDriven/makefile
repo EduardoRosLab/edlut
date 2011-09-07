@@ -49,7 +49,7 @@ licence     := GPL v3.0 or higher distributed by FSF
 # http://pkg-config.freedesktop.org/wiki
 
 # if matlab support -> Matlab paths, includes and flags.
-matlabsupport	:= true
+matlabsupport	:= false
 
 # matlab root dir : Folder where Matlab is installed. The root folder
 # in order to find the matlab include folder.If you don't need matlab 
@@ -62,7 +62,7 @@ matlabrootdir	:= /usr/local/matlabR2009b
 matlabinclude	:= ${matlabrootdir}/extern/include
 
 # if simulink support -> Simulink paths, includes and flags.
-simulinksupport	:= true
+simulinksupport	:= false
 
 # simulink include folder : Path where simulink include files are stored.
 # If you don't need simulink compatibility (simulink files), this option won't
@@ -122,7 +122,7 @@ sse-iset := false
 #      able to make measurements for those libraries.  
 # !!! after running your program, you can see the results with
 #      'make gflat' and 'make gcall'
-profile := true
+profile := false
 
 # do not change for linux /usr type directory structures. this structure means
 # .cpp .cc files reside in ./srcdir and .h files reside in ./include/$(packagename)/
