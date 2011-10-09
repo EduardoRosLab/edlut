@@ -31,6 +31,7 @@
  */
 
 class Interconnection;
+class ConnectionState;
 
 /*!
  * \class LearningRule
@@ -46,13 +47,13 @@ class LearningRule : public PrintableObject {
 
 	public:
 		/*!
-		 * \brief It gets the number of state variables that this learning rule needs.
+		 * \brief It gets the initial state associated to the learning rule.
 		 *
-		 * It gets the number of state variables that this learning rule needs.
+		 * It gets the initial state associated to the learning rule.
 		 *
-		 * \return The number of state variables that this learning rule needs.
+		 * \return The initial state that the learning rule needs.
 		 */
-		virtual int GetNumberOfVar() const = 0;
+		virtual ConnectionState * GetInitialState() = 0;
 
 		/*!
 		 * \brief It loads the learning rule properties.

@@ -54,18 +54,6 @@ class SinWeightChange: public AdditiveKernelChange{
 		 */
 		int exponent;
 		
-	protected:
-		/*!
-   		 * \brief It updates the previous activity in the connection.
-   		 * 
-   		 * It updates the previous activity in the connection.
-   		 * 
-   		 * \param time The spike time.
-   		 * \param Connection The connection to be modified.
-   		 * \param spike True if an spike is produced.
-   		 */
-		virtual void update_activity(double time,Interconnection * Connection,bool spike);
-	
 	public:
 		/*!
 		 * \brief Default constructor. It creates a new sinusoidal additive learning-rule
@@ -75,6 +63,15 @@ class SinWeightChange: public AdditiveKernelChange{
 		 * with the parameter exponent.
 		 */
 		SinWeightChange();
+
+		/*!
+		 * \brief It gets the initial state associated to the learning rule.
+		 *
+		 * It gets the initial state associated to the learning rule.
+		 *
+		 * \return The initial state that the learning rule needs.
+		 */
+		virtual ConnectionState * GetInitialState();
 
 		/*!
 		 * \brief It loads the learning rule properties.

@@ -63,28 +63,15 @@ class STDPWeightChange: public LearningRule {
 		 */
 		float MaxChangeLTP;
 
-	protected:
-		/*!
-		 * \brief It gets the weight difference after the last spike.
-		 *
-		 * It gets the weight difference after the last spike.
-		 *
-		 * \param Connection The connection where the spike happened.
-		 * \param CurrentTime Current simulation time.
-		 * \return The weight difference.
-		 */
-		virtual double GetWeightChange(Interconnection * Connection, double CurrentTime);
-
-
 	public:
 		/*!
-		 * \brief It gets the number of state variables that this learning rule needs.
+		 * \brief It gets the initial state associated to the learning rule.
 		 *
-		 * It gets the number of state variables that this learning rule needs.
+		 * It gets the initial state associated to the learning rule.
 		 *
-		 * \return The number of state variables that this learning rule needs.
+		 * \return The initial state that the learning rule needs.
 		 */
-		virtual int GetNumberOfVar() const;
+		virtual ConnectionState * GetInitialState();
 
 		/*!
 		 * \brief It gets the maximum value of the weight change for LTD.

@@ -1,7 +1,7 @@
 /***************************************************************************
- *                           SinWeightChange.cpp                           *
+ *                           ExpWeightChange.cpp                           *
  *                           -------------------                           *
- * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
+ * copyright            : (C) 2011 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
  ***************************************************************************/
 
@@ -15,32 +15,15 @@
  ***************************************************************************/
 
 
-#include "../../include/learning_rules/SinWeightChange.h"
+#include "../../include/learning_rules/ExpWeightChange.h"
 
-#include "../../include/learning_rules/SinState.h"
+#include "../../include/learning_rules/ExpState.h"
 
 #include "../../include/spike/Interconnection.h"
 
-SinWeightChange::SinWeightChange():exponent(0){
+ExpWeightChange::ExpWeightChange(){
 }
 
-ConnectionState * SinWeightChange::GetInitialState(){
-	return (ConnectionState *) new SinState(this->exponent,this->maxpos);
+ConnectionState * ExpWeightChange::GetInitialState(){
+	return (ConnectionState *) new ExpState(this->maxpos);
 }
-
-int SinWeightChange::GetNumberOfVar() const{
-	return this->exponent+2;
-}
-
-int SinWeightChange::GetExponent() const{
-	return this->exponent;
-}
-
-void SinWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException){
-	AdditiveKernelChange::LoadLearningRule(fh,Currentline);
-
-	if(!(fscanf(fh,"%i",&this->exponent)==1)){
-		throw EDLUTFileException(4,28,23,1,Currentline);
-	}
-}
-

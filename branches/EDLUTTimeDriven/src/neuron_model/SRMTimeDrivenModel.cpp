@@ -111,7 +111,7 @@ double SRMTimeDrivenModel::PotentialIncrement(SRMState * State){
 		//int Position = round(TimeDifference/this->EPSPStep);
 		double EPSPMax = sqrt(this->tau/2)*exp(-0.5);
 
-		double EPSP = sqrt(this->tau)*exp(-(TimeDifference/this->tau))/EPSPMax;
+		double EPSP = sqrt(TimeDifference)*exp(-(TimeDifference/this->tau))/EPSPMax;
 
 		//Increment += Weight*this->W*EPSP[Position];
 		Increment += Weight*this->W*EPSP;
@@ -168,7 +168,17 @@ bool SRMTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
 	double Potential = this->vr + this->PotentialIncrement((SRMState *) State);
 	State->SetStateVariableAt(1,Potential);
 
-	double FiringRate = this->r0 * log(1+exp((Potential-this->v0)/this->vf));
+	double FiringRate;
+
+	if((Potential-this->v0)*1000 > (10*this->vf)){
+		FiringRate = this->r0*1000*(Potential-this->v0)/this->vf;
+	} else {
+		double texp=exp((Potential-this->v0)*1000/this->vf);
+	    FiringRate =this->r0*log(1+texp);
+	}
+
+	//double texp = exp((Potential-this->v0)/this->vf);
+	//double FiringRate = this->r0 * log(1+texp);
 	State->SetStateVariableAt(2,FiringRate);
 
 	double TimeSinceSpike = State->GetLastSpikeTime();
@@ -176,7 +186,7 @@ bool SRMTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
 	double Refractoriness = 0;
 
 	if (TimeSinceSpike>this->tauabs){
-		Refractoriness = (Aux*Aux)/(this->taurel*this->taurel+(Aux*Aux));
+		Refractoriness = 1./(1.+(this->taurel*this->taurel)/(Aux*Aux));
 	}
 	State->SetStateVariableAt(3,Refractoriness);
 

@@ -78,7 +78,6 @@ void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
     	ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
     }
 
-	inter->SetLastSpikeTime(CurrentTime);	
 }
 
    	

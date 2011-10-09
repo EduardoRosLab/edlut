@@ -96,7 +96,7 @@ fortran77support := false
 # if optimized -> no debug info is produced --> applies -O3 flag if
 # set to true
 # optimize := true
-optimize    := true
+optimize    := false
 
 # this is for laptops and stuff with intel pentium M processors, if
 # you are not sure of your system, just set 'specialize' to false. if
@@ -173,9 +173,13 @@ interface-sources		:= $(srcdir)/interface/C_Interface.cpp
 
 learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
                            $(srcdir)/learning_rules/AdditiveKernelChange.cpp \
-                           $(srcdir)/learning_rules/MultiplicativeKernelChange.cpp \
                            $(srcdir)/learning_rules/SinWeightChange.cpp \
-                           $(srcdir)/learning_rules/STDPWeightChange.cpp
+                           $(srcdir)/learning_rules/ExpWeightChange.cpp \
+                           $(srcdir)/learning_rules/STDPWeightChange.cpp \
+                           $(srcdir)/learning_rules/ConnectionState.cpp \
+                           $(srcdir)/learning_rules/ExpState.cpp \
+                           $(srcdir)/learning_rules/SinState.cpp \
+                           $(srcdir)/learning_rules/STDPState.cpp
 
 neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
                            $(srcdir)/neuron_model/EventDrivenNeuronModel.cpp \

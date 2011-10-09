@@ -33,6 +33,7 @@
 class Neuron;
 class LearningRule;
 class ActivityRegister;
+class ConnectionState;
 
 /*!
  * \class Interconnection
@@ -90,14 +91,9 @@ class Interconnection : public PrintableObject {
 		LearningRule* wchange;
 		
 		/*!
-		 * \brief The activity register of the connection.
+		 * \brief The activity state of the connection
 		 */
-		ActivityRegister* activity;
-		
-		/*!
-		 * \brief The time of the last fired spike.
-		 */
-		double lastspiketime;
+		ConnectionState * state;
 		
 	public:
 	
@@ -121,11 +117,17 @@ class Interconnection : public PrintableObject {
 		 * \param NewWeight Synaptic weight of this connection.
 		 * \param NewMaxWeight Maximum synaptic weight of this connection.
 		 * \param NewWeightChange Learning (or weight change) rule associated to this connection.
-		 * \param NewActivity Last activity register of this connection.
-		 * \param NewLastSpikeTime Time of the last propagated spike in this connection.
+		 * \param NewConnectionState Current State object of the connection
 		 */
-		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, float NewLastSpikeTime);
+		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, ConnectionState* NewConnectionState);
 		
+		/*!
+		 * \brief Object destructor.
+		 *
+		 * It remove an interconnetion object an releases the memory of the connection state.
+		 */
+		~Interconnection();
+
 		/*!
 		 * \brief It gets the connection index.
 		 * 
@@ -270,6 +272,25 @@ class Interconnection : public PrintableObject {
 		 */
 		void SetWeightChange(LearningRule * NewWeightChange);
 		
+		/*!
+		 * \brief It gets the connection state of this connection.
+		 *
+		 * It gets the state of the connection.
+		 *
+		 * \return The connection state of the connection. 0 if the connection hasn't associated learning rule.
+		 */
+		ConnectionState * GetConnectionState() const;
+
+		/*!
+		 * \brief It sets the current state of this connection.
+		 *
+		 * It sets the state of the connection.
+		 *
+		 * \param NewConnectionState The new state of the connection. 0 if the connection hasn't learning rule.
+		 */
+		void SetConnectionState(ConnectionState * NewConnectionState);
+
+
 		/*!
 		 * \brief It clears the activity register of this connection.
 		 * 

@@ -19,8 +19,7 @@
 #include "../../include/spike/Neuron.h"
 #include "../../include/spike/InternalSpike.h"
 
-#include "../../include/learning_rules/MultiplicativeKernelChange.h"
-#include "../../include/learning_rules/AdditiveKernelChange.h"
+#include "../../include/learning_rules/ExpWeightChange.h"
 #include "../../include/learning_rules/SinWeightChange.h"
 #include "../../include/learning_rules/STDPWeightChange.h"
 
@@ -277,10 +276,8 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         					skip_comments(fh,Currentline);
         					string LearningModel;
         					if(fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident_type)==1){
-        						if (string(ident_type)==string("AdditiveKernel")){
-        							this->wchanges[wcind] = new AdditiveKernelChange();
-        						} else if (string(ident_type)==string("MultiplicativeKernel")){
-        							this->wchanges[wcind] = new MultiplicativeKernelChange();
+        						if (string(ident_type)==string("ExpAdditiveKernel")){
+        							this->wchanges[wcind] = new ExpWeightChange();
         						} else if (string(ident_type)==string("SinAdditiveKernel")){
         							this->wchanges[wcind] = new SinWeightChange();
         						} else if (string(ident_type)==string("STDP")){
@@ -346,10 +343,10 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         									this->inters[posc].SetMaxWeight(maxweight);
         									if(wchange >= 0){
         										this->inters[posc].SetWeightChange(this->wchanges[wchange]);
-												this->inters[posc].ClearActivity();
+        										this->inters[posc].SetConnectionState(this->wchanges[wchange]->GetInitialState());
+        									} else {
+        										this->inters[posc].SetConnectionState(0);
         									}
-                                
-                                			this->inters[posc].SetLastSpikeTime(-100); // -1.0/0.0; // -Infinite not needed if last activity=0
                                 		}
         							}
         						}

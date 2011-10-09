@@ -28,7 +28,7 @@ void FileOutputWeightDriver::WriteWeights(Network * Net, float SimulationTime) t
 	string Name = FileName;
 	
 	char* str = new char[30];
-    sprintf(str, "%.4g", SimulationTime );    
+    sprintf(str, "%.6g", SimulationTime );
 
 	Name = Name.insert(Name.find_last_of('.'),string(str));		
 	

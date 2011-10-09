@@ -16,22 +16,26 @@
 
 #include "../../include/spike/Interconnection.h"
 
-#include <math.h>
+#include <cmath>
+
 #include "../../include/learning_rules/ActivityRegister.h"
 #include "../../include/spike/Neuron.h"
 
 #include "../../include/learning_rules/LearningRule.h"
+#include "../../include/learning_rules/ConnectionState.h"
 
-Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), activity(0), lastspiketime(-100){
+Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), state(0){
 	
 }
 
-Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, float NewLastSpikeTime):
-	source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), weight(NewWeight), maxweight(NewMaxWeight), wchange(NewWeightChange), lastspiketime(NewLastSpikeTime) {
-	if (NewWeightChange->GetNumberOfVar()>0){
-		activity = new ActivityRegister(NewWeightChange->GetNumberOfVar());	
-	}else{
-		activity = 0;
+Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, ConnectionState* NewConnectionState):
+	source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), weight(NewWeight), maxweight(NewMaxWeight), wchange(NewWeightChange),state(NewConnectionState) {
+}
+
+Interconnection::~Interconnection(){
+	if (this->state!=0){
+		delete this->state;
+		this->state = 0;
 	}
 }
 
@@ -96,51 +100,15 @@ LearningRule * Interconnection::GetWeightChange() const{
 }
 		
 void Interconnection::SetWeightChange(LearningRule * NewWeightChange){
-	if (this->wchange==0){
-		if (NewWeightChange->GetNumberOfVar()>0){
-			activity = new ActivityRegister(NewWeightChange->GetNumberOfVar());
-		}else{
-			activity = 0;
-		}
-	}else if (this->wchange!=NewWeightChange){
-		// Update the activity register
-		if (this->wchange->GetNumberOfVar()!=NewWeightChange->GetNumberOfVar()){
-			if (activity!=0){
-				delete activity;
-			}
-			if (NewWeightChange->GetNumberOfVar()>0){
-				activity = new ActivityRegister(NewWeightChange->GetNumberOfVar());
-			}else{
-				activity = 0;
-			}
-		}
-	}
-	
-	this->wchange = NewWeightChange;
+	this->wchange=NewWeightChange;
 }
 
-void Interconnection::ClearActivity(){
-	if (activity!=0){
-		for (int i=0; i<this->activity->GetVarNumber(); ++i){
-			this->activity->SetVarValueAt(i,0);
-		}
-	}
+ConnectionState * Interconnection::GetConnectionState() const{
+	return this->state;
 }
 		
-float Interconnection::GetActivityAt(int index) const{
-	return this->activity->GetVarValueAt(index);
-}
-		
-void Interconnection::SetActivityAt(int index, float NewActivity){
-	this->activity->SetVarValueAt(index, NewActivity);
-}
-		
-double Interconnection::GetLastSpikeTime() const{
-	return this->lastspiketime;
-}	
-		
-void Interconnection::SetLastSpikeTime(double NewTime){
-	this->lastspiketime = NewTime;
+void Interconnection::SetConnectionState(ConnectionState * NewConnectionState){
+	this->state = NewConnectionState;
 }
 
 ostream & Interconnection::PrintInfo(ostream & out) {
@@ -162,8 +130,6 @@ ostream & Interconnection::PrintInfo(ostream & out) {
 
    	if (this->GetWeightChange()!=0) this->GetWeightChange()->PrintInfo(out);
    	else out << "None" << endl;
-
-   	out << "\tLast Spike Time: " << this->GetLastSpikeTime() << endl;
 
    	return out;
 }

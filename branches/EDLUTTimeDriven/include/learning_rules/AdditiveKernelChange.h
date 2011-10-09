@@ -67,19 +67,16 @@ class AdditiveKernelChange : public LearningRule {
 		 */
 		float a2prepre;
 
-		/*!
-		 * \brief It updates the activity state.
-		 *
-		 * It updates the activity state.
-		 *
-		 * \param time The current simulation time.
-		 * \param Connection The connection to be updated.
-		 * \param spike If an spike has just happened in current connection.
-		 */
-		virtual void update_activity(double time,Interconnection * Connection,bool spike);
-
-
 	public:
+		/*!
+		 * \brief It gets the initial state associated to the learning rule.
+		 *
+		 * It gets the initial state associated to the learning rule.
+		 *
+		 * \return The initial state that the learning rule needs.
+		 */
+		virtual ConnectionState * GetInitialState() = 0;
+
 		/*!
 		 * \brief It loads the learning rule properties.
 		 *
