@@ -24,6 +24,10 @@
 #include <cstring>
 #include <cstdlib>
 
+#ifdef _WIN32
+	#include <winsock2.h>
+#endif
+
 #include "./CommunicationDevice.h"
 
 using namespace std;
@@ -101,14 +105,14 @@ protected:
    * Number of socket instances in order to load or unload the windows socket library.
    *
    */
-  static unsigned int SocketInstances = 0;
+  static unsigned int SocketInstances;
 
   /*!
    *
    * Socket identification.
    *
    */
-  SOCKET socket_fd = INVALID_SOCKET;
+  SOCKET socket_fd;
 
 #else
 

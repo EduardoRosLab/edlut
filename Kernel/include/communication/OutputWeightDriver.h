@@ -28,6 +28,8 @@
  
 #include "../spike/EDLUTException.h" 
 
+#include "../simulation/PrintableObject.h"
+
 class Network;
 
 /*!
@@ -41,7 +43,7 @@ class Network;
  * \author Jesus Garrido
  * \date November 2008
  */
-class OutputWeightDriver {
+class OutputWeightDriver : public PrintableObject{
 
 	public:
 	

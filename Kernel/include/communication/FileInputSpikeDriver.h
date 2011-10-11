@@ -27,6 +27,7 @@
  * This file declares a class for getting external input spikes from a file.
  */
 #include <cstdlib>
+#include <string>
 
 #include "./InputSpikeDriver.h"
 
@@ -60,7 +61,7 @@ class FileInputSpikeDriver: public InputSpikeDriver {
 		/*!
 		 * The file name.
 		 */
-		const char * FileName;
+		string FileName;
 		
 		/*!
 		 * The current line in the file.
@@ -98,6 +99,16 @@ class FileInputSpikeDriver: public InputSpikeDriver {
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
 		void LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException);
+
+		/*!
+		 * \brief It prints the information of the object.
+		 *
+		 * It prints the information of the object.
+		 *
+		 * \param out The output stream where it prints the object to.
+		 * \return The output stream.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
 	
 };
 

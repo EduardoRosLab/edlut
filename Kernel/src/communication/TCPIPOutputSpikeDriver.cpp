@@ -15,18 +15,24 @@
  ***************************************************************************/
 
 #include "../../include/communication/TCPIPOutputSpikeDriver.h"
-#include "../../include/communication/CdSocket.h"
+
+#include "../../include/communication/ServerSocket.h"
+#include "../../include/communication/ClientSocket.h"
 
 #include "../../include/spike/Spike.h"
 #include "../../include/spike/Neuron.h"
 
 
-TCPIPOutputSpikeDriver::TCPIPOutputSpikeDriver(CdSocket * NewSocket):Socket(NewSocket){
-	
+TCPIPOutputSpikeDriver::TCPIPOutputSpikeDriver(enum TCPIPConnectionType Type, string server_address,unsigned short tcp_port){
+	if (Type == SERVER){
+		this->Socket = new ServerSocket(tcp_port);
+	} else {
+		this->Socket = new ClientSocket(server_address,tcp_port);
+	}
 }
 		
 TCPIPOutputSpikeDriver::~TCPIPOutputSpikeDriver(){
-	
+	delete this->Socket;
 }
 	
 void TCPIPOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
@@ -35,7 +41,7 @@ void TCPIPOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTExce
 	this->OutputBuffer.push_back(spike);	
 }
 		
-void TCPIPOutputSpikeDriver::WritePotential(float Time, Neuron * Source, float Value) throw (EDLUTException){
+void TCPIPOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){
 	return;	
 }
 		
@@ -51,6 +57,7 @@ void TCPIPOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
 	
 	unsigned short size = (unsigned short)this->OutputBuffer.size();
 	this->Socket->sendBuffer(&size,sizeof(unsigned short));
+	cout << "Tamaño enviado: " << size << endl;
 	if (size>0){
 		OutputSpike * Array = new OutputSpike [size];
 		
@@ -65,3 +72,10 @@ void TCPIPOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
 		this->OutputBuffer.clear();
 	}
 }		
+
+ostream & TCPIPOutputSpikeDriver::PrintInfo(ostream & out){
+
+	out << "- TCP/IP Output Spike Driver" << endl;
+
+	return out;
+}

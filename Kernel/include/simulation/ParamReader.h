@@ -34,12 +34,14 @@
 
 #include "./ParameterException.h"
 #include "../communication/ConnectionException.h"
+#include "../spike/EDLUTException.h"
 
 using namespace std;
 
 class InputSpikeDriver;
 class OutputSpikeDriver;
 class OutputWeightDriver;
+class Simulation;
 
  
  /*!
@@ -103,8 +105,12 @@ class OutputWeightDriver;
  		 * Simulation step time. 
  		 */
  		double SimulationStepTime;
- 		
- 		
+
+		/*!
+ 		 * Simulation time-driven step time. 
+ 		 */
+ 		double TimeDrivenStepTime;
+ 		 		
  		/*!
  		 * Input drivers.
  		 */ 	
@@ -222,6 +228,16 @@ class OutputWeightDriver;
  		 * \return The simulation step time. -1 if this option isn't enabled. 
  		 */
  		double GetSimulationStepTime();
+
+		/*!
+ 		 * \brief It gets the simulation time-driven step time.
+ 		 * 
+ 		 * It gets the simulation time-driven step time. The argument indicator for simulation step time
+ 		 * is -ts, so it searchs -ts and returns the value as a float.
+ 		 * 
+ 		 * \return The simulation time-driven step time. -1 if this option isn't enabled. 
+ 		 */
+ 		double GetTimeDrivenStepTime();
  		
  		
  		/*!
@@ -263,6 +279,18 @@ class OutputWeightDriver;
  		 * \return A vector of the simulation output drivers. 
  		 */ 	
  		vector<OutputWeightDriver *> GetOutputWeightDrivers();
+
+ 		/*!
+		 * \brief It creates and initializes the simulation.
+		 *
+		 * It creates and initializes the simulation.
+		 *
+		 * \throw EDLUTException If something wrong happens.
+		 * \throw ConnectionException If the connection haven't been able to be stablished.
+		 *
+		 * \param Reader is the parser of parameters
+		 */
+		Simulation * CreateAndInitializeSimulation() throw (EDLUTException, ConnectionException);
 };
 
 #endif /*PARAMREADER_H_*/

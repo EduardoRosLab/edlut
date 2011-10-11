@@ -78,3 +78,10 @@ void FileInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (
 	}
 	
 }
+
+ostream & FileInputSpikeDriver::PrintInfo(ostream & out){
+
+	out << "- File Input Spike Driver: " << this->FileName << endl;
+
+	return out;
+}

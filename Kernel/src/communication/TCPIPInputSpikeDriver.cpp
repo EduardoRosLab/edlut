@@ -16,6 +16,9 @@
  
 #include "../../include/communication/TCPIPInputSpikeDriver.h"
 
+#include "../../include/communication/ServerSocket.h"
+#include "../../include/communication/ClientSocket.h"
+
 #include "../../include/communication/CdSocket.h"
 
 #include "../../include/simulation/EventQueue.h"
@@ -25,17 +28,25 @@
 
 
 
-TCPIPInputSpikeDriver::TCPIPInputSpikeDriver(CdSocket * NewSocket): Socket(NewSocket){
+TCPIPInputSpikeDriver::TCPIPInputSpikeDriver(enum TCPIPConnectionType Type, string server_address,unsigned short tcp_port){
+	if (Type == SERVER){
+		this->Socket = new ServerSocket(tcp_port);
+	} else {
+		this->Socket = new ClientSocket(server_address,tcp_port);
+	}
 	this->Finished = false;
 }
 		
 TCPIPInputSpikeDriver::~TCPIPInputSpikeDriver(){
+	delete this->Socket;
 }
 	
 void TCPIPInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException){
 	unsigned short csize;
 	
 	this->Socket->receiveBuffer(&csize, sizeof(unsigned short));
+
+	cout << "Tamaño recibido: " << csize << endl;
 	
 	if (csize>0){
 		OutputSpike * InputSpikes = new OutputSpike [csize];
@@ -48,4 +59,11 @@ void TCPIPInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw 
 			Queue->InsertEvent(NewSpike);				
 		}
 	}
+}
+
+ostream & TCPIPInputSpikeDriver::PrintInfo(ostream & out){
+
+	out << "- TCP/IP Input Spike Driver" << endl;
+
+	return out;
 }

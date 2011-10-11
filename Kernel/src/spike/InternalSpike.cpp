@@ -15,13 +15,21 @@
  ***************************************************************************/
 
 #include "../../include/spike/InternalSpike.h"
+#include "../../include/spike/Interconnection.h"
 
-#include <list>
 #include "../../include/spike/Neuron.h"
+#include "../../include/spike/PropagatedSpike.h"
+
+#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/NeuronModel.h"
+#include "../../include/neuron_model/EventDrivenNeuronModel.h"
 
 #include "../../include/simulation/Simulation.h"
+#include "../../include/simulation/EventQueue.h"
 
 #include "../../include/communication/OutputSpikeDriver.h"
+
+#include "../../include/learning_rules/LearningRule.h"
 
 InternalSpike::InternalSpike():Spike() {
 }
@@ -36,20 +44,69 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 	
 	Neuron * neuron=this->source;  // source of the spike
 	
-	if(neuron->GetPredictedSpike()==this->time){
-		
-		neuron->ProcessInputActivity(this);
+	if (neuron->GetNeuronModel()->GetModelType() == EVENT_DRIVEN_MODEL){
+		EventDrivenNeuronModel * Model = (EventDrivenNeuronModel *) neuron->GetNeuronModel();
+		if(!Model->DiscardSpike(this)){
+			// Add the spike to simulation spike counter
+			long int Spikes = CurrentSimulation->GetTotalSpikeCounter();
+			CurrentSimulation->SetTotalSpikeCounter(Spikes+1);
+
+			neuron->GetNeuronState()->NewFiredSpike();
+			// If it is a valid spike (not discard), generate the next spike in this cell.
+			InternalSpike * NextSpike = Model->GenerateNextSpike(this);
+
+			if (NextSpike!=0){
+				CurrentSimulation->GetQueue()->InsertEvent(NextSpike);
+			}
 			
-		// Not needed for only one spike per input
-		neuron->GenerateAutoActivity(CurrentSimulation->GetQueue());
-		// Not-needed end (can be replaced by neuron->predictedspike=0)
-		
+			CurrentSimulation->WriteSpike(this);
+
+			Neuron * Cell = this->GetSource();
+			if (Cell->IsMonitored()){
+				CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), Cell);
+			}
+
+			// Generate the output activity
+			if (neuron->IsOutputConnected()){
+				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
+				CurrentSimulation->GetQueue()->InsertEvent(spike);
+			}
+
+			for (int i=0; i<neuron->GetInputNumber(); ++i){
+				Interconnection * inter = neuron->GetInputConnectionAt(i);
+
+				if(inter->GetWeightChange() != 0){
+					inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
+				}
+			}
+		}
+	} else { // Time-driven model (no check nor update needed
+		// Add the spike to simulation spike counter
+		long int Spikes = CurrentSimulation->GetTotalSpikeCounter();
+		CurrentSimulation->SetTotalSpikeCounter(Spikes+1);
+
 		CurrentSimulation->WriteSpike(this);
-		CurrentSimulation->WritePotential(neuron->GetLastUpdate(), this->GetSource(), neuron->GetStateVarAt(1));
 		
-		//spike.time+=Net.inters[neuron->outconind].delay;
-    	neuron->GenerateOutputActivity(this,CurrentSimulation->GetQueue());
-    }
+		Neuron * Cell = this->GetSource();
+		if (Cell->IsMonitored()){
+			CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), Cell);
+		}
+		
+		// Generate the output activity
+		if (neuron->IsOutputConnected()){
+			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
+			CurrentSimulation->GetQueue()->InsertEvent(spike);
+		}
+
+		for (int i=0; i<neuron->GetInputNumber(); ++i){
+			Interconnection * inter = neuron->GetInputConnectionAt(i);
+
+			if(inter->GetWeightChange() != 0){
+				inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
+			}
+		}
+		
+	}
 }
 
    	
