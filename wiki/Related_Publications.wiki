@@ -15,7 +15,6 @@ Several simulation examples of diverse networks and controlling robotic systems 
   * N. R. Luque, J. A. Garrido, R. R. Carrillo, E. Ros, Cerebellar spiking engine: Towards objet model abstraction in manipulation. International Joint Conference on Neural Networks (IJCNN 2010).[http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5596531 doi: 10.1109/IJCNN.2010.5596531].
   * R. R. Carrillo, E. Ros, C. Boucheny, O. J.-M. D. Coenen, A real-time spiking cerebellum model for learning robot control, Biosystems, 94, pp. 18-27, 2008. [http://www.sciencedirect.com/science/article/pii/S0303264708001226 doi:10.1016/j.biosystems.2008.05.008].
   * R. R. Carrillo, E. Ros, S. Tolu, T. Nieus, E. D’Angelo, Event-driven simulation of cerebellar granule cells, Biosystems, 94, pp. 10-17, 2008. [http://www.sciencedirect.com/science/article/pii/S0303264708001214 doi:10.1016/j.biosystems.2008.05.007].
-  * R. R. Carrillo, E. Ros, B. Barbour, C. Boucheny, O. Coenen. Event-driven simulation of neural population synchronization facilitated by electrical coupling.  Biosystems, 87, 275–280, 2007. [http://www.sciencedirect.com/science/article/pii/S0303264706001754
-doi:10.1016/j.biosystems.2006.09.023].
-*IMPORTANT: If you are using EDLUT for research, please refer some of these papers in the obtained publications.*
-If you do not have access to any of this journal and you are interested in some of these papers, do not hesitate in send me an email to jgarrido at atc.ugr.es and I will kindly provide the paper that you are interested on.
+  * R. R. Carrillo, E. Ros, B. Barbour, C. Boucheny, O. Coenen. Event-driven simulation of neural population synchronization facilitated by electrical coupling.  Biosystems, 87, 275–280, 2007. [http://www.sciencedirect.com/science/article/pii/S0303264706001754 doi:10.1016/j.biosystems.2006.09.023].
+
+*IMPORTANT: If you are using EDLUT for research, please refer some of these papers in the obtained publications.* If you do not have access to any of this journal and you are interested in some of these papers, do not hesitate in send me an email to jgarrido at atc.ugr.es and I will kindly provide the paper that you are interested on.
