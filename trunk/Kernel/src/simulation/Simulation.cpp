@@ -15,6 +15,8 @@
  ***************************************************************************/
 
 #include "../../include/simulation/Simulation.h"
+#include "../../include/simulation/StopSimulationEvent.h"
+#include "../../include/simulation/TimeEvent.h"
 
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Spike.h"
@@ -29,19 +31,30 @@
 #include "../../include/communication/InputSpikeDriver.h"
 #include "../../include/communication/OutputWeightDriver.h"
 
-Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep) throw (EDLUTException): Net(0), Queue(0), InputSpike(), OutputSpike(), OutputWeight(), Totsimtime(SimulationTime), SimulationStep(NewSimulationStep), SaveWeightStep(0), EndOfSimulation(false), Updates(0), Heapoc(0){
+Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep) throw (EDLUTException): Net(0), Queue(0), InputSpike(), OutputSpike(), OutputWeight(), Totsimtime(SimulationTime), TimeDrivenStep(0), SimulationStep(NewSimulationStep), SaveWeightStep(0), EndOfSimulation(false), Updates(0), Heapoc(0){
 	Queue = new EventQueue();
 	Net = new Network(NetworkFile, WeightsFile, this->Queue);
 }
 
-Simulation::Simulation(const Simulation & ant):Net(ant.Net), Queue(ant.Queue), InputSpike(ant.InputSpike), OutputSpike(ant.OutputSpike), OutputWeight(ant.OutputWeight), Totsimtime(ant.Totsimtime), SaveWeightStep(ant.SaveWeightStep), EndOfSimulation(ant.EndOfSimulation), Updates(ant.Updates), Heapoc(ant.Heapoc){
+Simulation::Simulation(const Simulation & ant):Net(ant.Net), Queue(ant.Queue), InputSpike(ant.InputSpike), OutputSpike(ant.OutputSpike), OutputWeight(ant.OutputWeight), Totsimtime(ant.Totsimtime), TimeDrivenStep(ant.TimeDrivenStep), SaveWeightStep(ant.SaveWeightStep), EndOfSimulation(ant.EndOfSimulation), Updates(ant.Updates), Heapoc(ant.Heapoc){
 }
 
 Simulation::~Simulation(){
+	if (this->Net!=0){
+		delete this->Net;
+	}
+
+	if (this->Queue){
+		delete this->Queue;
+	}
 }
 
 void Simulation::EndSimulation(){
 	this->EndOfSimulation = true;
+}
+
+void Simulation::StopSimulation(){
+	this->StopOfSimulation = true;
 }
 
 void Simulation::SetSaveStep(float NewSaveStep){
@@ -60,9 +73,17 @@ double Simulation::GetSimulationStep(){
 	return this->SimulationStep;	
 }
 
-void Simulation::RunSimulation()  throw (EDLUTException){
+void Simulation::SetTimeDrivenStep(double NewTimeDrivenStep){
+	this->TimeDrivenStep = NewTimeDrivenStep;		
+}
+		
+double Simulation::GetTimeDrivenStep(){
+	return this->TimeDrivenStep;	
+}
+
+void Simulation::InitSimulation() throw (EDLUTException){
 	this->CurrentSimulationTime = 0.0;
-	
+
 	// Get the external initial inputs
 	this->GetInput();
 	
@@ -78,6 +99,18 @@ void Simulation::RunSimulation()  throw (EDLUTException){
 	if (this->SimulationStep>0.0F){
 		this->Queue->InsertEvent(new CommunicationEvent(this->SimulationStep));		
 	}	
+
+	// Add the time-driven simulation event
+	if (this->TimeDrivenStep>0.0F){
+		this->Queue->InsertEvent(new TimeEvent(this->TimeDrivenStep));
+	}
+
+}
+
+void Simulation::RunSimulation()  throw (EDLUTException){
+	this->CurrentSimulationTime = 0.0;
+
+	this->InitSimulation();
 	
 	while(!this->EndOfSimulation){
 		Event * NewEvent;
@@ -103,12 +136,51 @@ void Simulation::RunSimulation()  throw (EDLUTException){
 	}
 }
 
+void Simulation::RunSimulationSlot(double preempt_time)  throw (EDLUTException){
+
+
+	this->StopOfSimulation = false;
+
+	// Add a stop simulation event in preempt_time
+	this->Queue->InsertEvent(new StopSimulationEvent(preempt_time));
+
+	while(!this->EndOfSimulation && !this->StopOfSimulation){
+		Event * NewEvent;
+
+		NewEvent=this->Queue->RemoveEvent();
+
+		if(NewEvent->GetTime() == -1){
+			break;
+		}
+
+		Updates++;
+		Heapoc+=Queue->Size();
+
+		if(NewEvent->GetTime() - this->CurrentSimulationTime < -0.0001){
+			cerr <<
+                        "Internal error: Bad spike time. Spike: " <<
+                        NewEvent->GetTime() <<
+                        " Current: " <<
+                        this->CurrentSimulationTime <<
+                        endl;
+		}
+
+		this->CurrentSimulationTime=NewEvent->GetTime(); // only for checking
+
+                NewEvent->ProcessEvent(this);
+
+		delete NewEvent;
+       }
+}
+
 void Simulation::WriteSpike(const Spike * spike){
 	Neuron * neuron=spike->GetSource();  // source of the spike
     
     if(neuron->IsMonitored()){
 		for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
-			(*it)->WriteSpike(spike);
+			if (!(*it)->IsWritePotentialCapable()){
+				(*it)->WriteSpike(spike);
+			}
 		}
 	}
 	   	
@@ -119,22 +191,12 @@ void Simulation::WriteSpike(const Spike * spike){
 	}		
 }
 
-void Simulation::WritePotential(float time, Neuron * neuron, float value){
-	if(neuron->IsMonitored()){
-		for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
-			if ((*it)->IsWritePotentialCapable()){
-				(*it)->WritePotential(time, neuron, value);
-			}
+void Simulation::WriteState(float time, Neuron * neuron){
+	for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
+		if ((*it)->IsWritePotentialCapable()){
+			(*it)->WriteState(time, neuron);
 		}
 	}
-	   	
-	if(neuron->IsOutput()){
-		for (list<OutputSpikeDriver *>::iterator it=this->OutputSpike.begin(); it!=this->OutputSpike.end(); ++it){
-			if ((*it)->IsWritePotentialCapable()){
-				(*it)->WritePotential(time, neuron, value);
-			}
-		}
-	}		
 }
 
 void Simulation::SaveWeights(){
@@ -161,6 +223,14 @@ void Simulation::GetInput(){
 			(*it)->LoadInputs(this->Queue, this->Net);
 		}
 	}
+}
+
+long Simulation::GetTotalSpikeCounter(){
+	return this->TotalSpikeCounter;
+}
+
+void Simulation::SetTotalSpikeCounter(long int value) {
+	this->TotalSpikeCounter = value;
 }
 
 Network * Simulation::GetNetwork() const{
@@ -213,4 +283,47 @@ void Simulation::AddOutputWeightDriver(OutputWeightDriver * NewOutput){
 		
 void Simulation::RemoveOutputWeightDriver(OutputWeightDriver * NewOutput){
 	this->OutputWeight.remove(NewOutput);
+}
+
+ostream & Simulation::PrintInfo(ostream & out) {
+	out << "- Simulation:" << endl;
+
+	out << "  * End simulation time: " << this->GetTotalSimulationTime() << " s."<< endl;
+
+	out << "  * Saving weight step time: " << this->GetSaveStep() << " s." << endl;
+
+	out << "  * Communication step time: " << this->GetSimulationStep() << " s." << endl;
+
+	out << "  * Total simulation time: " << this->GetTotalSimulationTime() << " s." << endl;
+
+	this->GetNetwork()->PrintInfo(out);
+
+	out << "  * Input spike channels: " << this->InputSpike.size() << endl;
+
+	for (list<InputSpikeDriver *>::iterator it=this->InputSpike.begin(); it!=this->InputSpike.end(); ++it){
+		(*it)->PrintInfo(out);
+	}
+
+	out << "  * Output spike channels: " << this->OutputSpike.size() << endl;
+
+	for (list<OutputSpikeDriver *>::iterator it=this->OutputSpike.begin(); it!=this->OutputSpike.end(); ++it){
+		(*it)->PrintInfo(out);
+	}
+
+	out << "  * Monitor spike channels: " << this->MonitorSpike.size() << endl;
+
+	for (list<OutputSpikeDriver *>::iterator it=this->MonitorSpike.begin(); it!=this->MonitorSpike.end(); ++it){
+		(*it)->PrintInfo(out);
+	}
+
+	out << "  * Saving weight channels: " << this->OutputWeight.size() << endl;
+
+	for (list<OutputWeightDriver *>::iterator it=this->OutputWeight.begin(); it!=this->OutputWeight.end(); ++it){
+		(*it)->PrintInfo(out);
+	}
+
+	out << "  * Network description:" << endl;
+	this->GetNetwork()->PrintInfo(out);
+
+	return out;
 }

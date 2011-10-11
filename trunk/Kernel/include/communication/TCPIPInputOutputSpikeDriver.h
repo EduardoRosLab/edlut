@@ -32,12 +32,14 @@
 #include "./InputSpikeDriver.h"
 #include "./OutputSpikeDriver.h"
 
+#include "./TCPIPConnectionType.h"
+
+
 #include "../spike/EDLUTFileException.h"
 
 using namespace std;
 
 class CdSocket;
-
 
 /*!
  * \class TCPIPInputOutputSpikeDriver
@@ -89,12 +91,14 @@ class TCPIPInputOutputSpikeDriver: public InputSpikeDriver, public OutputSpikeDr
 		/*!
 		 * \brief Class constructor.
 		 * 
-		 * It creates a new object from the socket.
+		 * It creates a new object from the socket data.
 		 * 
-		 * \param NewSocket The socket connection to send the spikes.
+		 * \param Type Client or Server
+		 * \param server_address address of the server host. If Type==Server, server_address is not used.
+		 * \param tcp_port tcp_port to connect
 		 * 
 		 */
-		TCPIPInputOutputSpikeDriver(CdSocket * NewSocket);
+		TCPIPInputOutputSpikeDriver(enum TCPIPConnectionType Type, string server_address,unsigned short tcp_port);
 		
 		/*!
 		 * \brief Class desctructor.
@@ -136,11 +140,10 @@ class TCPIPInputOutputSpikeDriver: public InputSpikeDriver, public OutputSpikeDr
 		 * 
 		 * \param Time Time of the event (potential value).
 		 * \param Source Source neuron of the potential.
-		 * \param Value Membrane potential value.
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */		
-		virtual void WritePotential(float Time, Neuron * Source, float Value) throw (EDLUTException);
+		virtual void WriteState(float Time, Neuron * Source) throw (EDLUTException);
 		
 		/*!
 		 * \brief It checks if the current output driver is buffered.
@@ -168,6 +171,16 @@ class TCPIPInputOutputSpikeDriver: public InputSpikeDriver, public OutputSpikeDr
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
 		 void FlushBuffers() throw (EDLUTException);
+
+		/*!
+		 * \brief It prints the information of the object.
+		 *
+		 * It prints the information of the object.
+		 *
+		 * \param out The output stream where it prints the object to.
+		 * \return The output stream.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
 	
 };
 

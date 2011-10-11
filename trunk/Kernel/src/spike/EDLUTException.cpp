@@ -27,6 +27,7 @@ const char * EDLUTException::Taskmsgs[] ={
 	"Scaling neuron tables",
 	"Generating the spike prediction time table",
 	"Loading neuron table",
+
 	"Loading neuron tables",
 	"Loading weights from file",
 	"Saving weights to file",
@@ -44,6 +45,7 @@ const char * EDLUTException::Errormsgs[] ={
 	"The actual number of neurons doesn't match with the specified total",
 	"Can't read enough neuron-type specifications from file",
 	"Can't read the number of neurons from file",
+
 	"The number of interconnections doesn't match with the total specified",
 	"The neuron specified in interconnections doesn't exist",
 	"Can't read enough interconnections from file",
@@ -54,6 +56,7 @@ const char * EDLUTException::Errormsgs[] ={
 	"Spike neuron number hasn't been defined",
 	"Can't read enough input spikes from the file",
 	"Can't read the number of inputs from the file",
+
 	"Can't open the input spikes file",
 	"The table doesn't appear to be correct (not enough data)",
 	"Can't read enough tables from the file of neuron tables",
@@ -64,6 +67,7 @@ const char * EDLUTException::Errormsgs[] ={
 	"Weight change constant out of range",
 	"Can't read enough types of weight change from file",
 	"The type of weight change referenced in the interconnection definition hasn't been defined",
+
 	"Can't open the file of weights",
 	"Can't read enough weights from the file",
 	"Invalid number of weights value",
@@ -74,12 +78,39 @@ const char * EDLUTException::Errormsgs[] ={
 	"Can't read the number of tables to load from the file",
 	"Can't read the number of dimensions",
 	"Can't read the numbers of state variables or interpolation flags corresponding to each dimension",
+
 	"Can't read the numbers of state variables that will be used as synaptic variables",
 	"Can't read the numbers of tables used to update the state variables",
 	"Can't read the initialization value for each state variable",
 	"Can't read the number of table used for end of prediction",
-	"Specified insufficient number of neuron types",
-	"The table is too big for the current processor/compiler architecture or the table file is corrupt"
+	"Invalid number of neuron types",
+	"The table is too big for the current processor/compiler architecture or the table file is corrupt",
+	"Can't read the number of the state variable that will be used as last spike time variable",
+	"Can't read the number of the state variable that will be used as seed variable",
+	"Can't read the time step in the time-driven neuron model",
+	"Can't read the relative refractory period",
+
+	"Can't read the absolute refractory period",
+	"Can't read the potential gain factor",
+	"Can't read the probabilistic threshold potential",
+	"Can't read the spontaneous firing rate",
+	"Can't read the synaptic efficacy",
+	"Can't read the resting potential",
+	"Can't read the EPSP step time",
+	"Can't read the decay time constant parameter",
+	"Invalid type of the neuron model",
+
+	"Can't read the resting conductance",
+	"Can't read the refractory period",
+	"Can't read the GABA receptor time constant",
+	"Can't read the AMPA receptor time constant",
+	"Can't read the membrane capacitance",
+	"Can't read the firing threshold",
+	"Can't read the resting potential",
+	"Can't read the inhibitory reversal potential",
+	"Can't read the excitatory reversal potential"
+
+
 };
 
 const char * EDLUTException::Repairmsgs[] ={
@@ -93,6 +124,7 @@ const char * EDLUTException::Repairmsgs[] ={
 	"Define more neuron-type specifications in the configuration file",
 	"Specify the number of neurons in the configuration file",
 	"Specify the correct number of interconnections in the configuration file",
+
 	"Define the neuron or correct the interconnection neuron number",
 	"Specify more interconnections or correct the interconnection number in the configuration file",
 	"Specify the number of interconnections in the configuration file",
@@ -103,7 +135,8 @@ const char * EDLUTException::Repairmsgs[] ={
 	"Define more spikes or correct the number of spikes in the file of input spikes",
 	"Specify the number of spikes in the file of input spikes",
 	"Generate a correct file of neuron tables",
-	"Specify a greater number of neuron types or change the type of some neurons",
+
+	"Specify the correct number of neuron types or change the type of some neurons",
 	"Specify the number of types of weight change in the configuration file",
 	"Specify correct values for the constants",
 	"Specify more types of weight change or correct the number of types of weight change in the configuration file",
@@ -112,7 +145,9 @@ const char * EDLUTException::Repairmsgs[] ={
 	"Define the exact number of weights of the network",
 	"Ensure that the file has the correct permissions to be accessed for reading and writing",
 	"Free more memory or use a smaller network",
-	"Reduce the number of state variables or change the maximum number of state variables in the simulator source code"
+	"Reduce the number of state variables or change the maximum number of state variables in the simulator source code",
+
+	"Check the type of the neuron model: Only SRMTimeDriven, TableBasedModel and SRMTableBasedModel are implemented at the moment"
 };
 
 long EDLUTException::GetErrorValue(int a, int b, int c, int d){

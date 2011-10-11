@@ -14,16 +14,15 @@
  *                                                                         *
  ***************************************************************************/
 
-
-
-
 #include "../../include/communication/CdSocket.h"
-#include "../../include/communication/Timer.h"
-
 
 #ifdef _WIN32
 	#include <windows.h>
 	#include <winsock2.h>
+
+	#pragma comment(lib, "ws2_32.lib")
+
+	unsigned int CdSocket::SocketInstances = 0;
 
 #else
 	// Linux socket includes
@@ -187,11 +186,13 @@ void CdSocket::initializeSocket()
 
 
 		clilen = sizeof(cli_addr);
-		socket_fd = accept(tmp_socket_fd, (struct sockaddr *) &cli_addr, (socklen_t *)&clilen);
+		
 
 #ifdef _WIN32
-		closesocket(tmp_socket_fd);
+		socket_fd = accept(tmp_socket_fd, (struct sockaddr *) &cli_addr, &clilen);
+		closesocket(tmp_socket_fd);		
 #else
+		socket_fd = accept(tmp_socket_fd, (struct sockaddr *) &cli_addr, (socklen_t *)&clilen);
 		close(tmp_socket_fd);          // close original socket
 #endif
 
@@ -213,6 +214,9 @@ void CdSocket::initializeSocket()
 		int one=1;
 		p = getprotobyname("tcp");
 		setsockopt(socket_fd, p->p_proto, TCP_NODELAY, (const char*)&one, sizeof(one));
+
+		//linger ls = {1, 6000} ; 
+		//setsockopt(socket_fd, p->p_proto, SO_LINGER, (const char *)&ls, sizeof(ls)) ;
 	}
 }
 

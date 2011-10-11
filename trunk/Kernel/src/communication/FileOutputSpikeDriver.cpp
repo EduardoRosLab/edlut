@@ -16,6 +16,8 @@
  
 #include "../../include/communication/FileOutputSpikeDriver.h"
 
+#include "../../include/neuron_model/NeuronState.h"
+
 #include "../../include/spike/Spike.h"
 #include "../../include/spike/Neuron.h"
 
@@ -32,12 +34,20 @@ FileOutputSpikeDriver::~FileOutputSpikeDriver(){
 }
 
 void FileOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
-	if(!fprintf(this->Handler,"%f %li 1.0\n",NewSpike->GetTime(),NewSpike->GetSource()->GetIndex())>0)
+	if(!fprintf(this->Handler,"%f\t%li\n",NewSpike->GetTime(),NewSpike->GetSource()->GetIndex())>0)
     	throw EDLUTException(3,3,2,0);
 }
 		
-void FileOutputSpikeDriver::WritePotential(float Time, Neuron * Source, float Value) throw (EDLUTException){
-	if(!fprintf(this->Handler,"%f %li %f\n",Time,Source->GetIndex(),Value) > 0)
+void FileOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){
+	if(!fprintf(this->Handler,"%f\t%li",Time,Source->GetIndex()) > 0)
+		throw EDLUTException(3,3,2,0);
+
+	for (unsigned int i=0; i<Source->GetNeuronState()->GetNumberOfPrintableValues(); ++i){
+		if(!fprintf(this->Handler,"\t%f",Source->GetNeuronState()->GetPrintableValuesAt(i)) > 0)
+				throw EDLUTException(3,3,2,0);
+	}
+
+	if(!fprintf(this->Handler,"\n") > 0)
 		throw EDLUTException(3,3,2,0);
 }
 
@@ -51,5 +61,15 @@ bool FileOutputSpikeDriver::IsWritePotentialCapable() const{
 
 void FileOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
 	return;
+}
+
+ostream & FileOutputSpikeDriver::PrintInfo(ostream & out){
+
+	out << "- File Output Spike Driver: " << this->FileName << endl;
+
+	if (this->PotentialWriteable) out << "\tWriteable Potential" << endl;
+	else out << "\tNon-writeable Potential" << endl;
+
+	return out;
 }
 	

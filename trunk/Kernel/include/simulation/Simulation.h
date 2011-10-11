@@ -31,6 +31,8 @@
 
 #include "../spike/EDLUTException.h"
 
+#include "./PrintableObject.h"
+
 class Network;
 class EventQueue;
 class InputSpikeDriver;
@@ -53,7 +55,7 @@ class Neuron;
  * \author Richard Carrillo
  * \date August 2008
  */
-class Simulation{
+class Simulation : public PrintableObject{
 	
 	private:
 		/*!
@@ -95,6 +97,11 @@ class Simulation{
 		 * Simulation step
 		 */
 		double SimulationStep;
+
+		/*!
+		 * Simulation step
+		 */
+		double TimeDrivenStep;
 		
 		/*!
 		 * Save weight step
@@ -112,6 +119,11 @@ class Simulation{
 		bool EndOfSimulation;
 		
 		/*!
+		 * Stop of simulation
+		 */
+		bool StopOfSimulation;
+
+		/*!
 		 * Number of realized updates.
 		 */
 		long long Updates;
@@ -120,6 +132,11 @@ class Simulation{
 		 * Sumatory of heap size.
 		 */
 		long long Heapoc;
+
+		/*!
+		 * Total spike count.
+		 */
+		long TotalSpikeCounter;
 
 	protected:
 		
@@ -205,6 +222,24 @@ class Simulation{
 		 * \return The simulation step time (in seconds). 0 values don't simulate by step.
 		 */
 		double GetSimulationStep();
+
+		/*!
+		 * \brief It sets the time-driven model step.
+		 * 
+		 * It sets the time-driven model step.
+		 * 
+		 * \param NewTimeDrivenStep The time-driven model step time (in seconds). 0 values represents variable step (not implemented yet).
+		 */
+		void SetTimeDrivenStep(double NewTimeDrivenStep);
+		
+		/*!
+		 * \brief It gets the simulation step time.
+		 * 
+		 * It gets the simulation step time.
+		 * 
+		 * \return The simulation step time (in seconds). 0 values don't simulate by step.
+		 */
+		double GetTimeDrivenStep();
 		
 		/*!
 		 * \brief It ends the simulation before the next event.
@@ -212,6 +247,13 @@ class Simulation{
 		 * It ends the simulation before the next event.
 		 */
 		void EndSimulation();
+
+		/*!
+		 * \brief It stops the simulation before the next event.
+		 *
+		 * It stops the simulation before the next event.
+		 */
+		void StopSimulation();
 				 
 				
 		/*!
@@ -287,6 +329,15 @@ class Simulation{
 		 void RemoveOutputWeightDriver(OutputWeightDriver * NewOutput);
 		
 		/*!
+		 * \brief It loads the simulation.
+		 *
+		 * It loads the simulation (inputs from file, saving weight events, communication events...).
+		 *
+		 * \throw EDLUTException If something wrong happens.
+		 */
+		void InitSimulation() throw (EDLUTException);
+
+		/*!
 		 * \brief It runs the simulation.
 		 * 
 		 * It runs the simulation.
@@ -295,6 +346,18 @@ class Simulation{
 		 */
 		void RunSimulation() throw (EDLUTException);
 		
+		/*!
+		 * \brief It runs the simulation until simulation time > preempt_time.
+		 *
+		 * It runs the simulation until simulation time > preempt_time.
+		 *
+		 * \throw EDLUTException If something wrong happens.
+		 *
+		 * \param preempt_time is the ending time of the time slot.
+		 */
+		void RunSimulationSlot(double preempt_time) throw (EDLUTException);
+
+
 		/*!
 		 * \brief It writes a spike in the activity log and in the outputs.
 		 * 
@@ -311,9 +374,8 @@ class Simulation{
 		 * 
 		 * \param time The event time.
 		 * \param neuron The neuron of the event.
-		 * \param value The value of the potential.
 		 */
-		void WritePotential(float time, Neuron * neuron, float value);
+		void WriteState(float time, Neuron * neuron);
 		
 		/*!
 		 * \brief It saves the current synaptic weights in the output weights driver.
@@ -329,6 +391,22 @@ class Simulation{
 		 */
 		void SendOutput();
 		
+		/*!
+		 * \brief Set total spike count.
+		 *
+		 * Sets the total spike counter.
+		 * \param value is value to set the counter to.
+		 */
+		void SetTotalSpikeCounter(long int value);
+
+		/*!
+		 * \brief Get total spike count.
+		 *
+		 * Gets the total spike counter.
+		 * \returns the counter value.
+		 */
+		long GetTotalSpikeCounter();
+
 		/*!
 		 * \brief It gets the input activity.
 		 * 
@@ -380,6 +458,16 @@ class Simulation{
 		 * \return The number of acumulated event queue sizes.
 		 */
 		long long GetHeapAcumSize() const;		
+
+		/*!
+		 * \brief It prints the information of the object.
+		 *
+		 * It prints the information of the object.
+		 *
+		 * \param out The output stream where it prints the object to.
+		 * \return The output stream.
+		 */
+		virtual ostream & PrintInfo(ostream & out);
 	
 };
 
