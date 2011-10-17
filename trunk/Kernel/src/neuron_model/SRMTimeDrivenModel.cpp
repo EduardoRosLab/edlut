@@ -62,7 +62,7 @@ void SRMTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 									if(fscanf(fh,"%f",&this->taurel)==1){
 										skip_comments(fh,Currentline);
 
-										this->InitialState = (SRMState *) new SRMState(4,8*this->tau,30);
+										this->InitialState = (SRMState *) new SRMState(4,8*this->tau);
 
 										for (unsigned int i=0; i<=4; ++i){
 											this->InitialState->SetStateVariableAt(i,0.0);
@@ -170,10 +170,10 @@ bool SRMTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
 
 	double FiringRate;
 
-	if((Potential-this->v0)*1000 > (10*this->vf)){
-		FiringRate = this->r0*1000*(Potential-this->v0)/this->vf;
+	if((Potential-this->v0) > (10*this->vf)){
+		FiringRate = this->r0*(Potential-this->v0)/this->vf;
 	} else {
-		double texp=exp((Potential-this->v0)*1000/this->vf);
+		double texp=exp((Potential-this->v0)/this->vf);
 	    FiringRate =this->r0*log(1+texp);
 	}
 

@@ -16,7 +16,7 @@
 
 #include "../../include/neuron_model/SRMState.h"
 
-SRMState::SRMState(unsigned int NumVariables, float BufferAmpl, unsigned int MaxSize): BufferedState(NumVariables,BufferAmpl,MaxSize){
+SRMState::SRMState(unsigned int NumVariables, float BufferAmpl): BufferedState(NumVariables,BufferAmpl){
 
 }
 

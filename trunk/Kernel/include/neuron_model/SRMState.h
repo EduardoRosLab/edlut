@@ -49,9 +49,8 @@ class SRMState: public BufferedState {
 		 *
 		 * \param NumVariables Number of the state variables this model needs.
 		 * \param BufferAmplitude Time in which the activity will be stored.
-		 * \param MaxSize Maximum number of elements which can be simultaneously stored.
 		 */
-		SRMState(unsigned int NumVariables, float BufferAmpl, unsigned int MaxSize);
+		SRMState(unsigned int NumVariables, float BufferAmpl);
 
 		/*!
 		 * \brief Copies constructor.
