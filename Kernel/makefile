@@ -34,7 +34,7 @@ installdir  := $(HOME)/usr
 # 'libcvlab.a'
 packagename := EDLUTKernel
 
-version     := 0.4
+version     := 1.0
 author      := $(FULL_USER_NAME)
 
 # you can write a short description here about the package
@@ -188,7 +188,6 @@ neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
                            $(srcdir)/neuron_model/NeuronModel.cpp \
                            $(srcdir)/neuron_model/NeuronModelTable.cpp \
                            $(srcdir)/neuron_model/NeuronState.cpp \
-                           $(srcdir)/neuron_model/SRMModel.cpp \
                            $(srcdir)/neuron_model/SRMState.cpp \
                            $(srcdir)/neuron_model/SRMTableBasedModel.cpp \
                            $(srcdir)/neuron_model/SRMTimeDrivenModel.cpp \

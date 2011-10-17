@@ -30,7 +30,6 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 #include "../../include/neuron_model/EventDrivenNeuronModel.h"
 #include "../../include/neuron_model/TableBasedModel.h"
-#include "../../include/neuron_model/SRMModel.h"
 #include "../../include/neuron_model/SRMTableBasedModel.h"
 
 #include "../../include/simulation/EventQueue.h"
@@ -94,9 +93,7 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype) throw (ED
 			neutypes[ni] = (LIFTimeDrivenModel *) new LIFTimeDrivenModel(neutype);
 		} else if (ident_type=="SRMTimeDrivenModel"){
 			neutypes[ni] = (SRMTimeDrivenModel *) new SRMTimeDrivenModel(neutype);
-		} else if (ident_type=="SRMTimeOverEvent"){
-   			neutypes[ni] = (SRMModel *) new SRMModel(neutype);
-   		} else if (ident_type=="TableBasedModel"){
+		} else if (ident_type=="TableBasedModel"){
    			neutypes[ni] = (TableBasedModel *) new TableBasedModel(neutype);
 		} else if (ident_type=="SRMTableBasedModel"){
 			neutypes[ni] = (SRMTableBasedModel *) new SRMTableBasedModel(neutype);

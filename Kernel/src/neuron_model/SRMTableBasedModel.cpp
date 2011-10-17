@@ -53,7 +53,7 @@ void SRMTableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 			float InitValue;
 
 			// Create a new initial state
-			this->InitialState = (SRMState *) new SRMState(this->NumStateVar+3,0,0);
+			this->InitialState = (SRMState *) new SRMState(this->NumStateVar+3,0);
 			this->InitialState->SetLastUpdateTime(0);
 			this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 			this->InitialState->SetStateVariableAt(0,0);

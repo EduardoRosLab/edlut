@@ -49,34 +49,46 @@ using namespace std;
 
 typedef pair<double,Interconnection *> InputActivity;
 
+/*!
+ * Define a node of the activity list
+ */
+struct Activity{
+	/*!
+	 * The input activity
+	 */
+	InputActivity Activity;
+
+	/*!
+	 * The next node in the list
+	 */
+	struct Activity * NextNode;
+};
+
+typedef struct Activity ActivityNode;
+
 class BufferedState: public NeuronState {
 
 	private:
 
 		/*!
-		 * \brief Buffer of received activity.
+		 * \brief First node of the activity list (the oldest one).
 		 */
-		InputActivity * ActivityBuffer;
+		ActivityNode * FirstElement;
 
 		/*!
-		 * \brief Time in which the activity will be stored.
+		 * \brief Last node of the activity list (the youngest one).
+		 */
+		ActivityNode * LastElement;
+
+		/*!
+		 * \brief Time in which the activity will be removed.
 		 */
 		float BufferAmplitude;
 
 		/*!
-		 * \brief Maximum size of the buffer.
+		 * \brief Number of elements inside.
 		 */
-		unsigned int MaximumSize;
-
-		/*!
-		 * \brief Index of the first element in the list.
-		 */
-		unsigned int FirstIndex;
-
-		/*!
-		 * \brief Index of the last element in the list.
-		 */
-		unsigned int LastIndex;
+		unsigned int NumberOfElements;
 
 
 	public:
@@ -87,9 +99,8 @@ class BufferedState: public NeuronState {
 		 *
 		 * \param NumVariables Number of the state variables this model needs.
 		 * \param BufferAmplitude Time in which the activity will be stored.
-		 * \param MaxSize Maximum number of elements which can be simultaneously stored.
 		 */
-		BufferedState(unsigned int NumVariables, float BufferAmpl, unsigned int MaxSize);
+		BufferedState(unsigned int NumVariables, float BufferAmpl);
 
 		/*!
 		 * \brief Copies constructor.
