@@ -150,13 +150,17 @@ InternalSpike * SRMTimeDrivenModel::ProcessInputSpike(PropagatedSpike *  InputSp
 
 	NeuronState * CurrentState = TargetCell->GetNeuronState();
 
+	InternalSpike * ProducedSpike = 0;
+
 	// Update Cell State
-	this->UpdateState(TargetCell->GetNeuronState(),InputSpike->GetTime());
+	if (this->UpdateState(TargetCell->GetNeuronState(),InputSpike->GetTime())){
+		ProducedSpike = new InternalSpike(InputSpike->GetTime(),TargetCell);
+	}
 
 	// Add the effect of the input spike
 	this->SynapsisEffect((SRMState *)CurrentState,inter);
 
-	return 0;
+	return ProducedSpike;
 }
 
 bool SRMTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
