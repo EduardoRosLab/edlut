@@ -194,7 +194,7 @@ bool SRMTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
 	}
 	State->SetStateVariableAt(3,Refractoriness);
 
-	double Probability = (1 - exp(-FiringRate*Refractoriness))*ElapsedTime/0.001;
+	double Probability = (1 - exp(-FiringRate*Refractoriness*ElapsedTime));
 	State->SetStateVariableAt(4,Probability);
 
 	State->SetLastUpdateTime(CurrentTime);
