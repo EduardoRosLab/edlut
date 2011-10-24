@@ -90,7 +90,8 @@ void BufferedState::CheckActivity(){
 		ActivityNode * Next = Iterator->NextNode;
 		delete Iterator;
 		this->FirstElement = Next;
-		if (this->LastElement==Iterator){
+		if (Next==0){
+			// Empty buffer
 			this->LastElement = 0;
 		}
 		Iterator = Next;
@@ -106,6 +107,8 @@ void BufferedState::AddElapsedTime(float ElapsedTime){
 		Iterator->Activity.first += ElapsedTime;
 		Iterator = Iterator->NextNode;
 	}
+
+	this->CheckActivity();
 }
 
 unsigned int BufferedState::GetNumberOfSpikes(){
