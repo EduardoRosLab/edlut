@@ -34,20 +34,20 @@ FileOutputSpikeDriver::~FileOutputSpikeDriver(){
 }
 
 void FileOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
-	if(!fprintf(this->Handler,"%f\t%li\n",NewSpike->GetTime(),NewSpike->GetSource()->GetIndex())>0)
+	if(fprintf(this->Handler,"%f\t%li\n",NewSpike->GetTime(),NewSpike->GetSource()->GetIndex())<0)
     	throw EDLUTException(3,3,2,0);
 }
 		
 void FileOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){
-	if(!fprintf(this->Handler,"%f\t%li",Time,Source->GetIndex()) > 0)
+	if(fprintf(this->Handler,"%f\t%li",Time,Source->GetIndex()) < 0)
 		throw EDLUTException(3,3,2,0);
 
 	for (unsigned int i=0; i<Source->GetNeuronState()->GetNumberOfPrintableValues(); ++i){
-		if(!fprintf(this->Handler,"\t%f",Source->GetNeuronState()->GetPrintableValuesAt(i)) > 0)
+		if(fprintf(this->Handler,"\t%f",Source->GetNeuronState()->GetPrintableValuesAt(i)) < 0)
 				throw EDLUTException(3,3,2,0);
 	}
 
-	if(!fprintf(this->Handler,"\n") > 0)
+	if(fprintf(this->Handler,"\n") < 0)
 		throw EDLUTException(3,3,2,0);
 }
 

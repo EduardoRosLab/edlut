@@ -417,14 +417,11 @@ void Network::LoadWeights(const char *wfile) throw (EDLUTFileException){
 
 void Network::SaveWeights(const char *wfile) throw (EDLUTException){
 	FILE *fh;
-	int connind,ret;
-	long Currentline;
+	int connind;
 	fh=fopen(wfile,"wt");
 	if(fh){
 		float weight,antweight;
 		int nantw;
-		Currentline=1L;
-		ret=0;
 		nantw=0;
 		antweight=0.0;
 		weight=0.0; // just to avoid compiler warning messages

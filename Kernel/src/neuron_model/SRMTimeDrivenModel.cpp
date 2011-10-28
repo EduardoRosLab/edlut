@@ -62,9 +62,9 @@ void SRMTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 									if(fscanf(fh,"%f",&this->taurel)==1){
 										skip_comments(fh,Currentline);
 
-										this->InitialState = (SRMState *) new SRMState(4,8*this->tau);
+										this->InitialState = (SRMState *) new SRMState(5,8*this->tau);
 
-										for (unsigned int i=0; i<=4; ++i){
+										for (unsigned int i=0; i<5; ++i){
 											this->InitialState->SetStateVariableAt(i,0.0);
 										}
 
@@ -104,7 +104,9 @@ void SRMTimeDrivenModel::SynapsisEffect(SRMState * State, Interconnection * Inpu
 double SRMTimeDrivenModel::PotentialIncrement(SRMState * State){
 	double Increment = 0;
 
-	for (BufferedState::Iterator it=State->Begin(); it!=State->End(); ++it){
+	BufferedState::Iterator itEnd = State->End();
+
+	for (BufferedState::Iterator it=State->Begin(); it!=itEnd; ++it){
 		double TimeDifference = it.GetSpikeTime();
 		double Weight = it.GetConnection()->GetWeight();
 

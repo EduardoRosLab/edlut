@@ -41,7 +41,7 @@ ifeq ($(multi-threading),true)
 endif
 
 ifeq ($(profile),true)
-  CXXFLAGS+= -pg
+#  CXXFLAGS+= -pg
   LDFLAGS+= -lprofiler
 endif
 

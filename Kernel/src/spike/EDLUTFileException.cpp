@@ -27,17 +27,14 @@ void EDLUTFileException::display_error() const {
 
 	char msgbuf[160];
 	if(this->GetErrorNum()){
-		sprintf(msgbuf,"Error while: %s",this->GetTaskMsg());
-		fprintf(stderr,msgbuf);
+		cerr << "Error while: " << this->GetTaskMsg() << endl;
 		if((this->GetErrorNum() & 0xFF) == 1){
-			sprintf(msgbuf,"In file line: %li",Currentline);
-			fprintf(stderr,msgbuf);
+			cerr << "In file line: " << Currentline << endl;
 		}
 		
 		sprintf(msgbuf,"Error message (%08lX): %s",this->GetErrorNum(),this->GetErrorMsg());
-		fprintf(stderr,msgbuf);
-		sprintf(msgbuf,"Try to: %s",this->GetRepairMsg());
-		fprintf(stderr,msgbuf);
+		cerr << msgbuf << endl;
+		cerr << "Try to: " << this->GetRepairMsg() << endl;
 	}
 }
 

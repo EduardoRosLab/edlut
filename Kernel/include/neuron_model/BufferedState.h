@@ -197,6 +197,15 @@ class BufferedState: public NeuronState {
 				 *
 				 * \param ElemAux Element to be copied.
 				 */
+				Iterator(const Iterator & ItAux);
+
+				/*!
+				 * \brief Copy class constructor
+				 *
+				 * Copy class constructor. It creates a new pointer pointing to the parameter.
+				 *
+				 * \param ElemAux Element to be copied.
+				 */
 				Iterator(ActivityNode * ElemAux);
 
 				/*!
@@ -206,7 +215,7 @@ class BufferedState: public NeuronState {
 				 *
 				 * \return An iterator pointing to the next element in the buffer.
 				 */
-				Iterator operator++();
+				Iterator & operator++();
 
 				/*!
 				 * \brief It compares if two iterators point the same element.
