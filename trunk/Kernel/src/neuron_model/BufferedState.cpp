@@ -128,3 +128,37 @@ Interconnection * BufferedState::GetInterconnectionAt(unsigned int Position){
 	}
 	return (Iterator==0)?0:Iterator->Activity.second;
 }
+
+BufferedState::Iterator BufferedState::Begin(){
+	return Iterator(this->FirstElement);
+}
+
+BufferedState::Iterator BufferedState::End(){
+	return Iterator();
+}
+
+BufferedState::Iterator::Iterator():element(0){}
+
+BufferedState::Iterator::Iterator(ActivityNode * ElemAux):element(ElemAux) {}
+
+BufferedState::Iterator BufferedState::Iterator::operator++(){
+	this->element = this->element->NextNode;
+
+	return *this;
+}
+
+bool BufferedState::Iterator::operator==(BufferedState::Iterator Aux){
+	return this->element==Aux.element;
+}
+
+bool BufferedState::Iterator::operator!=(BufferedState::Iterator Aux){
+	return this->element!=Aux.element;
+}
+
+double BufferedState::Iterator::GetSpikeTime(){
+	return this->element->Activity.first;
+}
+
+Interconnection * BufferedState::Iterator::GetConnection(){
+	return this->element->Activity.second;
+}
