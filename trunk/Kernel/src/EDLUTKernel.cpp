@@ -36,6 +36,7 @@
 #include "../include/spike/EDLUTException.h"
 #include "../include/spike/Network.h"
 
+//#include "google/profiler.h"
 //#include "vld.h"
 
 
@@ -103,7 +104,9 @@ int main(int ac, char *av[]) {
 		cout << "Simulating network..." << endl;
 		
 		startt=clock();
+		//ProfilerStart("Profiling.prof");
 		Simul.RunSimulation();
+		//ProfilerStop();
 		endt=clock();
 
 		// Closing simulation connections

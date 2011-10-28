@@ -37,12 +37,11 @@ FileInputSpikeDriver::~FileInputSpikeDriver(){
 	
 void FileInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException){
 	if (this->Handler){
-		int ninputs,i,ret;
+		int ninputs,i;
 		skip_comments(this->Handler,Currentline);
 		if(fscanf(this->Handler,"%i",&ninputs)==1){
 			int nspikes,nneuron,nreps,ineuron,itime;
 			float time,interv;
-			ret=0;
 			
 			for(i=0;i<ninputs;){
 				skip_comments(this->Handler,Currentline);

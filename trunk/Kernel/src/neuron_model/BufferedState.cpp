@@ -139,9 +139,15 @@ BufferedState::Iterator BufferedState::End(){
 
 BufferedState::Iterator::Iterator():element(0){}
 
-BufferedState::Iterator::Iterator(ActivityNode * ElemAux):element(ElemAux) {}
+BufferedState::Iterator::Iterator(const BufferedState::Iterator & ItAux){
+	this->element = ItAux.element;
+}
 
-BufferedState::Iterator BufferedState::Iterator::operator++(){
+BufferedState::Iterator::Iterator(ActivityNode * ElemAux){
+	this->element=ElemAux;
+}
+
+BufferedState::Iterator & BufferedState::Iterator::operator++(){
 	this->element = this->element->NextNode;
 
 	return *this;

@@ -23,7 +23,7 @@ EventQueue::EventQueue() : Events(1,(Event *)0){
 }
    		
 EventQueue::~EventQueue(){
-	for (int i=0; i<Events.size(); ++i){
+	for (unsigned int i=0; i<Events.size(); ++i){
 		delete Events[i];
 	}
 }

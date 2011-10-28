@@ -176,19 +176,10 @@ const char * EDLUTException::GetRepairMsg() const{
 
 void EDLUTException::display_error() const{
 
-	char msgbuf[160];
 	if(this->ErrorNum){
-		sprintf(msgbuf,"Error while: %s",this->GetTaskMsg());
-		fprintf(stderr,msgbuf);
-		//if((this->ErrorNum & 0xFF) == 1){
-			//sprintf(msgbuf,"In file line: %li",Currentline);
-			//fprintf(stderr,msgbuf);
-		//}
-		
-		sprintf(msgbuf,"Error message (%i): %s",this->ErrorNum,this->GetErrorMsg());
-		fprintf(stderr,msgbuf);
-		sprintf(msgbuf,"Try to: %s",this->GetRepairMsg());
-		fprintf(stderr,msgbuf);
+		cerr << "Error while: " << this->GetTaskMsg() << endl;
+		cerr << "Error message (" << this->ErrorNum << "): " << this->GetErrorMsg() << endl;
+		cerr << "Try to: " << this->GetRepairMsg() << endl;
 	}
 }
 

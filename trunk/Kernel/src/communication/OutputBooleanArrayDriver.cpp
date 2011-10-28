@@ -22,7 +22,7 @@
 OutputBooleanArrayDriver::OutputBooleanArrayDriver(unsigned int OutputLines, int * Associated):AssociatedCells(0),NumOutputLines(OutputLines){
 	AssociatedCells = new int [this->NumOutputLines];
 
-	for (int i=0; i<this->NumOutputLines; ++i){
+	for (unsigned int i=0; i<this->NumOutputLines; ++i){
 		AssociatedCells[i] = Associated[i];
 	}
 
@@ -43,7 +43,7 @@ void OutputBooleanArrayDriver::GetBufferedSpikes(bool * OutputLines){
 		for (int i=0; i<size; ++i){
 			int CellNumber = this->OutputBuffer[i].Neuron;
 
-			for (int j=0; j<this->NumOutputLines; ++j){
+			for (unsigned int j=0; j<this->NumOutputLines; ++j){
 				if (CellNumber==this->AssociatedCells[j]){
 					OutputLines[j] = true;
 				}

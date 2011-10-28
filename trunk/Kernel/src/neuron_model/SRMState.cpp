@@ -34,7 +34,7 @@ unsigned int SRMState::GetNumberOfPrintableValues(){
 
 double SRMState::GetPrintableValuesAt(unsigned int position){
 	if (position<BufferedState::GetNumberOfPrintableValues()){
-		return BufferedState::GetStateVariableAt(position);
+		return BufferedState::GetPrintableValuesAt(position);
 	} else if (position==BufferedState::GetNumberOfPrintableValues()) {
 		return this->GetLastSpikeTime();
 	} else return -1;

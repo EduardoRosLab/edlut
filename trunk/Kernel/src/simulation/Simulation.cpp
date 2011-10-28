@@ -31,7 +31,7 @@
 #include "../../include/communication/InputSpikeDriver.h"
 #include "../../include/communication/OutputWeightDriver.h"
 
-Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep) throw (EDLUTException): Net(0), Queue(0), InputSpike(), OutputSpike(), OutputWeight(), Totsimtime(SimulationTime), TimeDrivenStep(0), SimulationStep(NewSimulationStep), SaveWeightStep(0), EndOfSimulation(false), Updates(0), Heapoc(0){
+Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep) throw (EDLUTException): Net(0), Queue(0), InputSpike(), OutputSpike(), OutputWeight(), Totsimtime(SimulationTime), SimulationStep(NewSimulationStep), TimeDrivenStep(0), SaveWeightStep(0), EndOfSimulation(false), Updates(0), Heapoc(0){
 	Queue = new EventQueue();
 	Net = new Network(NetworkFile, WeightsFile, this->Queue);
 }

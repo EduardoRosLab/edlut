@@ -16,7 +16,7 @@
 
 #include "../../include/neuron_model/NeuronState.h"
 
-NeuronState::NeuronState(unsigned int NumVariables): NumberOfVariables(NumVariables), LastSpikeTime(100){
+NeuronState::NeuronState(unsigned int NumVariables): NumberOfVariables(NumVariables), LastUpdate(0), PredictedSpike(-1), PredictionEnd(-1), LastSpikeTime(100){
 	// TODO Auto-generated constructor stub
 	this->StateVars = (float *) new float [NumVariables];
 }
