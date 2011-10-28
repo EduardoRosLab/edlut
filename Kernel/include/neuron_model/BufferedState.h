@@ -160,6 +160,8 @@ class BufferedState: public NeuronState {
 		 *
 		 * \param Position Position of the spike.
 		 * \return The time when the Position-th stored spike happened.
+		 *
+		 * \note This function should be avoided in favour of iterators due to efficiency issues.
 		 */
 		double GetSpikeTimeAt(unsigned int Position);
 
@@ -170,9 +172,98 @@ class BufferedState: public NeuronState {
 		 *
 		 * \param Position Position of the spike.
 		 * \return The connection when the Position-th stored spike happened.
+		 *
+		 * \note This function should be avoided in favour of iterators due to efficiency issues.
 		 */
 		Interconnection * GetInterconnectionAt(unsigned int Position);
 
+		class Iterator {
+			private:
+				// Declaring buffer iterator
+				ActivityNode * element;
+
+			public:
+				/*!
+				 * \brief Default class constructor
+				 *
+				 * Default class constructor. It creates a new null-pointer iterator.
+				 */
+				Iterator();
+
+				/*!
+				 * \brief Copy class constructor
+				 *
+				 * Copy class constructor. It creates a new pointer pointing to the parameter.
+				 *
+				 * \param ElemAux Element to be copied.
+				 */
+				Iterator(ActivityNode * ElemAux);
+
+				/*!
+				 * \brief It gets the next element stored in the activity buffer.
+				 *
+				 * It gets the next element stored in the activity buffer.
+				 *
+				 * \return An iterator pointing to the next element in the buffer.
+				 */
+				Iterator operator++();
+
+				/*!
+				 * \brief It compares if two iterators point the same element.
+				 *
+				 * It compares if two iterators point the same element.
+				 *
+				 * \return True if the two iterators point the same element. False otherwise.
+				 */
+				bool operator==(BufferedState::Iterator Aux);
+
+				/*!
+				 * \brief It compares if two iterators point different elements.
+				 *
+				 * It compares if two iterators point different elements.
+				 *
+				 * \return True if the two iterators point different elements. False otherwise.
+				 */
+				bool operator!=(BufferedState::Iterator Aux);
+
+				/*! It gets the spike time of the current element pointed by the iterator.
+				 *
+				 * It gets the spike time of the current element pointed by the iterator.
+				 *
+				 * \return The spike time of the current element pointed by the iterator.
+				 */
+				double GetSpikeTime();
+
+				/*! It gets the connection of the current element pointed by the iterator.
+				 *
+				 * It gets the connection of the current element pointed by the iterator.
+				 *
+				 * \return The connection of the current element pointed by the iterator.
+				 */
+				Interconnection * GetConnection();
+
+		};
+
+		/*!
+		 * \brief It gets the first element stored in the activity buffer.
+		 *
+		 * It gets the first element stored in the activity buffer.
+		 *
+		 * \return An iterator pointing to the first element in the buffer.
+		 */
+		Iterator Begin();
+
+		/*!
+		 * \brief It gets the after-last element stored in the activity buffer.
+		 *
+		 * It gets the after-last element stored in the activity buffer.
+		 *
+		 * \return An iterator pointing to the after-last element in the buffer.
+		 */
+		Iterator End();
+
+
 };
+
 
 #endif /* BUFFEREDSTATE_H_ */

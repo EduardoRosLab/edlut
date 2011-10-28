@@ -104,9 +104,9 @@ void SRMTimeDrivenModel::SynapsisEffect(SRMState * State, Interconnection * Inpu
 double SRMTimeDrivenModel::PotentialIncrement(SRMState * State){
 	double Increment = 0;
 
-	for (unsigned int i=0; i<State->GetNumberOfSpikes(); ++i){
-		double TimeDifference = State->GetSpikeTimeAt(i);
-		double Weight = State->GetInterconnectionAt(i)->GetWeight();
+	for (BufferedState::Iterator it=State->Begin(); it!=State->End(); ++it){
+		double TimeDifference = it.GetSpikeTime();
+		double Weight = it.GetConnection()->GetWeight();
 
 		//int Position = round(TimeDifference/this->EPSPStep);
 		double EPSPMax = sqrt(this->tau/2)*exp(-0.5);
