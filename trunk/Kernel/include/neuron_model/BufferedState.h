@@ -56,7 +56,7 @@ struct Activity{
 	/*!
 	 * The input activity
 	 */
-	InputActivity Activity;
+	InputActivity Spike;
 
 	/*!
 	 * The next node in the list
@@ -73,34 +73,40 @@ class BufferedState: public NeuronState {
 		/*!
 		 * \brief First node of the activity list (the oldest one).
 		 */
-		ActivityNode * FirstElement;
+		ActivityNode ** FirstElement;
 
 		/*!
 		 * \brief Last node of the activity list (the youngest one).
 		 */
-		ActivityNode * LastElement;
+		ActivityNode ** LastElement;
 
 		/*!
 		 * \brief Time in which the activity will be removed.
 		 */
-		float BufferAmplitude;
+		float * BufferAmplitude;
 
 		/*!
 		 * \brief Number of elements inside.
 		 */
-		unsigned int NumberOfElements;
+		unsigned int * NumberOfElements;
+
+		/*!
+		 * \brief Number of buffers included.
+		 */
+		unsigned int NumberOfBuffers;
 
 
 	public:
 		/*!
 		 * \brief Default constructor with parameters.
 		 *
-		 * It generates a new state of a cell.
+		 * It generates a new state of a cell. The temporal amplitude of each channel must be set by using
+		 * SetBufferAmplitude.
 		 *
 		 * \param NumVariables Number of the state variables this model needs.
-		 * \param BufferAmplitude Time in which the activity will be stored.
+		 * \param NumBuffers Number of input channels
 		 */
-		BufferedState(unsigned int NumVariables, float BufferAmpl);
+		BufferedState(unsigned int NumVariables, unsigned int NumBuffers);
 
 		/*!
 		 * \brief Copies constructor.
@@ -110,6 +116,16 @@ class BufferedState: public NeuronState {
 		 * \param OldState State being copied.
 		 */
 		BufferedState(const BufferedState & OldState);
+
+		/*!
+		 * \brief It sets the amplitude of the selected buffer
+		 *
+		 * It sets the amplitude of the selected buffer.
+		 *
+		 * \param NumBuffer Number of the buffer to be set.
+		 * \param BufferAmpl Temporal amplitude of the buffer.
+		 */
+		void SetBufferAmplitude(unsigned int NumBuffer, float BufferAmpl);
 
 		/*!
 		 * \brief It adds a new input spike into the buffer of activity.
@@ -149,9 +165,11 @@ class BufferedState: public NeuronState {
 		 *
 		 * It gets the number of stored spikes.
 		 *
+		 * \param NumBuffer Number of the buffer to get the number of stored spikes.
+		 *
 		 * \return The number of spikes stored in the current state.
 		 */
-		unsigned int GetNumberOfSpikes();
+		unsigned int GetNumberOfSpikes(unsigned int NumBuffer);
 
 		/*!
 		 * \brief It gets the time when a spike happened.
@@ -159,11 +177,13 @@ class BufferedState: public NeuronState {
 		 * It gets the time when a spike happened. The first spike is the first being introduced.
 		 *
 		 * \param Position Position of the spike.
+		 * \param NumBuffer Number of the buffer from which the spike will be retrieved.
+		 *
 		 * \return The time when the Position-th stored spike happened.
 		 *
 		 * \note This function should be avoided in favour of iterators due to efficiency issues.
 		 */
-		double GetSpikeTimeAt(unsigned int Position);
+		double GetSpikeTimeAt(unsigned int Position, unsigned int NumBuffer);
 
 		/*!
 		 * \brief It gets the connection where a spike happened.
@@ -171,11 +191,13 @@ class BufferedState: public NeuronState {
 		 * It gets the connection where a spike happened. The first spike is the first being introduced.
 		 *
 		 * \param Position Position of the spike.
+		 * \param NumBuffer Number of the buffer from which the spike will be retrieved.
+		 *
 		 * \return The connection when the Position-th stored spike happened.
 		 *
 		 * \note This function should be avoided in favour of iterators due to efficiency issues.
 		 */
-		Interconnection * GetInterconnectionAt(unsigned int Position);
+		Interconnection * GetInterconnectionAt(unsigned int Position, unsigned int NumBuffer);
 
 		class Iterator {
 			private:
@@ -258,9 +280,11 @@ class BufferedState: public NeuronState {
 		 *
 		 * It gets the first element stored in the activity buffer.
 		 *
+		 * \param NumBuffer Number of the buffer to iterate.
+		 *
 		 * \return An iterator pointing to the first element in the buffer.
 		 */
-		Iterator Begin();
+		Iterator Begin(unsigned int NumBuffer);
 
 		/*!
 		 * \brief It gets the after-last element stored in the activity buffer.

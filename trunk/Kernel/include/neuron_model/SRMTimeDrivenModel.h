@@ -51,10 +51,16 @@ class Interconnection;
 class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 
 	private:
+
+		/*!
+		 * \brief Number of channels in the neuron model
+		 */
+		unsigned int NumberOfChannels;
+
 		/*!
 		 * \brief Decay time constant of the EPSP
 		 */
-		float tau;
+		float * tau;
 
 		/*!
 		 * \brief Resting potential
@@ -64,7 +70,7 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		/*!
 		 * \brief Synaptic efficacy
 		 */
-		float W;
+		float * W;
 
 		/*!
 		 * \brief Spontaneous firing rate

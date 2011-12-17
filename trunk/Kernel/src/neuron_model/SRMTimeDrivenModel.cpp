@@ -34,67 +34,87 @@ using namespace std;
 void SRMTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 	FILE *fh;
 	long Currentline = 0L;
+
 	fh=fopen(ConfigFile.c_str(),"rt");
-	if(fh){
-		Currentline=1L;
+	if(!fh){
+		// Error: Neuron model file doesn't exist
+		throw EDLUTFileException(13,59,31,1,Currentline);
+	}
+
+	Currentline=1L;
+	skip_comments(fh,Currentline);
+	if (!fscanf(fh, "%u", &this->NumberOfChannels)==1){
+		throw EDLUTFileException(13,57,3,1,Currentline);
+	}
+
+	this->tau = (float *) new float [this->NumberOfChannels];
+	this->W = (float *) new float [this->NumberOfChannels];
+
+	for (unsigned int i=0; i<this->NumberOfChannels; ++i){
 		skip_comments(fh,Currentline);
-		if(fscanf(fh,"%f",&this->tau)==1){
-			skip_comments(fh,Currentline);
-
-			if(fscanf(fh,"%f",&this->vr)==1){
-				skip_comments(fh,Currentline);
-
-				if(fscanf(fh,"%f",&this->W)==1){
-					skip_comments(fh,Currentline);
-
-					if(fscanf(fh,"%f",&this->r0)==1){
-						skip_comments(fh,Currentline);
-
-						if(fscanf(fh,"%f",&this->v0)==1){
-							skip_comments(fh,Currentline);
-
-							if(fscanf(fh,"%f",&this->vf)==1){
-								skip_comments(fh,Currentline);
-
-								if(fscanf(fh,"%f",&this->tauabs)==1){
-									skip_comments(fh,Currentline);
-
-									if(fscanf(fh,"%f",&this->taurel)==1){
-										skip_comments(fh,Currentline);
-
-										this->InitialState = (SRMState *) new SRMState(5,8*this->tau);
-
-										for (unsigned int i=0; i<5; ++i){
-											this->InitialState->SetStateVariableAt(i,0.0);
-										}
-
-										this->InitialState->SetLastUpdateTime(0);
-										this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
-									} else {
-										throw EDLUTFileException(13,50,3,1,Currentline);
-									}
-								} else {
-									throw EDLUTFileException(13,51,3,1,Currentline);
-								}
-							} else {
-								throw EDLUTFileException(13,52,3,1,Currentline);
-							}
-						} else {
-							throw EDLUTFileException(13,53,3,1,Currentline);
-						}
-					} else {
-						throw EDLUTFileException(13,54,3,1,Currentline);
-					}
-				} else {
-					throw EDLUTFileException(13,55,3,1,Currentline);
-				}
-			} else {
-				throw EDLUTFileException(13,56,3,1,Currentline);
-			}
-		} else {
+		if(!fscanf(fh,"%f",&this->tau[i])==1){
 			throw EDLUTFileException(13,58,3,1,Currentline);
 		}
 	}
+
+	skip_comments(fh,Currentline);
+
+	if(!fscanf(fh,"%f",&this->vr)==1){
+		throw EDLUTFileException(13,56,3,1,Currentline);
+	}
+
+	for (unsigned int i=0; i<this->NumberOfChannels; ++i){
+		skip_comments(fh,Currentline);
+		if(!fscanf(fh,"%f",&this->W[i])==1){
+			throw EDLUTFileException(13,55,3,1,Currentline);
+		}
+	}
+
+	skip_comments(fh,Currentline);
+
+	if(!fscanf(fh,"%f",&this->r0)==1){
+		throw EDLUTFileException(13,54,3,1,Currentline);
+	}
+
+	skip_comments(fh,Currentline);
+
+	if(!fscanf(fh,"%f",&this->v0)==1){
+		throw EDLUTFileException(13,53,3,1,Currentline);
+	}
+
+	skip_comments(fh,Currentline);
+
+	if(!fscanf(fh,"%f",&this->vf)==1){
+		throw EDLUTFileException(13,52,3,1,Currentline);
+	}
+
+	skip_comments(fh,Currentline);
+
+	if(!fscanf(fh,"%f",&this->tauabs)==1){
+		throw EDLUTFileException(13,51,3,1,Currentline);
+	}
+
+	skip_comments(fh,Currentline);
+
+	if(!fscanf(fh,"%f",&this->taurel)==1){
+		throw EDLUTFileException(13,50,3,1,Currentline);
+	}
+
+	// Initialize the neuron state
+	this->InitialState = (SRMState *) new SRMState(5,this->NumberOfChannels);
+
+	// Initialize the amplitude of each buffer
+	for (unsigned int i=0; i<this->NumberOfChannels; ++i){
+		((SRMState *) this->InitialState)->SetBufferAmplitude(i,8*this->tau[i]);
+	}
+
+	// Initialize the state variables
+	for (unsigned int i=0; i<5; ++i){
+		this->InitialState->SetStateVariableAt(i,0.0);
+	}
+
+	this->InitialState->SetLastUpdateTime(0);
+	this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 }
 
 void SRMTimeDrivenModel::SynapsisEffect(SRMState * State, Interconnection * InputConnection){
@@ -104,19 +124,22 @@ void SRMTimeDrivenModel::SynapsisEffect(SRMState * State, Interconnection * Inpu
 double SRMTimeDrivenModel::PotentialIncrement(SRMState * State){
 	double Increment = 0;
 
-	BufferedState::Iterator itEnd = State->End();
+	for (unsigned int i=0; i<this->NumberOfChannels; ++i){
+		BufferedState::Iterator itEnd = State->End();
 
-	for (BufferedState::Iterator it=State->Begin(); it!=itEnd; ++it){
-		double TimeDifference = it.GetSpikeTime();
-		double Weight = it.GetConnection()->GetWeight();
+		for (BufferedState::Iterator it=State->Begin(i); it!=itEnd; ++it){
+			double TimeDifference = it.GetSpikeTime();
+			double Weight = it.GetConnection()->GetWeight();
 
-		//int Position = round(TimeDifference/this->EPSPStep);
-		double EPSPMax = sqrt(this->tau/2)*exp(-0.5);
+			//int Position = round(TimeDifference/this->EPSPStep);
+			double EPSPMax = sqrt(this->tau[i]/2)*exp(-0.5);
 
-		double EPSP = sqrt(TimeDifference)*exp(-(TimeDifference/this->tau))/EPSPMax;
+			double EPSP = sqrt(TimeDifference)*exp(-(TimeDifference/this->tau[i]))/EPSPMax;
 
-		//Increment += Weight*this->W*EPSP[Position];
-		Increment += Weight*this->W*EPSP;
+			// Inhibitory channels must define negative W values
+			//Increment += Weight*this->W*EPSP[Position];
+			Increment += Weight*this->W[i]*EPSP;
+		}
 	}
 
 	return Increment;
@@ -133,7 +156,10 @@ SRMTimeDrivenModel::SRMTimeDrivenModel(string NeuronModelID): TimeDrivenNeuronMo
 }
 
 SRMTimeDrivenModel::~SRMTimeDrivenModel(){
-
+	delete [] this->tau;
+	this->tau = 0;
+	delete [] this->W;
+	this->W = 0;
 }
 
 void SRMTimeDrivenModel::LoadNeuronModel() throw (EDLUTFileException) {
@@ -212,9 +238,22 @@ bool SRMTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
 ostream & SRMTimeDrivenModel::PrintInfo(ostream & out) {
 	out << "- SRM Time-Driven Model: " << this->GetModelID() << endl;
 
-	out << "\tTau: " << this->tau << "s\tVresting: " << this->vr << endl;
+	out << "\tNumber of channels: " << this->NumberOfChannels << endl;
 
-	out << "\tWeight Scale: " << this->W << "\tFiring Rate: " << this->r0 << "Hz\tVthreshold: " << this->v0 << "V" << endl;
+	out << "\tTau: ";
+	for (unsigned int i=0; i<this->NumberOfChannels; ++i){
+		out << "\t" << this->tau[i];
+	}
+
+	out << endl << "\tVresting: " << this->vr << endl;
+
+	out << "\tWeight Scale: ";
+
+	for (unsigned int i=0; i<this->NumberOfChannels; ++i){
+		out << "\t" << this->W[i];
+	}
+
+	out << endl << "\tFiring Rate: " << this->r0 << "Hz\tVthreshold: " << this->v0 << "V" << endl;
 
 	out << "\tGain Factor: " << this->vf << "\tAbsolute Refractory Period: " << this->tauabs << "s\tRelative Refractory Period: " << this->taurel << "s" << endl;
 

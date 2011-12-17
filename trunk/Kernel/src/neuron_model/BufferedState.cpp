@@ -16,121 +16,153 @@
 
 #include "../../include/neuron_model/BufferedState.h"
 
-BufferedState::BufferedState(unsigned int NumVariables, float BufferAmpl):
-	NeuronState(NumVariables), FirstElement(0), LastElement(0), BufferAmplitude(BufferAmpl), NumberOfElements(0) {
+BufferedState::BufferedState(unsigned int NumVariables, unsigned int NumBuffers):
+	NeuronState(NumVariables), FirstElement(0), LastElement(0), BufferAmplitude(0), NumberOfElements(0), NumberOfBuffers(NumBuffers) {
+		FirstElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
+		LastElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
+		BufferAmplitude = (float *) new float [NumberOfBuffers];
+		NumberOfElements = (unsigned int *) new unsigned int [NumberOfBuffers];
 }
 
 BufferedState::BufferedState(const BufferedState & OldState): NeuronState(OldState), FirstElement(0), LastElement(0),
-		BufferAmplitude(OldState.BufferAmplitude), NumberOfElements(0) {
-	ActivityNode * Iterator = OldState.FirstElement;
+		BufferAmplitude(0), NumberOfElements(0), NumberOfBuffers(OldState.NumberOfBuffers) {
 
-	while (Iterator!=0){
-		ActivityNode * NewElement = (ActivityNode *) new ActivityNode;
+	FirstElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
+	LastElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
+	BufferAmplitude = (float *) new float [NumberOfBuffers];
+	NumberOfElements = (unsigned int *) new unsigned int [NumberOfBuffers];
 
-		NewElement->Activity = Iterator->Activity;
-		NewElement->NextNode = 0;
+	for (unsigned int i=0; i<this->NumberOfBuffers; ++i){
+		this->BufferAmplitude[i] = OldState.BufferAmplitude[i];
 
-		if (this->FirstElement==0){
-			// This is the first element of the list
-			this->FirstElement = NewElement;
-			this->LastElement = NewElement;
-		} else {
-			// Add the element after the last element
-			this->LastElement->NextNode = NewElement;
-			this->LastElement = NewElement;
+		ActivityNode * Iterator = OldState.FirstElement[i];
+
+		while (Iterator!=0){
+			ActivityNode * NewElement = (ActivityNode *) new ActivityNode;
+
+			NewElement->Spike = Iterator->Spike;
+			NewElement->NextNode = 0;
+
+			if (this->FirstElement[i]==0){
+				// This is the first element of the list
+				this->FirstElement[i] = NewElement;
+				this->LastElement[i] = NewElement;
+			} else {
+				// Add the element after the last element
+				this->LastElement[i]->NextNode = NewElement;
+				this->LastElement[i] = NewElement;
+			}
+
+			this->NumberOfElements[i] ++;
+
+			Iterator = Iterator->NextNode;
 		}
-
-		this->NumberOfElements ++;
-
-		Iterator = Iterator->NextNode;
 	}
+}
+
+void BufferedState::SetBufferAmplitude(unsigned int NumBuffer, float BufferAmpl){
+	this->BufferAmplitude[NumBuffer] = BufferAmpl;
 }
 
 BufferedState::~BufferedState() {
 	// TODO Auto-generated destructor stub
-	ActivityNode * Iterator = this->FirstElement;
+	for (unsigned int i=0; i<this->NumberOfBuffers; ++i){
+		ActivityNode * Iterator = this->FirstElement[i];
 
-	while (Iterator!=0){
-		ActivityNode * NextElement = Iterator->NextNode;
+		while (Iterator!=0){
+			ActivityNode * NextElement = Iterator->NextNode;
 
-		delete Iterator;
+			delete Iterator;
 
-		Iterator = NextElement;
+			Iterator = NextElement;
+		}
+
 	}
 
+	delete [] this->NumberOfElements;
 	this->NumberOfElements = 0;
+	delete [] this->BufferAmplitude;
+	this->BufferAmplitude = 0;
+	delete [] this->FirstElement;
 	this->FirstElement = 0;
+	delete [] this->LastElement;
 	this->LastElement = 0;
 }
 
 void BufferedState::AddActivity(Interconnection * InputConnection){
 	ActivityNode * NewElement = (ActivityNode *) new ActivityNode;
 
-	NewElement->Activity.first = 0;
-	NewElement->Activity.second = InputConnection;
+	unsigned int NumBuffer = (unsigned int) InputConnection->GetType();
+
+	NewElement->Spike.first = 0;
+	NewElement->Spike.second = InputConnection;
 	NewElement->NextNode = 0;
 
-	if (this->FirstElement==0){
+	if (this->FirstElement[NumBuffer]==0){
 		// This is the first element of the list
-		this->FirstElement = NewElement;
-		this->LastElement = NewElement;
+		this->FirstElement[NumBuffer] = NewElement;
+		this->LastElement[NumBuffer] = NewElement;
 	} else {
 		// Add the element after the last element
-		this->LastElement->NextNode = NewElement;
-		this->LastElement = NewElement;
+		this->LastElement[NumBuffer]->NextNode = NewElement;
+		this->LastElement[NumBuffer] = NewElement;
 	}
 
-	this->NumberOfElements ++;
+	this->NumberOfElements[NumBuffer] ++;
 }
 
 void BufferedState::CheckActivity(){
-	// If the first element is older than we accept, remove it.
-	ActivityNode * Iterator = this->FirstElement;
-	while (Iterator!=0 && Iterator->Activity.first>this->BufferAmplitude){
-		ActivityNode * Next = Iterator->NextNode;
-		delete Iterator;
-		this->FirstElement = Next;
-		if (Next==0){
-			// Empty buffer
-			this->LastElement = 0;
+	for (unsigned int i=0; i<this->NumberOfBuffers; ++i){
+		// If the first element is older than we accept, remove it.
+		ActivityNode * Iterator = this->FirstElement[i];
+		while (Iterator!=0 && Iterator->Spike.first>this->BufferAmplitude[i]){
+			ActivityNode * Next = Iterator->NextNode;
+			delete Iterator;
+			this->FirstElement[i] = Next;
+			if (Next==0){
+				// Empty buffer
+				this->LastElement[i] = 0;
+			}
+			Iterator = Next;
+			this->NumberOfElements[i] --;
 		}
-		Iterator = Next;
-		this->NumberOfElements --;
 	}
 }
 
 void BufferedState::AddElapsedTime(float ElapsedTime){
 	NeuronState::AddElapsedTime(ElapsedTime);
 
-	ActivityNode * Iterator = this->FirstElement;
-	while (Iterator!=0){
-		Iterator->Activity.first += ElapsedTime;
-		Iterator = Iterator->NextNode;
+	for (unsigned int i=0; i<this->NumberOfBuffers; ++i){
+		ActivityNode * Iterator = this->FirstElement[i];
+		while (Iterator!=0){
+			Iterator->Spike.first += ElapsedTime;
+			Iterator = Iterator->NextNode;
+		}
 	}
 
 	this->CheckActivity();
 }
 
-unsigned int BufferedState::GetNumberOfSpikes(){
-	return this->NumberOfElements;
+unsigned int BufferedState::GetNumberOfSpikes(unsigned int NumBuffer){
+	return this->NumberOfElements[NumBuffer];
 }
 
-double BufferedState::GetSpikeTimeAt(unsigned int Position){
-	ActivityNode * Iterator = this->FirstElement;
+double BufferedState::GetSpikeTimeAt(unsigned int Position, unsigned int NumBuffer){
+	ActivityNode * Iterator = this->FirstElement[NumBuffer];
 	for (unsigned int i = 0; i<Position && Iterator!=0; ++i, Iterator=Iterator->NextNode){
 	}
-	return (Iterator==0)?-1:Iterator->Activity.first;
+	return (Iterator==0)?-1:Iterator->Spike.first;
 }
 
-Interconnection * BufferedState::GetInterconnectionAt(unsigned int Position){
-	ActivityNode * Iterator = this->FirstElement;
+Interconnection * BufferedState::GetInterconnectionAt(unsigned int Position, unsigned int NumBuffer){
+	ActivityNode * Iterator = this->FirstElement[NumBuffer];
 	for (unsigned int i = 0; i<Position && Iterator!=0; ++i, Iterator=Iterator->NextNode){
 	}
-	return (Iterator==0)?0:Iterator->Activity.second;
+	return (Iterator==0)?0:Iterator->Spike.second;
 }
 
-BufferedState::Iterator BufferedState::Begin(){
-	return Iterator(this->FirstElement);
+BufferedState::Iterator BufferedState::Begin(unsigned int NumBuffer){
+	return Iterator(this->FirstElement[NumBuffer]);
 }
 
 BufferedState::Iterator BufferedState::End(){
@@ -162,9 +194,9 @@ bool BufferedState::Iterator::operator!=(BufferedState::Iterator Aux){
 }
 
 double BufferedState::Iterator::GetSpikeTime(){
-	return this->element->Activity.first;
+	return this->element->Spike.first;
 }
 
 Interconnection * BufferedState::Iterator::GetConnection(){
-	return this->element->Activity.second;
+	return this->element->Spike.second;
 }
