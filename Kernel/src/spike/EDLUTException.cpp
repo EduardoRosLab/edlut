@@ -96,7 +96,7 @@ const char * EDLUTException::Errormsgs[] ={
 	"Can't read the spontaneous firing rate",
 	"Can't read the synaptic efficacy",
 	"Can't read the resting potential",
-	"Can't read the EPSP step time",
+	"Can't read the number of channels in the time-driven neuron model",
 	"Can't read the decay time constant parameter",
 	"Invalid type of the neuron model",
 
@@ -147,7 +147,8 @@ const char * EDLUTException::Repairmsgs[] ={
 	"Free more memory or use a smaller network",
 	"Reduce the number of state variables or change the maximum number of state variables in the simulator source code",
 
-	"Check the type of the neuron model: Only SRMTimeDriven, TableBasedModel and SRMTableBasedModel are implemented at the moment"
+	"Check the type of the neuron model: Only SRMTimeDriven, TableBasedModel and SRMTableBasedModel are implemented at the moment",
+	"Check if the neuron model is described and can be accessed by this software"
 };
 
 long EDLUTException::GetErrorValue(int a, int b, int c, int d){

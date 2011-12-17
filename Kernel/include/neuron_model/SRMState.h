@@ -48,9 +48,9 @@ class SRMState: public BufferedState {
 		 * It generates a new state of a cell.
 		 *
 		 * \param NumVariables Number of the state variables this model needs.
-		 * \param BufferAmplitude Time in which the activity will be stored.
+		 * \param NumBuffers Number of buffers this model needs.
 		 */
-		SRMState(unsigned int NumVariables, float BufferAmpl);
+		SRMState(unsigned int NumVariables, unsigned int NumBuffers);
 
 		/*!
 		 * \brief Copies constructor.

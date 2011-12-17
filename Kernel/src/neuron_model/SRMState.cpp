@@ -16,7 +16,7 @@
 
 #include "../../include/neuron_model/SRMState.h"
 
-SRMState::SRMState(unsigned int NumVariables, float BufferAmpl): BufferedState(NumVariables,BufferAmpl){
+SRMState::SRMState(unsigned int NumVariables, unsigned int NumBuffers): BufferedState(NumVariables,NumBuffers){
 
 }
 
