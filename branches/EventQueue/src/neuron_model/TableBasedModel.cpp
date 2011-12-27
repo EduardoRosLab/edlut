@@ -72,7 +72,9 @@ void TableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExcepti
        			}
        		}
 
-
+			// Allocate temporal state vars
+			this->TempStateVars = (float *) new float [this->InitialState->GetNumberOfVariables()];
+			
    			skip_comments(fh,Currentline);
    			unsigned int FiringIndex, FiringEndIndex;
    			if(fscanf(fh,"%i",&FiringIndex)==1){
@@ -170,7 +172,7 @@ void TableBasedModel::LoadTables(string TableFile) throw (EDLUTException){
 TableBasedModel::TableBasedModel(string NeuronModelID): EventDrivenNeuronModel(NeuronModelID),
 		NumStateVar(0), NumTimeDependentStateVar(0), NumSynapticVar(0), SynapticVar(0),
 		StateVarOrder(0), StateVarTable(0), FiringTable(0), EndFiringTable(0),
-		NumTables(0), Tables(0) {
+		NumTables(0), Tables(0), TempStateVars(0) {
 
 }
 
@@ -190,6 +192,10 @@ TableBasedModel::~TableBasedModel() {
 
 	if (this->Tables!=0) {
 		delete [] this->Tables;
+	}
+
+	if (this->TempStateVars!=0) {
+		delete [] this->TempStateVars;
 	}
 }
 
@@ -224,16 +230,14 @@ void TableBasedModel::UpdateState(NeuronState * State, double CurrentTime){
 
 	State->SetStateVariableAt(0,CurrentTime-State->GetLastUpdateTime());
 
-	float * vars = (float *) new float [State->GetNumberOfVariables()];
-
 	for(ivar=0;ivar<this->NumTimeDependentStateVar;ivar++){
 		orderedvar=this->StateVarOrder[ivar];
-		vars[orderedvar]=this->StateVarTable[orderedvar]->TableAccess(State);
+		this->TempStateVars[orderedvar]=this->StateVarTable[orderedvar]->TableAccess(State);
 	}
 
 	for(ivar=0;ivar<this->NumTimeDependentStateVar;ivar++){
 		orderedvar=this->StateVarOrder[ivar];
-		State->SetStateVariableAt(orderedvar+1,vars[orderedvar]);
+		State->SetStateVariableAt(orderedvar+1,this->TempStateVars[orderedvar]);
 	}
 
 	for(ivar=this->NumTimeDependentStateVar;ivar<this->NumStateVar;ivar++){
@@ -243,7 +247,6 @@ void TableBasedModel::UpdateState(NeuronState * State, double CurrentTime){
 
 	State->SetLastUpdateTime(CurrentTime);
 
-	delete [] vars;
 }
 
 void TableBasedModel::SynapsisEffect(NeuronState * State, Interconnection * InputConnection){

@@ -18,71 +18,115 @@
 
 #include "../../include/simulation/Event.h"
 
-EventQueue::EventQueue() : Events(1,(Event *)0){
+EventQueue::EventQueue() : Events(0), NumberOfElements(0), AllocatedSize(0) {
+	// Allocate memory for a MIN_SIZE sized array
+	this->Events = (EventForQueue *) new EventForQueue [MIN_SIZE];
+
+	this->AllocatedSize = MIN_SIZE;
+	
+	// The first element in the array is discard
+	NumberOfElements = 1;
 
 }
    		
 EventQueue::~EventQueue(){
-	for (unsigned int i=0; i<Events.size(); ++i){
-		delete Events[i];
+	for (unsigned int i=1; i<this->NumberOfElements; ++i){
+		delete (this->Events+i)->EventPtr;
 	}
+
+	delete [] this->Events;
 }
 
-inline void EventQueue::SwapEvents(int c1, int c2){
-	Event * exchange;
-	exchange=Events[c2];
-	Events[c2]=Events[c1];
-	Events[c1]=exchange;
+inline void EventQueue::SwapEvents(unsigned int c1, unsigned int c2){
+	EventForQueue exchange;
+	exchange=*(this->Events+c2);
+	*(this->Events+c2)=*(this->Events+c1);
+	*(this->Events+c1)=exchange;
+}
+
+
+void EventQueue::Resize(unsigned int NewSize){
+	EventForQueue * Temp = this->Events;
+
+	// Allocate the new array
+	this->Events = (EventForQueue *) new EventForQueue [NewSize];
+
+	this->AllocatedSize = NewSize;
+
+	// Copy all the elements from the original array
+	for (unsigned int i = 0; i<this->NumberOfElements; ++i){
+		*(this->Events+i) = *(Temp+i);
+	}
+	
+	// Release old memory
+	delete [] Temp;
 }
    		
 void EventQueue::InsertEvent(Event * event){
-	Events.push_back(event);
-      
-  	for(long int c=long(Size());c>1 && Events[c/2]->GetTime() > Events[c]->GetTime(); c/=2){
+
+	if (this->NumberOfElements == this->AllocatedSize){
+		this->Resize(this->AllocatedSize*RESIZE_FACTOR);
+	}
+	
+	(this->Events+this->NumberOfElements)->EventPtr = event;
+	(this->Events+this->NumberOfElements)->Time = event->GetTime();
+	
+	this->NumberOfElements++;
+
+
+	for(unsigned int c=this->Size();c>1 && (this->Events+c/2)->Time > (this->Events+c)->Time; c/=2){
     	SwapEvents(c, c/2);
   	}
     
     return;
 }
 
-long long EventQueue::Size() const{
-	return (Events.size()-1);
+inline unsigned int EventQueue::Size() const{
+	return this->NumberOfElements-1;
 }
    		
 Event * EventQueue::RemoveEvent(void){
 	unsigned int c,p;
    	
    	Event * first = 0;
-   	if(Size()>0){
-   		first=Events[1];
+	if(this->NumberOfElements>2){
+		first=(this->Events+1)->EventPtr;
       
       	//Events[1]=Events.back();
-		Events[1]=Events[this->Size()];
-      	Events.pop_back();
-      
+		*(this->Events+1)=*(this->Events+this->Size());
+		this->NumberOfElements--;
+
+		if (this->NumberOfElements>MIN_SIZE && this->NumberOfElements<this->AllocatedSize/(RESIZE_FACTOR*2)){
+			this->Resize(this->AllocatedSize/RESIZE_FACTOR);
+		}
+      	
       	p=1;
-      	for(c=p*2;c<Size();p=c,c=p*2){
-      		if(Events[c]->GetTime() > Events[c+1]->GetTime())
+		for(c=p*2;c<this->Size();p=c,c=p*2){
+      		if((this->Events+c)->Time > (this->Events+c+1)->Time)
       			c++;
       		
-      		if(Events[c]->GetTime() < Events[p]->GetTime())
+      		if((this->Events+c)->Time < (this->Events+p)->Time)
             	SwapEvents(p, c);
          	else
             	break;
         }
       
-      	if(c==Size() && Events[p]->GetTime() > Events[c]->GetTime())
+		if(c==this->Size() && (this->Events+p)->Time > (this->Events+c)->Time)
         	SwapEvents(p, c);
+	} else if (this->NumberOfElements==2){
+		first = (this->Events+1)->EventPtr;
+
+		this->NumberOfElements--;
 	}
     
     return(first);
 }
    		
 double EventQueue::FirstEventTime() const{
-	float ti;
+	double ti;
 	
-	if(Size()>0)
-		ti=Events[1]->GetTime();
+	if(this->NumberOfElements>1)
+		ti=(this->Events+1)->Time;
    	else
     	ti=-1.0;
    

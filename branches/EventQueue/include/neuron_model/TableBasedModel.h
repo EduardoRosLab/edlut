@@ -100,6 +100,11 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		NeuronModelTable * Tables;
 
 		/*!
+		 * \brief Temporal state variables
+		 */
+		float * TempStateVars;
+
+		/*!
 		 * \brief It loads the neuron model description.
 		 *
 		 * It loads the neuron type description from the file .cfg.

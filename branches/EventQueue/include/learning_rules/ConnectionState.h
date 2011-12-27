@@ -46,17 +46,17 @@ class ConnectionState {
 		 */
 		unsigned int NumberOfVariables;
 
-		/*!
-	   	 * \brief Neuron state variables.
-	   	 */
-	   	float * StateVars;
-
 	   	/*!
 	   	 * \brief Last update time
 	   	 */
 	   	double LastUpdate;
 
 	protected:
+		/*!
+	   	 * \brief Neuron state variables.
+	   	 */
+	   	float * StateVars;
+
 	   	/*!
 		 * \brief It sets the time when the last update happened.
 		 *
