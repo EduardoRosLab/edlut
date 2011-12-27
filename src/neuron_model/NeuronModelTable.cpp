@@ -86,7 +86,7 @@ void NeuronModelTable::GenerateVirtualCoordinates() throw (EDLUTException){
 					}
 					
 					if(ipos+1 <  this->dims[idim].size){
-						coffset=1.0-(this->dims[idim].coord[ipos+1] - (ivind*minsca+first))/minsca;
+						coffset=1.0-((double) this->dims[idim].coord[ipos+1] - ((double)ivind*minsca+first))/minsca;
 						
 						if(coffset < 0.0){
 							coffset=0.0;
@@ -102,14 +102,14 @@ void NeuronModelTable::GenerateVirtualCoordinates() throw (EDLUTException){
 					coffset=0.0;
 					
 					if(ipos+1 < this->dims[idim].size){
-						coffset=(ivind*minsca+first)/minsca + 0.5 - (this->dims[idim].coord[ipos]+this->dims[idim].coord[ipos+1])/2/minsca;
+						coffset=((double)ivind*minsca+first)/minsca + 0.5 - ((double)this->dims[idim].coord[ipos]+this->dims[idim].coord[ipos+1])/2/minsca;
 						if(coffset < 0.0){
 							coffset=0.0;
 						}
 					}
 					
 					if(ipos > 0 && coffset == 0.0){
-						coffset=(ivind*minsca+first)/minsca - 0.5 - (this->dims[idim].coord[ipos]+this->dims[idim].coord[ipos-1])/2/minsca;
+						coffset=((double)ivind*minsca+first)/minsca - 0.5 - ((double)this->dims[idim].coord[ipos]+this->dims[idim].coord[ipos-1])/2/minsca;
 						
 						if(coffset > 0.0){
 							coffset=0.0;
@@ -310,20 +310,18 @@ float NeuronModelTable::TableAccessDirect(NeuronState * statevars){
 	unsigned int idim,tind;
 	float elem;
 	void **cpointer;
-	NeuronModelTable *tab;
 	NeuronModelTable::TableDimension *dim;
-	tab=this;
-	cpointer=(void **)tab->elems;
-	for(idim=0;idim<tab->ndims-1;idim++){
-		dim=&tab->dims[idim];
+	cpointer=(void **)this->elems;
+	for(idim=0;idim<this->ndims-1;idim++){
+		dim=this->dims+idim;
 		float VarValue = statevars->GetStateVariableAt(dim->statevar);
 		tind=table_indcomp2(dim,VarValue);
-		cpointer=(void **)cpointer[tind];
+		cpointer=(void **)*(cpointer+tind);
 	}
-	dim=&tab->dims[idim];
+	dim=this->dims+idim;
 	float VarValue = statevars->GetStateVariableAt(dim->statevar);
 	tind=table_indcomp2(dim,VarValue);
-	elem=((float *)cpointer)[tind];
+	elem=*(((float *)cpointer)+tind);
 	return(elem);
 }
 

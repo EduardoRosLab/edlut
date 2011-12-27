@@ -27,10 +27,10 @@
  * This file declares a class which abstracts a neuron model table.
  */
 
-#define last_coord(dim) ((dim)->coord[(dim)->size-1])
-#define table_indcomp(dim,coo) (((coo)>last_coord(dim))?((dim)->size-1):(((coo)<(dim)->vfirst)?0:((dim)->vindex[(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + 0.49) ])))
-#define table_indcomp2(dim,coo) (((coo)>last_coord(dim))?((dim)->size-1):(((coo)<(dim)->vfirst)?0:((dim)->vindex[(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + 0.5 + (dim)->voffset[(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + 0.5) ] ) ])))
-#define table_ind_int(dim,coo) ((dim)->vindex[(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + ((dim)->voffset[(int)( ((coo) - (dim)->vfirst) / (dim)->vscale) ])) ])
+#define last_coord(dim) (*((dim)->coord+(dim)->size-1))
+#define table_indcomp(dim,coo) (((coo)>last_coord(dim))?((dim)->size-1):(((coo)<(dim)->vfirst)?0:(*((dim)->vindex+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + 0.49) ))))
+#define table_indcomp2(dim,coo) (((coo)>last_coord(dim))?((dim)->size-1):(((coo)<(dim)->vfirst)?0:(*((dim)->vindex+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + 0.5 + *((dim)->voffset+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + 0.5) ) ) ))))
+#define table_ind_int(dim,coo) (*((dim)->vindex+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + (*((dim)->voffset+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale) ))) ))
 
 #include <cstdio>
 #include <cstdlib>
@@ -402,3 +402,4 @@ class NeuronModelTable {
 };
 
 #endif /*NEURONMODELTABLE_H_*/
+

@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           EventQueue.h                                  *
+ *                           EventQueueSTL.h                                  *
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
  * email                : jgarrido@atc.ugr.es                              *
@@ -14,81 +14,49 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef EVENTQUEUE_H_
-#define EVENTQUEUE_H_
+#ifndef EVENTQUEUESTL_H_
+#define EVENTQUEUESTL_H_
 
 /*!
- * \file EventQueue.h
+ * \file EventQueueSTL.h
  *
  * \author Jesus Garrido
  * \author Richard Carrido
  * \date August 2008
  *
- * This file declares a class which abstracts an event queue by using standard arrays.
+ * This file declares a class which abstracts an event queue by using a STL vector.
  */
  
 #include <cstdlib>
-
-#define MIN_SIZE 100
-#define RESIZE_FACTOR 100
+#include <vector>
 
 using namespace std;
 
 class Event;
 
 /*!
- * \brief Auxiliary struct to take advantage of cache saving event time and pointer in the same array.
- *
- * Auxiliary struct to take advantage of cache saving event time and pointer in the same array.
- */
-struct EventForQueue {
-	Event * EventPtr;
-	 
-	double Time;
- };
-
-/*!
- * \class EventQueue
+ * \class EventQueueSTL
  *
  * \brief Event queue
  *
- * This class abstract the behaviour of an sorted by event time queue by using standard arrays.
+ * This class abstract the behaviour of an sorted by event time queue. This implementation uses a STL vector.
  *
  * \author Jesus Garrido
  * \author Richard Carrillo
  * \date August 2008
  */
-class EventQueue {
+class EventQueueSTL {
 	private:
 	
 		/*!
 		 * Spikes vector.
 		 */
-		EventForQueue * Events;
-
-		/*!
-		 * Number of elements introduced in the queue.
-		 */
-		unsigned int NumberOfElements;
-
-		/*!
-		 * Number of elements allocated in the array.
-		 */
-		unsigned int AllocatedSize;
+		vector<Event *> Events;
    
    		/*!
    		 * It swaps the position of two events.
    		 */
    		void SwapEvents(unsigned int c1, unsigned int c2);
-
-		/*!
-   		 * \brief Resize the event queue to a new size keeping the same elements inside.
-		 *
-		 * Resize the event queue to a new size keeping the same elements inside.
-		 *
-		 * \param NewSize The new size of the event queue.
-   		 */
-   		void Resize(unsigned int NewSize);
    		
    	public:
    	
@@ -97,14 +65,14 @@ class EventQueue {
    		 * 
    		 * Default constructor without parameters. It creates a new event queue.
    		 */
-   		EventQueue();
+   		EventQueueSTL();
    		
    		/*!
    		 * \brief Object destructor.
    		 * 
    		 * Default object destructor.
    		 */
-   		~EventQueue();
+   		~EventQueueSTL();
    		
    		/*!
    		 * \brief It gets the number of events in the queue.
@@ -143,4 +111,4 @@ class EventQueue {
    		double FirstEventTime(void) const;		
 };
 
-#endif /*EVENTQUEUE_H_*/
+#endif /*EVENTQUEUESTL_H_*/

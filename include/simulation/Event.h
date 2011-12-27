@@ -73,7 +73,7 @@ class Event{
    		 * 
    		 * It destroies an object of this class.
    		 */
-   		virtual ~Event();
+		virtual ~Event();
    	
    		/*!
    		 * \brief It gets the event time.
