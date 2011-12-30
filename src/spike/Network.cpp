@@ -57,9 +57,44 @@ void Network::FindOutConnections(){
 	// Change the ordenation
    	qsort(inters,ninters,sizeof(Interconnection),qsort_inters);
 	if(ninters>0){
-		for (int ninter=0;ninter<ninters;ninter++){
-			inters[ninter].GetSource()->AddOutputConnection(inters+ninter);
-		}		
+		// Calculate the number of input connections with learning for each cell
+		unsigned long * NumberOfOutputs = (unsigned long *) new unsigned long [this->nneurons];
+		unsigned long * OutputsLeft = (unsigned long *) new unsigned long [this->nneurons];
+
+		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
+			NumberOfOutputs[neu] = 0;
+		}
+
+		for (unsigned long con= 0; con<this->ninters; ++con){
+			NumberOfOutputs[this->inters[con].GetSource()->GetIndex()]++;
+		}
+
+		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
+			OutputsLeft[neu] = NumberOfOutputs[neu];
+		}
+
+		Interconnection *** OutputConnections = (Interconnection ***) new Interconnection ** [this->nneurons];
+
+		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
+			if (NumberOfOutputs[neu]>0){
+				OutputConnections[neu] = (Interconnection **) new Interconnection * [NumberOfOutputs[neu]];
+			} else {
+				OutputConnections[neu] = 0;
+			}
+		}
+
+		for (unsigned long con= this->ninters-1; con<this->ninters; --con){
+			unsigned long SourceCell = this->inters[con].GetSource()->GetIndex();
+			OutputConnections[SourceCell][--OutputsLeft[SourceCell]] = this->inters+con;
+		}
+
+		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
+			this->neurons[neu].SetOutputConnections(OutputConnections[neu],NumberOfOutputs[neu]);
+		}
+
+		delete [] OutputConnections;
+		delete [] NumberOfOutputs;
+		delete [] OutputsLeft;
 	}
 }
 
@@ -73,10 +108,49 @@ void Network::SetWeightOrdination(){
 }
 
 void Network::FindInConnections(){
-	if(ninters>0){
-		for (int ninter=0;ninter<ninters;ninter++){
-			inters[ninter].GetTarget()->AddInputConnection(inters+ninter);
+	if(this->ninters>0){
+		// Calculate the number of input connections with learning for each cell
+		unsigned long * NumberOfInputsWithLearning = (unsigned long *) new unsigned long [this->nneurons];
+		unsigned long * InputsLeft = (unsigned long *) new unsigned long [this->nneurons];
+
+		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
+			NumberOfInputsWithLearning[neu] = 0;
 		}
+
+		for (unsigned long con= 0; con<this->ninters; ++con){
+			if (this->inters[con].GetWeightChange()!=0){
+				NumberOfInputsWithLearning[this->inters[con].GetTarget()->GetIndex()]++;
+			}
+		}
+
+		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
+			InputsLeft[neu] = NumberOfInputsWithLearning[neu];
+		}
+
+		Interconnection *** InputConnectionsWithLearning = (Interconnection ***) new Interconnection ** [this->nneurons];
+
+		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
+			if (NumberOfInputsWithLearning[neu]>0){
+				InputConnectionsWithLearning[neu] = (Interconnection **) new Interconnection * [NumberOfInputsWithLearning[neu]];
+			} else {
+				InputConnectionsWithLearning[neu] = 0;
+			}
+		}
+
+		for (unsigned long con= this->ninters-1; con<this->ninters; --con){
+			if (this->inters[con].GetWeightChange()!=0){
+				unsigned long TargetCell = this->inters[con].GetTarget()->GetIndex();
+				InputConnectionsWithLearning[TargetCell][--InputsLeft[TargetCell]] = this->inters+con;
+			}
+		}
+
+		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
+			this->neurons[neu].SetInputConnectionsWithLearning(InputConnectionsWithLearning[neu],NumberOfInputsWithLearning[neu]);
+		}
+
+		delete [] InputConnectionsWithLearning;
+		delete [] NumberOfInputsWithLearning;
+		delete [] InputsLeft;
 	}
 }
 

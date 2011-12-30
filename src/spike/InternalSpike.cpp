@@ -72,12 +72,10 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 				CurrentSimulation->GetQueue()->InsertEvent(spike);
 			}
 
-			for (int i=0; i<neuron->GetInputNumber(); ++i){
-				Interconnection * inter = neuron->GetInputConnectionAt(i);
-
-				if(inter->GetWeightChange() != 0){
-					inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
-				}
+			for (int i=0; i<neuron->GetInputNumberWithLearning(); ++i){
+				Interconnection * inter = neuron->GetInputConnectionWithLearningAt(i);
+				LearningRule * Plasticity = inter->GetWeightChange();
+				Plasticity->ApplyPostSynapticSpike(inter,this->time);
 			}
 		}
 	} else { // Time-driven model (no check nor update needed
@@ -98,12 +96,10 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 			CurrentSimulation->GetQueue()->InsertEvent(spike);
 		}
 
-		for (int i=0; i<neuron->GetInputNumber(); ++i){
-			Interconnection * inter = neuron->GetInputConnectionAt(i);
-
-			if(inter->GetWeightChange() != 0){
-				inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
-			}
+		for (int i=0; i<neuron->GetInputNumberWithLearning(); ++i){
+			Interconnection * inter = neuron->GetInputConnectionWithLearningAt(i);
+			LearningRule * Plasticity = inter->GetWeightChange();
+			Plasticity->ApplyPostSynapticSpike(inter,this->time);
 		}
 		
 	}

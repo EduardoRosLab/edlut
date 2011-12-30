@@ -80,13 +80,23 @@ class Neuron : public PrintableObject {
    		/*!
    		 * Output connections.
    		 */
-   		vector<Interconnection*> OutputConnections;
+   		Interconnection** OutputConnections;
+
+		/*!
+		 * Output Connection number.
+		 */
+		unsigned int OutputConNumber;
    		
    		/*!
-   		 * Input connections.
+   		 * Input connections with asssociated learning.
    		 */
-   		vector<Interconnection*> InputConnections;
+   		Interconnection** InputLearningConnections;
    		
+		/*!
+		 * Input Connection number.
+		 */
+		unsigned int InputConLearningNumber;
+
    		/*!
    		 * It tells if neuron activity will be registered.
    		 */
@@ -164,13 +174,13 @@ class Neuron : public PrintableObject {
    		NeuronState * GetNeuronState() const;
    		
    		/*!
-   		 * \brief It gets the number of inputs to the current neuron.
+   		 * \brief It gets the number of inputs to the current neuron which have associated learning.
    		 * 
-   		 * It returns the number of input connections to the current neuron.
+   		 * It returns the number of input connections to the current neuron which have associated learning.
    		 * 
-   		 * \return The number of input connections to the current neuron.
+   		 * \return The number of input connections to the current neuron with plasticity.
    		 */
-   		int GetInputNumber() const;
+   		unsigned int GetInputNumberWithLearning() const;
    		
    		/*!
    		 * \brief It gets the number of output from the current neuron.
@@ -179,7 +189,7 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The number of output connections from the current neuron.
    		 */
-   		int GetOutputNumber() const;
+   		unsigned int GetOutputNumber() const;
    		
    		/*!
    		 * \brief It gets the input connection at an specified index.
@@ -189,16 +199,17 @@ class Neuron : public PrintableObject {
    		 * \param index The index of the input connection what we want to get.
    		 * \return The input connection of index index.
    		 */
-   		Interconnection * GetInputConnectionAt(int index) const;
+   		Interconnection * GetInputConnectionWithLearningAt(unsigned int index) const;
    		
    		/*!
-   		 * \brief It adds an input connection to the neuron.
+   		 * \brief It sets the input connections which have associated learning.
    		 * 
-   		 * It adds the parameter connection as an input connection to the neuron.
+   		 * It sets the input connections which have associated learning.
    		 * 
-   		 * \param Connection The input connection to add.
+   		 * \param Connection The input connections to set. The memory will be released within the class destructor.
+		 * \param NumberOfConnections The number of input connections in the first parameter.
    		 */
-   		void AddInputConnection(Interconnection * Connection);
+   		void SetInputConnectionsWithLearning(Interconnection ** Connections, unsigned int NumberOfConnections);
    		
    		/*!
    		 * \brief It checks if the neuron has some input connection.
@@ -217,16 +228,17 @@ class Neuron : public PrintableObject {
    		 * \param index The index of the output connection what we want to get.
    		 * \return The output connection of index index.
    		 */
-   		Interconnection * GetOutputConnectionAt(int index) const;
+   		Interconnection * GetOutputConnectionAt(unsigned int index) const;
    		
    		/*!
-   		 * \brief It adds an output connection to the neuron.
+   		 * \brief It sets the output connections from this neuron.
    		 * 
-   		 * It adds the parameter connection as an output connection to the neuron.
+   		 * It sets the output connection array.
    		 * 
-   		 * \param Connection The output connection to add.
-   		 */
-   		void AddOutputConnection(Interconnection * Connection);
+   		 * \param Connection The output connections to set. The memory will be released within the class destructor.
+   		 * \param NumberOfConnections The number of input connections in the first parameter.
+		 */
+   		void SetOutputConnections(Interconnection ** Connections, unsigned int NumberOfConnections);
    		
    		/*!
    		 * \brief It checks if the neuron has some output connection.
