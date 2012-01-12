@@ -39,7 +39,7 @@ void TimeEvent::ProcessEvent(Simulation * CurrentSimulation){
 
 	long int TDCells = CurrentNetwork->GetTimeDrivenNeuronNumber();
 
-	float CurrentTime = this->GetTime();
+	double CurrentTime = this->GetTime();
 
 	// Process the neuron state of all the time-driven cells.
 	for (int i=0; i<TDCells; ++i){
