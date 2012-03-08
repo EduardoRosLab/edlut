@@ -2,7 +2,7 @@
 ########################### - MAKEFILE FLAGS - #################################
 ################################################################################
 
-CXXFLAGS += -I$(includedir) -DUSE_OPENCV
+CXXFLAGS += -I$(includedir) -DUSE_OPENCV -fPIC
 
 ifneq ($(external_sources),none)
  CXXFLAGS += `pkg-config --cflags ${external_sources}`
