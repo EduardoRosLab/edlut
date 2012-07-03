@@ -80,12 +80,22 @@ class LIFTimeDrivenModel : public TimeDrivenNeuronModel {
 		/*!
 		 * \brief AMPA receptor time constant
 		 */
-		float texc;
+		float tampa;
 
+		/*!
+		 * \brief NMDA receptor time constant
+		 */
+		float tnmda;
+		
 		/*!
 		 * \brief GABA receptor time constant
 		 */
 		float tinh;
+
+		/*!
+		 * \brief Gap Junction time constant
+		 */
+		float tgj;
 
 		/*!
 		 * \brief Refractory period
@@ -97,6 +107,11 @@ class LIFTimeDrivenModel : public TimeDrivenNeuronModel {
 		 */
 		float grest;
 
+		/*!
+		 * \brief Gap junction factor
+		 */
+		float fgj;
+		
 		/*!
 		 * \brief It loads the neuron model description.
 		 *

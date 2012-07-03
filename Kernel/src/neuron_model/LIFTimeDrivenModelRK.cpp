@@ -40,49 +40,83 @@ bool LIFTimeDrivenModelRK::UpdateState(NeuronState * State, double CurrentTime){
 	float last_spike = State->GetLastSpikeTime();
 
 	float vm = State->GetStateVariableAt(0);
-	float gexc = State->GetStateVariableAt(1);
-	float ginh = State->GetStateVariableAt(2);
+	float gampa = State->GetStateVariableAt(1);
+	float gnmda = State->GetStateVariableAt(2);
+	float ginh = State->GetStateVariableAt(3);
+	float ggj = State->GetStateVariableAt(4);
+
+	float nextgampa = gampa * exp(-(elapsed_time/this->tampa));
+	float nextgnmda = gnmda * exp(-(elapsed_time/this->tnmda));
+	float nextginh = ginh * exp(-(elapsed_time/this->tinh));
+	float nextggj = ggj * exp(-(elapsed_time/this->tgj));
+	
 
 	bool spike = false;
-
-	float nextgexc = gexc * exp(-(elapsed_time/this->texc));
-	float nextginh = ginh * exp(-(elapsed_time/this->tinh));
 
 	if (last_spike > this->tref) {
 		// 4th order Runge-Kutta terms
 		// 1st term
-		float k1 = (gexc * (this->eexc - vm) + ginh * (this->einh - vm) + grest * (this->erest-vm))/this->cm;
+		float iampa = gampa*(this->eexc-vm);
+		float gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*1.2/3.57);
+		float inmda = gnmda*gnmdainf*(this->eexc-vm);
+		float iinh = ginh*(this->einh-vm);
+		
+		float k1 = (iampa + inmda + iinh + grest * (this->erest-vm))*1.e-9/this->cm;
 
 		// 2nd term
-		float gexcaux = gexc * exp(-((elapsed_time/2)/this->texc));
+		float gampaaux = gampa * exp(-((elapsed_time/2)/this->tampa));
+		float gnmdaaux = gnmda * exp(-((elapsed_time/2)/this->tnmda));
 		float ginhaux = ginh * exp(-((elapsed_time/2)/this->tinh));
 		float yaux = vm+(k1*elapsed_time/2);
-		float k2 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))/this->cm;
+		
+		float iampaaux = gampaaux*(this->eexc-yaux);
+		float gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+		float inmdaaux = gnmdaaux*gnmdainfaux*(this->eexc-yaux);
+		float iinhaux = ginhaux*(this->einh-yaux);
+				
+		float k2 = (iampaaux + inmdaaux + iinhaux + grest * (this->erest - yaux))*1.e-9/this->cm;
 
 		// 3rd term
 		yaux = vm+(k2*elapsed_time/2);
-		float k3 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))/this->cm;
+
+		iampaaux = gampaaux*(this->eexc-yaux);
+		gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+		inmdaaux = gnmdaaux*gnmdainfaux*(this->eexc-yaux);
+		iinhaux = ginhaux*(this->einh-yaux);
+		
+		float k3 = (iampaaux + inmdaaux + iinhaux + grest * (this->erest - yaux))*1.e-9/this->cm;
 
 		// 4rd term
-		gexcaux = nextgexc;
-		ginhaux = nextginh;
 		yaux = vm+(k3*elapsed_time);
-		float k4 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))/this->cm;
+
+		iampaaux = nextgampa*(this->eexc-yaux);
+		gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+		inmdaaux = nextgampa*gnmdainfaux*(this->eexc-yaux);
+		iinhaux = nextginh*(this->einh-yaux);
+		
+		float k4 = (iampaaux + inmdaaux + iinhaux + grest * (this->erest - yaux))*1.e-9/this->cm;
 
 		vm = vm + (k1+2*k2+2*k3+k4)*elapsed_time/6;
 
-		if (vm > this->vthr){
+		float vm_cou = vm + this->fgj * ggj;
+
+		if (vm_cou > this->vthr){
 			State->NewFiredSpike();
 			spike = true;
 			vm = this->erest;
 		}
 	}
-	gexc = nextgexc;
+	
+	gampa = nextgampa;
+	gnmda = nextgnmda;
 	ginh = nextginh;
+	ggj = nextggj;
 
 	State->SetStateVariableAt(0,vm);
-	State->SetStateVariableAt(1,gexc);
-	State->SetStateVariableAt(2,ginh);
+	State->SetStateVariableAt(1,gampa);
+	State->SetStateVariableAt(2,gnmda);
+	State->SetStateVariableAt(3,ginh);
+	State->SetStateVariableAt(4,ggj);
 	State->SetLastUpdateTime(CurrentTime);
 
 	return spike;
