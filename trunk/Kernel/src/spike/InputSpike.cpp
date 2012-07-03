@@ -41,6 +41,8 @@ void InputSpike::ProcessEvent(Simulation * CurrentSimulation){
 	Neuron * neuron=this->source;  // source of the spike
     
     CurrentSimulation->WriteSpike(this);
+
+	// CurrentSimulation->WriteState(this->GetTime(),neuron);
 	
 	// CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource());
 		

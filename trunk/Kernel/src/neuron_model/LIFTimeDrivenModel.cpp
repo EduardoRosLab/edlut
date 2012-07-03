@@ -51,54 +51,71 @@ void LIFTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 						if(fscanf(fh,"%f",&this->cm)==1){
 							skip_comments(fh,Currentline);
 
-							if(fscanf(fh,"%f",&this->texc)==1){
+							if(fscanf(fh,"%f",&this->tampa)==1){
 								skip_comments(fh,Currentline);
 
-								if(fscanf(fh,"%f",&this->tinh)==1){
+								if(fscanf(fh,"%f",&this->tnmda)==1){
 									skip_comments(fh,Currentline);
-
-									if(fscanf(fh,"%f",&this->tref)==1){
+									
+									if(fscanf(fh,"%f",&this->tinh)==1){
 										skip_comments(fh,Currentline);
 
-										if(fscanf(fh,"%f",&this->grest)==1){
+										if(fscanf(fh,"%f",&this->tgj)==1){
 											skip_comments(fh,Currentline);
+											if(fscanf(fh,"%f",&this->tref)==1){
+												skip_comments(fh,Currentline);
 
-											this->InitialState = (NeuronState *) new NeuronState(3);
+												if(fscanf(fh,"%f",&this->grest)==1){
+													skip_comments(fh,Currentline);
 
-											for (unsigned int i=0; i<3; ++i){
-												this->InitialState->SetStateVariableAt(i,0.0);
+													if(fscanf(fh,"%f",&this->fgj)==1){
+														skip_comments(fh,Currentline);
+
+														this->InitialState = (NeuronState *) new NeuronState(5);
+
+														for (unsigned int i=0; i<5; ++i){
+															this->InitialState->SetStateVariableAt(i,0.0);
+														}
+
+														this->InitialState->SetStateVariableAt(0,this->erest);
+
+														this->InitialState->SetLastUpdateTime(0);
+														this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
+													} else {
+														throw EDLUTFileException(13,60,3,1,Currentline);
+													}
+												} else {
+													throw EDLUTFileException(13,61,3,1,Currentline);
+												}
+											} else {
+												throw EDLUTFileException(13,62,3,1,Currentline);
 											}
-
-											this->InitialState->SetStateVariableAt(0,this->erest);
-
-											this->InitialState->SetLastUpdateTime(0);
-											this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 										} else {
-											throw EDLUTFileException(13,60,3,1,Currentline);
+											throw EDLUTFileException(13,63,3,1,Currentline);
 										}
 									} else {
-										throw EDLUTFileException(13,61,3,1,Currentline);
+										throw EDLUTFileException(13,64,3,1,Currentline);
 									}
 								} else {
-									throw EDLUTFileException(13,62,3,1,Currentline);
+									throw EDLUTFileException(13,65,3,1,Currentline);
 								}
 							} else {
-								throw EDLUTFileException(13,63,3,1,Currentline);
+								throw EDLUTFileException(13,66,3,1,Currentline);
 							}
 						} else {
-							throw EDLUTFileException(13,64,3,1,Currentline);
+							throw EDLUTFileException(13,67,3,1,Currentline);
 						}
 					} else {
-						throw EDLUTFileException(13,65,3,1,Currentline);
+						throw EDLUTFileException(13,68,3,1,Currentline);
 					}
 				} else {
-					throw EDLUTFileException(13,66,3,1,Currentline);
+					throw EDLUTFileException(13,69,3,1,Currentline);
 				}
 			} else {
-				throw EDLUTFileException(13,67,3,1,Currentline);
+				throw EDLUTFileException(13,70,3,1,Currentline);
 			}
 		} else {
-			throw EDLUTFileException(13,68,3,1,Currentline);
+			throw EDLUTFileException(13,71,3,1,Currentline);
 		}
 	}
 }
@@ -107,20 +124,31 @@ void LIFTimeDrivenModel::SynapsisEffect(NeuronState * State, Interconnection * I
 
 	switch (InputConnection->GetType()){
 		case 0: {
-			float gexc = State->GetStateVariableAt(1);
-			gexc += 1e-9*InputConnection->GetWeight();
-			State->SetStateVariableAt(1,gexc);
+			float gampa = State->GetStateVariableAt(1);
+			gampa += InputConnection->GetWeight();
+			State->SetStateVariableAt(1,gampa);
 			break;
 		}case 1:{
-			float ginh = State->GetStateVariableAt(2);
-			ginh += 1e-9*InputConnection->GetWeight();
-			State->SetStateVariableAt(2,ginh);
+			float gnmda = State->GetStateVariableAt(2);
+			gnmda += InputConnection->GetWeight();
+			State->SetStateVariableAt(2,gnmda);
+			break;
+		}case 2:{
+			float ginh = State->GetStateVariableAt(3);
+			ginh += InputConnection->GetWeight();
+			State->SetStateVariableAt(3,ginh);
+			break;
+		}case 3:{
+			float ggj = State->GetStateVariableAt(4);
+			ggj += InputConnection->GetWeight();
+			State->SetStateVariableAt(4,ggj);
 			break;
 		}
+
 	}
 }
 
-LIFTimeDrivenModel::LIFTimeDrivenModel(string NeuronModelID): TimeDrivenNeuronModel(NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), texc(0), tinh(0),
+LIFTimeDrivenModel::LIFTimeDrivenModel(string NeuronModelID): TimeDrivenNeuronModel(NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), tampa(0), tnmda(0), tinh(0), tgj(0),
 		tref(0), grest(0) {
 }
 
@@ -162,25 +190,38 @@ bool LIFTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
 	float last_spike = State->GetLastSpikeTime();
 
 	float vm = State->GetStateVariableAt(0);
-	float gexc = State->GetStateVariableAt(1);
-	float ginh = State->GetStateVariableAt(2);
+	float gampa = State->GetStateVariableAt(1);
+	float gnmda = State->GetStateVariableAt(2);
+	float ginh = State->GetStateVariableAt(3);
+	float ggj = State->GetStateVariableAt(4);
 
 	bool spike = false;
 
 	if (last_spike > this->tref) {
-		vm = vm + elapsed_time * ( gexc * (this->eexc - vm) + ginh * (this->einh - vm) + grest * (this->erest - vm))/this->cm;
-		if (vm > this->vthr){
+		float iampa = gampa*(this->eexc-vm);
+		float gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*1.2/3.57);
+		float inmda = gnmda*gnmdainf*(this->eexc-vm);
+		float iinh = ginh*(this->einh-vm);
+		vm = vm + elapsed_time * (iampa + inmda + iinh + this->grest* (this->erest-vm))*1.e-9/this->cm;
+
+		float vm_cou = vm + this->fgj * ggj;
+
+		if (vm_cou > this->vthr){
 			State->NewFiredSpike();
 			spike = true;
 			vm = this->erest;
 		}
 	}
-	gexc = gexc * exp(-(elapsed_time/this->texc));
+	gampa = gampa * exp(-(elapsed_time/this->tampa));
+	gnmda = gnmda * exp(-(elapsed_time/this->tnmda));
 	ginh = ginh * exp(-(elapsed_time/this->tinh));
+	ggj = ggj * exp(-(elapsed_time/this->tgj));
 
 	State->SetStateVariableAt(0,vm);
-	State->SetStateVariableAt(1,gexc);
-	State->SetStateVariableAt(2,ginh);
+	State->SetStateVariableAt(1,gampa);
+	State->SetStateVariableAt(2,gnmda);
+	State->SetStateVariableAt(3,ginh);
+	State->SetStateVariableAt(4,ggj);
 	State->SetLastUpdateTime(CurrentTime);
 
 	return spike;
@@ -191,9 +232,9 @@ ostream & LIFTimeDrivenModel::PrintInfo(ostream & out){
 
 	out << "\tExc. Reversal Potential: " << this->eexc << "V\tInh. Reversal Potential: " << this->einh << "V\tResting potential: " << this->erest << "V" << endl;
 
-	out << "\tFiring threshold: " << this->vthr << "V\tMembrane capacitance: " << this->cm << "nS\tExcitatory Time Constant: " << this->texc << "s" << endl;
+	out << "\tFiring threshold: " << this->vthr << "V\tMembrane capacitance: " << this->cm << "nS\tAMPA Time Constant: " << this->tampa << "sNMDA Time Constant: " << this->tnmda << "s" << endl;
 
-	out << "\tInhibitory time constant: " << this->tinh << "s\tRefractory Period: " << this->tref << "s\tResting Conductance: " << this->grest << "nS" << endl;
+	out << "\tInhibitory time constant: " << this->tinh << "s\tGap junction time constant: " << this->tgj << "s\tRefractory Period: " << this->tref << "s\tResting Conductance: " << this->grest << "nS" << endl;
 
 	return out;
 }		

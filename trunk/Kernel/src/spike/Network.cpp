@@ -36,13 +36,16 @@
 #include "../../include/simulation/Utils.h"
 #include "../../include/simulation/Configuration.h"
 
-int qsort_inters(const void *e1, const void *e2){
+int qsort_inters(void *e1, void *e2){
 	int ord;
-	float ordf;
+	double ordf;
+
+	Interconnection * Con1 = (Interconnection *) e1;
+	Interconnection * Con2 = (Interconnection *) e2;
 	
-	ord=((Interconnection *)e1)->GetSource()->GetIndex() - ((Interconnection *)e2)->GetSource()->GetIndex();
+	ord=Con1->GetSource()->GetIndex() - Con2->GetSource()->GetIndex();
 	if(!ord){
-		ordf=((Interconnection *)e1)->GetDelay() - ((Interconnection *)e2)->GetDelay();
+		ordf=Con1->GetDelay() - Con2->GetDelay();
 		if(ordf<0.0)
 			ord=-1;
 		else
@@ -53,12 +56,49 @@ int qsort_inters(const void *e1, const void *e2){
 	return(ord);
 }
 
+static void swap(char *x, char *y, size_t l) {
+   char *a = x, *b = y, c;
+   while(l--) {
+      c = *a;
+      *a++ = *b;
+      *b++ = c;
+   }
+}
+ 
+static void sort(char *array, size_t size, int (*cmp)(void*,void*), int begin, int end) {
+   if (end > begin) {
+      void *pivot = array + begin;
+      int l = begin + size;
+      int r = end;
+      while(l < r) {
+         if (cmp(array+l,pivot) <= 0) {
+            l += size;
+         } else {
+            r -= size;
+            swap(array+l, array+r, size);
+         }
+      }
+      l -= size;
+      swap(array+begin, array+l, size);
+      sort(array, size, cmp, begin, l);
+      sort(array, size, cmp, r, end);
+   }
+}
+ 
+void qsort_new(Interconnection *array, size_t nitems, size_t size, int (*cmp)(void*,void*)) {
+   sort((char *) array, size, cmp, 0, (nitems-1)*size);
+}
+
+
 void Network::FindOutConnections(){
 	// Change the ordenation
-   	qsort(inters,ninters,sizeof(Interconnection),qsort_inters);
+   	qsort_new(inters,ninters,sizeof(Interconnection),qsort_inters);
 	if(ninters>0){
 		for (int ninter=0;ninter<ninters;ninter++){
 			inters[ninter].GetSource()->AddOutputConnection(inters+ninter);
+			unsigned long int sourceindex = inters[ninter].GetSource()->GetIndex();
+			unsigned long int targetindex = (inters+ninter)->GetTarget()->GetIndex();
+			unsigned int i = 0;
 		}		
 	}
 }
