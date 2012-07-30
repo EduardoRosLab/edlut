@@ -73,7 +73,7 @@ class SRMTableBasedModel: public TableBasedModel {
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(NeuronState * State, Interconnection * InputConnection);
+		virtual void SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection);
 
 		/*!
 		 * \brief It returns the end of the refractory period.
@@ -83,7 +83,7 @@ class SRMTableBasedModel: public TableBasedModel {
 		 * \param State Cell current state.
 		 * \return The end of the refractory period. -1 if no spike is predicted.
 		 */
-		virtual double EndRefractoryPeriod(NeuronState * State);
+		virtual double EndRefractoryPeriod(int index, VectorNeuronState * State);
 
 		/*!
 		 * \brief It updates the neuron state after the evolution of the time.
@@ -93,7 +93,7 @@ class SRMTableBasedModel: public TableBasedModel {
 		 * \param State Cell current state.
 		 * \param CurrentTime Current simulation time.
 		 */
-		virtual void UpdateState(NeuronState * State, double CurrentTime);
+		virtual void UpdateState(int index, VectorNeuronState * State, double CurrentTime);
 
 		/*!
 		 * \brief It returns the next spike time.
@@ -103,7 +103,7 @@ class SRMTableBasedModel: public TableBasedModel {
 		 * \param State Cell current state.
 		 * \return The next firing spike time. -1 if no spike is predicted.
 		 */
-		virtual double NextFiringPrediction(NeuronState * State);
+		virtual double NextFiringPrediction(int index, VectorNeuronState * State);
 
 	public:
 
@@ -115,7 +115,7 @@ class SRMTableBasedModel: public TableBasedModel {
 		 *
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		SRMTableBasedModel(string NeuronModelID);
+		SRMTableBasedModel(string NeuronTypeID, string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
@@ -131,7 +131,7 @@ class SRMTableBasedModel: public TableBasedModel {
 		 *
 		 * \return A new object with the neuron state.
 		 */
-		virtual NeuronState * InitializeState();
+		virtual VectorNeuronState * InitializeState();
 
 		/*!
 		 * \brief It processes an internal spike (generated spike in the cell).
@@ -148,6 +148,8 @@ class SRMTableBasedModel: public TableBasedModel {
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
 		virtual InternalSpike * GenerateNextSpike(InternalSpike *  OutputSpike);
+
+virtual void InitializeStates(int N_neurons);
 };
 
 #endif /* SRMTABLEBASEDMODEL_H_ */

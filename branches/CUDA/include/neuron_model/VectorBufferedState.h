@@ -1,8 +1,8 @@
 /***************************************************************************
- *                           BufferedState.h                               *
+ *                           VectorBufferedState.h                         *
  *                           -------------------                           *
- * copyright            : (C) 2010 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2012 by Jesus Garrido and Francisco Naveros  *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,20 +14,25 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef BUFFEREDSTATE_H_
-#define BUFFEREDSTATE_H_
+#ifndef VECTORBUFFEREDSTATE_H_
+#define VECTORBUFFEREDSTATE_H_
 
 /*!
- * \file BufferedState.h
+ * \file VectorBufferedState.h
  *
  * \author Jesus Garrido
- * \date February 2010
+ * \author Francisco Naveros
+ * \date February 2012
  *
- * This file declares a class which implements the state of a cell which
+ * This file declares a class which implements the state of a cell vector which
  * stores the last activity happened.
+ *
+ * \note: This class is a modification of previous BufferedState class. In this new class,
+ * it is generated a only object for a neuron model cell vector instead of a object for
+ * each cell.
  */
 
-#include "NeuronState.h"
+#include "VectorNeuronState.h"
 
 #include "../spike/Interconnection.h"
 
@@ -37,14 +42,15 @@
 using namespace std;
 
 /*!
- * \class BufferedState
+ * \class VectorBufferedState
  *
  * \brief Spiking neuron current state with activity buffer.
  *
- * This class abstracts the state of a cell and stores the last activity happened.
+ * This class abstracts the state of a cell vector and stores the last activity happened.
  *
  * \author Jesus Garrido
- * \date February 2010
+ * \author Francisco Naveros
+ * \date February 2012
  */
 
 typedef pair<double,Interconnection *> InputActivity;
@@ -66,29 +72,29 @@ struct Activity{
 
 typedef struct Activity ActivityNode;
 
-class BufferedState: public NeuronState {
+class VectorBufferedState: public VectorNeuronState {
 
 	private:
 
 		/*!
-		 * \brief First node of the activity list (the oldest one).
+		 * \brief First node of the activity list (the oldest one) for all neuron model cell vector.
 		 */
-		ActivityNode ** FirstElement;
+		ActivityNode *** FirstElement;
 
 		/*!
-		 * \brief Last node of the activity list (the youngest one).
+		 * \brief Last node of the activity list (the youngest one) for all neuron model cell vector.
 		 */
-		ActivityNode ** LastElement;
+		ActivityNode *** LastElement;
 
 		/*!
-		 * \brief Time in which the activity will be removed.
+		 * \brief Time in which the activity will be removed for all neuron model cell vector.
 		 */
-		float * BufferAmplitude;
+		float ** BufferAmplitude;
 
 		/*!
-		 * \brief Number of elements inside.
+		 * \brief Number of elements inside for all neuron model cell vector.
 		 */
-		unsigned int * NumberOfElements;
+		unsigned int ** NumberOfElements;
 
 		/*!
 		 * \brief Number of buffers included.
@@ -105,8 +111,9 @@ class BufferedState: public NeuronState {
 		 *
 		 * \param NumVariables Number of the state variables this model needs.
 		 * \param NumBuffers Number of input channels
+		 * \param isTimeDriven It is for a time-driven or a event-driven method.
 		 */
-		BufferedState(unsigned int NumVariables, unsigned int NumBuffers);
+		VectorBufferedState(unsigned int NumVariables, unsigned int NumBuffers, bool isTimeDriven);
 
 		/*!
 		 * \brief Copies constructor.
@@ -115,67 +122,74 @@ class BufferedState: public NeuronState {
 		 *
 		 * \param OldState State being copied.
 		 */
-		BufferedState(const BufferedState & OldState);
+		VectorBufferedState(const VectorBufferedState & OldState);
 
 		/*!
-		 * \brief It sets the amplitude of the selected buffer
+		 * \brief It sets the amplitude of the selected buffer for a cell.
 		 *
-		 * It sets the amplitude of the selected buffer.
+		 * It sets the amplitude of the selected buffer for a cell.
 		 *
+		 * \param index The cell index inside the vector.
 		 * \param NumBuffer Number of the buffer to be set.
 		 * \param BufferAmpl Temporal amplitude of the buffer.
 		 */
-		void SetBufferAmplitude(unsigned int NumBuffer, float BufferAmpl);
+		void SetBufferAmplitude(int index, unsigned int NumBuffer, float BufferAmpl);
 
 		/*!
-		 * \brief It adds a new input spike into the buffer of activity.
+		 * \brief It adds a new input spike into the buffer of activity for a cell.
 		 *
-		 * It adds a new input spike into the buffer of activity. The spike insertion
+		 * It adds a new input spike into the buffer of activity for a cell. The spike insertion
 		 * must be done in ascending order by time.
 		 *
+		 * \param index The cell index inside the vector.
 		 * \param InputConnection Interconnection in which the spike was received.
 		 */
-		void AddActivity(Interconnection * InputConnection);
+		void AddActivity(int index, Interconnection * InputConnection);
 
 		/*!
-		 * \brief It removes all the spikes happened before BufferAmplitude time.
+		 * \brief It removes all the spikes happened before BufferAmplitude time for a cell.
 		 *
-		 * It removes all the spikes happened before BufferAmplitude time.
+		 * It removes all the spikes happened before BufferAmplitude time for a cell.
+		 *
+		 * \param index The cell index inside the vector.
 		 */
-		void CheckActivity();
+		void CheckActivity(int index);
 
 		/*!
-		 * \brief Add elapsed time to spikes.
+		 * \brief Add elapsed time to spikes for a cell.
 		 *
-		 * It adds the elapsed time to spikes.
+		 * It adds the elapsed time to spikesfor a cell.
 		 *
+		 * \param index The cell index inside the vector.
 		 * \param ElapsedTime The time since the last update.
 		 */
-		virtual void AddElapsedTime(float ElapsedTime);
+		virtual void AddElapsedTime(int index, double ElapsedTime);
 
 		/*!
 		 * \brief Class destructor.
 		 *
 		 * It destroys an object of this class.
 		 */
-		virtual ~BufferedState();
+		virtual ~VectorBufferedState();
 
 		/*!
-		 * \brief It gets the number of stored spikes.
+		 * \brief It gets the number of stored spikes for a cell.
 		 *
-		 * It gets the number of stored spikes.
+		 * It gets the number of stored spikes for a cell.
 		 *
+		 * \param index The cell index inside the vector.
 		 * \param NumBuffer Number of the buffer to get the number of stored spikes.
 		 *
-		 * \return The number of spikes stored in the current state.
+		 * \return The number of spikes stored in the current state for a cell.
 		 */
-		unsigned int GetNumberOfSpikes(unsigned int NumBuffer);
+		unsigned int GetNumberOfSpikes(int index, unsigned int NumBuffer);
 
 		/*!
-		 * \brief It gets the time when a spike happened.
+		 * \brief It gets the time when a spike happened for a cell.
 		 *
-		 * It gets the time when a spike happened. The first spike is the first being introduced.
+		 * It gets the time when a spike happened for a cell. The first spike is the first being introduced.
 		 *
+		 * \param index The cell index inside the vector.
 		 * \param Position Position of the spike.
 		 * \param NumBuffer Number of the buffer from which the spike will be retrieved.
 		 *
@@ -183,13 +197,14 @@ class BufferedState: public NeuronState {
 		 *
 		 * \note This function should be avoided in favour of iterators due to efficiency issues.
 		 */
-		double GetSpikeTimeAt(unsigned int Position, unsigned int NumBuffer);
+		double GetSpikeTimeAt(int index, unsigned int Position, unsigned int NumBuffer);
 
 		/*!
-		 * \brief It gets the connection where a spike happened.
+		 * \brief It gets the connection where a spike happened for a cell.
 		 *
-		 * It gets the connection where a spike happened. The first spike is the first being introduced.
+		 * It gets the connection where a spike happened for a cell. The first spike is the first being introduced.
 		 *
+		 * \param index The cell index inside the vector.
 		 * \param Position Position of the spike.
 		 * \param NumBuffer Number of the buffer from which the spike will be retrieved.
 		 *
@@ -197,7 +212,20 @@ class BufferedState: public NeuronState {
 		 *
 		 * \note This function should be avoided in favour of iterators due to efficiency issues.
 		 */
-		Interconnection * GetInterconnectionAt(unsigned int Position, unsigned int NumBuffer);
+		Interconnection * GetInterconnectionAt(int index, unsigned int Position, unsigned int NumBuffer);
+
+		/*!
+		 * \brief It initialice all vectors with size size and copy initialization inside VectorNeuronStates
+		 * for each cell.
+		 *
+		 * It initialice all vectors with size size and copy initialization inside VectorNeuronStates
+		 * for each cell.
+		 *
+		 * \param size cell number inside the VectorNeuronState.
+		 * \param initialization initial state for each cell.
+		 */
+void InitializeBufferedStates(int size, float * initialization);
+
 
 		class Iterator {
 			private:
@@ -246,7 +274,7 @@ class BufferedState: public NeuronState {
 				 *
 				 * \return True if the two iterators point the same element. False otherwise.
 				 */
-				bool operator==(BufferedState::Iterator Aux);
+				bool operator==(VectorBufferedState::Iterator Aux);
 
 				/*!
 				 * \brief It compares if two iterators point different elements.
@@ -255,7 +283,7 @@ class BufferedState: public NeuronState {
 				 *
 				 * \return True if the two iterators point different elements. False otherwise.
 				 */
-				bool operator!=(BufferedState::Iterator Aux);
+				bool operator!=(VectorBufferedState::Iterator Aux);
 
 				/*! It gets the spike time of the current element pointed by the iterator.
 				 *
@@ -276,22 +304,23 @@ class BufferedState: public NeuronState {
 		};
 
 		/*!
-		 * \brief It gets the first element stored in the activity buffer.
+		 * \brief It gets the first element stored in the activity buffer for a cell.
 		 *
-		 * It gets the first element stored in the activity buffer.
+		 * It gets the first element stored in the activity buffer for a cell.
 		 *
+		 * \param index The cell index inside the vector.
 		 * \param NumBuffer Number of the buffer to iterate.
 		 *
-		 * \return An iterator pointing to the first element in the buffer.
+		 * \return An iterator pointing to the first element in the buffer for a cell.
 		 */
-		Iterator Begin(unsigned int NumBuffer);
+		Iterator Begin(int index, unsigned int NumBuffer);
 
 		/*!
-		 * \brief It gets the after-last element stored in the activity buffer.
+		 * \brief It gets the after-last element stored in the activity buffer for a cell.
 		 *
-		 * It gets the after-last element stored in the activity buffer.
+		 * It gets the after-last element stored in the activity buffer for a cell.
 		 *
-		 * \return An iterator pointing to the after-last element in the buffer.
+		 * \return An iterator pointing to the after-last element in the buffer for a cell.
 		 */
 		Iterator End();
 
@@ -299,4 +328,4 @@ class BufferedState: public NeuronState {
 };
 
 
-#endif /* BUFFEREDSTATE_H_ */
+#endif /* VECTORBUFFEREDSTATE_H_ */

@@ -1,8 +1,8 @@
 /***************************************************************************
- *                           LIFTimeDrivenModel.h                          *
+ *                           LIFTimeDrivenModel_GPU.h                      *
  *                           -------------------                           *
- * copyright            : (C) 2011 by Jesus Garrido and Francisco Naveros  *
- * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
+ * copyright            : (C) 2012 by Francisco Naveros                    *
+ * email                : fnaveros@atc.ugr.es                              *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,19 +14,16 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef LIFTIMEDRIVENMODEL_H_
-#define LIFTIMEDRIVENMODEL_H_
+#ifndef LIFTIMEDRIVENMODEL_GPU_H_
+#define LIFTIMEDRIVENMODEL_GPU_H_
 
 /*!
- * \file LIFTimeDrivenModel.h
+ * \file LIFTimeDrivenModel_GPU.h
  *
- * \author Jesus Garrido
  * \author Francisco Naveros
- * \date January 2011
+ * \date January 2012
  *
  * This file declares a class which abstracts a Leaky Integrate-And-Fire neuron model.
- *
- * \note: this class has been modified to use the class VectorNeuronState instead of NeuronState.
  */
 
 #include "./TimeDrivenNeuronModel.h"
@@ -37,10 +34,11 @@ using namespace std;
 
 class InputSpike;
 class VectorNeuronState;
+class VectorNeuronState_GPU;
 class Interconnection;
 
 /*!
- * \class LIFTimeDrivenModel
+ * \class LIFTimeDrivenModel_GPU
  *
  * \brief Leaky Integrate-And-Fire Time-Driven neuron model
  *
@@ -50,10 +48,10 @@ class Interconnection;
  * This is only a virtual function (an interface) which defines the functions of the
  * inherited classes.
  *
- * \author Jesus Garrido
- * \date January 2011
+ * \author Francisco Naveros
+ * \date January 2012
  */
-class LIFTimeDrivenModel : public TimeDrivenNeuronModel {
+class LIFTimeDrivenModel_GPU : public TimeDrivenNeuronModel {
 	protected:
 		/*!
 		 * \brief Excitatory reversal potential
@@ -100,6 +98,10 @@ class LIFTimeDrivenModel : public TimeDrivenNeuronModel {
 		 */
 		float grest;
 
+float * parameter;
+
+
+
 		/*!
 		 * \brief It loads the neuron model description.
 		 *
@@ -116,13 +118,17 @@ class LIFTimeDrivenModel : public TimeDrivenNeuronModel {
 		 *
 		 * It abstracts the effect of an input spike in the cell.
 		 *
-		 * \param index The cell index inside the VectorNeuronState.
+		 * \param index The cell index inside the VectorNeuronState_GPU.
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection);
+		virtual void SynapsisEffect(int index,VectorNeuronState_GPU * state, Interconnection * InputConnection);
 
 	public:
+
+float time;
+int counter;
+int size;
 
 		/*!
 		 * \brief Default constructor with parameters.
@@ -132,14 +138,14 @@ class LIFTimeDrivenModel : public TimeDrivenNeuronModel {
 		 * \param NeuronTypeID Neuron type identificator
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		LIFTimeDrivenModel(string NeuronTypeID, string NeuronModelID);
+		LIFTimeDrivenModel_GPU(string NeuronTypeID, string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
 		 *
 		 * It destroys an object of this class.
 		 */
-		virtual ~LIFTimeDrivenModel();
+		virtual ~LIFTimeDrivenModel_GPU();
 
 		/*!
 		 * \brief It loads the neuron model description and tables (if necessary).
@@ -193,7 +199,6 @@ class LIFTimeDrivenModel : public TimeDrivenNeuronModel {
 		 */
 		virtual ostream & PrintInfo(ostream & out);
 
-
 		/*!
 		 * \brief It gets the neuron model type (event-driven or time-driven).
 		 *
@@ -211,6 +216,7 @@ class LIFTimeDrivenModel : public TimeDrivenNeuronModel {
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
 		virtual void InitializeStates(int N_neurons);
+
 };
 
-#endif /* LIFTIMEDRIVENMODEL_H_ */
+#endif /* LIFTIMEDRIVENMODEL_GPU_H_ */

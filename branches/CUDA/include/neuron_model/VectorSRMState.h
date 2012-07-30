@@ -1,8 +1,8 @@
 /***************************************************************************
- *                           SRMState.h                                    *
+ *                           VectorSRMState.h                              *
  *                           -------------------                           *
- * copyright            : (C) 2010 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2012 by Jesus Garrido and Francisco Naveros  *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,32 +14,38 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef SRMSTATE_H_
-#define SRMSTATE_H_
+#ifndef VECTORSRMSTATE_H_
+#define VECTORSRMSTATE_H_
 
 /*!
- * \file SRMState.h
+ * \file VectorSRMState.h
  *
  * \author Jesus Garrido
- * \date February 2010
+ * \author Francisco Naveros
+ * \date February 2012
  *
- * This file declares a class which implements the state of a cell which
+ * This file declares a class which implements the state of a cell vector which
  * stores the last activity happened.
+ *
+ * \note: This class is a modification of previous SRMState class. In this new class,
+ * it is generated a only object for a neuron model cell vector instead of a object for
+ * each cell.
  */
 
-#include "BufferedState.h"
+#include "VectorBufferedState.h"
 
 /*!
- * \class SRMState
+ * \class VectorSRMState
  *
  * \brief Spiking response model based on activity buffer.
  *
  * This class abstracts the state of a cell in a SRM Model.
  *
  * \author Jesus Garrido
- * \date February 2010
+ * \author Francisco Naveros
+ * \date February 2012
  */
-class SRMState: public BufferedState {
+class VectorSRMState: public VectorBufferedState {
 
 	public:
 		/*!
@@ -49,8 +55,9 @@ class SRMState: public BufferedState {
 		 *
 		 * \param NumVariables Number of the state variables this model needs.
 		 * \param NumBuffers Number of buffers this model needs.
+		 * \param isTimeDriven It is for a time-driven or a event-driven method.
 		 */
-		SRMState(unsigned int NumVariables, unsigned int NumBuffers);
+		VectorSRMState(unsigned int NumVariables, unsigned int NumBuffers, bool isTimeDriven);
 
 		/*!
 		 * \brief Copies constructor.
@@ -59,14 +66,14 @@ class SRMState: public BufferedState {
 		 *
 		 * \param OldState State being copied.
 		 */
-		SRMState(const SRMState & OldState);
+		VectorSRMState(const VectorSRMState & OldState);
 
 		/*!
 		 * \brief Class destructor.
 		 *
 		 * It destroys an object of this class.
 		 */
-		virtual ~SRMState();
+		virtual ~VectorSRMState();
 
 		/*!
 		 * \brief It gets the number of variables that you can print in this state.
@@ -78,13 +85,28 @@ class SRMState: public BufferedState {
 		virtual unsigned int GetNumberOfPrintableValues();
 
 		/*!
-		 * \brief It gets a value to be printed from this state.
+		 * \brief It gets a value to be printed from this state for a cell.
 		 *
-		 * It gets a value to be printed from this state.
+		 * It gets a value to be printed from this state for a cell.
 		 *
-		 * \return The value at position-th position in this state.
+		 * \param index The cell index inside the vector.
+		 * \param position inside a neuron state.
+		 *
+		 * \return The value at position-th position in this state for a cell.
 		 */
-		virtual double GetPrintableValuesAt(unsigned int position);
+		virtual double GetPrintableValuesAt(int index, int position);
+
+		/*!
+		 * \brief It initialice all vectors with size size and copy initialization inside VectorNeuronStates
+		 * for each cell.
+		 *
+		 * It initialice all vectors with size size and copy initialization inside VectorNeuronStates
+		 * for each cell.
+		 *
+		 * \param size cell number inside the VectorNeuronState.
+		 * \param initialization initial state for each cell.
+		 */
+		void InitializeSRMStates(int size, float * initialization);
 };
 
-#endif /* SRMSTATE_H_ */
+#endif /* VECTORSRMSTATE_H_ */

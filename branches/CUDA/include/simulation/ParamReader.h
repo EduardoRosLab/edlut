@@ -1,8 +1,9 @@
 /***************************************************************************
  *                           ParamReader.h                                 *
  *                           -------------------                           *
- * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2009 by Jesus Garrido, Richard Carrillo and  *
+ *						: Francisco Naveros                                *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -21,7 +22,11 @@
  * \file ParamReader.h
  *
  * \author Jesus Garrido
+ * \author Francisco Naveros
  * \date September 2008
+ *
+ * \note Modified on January 2012 in order to include time-driven simulation support in GPU.
+ * New state variables (TimeDrivenStepTimeGPU)
  *
  * This file declares a class which read the input parameters and generates the
  * simulation characteristics (inputs, outputs, simulation time, simulation step...)
@@ -58,10 +63,13 @@ class Simulation;
  * 			
  * \note  parameters:
  * 			-info 	It shows the network information.
- * 			-log File_Name	It saves the monitored cells activity in file File_Name.
  * 			-sf File_Name	It saves the final weights in file File_Name.
  * 			-wt Save_Weight_Step	It sets the step time between weights saving.
  * 			-st Step_Time(in_seconds) It sets the step time in simulation.
+ *			-ts Time driven step time (in_seconds).
+ *			-tsGPU Time driven step time for GPU (in_seconds).
+ * 			-log File_Name It saves the activity register in file File_Name.
+ *          -logp File_Name It saves all events register in file File_Name.
  * 			-if Input_File	It adds the Input_File file in the input sources of the simulation.
  * 			-of Output_File	It adds the Output_File file in the output targets of the simulation.
  * 			-ic IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the input sources of the simulation.
@@ -110,6 +118,11 @@ class Simulation;
  		 * Simulation time-driven step time. 
  		 */
  		double TimeDrivenStepTime;
+
+		/*!
+ 		 * Simulation time-driven step time for GPU. 
+ 		 */
+ 		double TimeDrivenStepTimeGPU;
  		 		
  		/*!
  		 * Input drivers.
@@ -238,6 +251,16 @@ class Simulation;
  		 * \return The simulation time-driven step time. -1 if this option isn't enabled. 
  		 */
  		double GetTimeDrivenStepTime();
+
+		/*!
+ 		 * \brief It gets the simulation time-driven step time for GPU.
+ 		 * 
+ 		 * It gets the simulation time-driven step time for GPU. The argument indicator for simulation step time
+ 		 * is -tsGPU, so it searchs -tsGPU and returns the value as a float.
+ 		 * 
+ 		 * \return The simulation time-driven step time for GPU. -1 if this option isn't enabled. 
+ 		 */
+ 		double GetTimeDrivenStepTimeGPU();
  		
  		
  		/*!

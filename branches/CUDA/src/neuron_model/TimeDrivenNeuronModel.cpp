@@ -19,7 +19,7 @@
 
 #include <string>
 
-TimeDrivenNeuronModel::TimeDrivenNeuronModel(string NeuronModelID): NeuronModel(NeuronModelID) {
+TimeDrivenNeuronModel::TimeDrivenNeuronModel(string NeuronTypeID, string NeuronModelID): NeuronModel(NeuronTypeID, NeuronModelID) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -28,6 +28,10 @@ TimeDrivenNeuronModel::~TimeDrivenNeuronModel() {
 	// TODO Auto-generated destructor stub
 }
 
-enum NeuronModelType TimeDrivenNeuronModel::GetModelType(){
-	return TIME_DRIVEN_MODEL;
-}
+
+
+
+
+
+
+

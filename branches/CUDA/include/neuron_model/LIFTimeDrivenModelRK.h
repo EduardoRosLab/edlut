@@ -1,8 +1,8 @@
 /***************************************************************************
  *                           LIFTimeDrivenModelRK.h                        *
  *                           -------------------                           *
- * copyright            : (C) 2011 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2011 by Jesus Garrido and Francisco Naveros  *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -25,6 +25,8 @@
  *
  * This file declares a class which abstracts a Leaky Integrate-And-Fire neuron model
  * using 4th order Runge-Kutta integration method.
+ *
+ * \note: this class has been modified to use the class VectorNeuronState instead of NeuronState.
  */
 
 #include "./LIFTimeDrivenModel.h"
@@ -34,7 +36,7 @@
 using namespace std;
 
 class InputSpike;
-class NeuronState;
+class VectorNeuronState;
 class Interconnection;
 
 /*!
@@ -59,9 +61,10 @@ class LIFTimeDrivenModelRK : public LIFTimeDrivenModel {
 		 *
 		 * It generates a new neuron model object without being initialized.
 		 *
+		 * \param NeuronTypeID Neuron type identificator
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		LIFTimeDrivenModelRK(string NeuronModelID);
+		LIFTimeDrivenModelRK(string NeuronTypeID, string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
@@ -75,13 +78,14 @@ class LIFTimeDrivenModelRK : public LIFTimeDrivenModel {
 		 *
 		 * It updates the neuron state variables.
 		 *
+		 * \param index The cell index inside the VectorNeuronState. if index=-1, updating all cell.
 		 * \param The current neuron state.
 		 * \param CurrentTime Current time.
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		virtual bool UpdateState(NeuronState * State, double CurrentTime);
+		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime);
 };
 
-#endif /* NEURONMODEL_H_ */
+#endif /* LIFTIMEDRIVENMODELRK_H_ */
 

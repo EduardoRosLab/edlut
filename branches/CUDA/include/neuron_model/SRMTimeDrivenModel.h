@@ -1,8 +1,8 @@
 /***************************************************************************
  *                           SRMTimeDrivenModel.h                          *
  *                           -------------------                           *
- * copyright            : (C) 2011 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2011 by Jesus Garrido and Francisco Naveros  *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -21,18 +21,22 @@
  * \file SRMTimeDrivenModel.h
  *
  * \author Jesus Garrido
+ * \author Francisco Naveros
  * \date January 2011
  *
  * This file declares a class which implements a SRM (Spike response model) time-driven neuron
  * model.
+ *
+ * \note: this class has been modified to use the class VectorSRMState and VectorBufferState
+ * instead of SRMState and BufferState.
  */
 
 #include "./TimeDrivenNeuronModel.h"
 
 #include "../spike/EDLUTFileException.h"
 
-class SRMState;
-class BufferedState;
+class VectorSRMState;
+class VectorBufferedState;
 class Interconnection;
 
 /*!
@@ -104,23 +108,25 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 *
 		 * It calculates the potential difference between resting and the potential in the defined time.
 		 *
-		 * \param State Cell current state.
+		 * \param index The cell index inside the VectorSRMState.
+		 * \param State Cells state vector.
 		 *
 		 * \return The potential difference between resting and the potential in the defined time.
 		 */
-		double PotentialIncrement(SRMState * State);
+		float PotentialIncrement(int index, VectorSRMState * State);
 
 		/*!
 		 * \brief It checks if an spike is fired in the defined time.
 		 *
 		 * It checks if an spike is fired in the defined time.
 		 *
+		 * \param index The cell index inside the VectorSRMState.
 		 * \param State Cell current state.
 		 * \param CurrentTime Current simulation time.
 		 *
 		 * \return True if an spike is fired in the defined time. False in otherwise.
 		 */
-		bool CheckSpikeAt(SRMState * State, double CurrentTime);
+		bool CheckSpikeAt(int index, VectorSRMState * State, double CurrentTime);
 
 		/*!
 		 * \brief It loads the neuron model description.
@@ -138,10 +144,11 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 *
 		 * It abstracts the effect of an input spike in the cell.
 		 *
+		 * \param index The cell index inside the VectorSRMState.
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(SRMState * State, Interconnection * InputConnection);
+		virtual void SynapsisEffect(int index, VectorSRMState * State, Interconnection * InputConnection);
 
 	public:
 		/*!
@@ -149,9 +156,10 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 *
 		 * It generates a new neuron model object.
 		 *
+		 * \param NeuronTypeID Neuron type identificator
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		SRMTimeDrivenModel(string NeuronModelID);
+		SRMTimeDrivenModel(string NeuronTypeID, string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
@@ -168,13 +176,12 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		virtual void LoadNeuronModel() throw (EDLUTFileException);
 
 		/*!
-		 * \brief It initializes the neuron state to defined values.
+		 * \brief It return the Neuron Model VectorNeuronState 
 		 *
-		 * It initializes the neuron state to defined values.
+		 * It return the Neuron Model VectorNeuronState 
 		 *
-		 * \param State Cell current state.
 		 */
-		virtual NeuronState * InitializeState();
+		virtual VectorNeuronState * InitializeState();
 
 		/*!
 		 * \brief It processes a propagated spike (input spike in the cell).
@@ -194,12 +201,13 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 *
 		 * It updates the neuron state variables.
 		 *
+		 * \param index The cell index inside the VectorNeuronState. if index=-1, updating all cell.
 		 * \param The current neuron state.
 		 * \param CurrentTime Current time.
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		virtual bool UpdateState(NeuronState * State, double CurrentTime);
+		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime);
 
 		/*!
 		 * \brief It prints the time-driven model info.
@@ -211,6 +219,25 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 * \return The stream after the printer.
 		 */
 		virtual ostream & PrintInfo(ostream & out);
+
+		/*!
+		 * \brief It gets the neuron model type (event-driven or time-driven).
+		 *
+		 * It gets the neuron model type (event-driven or time-driven).
+		 *
+		 * \return The type of the neuron model.
+		 */
+		enum NeuronModelType GetModelType();
+
+		/*!
+		 * \brief It initialice VectorNeuronState.
+		 *
+		 * It initialice VectorSRMState.
+		 *
+		 * \param N_neurons cell number inside the VectorNeuronState.
+		 */
+		void InitializeStates(int N_neurons);
+
 };
 
-#endif /* SRMMODEL_H_ */
+#endif /* SRMTIMEDRIVENMODEL_H_ */

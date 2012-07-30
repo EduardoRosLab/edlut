@@ -42,7 +42,7 @@ void InputSpike::ProcessEvent(Simulation * CurrentSimulation){
     
     CurrentSimulation->WriteSpike(this);
 	
-	// CurrentSimulation->WriteState(neuron->GetNeuronState()->GetLastUpdateTime(), this->GetSource());
+	// CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(), this->GetSource());
 		
     if (neuron->IsOutputConnected()){
 		PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);

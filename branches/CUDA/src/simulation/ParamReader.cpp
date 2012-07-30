@@ -104,6 +104,16 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 			} else {
 				throw ParameterException(Arguments[i],"Invalid simulation time-driven step time");				
 			}
+		} else if (CurrentArgument=="-tsGPU"){
+			if (i+1<Number){
+				// Check if it is a number
+				istringstream Argument(Arguments[++i]);
+   
+   				if (!(Argument >> this->TimeDrivenStepTimeGPU))
+     				throw ParameterException(Arguments[i], "Invalid simulation time-driven step time for GPU");
+			} else {
+				throw ParameterException(Arguments[i],"Invalid simulation time-driven step time for GPU");				
+			}
 		} else if (CurrentArgument=="-if"){
 			if (i+1<Number){
 				// Check if it is a valid file and exists
@@ -289,7 +299,7 @@ bool ParamReader::FileExists(string Name){
 }
  		 
 ParamReader::ParamReader(int ArgNumber, char ** Arg) throw (ParameterException, ConnectionException) :SimulationTime(-1.0), NetworkFile(NULL), WeightsFile(NULL), WeightTime(0.0), NetworkInfo(false),
-	SimulationStepTime(0.0), TimeDrivenStepTime(-1.0), InputDrivers(), OutputDrivers(), OutputWeightDrivers() {
+	SimulationStepTime(0.0), TimeDrivenStepTime(-1.0), TimeDrivenStepTimeGPU(-1.0), InputDrivers(), OutputDrivers(), OutputWeightDrivers() {
 	ParseArguments(ArgNumber,Arg);	
 }
  		
@@ -319,6 +329,10 @@ double ParamReader::GetSimulationStepTime(){
 
 double ParamReader::GetTimeDrivenStepTime(){
 	return this->TimeDrivenStepTime;	
+}
+
+double ParamReader::GetTimeDrivenStepTimeGPU(){
+	return this->TimeDrivenStepTimeGPU;	
 }
  		
 vector<InputSpikeDriver *> ParamReader::GetInputSpikeDrivers(){

@@ -1,8 +1,8 @@
 /***************************************************************************
  *                           NeuronModel.h                                 *
  *                           -------------------                           *
- * copyright            : (C) 2011 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2011 by Jesus Garrido and Francisco Naveros  *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -21,7 +21,11 @@
  * \file NeuronModel.h
  *
  * \author Jesus Garrido
+ * \author Francisco Naveros
  * \date January 2011
+ *
+ * \note Modified on January 2012 in order to include time-driven simulation support in GPU.
+ * New state variables (TIME_DRIVEN_MODEL_CPU and TIME_DRIVEN_MODEL_GPU)
  *
  * This file declares a class which abstracts an spiking neural model.
  */
@@ -32,11 +36,12 @@
 
 using namespace std;
 
-class NeuronState;
+class VectorNeuronState;
 class InternalSpike;
 class PropagatedSpike;
 
-enum NeuronModelType {TIME_DRIVEN_MODEL, EVENT_DRIVEN_MODEL};
+enum NeuronModelType {EVENT_DRIVEN_MODEL, TIME_DRIVEN_MODEL_CPU, TIME_DRIVEN_MODEL_GPU};
+
 
 /*!
  * \class NeuronModel
@@ -56,6 +61,11 @@ class NeuronModel {
 	private:
 
 		/*!
+		 * \brief Neuron type ID.
+		*/
+		string TypeID;
+
+		/*!
 		 * \brief Neuron model ID.
 		 */
 		string ModelID;
@@ -64,7 +74,7 @@ class NeuronModel {
 		/*!
 		 * \brief Initial state of this neuron model
 		 */
-		NeuronState * InitialState;
+		VectorNeuronState * InitialState;
 
 	public:
 
@@ -75,7 +85,7 @@ class NeuronModel {
 		 *
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		NeuronModel(string NeuronModelID);
+		NeuronModel(string NeuronTypeID,string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
@@ -98,7 +108,7 @@ class NeuronModel {
 		 *
 		 * \param State Cell current state.
 		 */
-		virtual NeuronState * InitializeState() = 0;
+		virtual VectorNeuronState * InitializeState() = 0;
 
 		/*!
 		 * \brief It processes a propagated spike (input spike in the cell).
@@ -112,6 +122,15 @@ class NeuronModel {
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
 		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike) = 0;
+
+		/*!
+		 * \brief It gets the neuron type ID.
+		 *
+		 * It gets the neuron type ID.
+		 *
+		 * \return The identificator of the neuron type.
+		 */
+		string GetTypeID();
 
 		/*!
 		 * \brief It gets the neuron model ID.
@@ -141,6 +160,25 @@ class NeuronModel {
 		 * \return The stream after the printer.
 		 */
 		virtual ostream & PrintInfo(ostream & out) = 0;
+
+		/*!
+		 * \brief It gets the VectorNeuronState.
+		 *
+		 * It gets the VectorNeuronState.
+		 *
+		 * \return The VectorNeuronState.
+		 */
+		VectorNeuronState * GetVectorNeuronState();
+
+		/*!
+		 * \brief It initialice VectorNeuronState.
+		 *
+		 * It initialice VectorNeuronState.
+		 *
+		 * \param N_neurons cell number inside the VectorNeuronState.
+		 */
+		virtual void InitializeStates(int N_neurons)=0;
+
 
 };
 

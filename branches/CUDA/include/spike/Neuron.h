@@ -36,7 +36,7 @@
 using namespace std;
 
 class NeuronModel;
-class NeuronState;
+class VectorNeuronState;
 class Interconnection;
 class EventQueue;
 class InternalSpike;
@@ -70,12 +70,16 @@ class Neuron : public PrintableObject {
 		 * \brief Neuron index into the network neurons.
 		 */
 		long int index;
+
+		/*!
+		 * \brief Neuron index into the Neuron State Vector.
+		 */
+		long int index_VectorNeuronState;
    
    		/*!
    		 * \brief Neuron state variables.
    		 */
-   		//float statevars[MAXSTATEVARS];
-   		NeuronState * state;
+   		VectorNeuronState * state;
    		
    		/*!
    		 * Output connections.
@@ -153,7 +157,7 @@ class Neuron : public PrintableObject {
 		 * \param Monitored If true, the neuron activity will be registered.
 		 * \param IsOutput If true, the neuron activity will be send to output driver
 		 */
-   		void InitNeuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput);
+   		void InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel * Type, bool Monitored, bool IsOutput);
    		
    		/*!
 		 * \brief It gets the neuron index into the network.
@@ -171,7 +175,7 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The current neuron state.
    		 */
-   		NeuronState * GetNeuronState() const;
+   		VectorNeuronState * GetVectorNeuronState() const;
    		
    		/*!
    		 * \brief It gets the number of inputs to the current neuron which have associated learning.
@@ -304,6 +308,26 @@ class Neuron : public PrintableObject {
 		 * \return The number of spikes fired by the neuron.
 		 */
 		long GetSpikeCounter();
+
+		/*!
+		 * \brief Sets the neuron index into the VectorNeuronState.
+		 *
+		 * Sets the neuron index into the VectorNeuronState.
+		 *
+		 * \param Index is the value that Index_VectorNeuronState should be set to.
+		 */
+		void SetIndex_VectorNeuronState(long int Index);
+
+		/*!
+		 * \brief It gets the neuron index into the VectorNeuronState.
+		 * 
+		 * It returns the saved neuron index into the VectorNeuronState.
+		 * 
+		 * \return The neuron index.
+		 */
+		long int GetIndex_VectorNeuronState();
+
+
 };
   
 #endif /*NEURON_H_*/

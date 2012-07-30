@@ -15,11 +15,15 @@
  ***************************************************************************/
 
 #include "../../include/neuron_model/LIFTimeDrivenModel.h"
-#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/VectorNeuronState.h"
 
 #include <iostream>
 #include <cmath>
 #include <string>
+
+#ifdef _OPENMP
+	#include <omp.h>
+#endif
 
 #include "../../include/spike/EDLUTFileException.h"
 #include "../../include/spike/Neuron.h"
@@ -63,16 +67,16 @@ void LIFTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 										if(fscanf(fh,"%f",&this->grest)==1){
 											skip_comments(fh,Currentline);
 
-											this->InitialState = (NeuronState *) new NeuronState(3);
+											this->InitialState = (VectorNeuronState *) new VectorNeuronState(3, true);
 
-											for (unsigned int i=0; i<3; ++i){
-												this->InitialState->SetStateVariableAt(i,0.0);
-											}
+											//for (unsigned int i=0; i<3; ++i){
+											//	this->InitialState->SetStateVariableAt(i,0.0);
+											//}
 
-											this->InitialState->SetStateVariableAt(0,this->erest);
+											//this->InitialState->SetStateVariableAt(0,this->erest);
 
-											this->InitialState->SetLastUpdateTime(0);
-											this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
+											//this->InitialState->SetLastUpdateTime(0);
+											//this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 										} else {
 											throw EDLUTFileException(13,60,3,1,Currentline);
 										}
@@ -103,24 +107,24 @@ void LIFTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 	}
 }
 
-void LIFTimeDrivenModel::SynapsisEffect(NeuronState * State, Interconnection * InputConnection){
+void LIFTimeDrivenModel::SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection){
 
 	switch (InputConnection->GetType()){
 		case 0: {
-			float gexc = State->GetStateVariableAt(1);
+			float gexc = State->GetStateVariableAt(index,1);
 			gexc += 1e-9*InputConnection->GetWeight();
-			State->SetStateVariableAt(1,gexc);
+			State->SetStateVariableAt(index,1,gexc);
 			break;
 		}case 1:{
-			float ginh = State->GetStateVariableAt(2);
+			float ginh = State->GetStateVariableAt(index,2);
 			ginh += 1e-9*InputConnection->GetWeight();
-			State->SetStateVariableAt(2,ginh);
+			State->SetStateVariableAt(index,2,ginh);
 			break;
 		}
 	}
 }
 
-LIFTimeDrivenModel::LIFTimeDrivenModel(string NeuronModelID): TimeDrivenNeuronModel(NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), texc(0), tinh(0),
+LIFTimeDrivenModel::LIFTimeDrivenModel(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel(NeuronTypeID, NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), texc(0), tinh(0),
 		tref(0), grest(0) {
 }
 
@@ -132,8 +136,9 @@ void LIFTimeDrivenModel::LoadNeuronModel() throw (EDLUTFileException){
 	this->LoadNeuronModel(this->GetModelID()+".cfg");
 }
 
-NeuronState * LIFTimeDrivenModel::InitializeState(){
-	return (NeuronState *) new NeuronState(*((NeuronState *) this->InitialState));
+VectorNeuronState * LIFTimeDrivenModel::InitializeState(){
+	//return (VectorNeuronState *) new VectorNeuronState(*((VectorNeuronState *) this->InitialState));
+	return this->GetVectorNeuronState();
 }
 
 
@@ -142,49 +147,118 @@ InternalSpike * LIFTimeDrivenModel::ProcessInputSpike(PropagatedSpike *  InputSp
 
 	Neuron * TargetCell = inter->GetTarget();
 
-	NeuronState * CurrentState = TargetCell->GetNeuronState();
+	VectorNeuronState * CurrentState = TargetCell->GetVectorNeuronState();
+
 
 	// Add the effect of the input spike
-	this->SynapsisEffect((NeuronState *)CurrentState,inter);
+	this->SynapsisEffect(inter->GetTarget()->GetIndex_VectorNeuronState(),(VectorNeuronState *)CurrentState,inter);
+
 
 	return 0;
 }
 
 		
-bool LIFTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
+bool LIFTimeDrivenModel::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
 
-	float last_update = State->GetLastUpdateTime();
+	bool * internalSpike=State->getInternalSpike();
+	int Size=State->GetSizeState();
+	int i;
+	double last_update,elapsed_time,last_spike;
+	float vm,gexc,ginh;
+	bool spike;
+
+#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime) private(i,last_update, elapsed_time,last_spike,vm,gexc,ginh,spike)
+	for (int i=0; i< Size; i++){
+
+		last_update = State->GetLastUpdateTime(i);
+		elapsed_time = CurrentTime - last_update;
 	
-	float elapsed_time = CurrentTime - last_update;
-
-	State->AddElapsedTime(elapsed_time);
+		State->AddElapsedTime(i, elapsed_time);
 	
-	float last_spike = State->GetLastSpikeTime();
+		last_spike = State->GetLastSpikeTime(i);
 
-	float vm = State->GetStateVariableAt(0);
-	float gexc = State->GetStateVariableAt(1);
-	float ginh = State->GetStateVariableAt(2);
+		vm = State->GetStateVariableAt(i,0);
+		gexc = State->GetStateVariableAt(i,1);
+		ginh = State->GetStateVariableAt(i,2);
 
-	bool spike = false;
+		spike = false;
 
-	if (last_spike > this->tref) {
-		vm = vm + elapsed_time * ( gexc * (this->eexc - vm) + ginh * (this->einh - vm) + grest * (this->erest - vm))/this->cm;
-		if (vm > this->vthr){
-			State->NewFiredSpike();
-			spike = true;
-			vm = this->erest;
+		if (last_spike > this->tref) {
+			vm = vm + elapsed_time * ( gexc * (this->eexc - vm) + ginh * (this->einh - vm) + grest * (this->erest - vm))/this->cm;
+			if (vm > this->vthr){
+				State->NewFiredSpike(i);
+				spike = true;
+				vm = this->erest;
+			}
 		}
+		internalSpike[i]=spike;
+
+		gexc = gexc * exp(-(elapsed_time/this->texc));
+		ginh = ginh * exp(-(elapsed_time/this->tinh));
+
+		State->SetStateVariableAt(i,0,vm);
+		State->SetStateVariableAt(i,1,gexc);
+		State->SetStateVariableAt(i,2,ginh);
+		State->SetLastUpdateTime(i, CurrentTime);
 	}
-	gexc = gexc * exp(-(elapsed_time/this->texc));
-	ginh = ginh * exp(-(elapsed_time/this->tinh));
-
-	State->SetStateVariableAt(0,vm);
-	State->SetStateVariableAt(1,gexc);
-	State->SetStateVariableAt(2,ginh);
-	State->SetLastUpdateTime(CurrentTime);
-
-	return spike;
+	return false;
 }
+
+
+
+
+//bool LIFTimeDrivenModel::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
+//	float inv_cm=1/this->cm;
+//
+//
+//	double last_update = State->GetLastUpdateTime(0);
+//	double elapsed_time = CurrentTime - last_update;
+//	float elapsed_time1=elapsed_time;
+//
+//	float exponential1=exp(-(elapsed_time1/this->texc));
+//	float exponential2=exp(-(elapsed_time1/this->tinh));
+//
+//	bool * internalSpike=State->getInternalSpike();
+//	int i;
+//	double last_spike;
+//	float vm,gexc,ginh;
+//	bool spike;
+//	int Size=State->GetSizeState();
+//
+//#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime,last_update, elapsed_time, exponential1,exponential2, inv_cm) private(i,last_spike,vm,gexc,ginh,spike)
+//	for (i=0; i<Size; i++){
+//	
+//		State->AddElapsedTime(i, elapsed_time);
+//	
+//		last_spike = State->GetLastSpikeTime(i);
+//
+//		vm = State->GetStateVariableAt(i,0);
+//		gexc = State->GetStateVariableAt(i,1);
+//		ginh = State->GetStateVariableAt(i,2);
+//
+//		spike = false;
+//
+//		if (last_spike > this->tref) {
+//			vm += elapsed_time * ( gexc * (this->eexc - vm) + ginh * (this->einh - vm) + grest * (this->erest - vm))*inv_cm;
+//			if (vm > this->vthr){
+//				State->NewFiredSpike(i);
+//				spike = true;
+//				vm = this->erest;
+//			}
+//		}
+//		internalSpike[i]=spike;
+//
+//		gexc *= exponential1;
+//		ginh *= exponential2;
+//
+//		State->SetStateVariableAt(i,0,vm);
+//		State->SetStateVariableAt(i,1,gexc);
+//		State->SetStateVariableAt(i,2,ginh);
+//		State->SetLastUpdateTime(i, CurrentTime);
+//	}
+//
+//	return false;
+//}
 
 ostream & LIFTimeDrivenModel::PrintInfo(ostream & out){
 	out << "- Leaky Time-Driven Model: " << this->GetModelID() << endl;
@@ -196,4 +270,16 @@ ostream & LIFTimeDrivenModel::PrintInfo(ostream & out){
 	out << "\tInhibitory time constant: " << this->tinh << "s\tRefractory Period: " << this->tref << "s\tResting Conductance: " << this->grest << "nS" << endl;
 
 	return out;
-}		
+}	
+
+
+enum NeuronModelType LIFTimeDrivenModel::GetModelType(){
+	return TIME_DRIVEN_MODEL_CPU;
+}
+
+
+void LIFTimeDrivenModel::InitializeStates(int N_neurons){
+	float inicialization[] = {erest,0.0,0.0};
+	InitialState->InitializeStates(N_neurons, inicialization);
+}
+

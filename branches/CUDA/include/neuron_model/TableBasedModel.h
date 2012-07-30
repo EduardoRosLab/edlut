@@ -104,6 +104,11 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 */
 		float * TempStateVars;
 
+/*!
+ * \brief Vector where we temporary store initial values
+ */
+float * InitValues;
+
 		/*!
 		 * \brief It loads the neuron model description.
 		 *
@@ -137,7 +142,7 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 * \param State Cell current state.
 		 * \return The end of the refractory period. -1 if no spike is predicted.
 		 */
-		virtual double EndRefractoryPeriod(NeuronState * State);
+		virtual double EndRefractoryPeriod(int index, VectorNeuronState * State);
 
 		/*!
 		 * \brief It updates the neuron state after the evolution of the time.
@@ -147,7 +152,7 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 * \param State Cell current state.
 		 * \param CurrentTime Current simulation time.
 		 */
-		virtual void UpdateState(NeuronState * State, double CurrentTime);
+		virtual void UpdateState(int index, VectorNeuronState * State, double CurrentTime);
 
 		/*!
 		 * \brief It abstracts the effect of an input spike in the cell.
@@ -157,7 +162,7 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(NeuronState * State, Interconnection * InputConnection);
+		virtual void SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection);
 
 		/*!
 		 * \brief It returns the next spike time.
@@ -167,7 +172,7 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 * \param State Cell current state.
 		 * \return The next firing spike time. -1 if no spike is predicted.
 		 */
-		virtual double NextFiringPrediction(NeuronState * State);
+		virtual double NextFiringPrediction(int index, VectorNeuronState * State);
 
 	public:
 		/*!
@@ -178,7 +183,7 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 *
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		TableBasedModel(string NeuronModelID);
+		TableBasedModel(string NeuronTypeID, string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
@@ -201,7 +206,7 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 *
 		 * \return A new object with the neuron state.
 		 */
-		virtual NeuronState * InitializeState();
+		virtual VectorNeuronState * InitializeState();
 
 		/*!
 		 * \brief It generates the first spike (if any) in a cell.
@@ -265,6 +270,8 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 * \return The stream after the printer.
 		 */
 		virtual ostream & PrintInfo(ostream & out);
+
+virtual void InitializeStates(int N_neurons);
 
 };
 

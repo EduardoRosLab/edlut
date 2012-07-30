@@ -21,7 +21,7 @@
 #include "../../include/spike/Interconnection.h"
 
 #include "../../include/neuron_model/NeuronModel.h"
-#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/VectorNeuronState.h"
 
 #include "../../include/simulation/EventQueue.h"
 
@@ -33,14 +33,11 @@ Neuron::Neuron(){
 }
 
 Neuron::Neuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput){
-	InitNeuron(NewIndex,Type,Monitored,IsOutput);
+	InitNeuron(NewIndex,-1,Type,Monitored,IsOutput);
 }
 
 Neuron::~Neuron(){
-	if (this->state!=0){
-		delete this->state;
-	}
-
+	//state is deleted en Neuron Model.
 	if (this->InputLearningConnections!=0){
 		delete [] this->InputLearningConnections;
 	}
@@ -50,7 +47,7 @@ Neuron::~Neuron(){
 	}
 }
 
-void Neuron::InitNeuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput){
+void Neuron::InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel * Type, bool Monitored, bool IsOutput){
 
 	this->type = Type;
 
@@ -66,6 +63,8 @@ void Neuron::InitNeuron(int NewIndex, NeuronModel * Type, bool Monitored, bool I
 
 	this->index = NewIndex;
 
+	this->index_VectorNeuronState=index_VectorNeuronState;
+
 	this->monitored=Monitored;
 
 	this->spikeCounter = 0; // For LSAM
@@ -77,7 +76,7 @@ long int Neuron::GetIndex() const{
 	return this->index;	
 }
 
-NeuronState * Neuron::GetNeuronState() const{
+VectorNeuronState * Neuron::GetVectorNeuronState() const{
 	return this->state;
 }
    		
@@ -163,4 +162,12 @@ void Neuron::SetSpikeCounter(long n) {
 /* For LSAM */
 long Neuron::GetSpikeCounter() {
   return this->spikeCounter;
+}
+
+void Neuron::SetIndex_VectorNeuronState(long int index){
+	index_VectorNeuronState=index;
+}
+
+long int Neuron::GetIndex_VectorNeuronState(){
+	return index_VectorNeuronState;
 }
