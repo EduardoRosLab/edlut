@@ -37,7 +37,7 @@ EventQueue::~EventQueue(){
 	delete [] this->Events;
 }
 
-inline void EventQueue::SwapEvents(unsigned int c1, unsigned int c2){
+void EventQueue::SwapEvents(unsigned int c1, unsigned int c2){
 	EventForQueue exchange;
 	exchange=*(this->Events+c2);
 	*(this->Events+c2)=*(this->Events+c1);
@@ -81,7 +81,7 @@ void EventQueue::InsertEvent(Event * event){
     return;
 }
 
-inline unsigned int EventQueue::Size() const{
+unsigned int EventQueue::Size() const{
 	return this->NumberOfElements-1;
 }
    		

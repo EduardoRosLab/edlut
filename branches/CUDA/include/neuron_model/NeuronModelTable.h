@@ -35,8 +35,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-//#include <stdint.h>
-#include "../stdint.h"
+#ifdef _WIN32 || _WIN64
+	#include "../stdint_WIN.h"
+#else 
+	#include <stdint.h>
+#endif
+
 
 
 #include "../spike/EDLUTFileException.h"
