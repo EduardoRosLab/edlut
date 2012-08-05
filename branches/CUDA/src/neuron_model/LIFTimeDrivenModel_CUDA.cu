@@ -52,96 +52,133 @@ void destroySynchronize(){
 }
 
 
+
+//__global__ void UpdateState(float * parameter, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime){
+//    int index = blockIdx.x * blockDim.x + threadIdx.x;
+//    int index4, index5;
+
+//    while (index<SizeStates){
+//        index4 = index*4;
+//        index5 = index*5;
+
+//        double elapsed_time =CurrentTime - LastUpdateGPU[index];
+//        float elapsed_time1 =elapsed_time;
+//        LastSpikeTimeGPU[index]+=elapsed_time;
+//        double last_spike=LastSpikeTimeGPU[index];
+
+//        float vm = StateGPU[index5];
+//        float gampa = StateGPU[index5+1]+AuxStateGPU[index4];
+//        float gnmda = StateGPU[index5+2]+AuxStateGPU[index4+1];
+//        float ginh = StateGPU[index5+3]+AuxStateGPU[index4+2];
+//        float ggj = StateGPU[index5+4]+AuxStateGPU[index4+3];
+
+//        bool spike=false;
+
+//        if (last_spike > parameter[9]) {
+//            float iampa = gampa*(parameter[0]-vm);
+//            float gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*1.2/3.57);
+//            float inmda = gnmda*gnmdainf*(parameter[0]-vm);
+//            float iinh = ginh*(parameter[1]-vm);
+//            vm = vm + elapsed_time * (iampa + inmda + iinh + parameter[10]* (parameter[2]-vm))*1.e-9/parameter[4];
+
+//            float vm_cou = vm + parameter[11] * ggj;
+
+
+//            if (vm_cou > parameter[3]){
+//                LastSpikeTimeGPU[index]=0;
+//                spike = true;
+//                vm = parameter[2];
+//            }
+//        }
+
+//        InternalSpikeGPU[index]=spike;
+	
+//        gampa *= exp(-(elapsed_time1/parameter[5]));
+//        gnmda *= exp(-(elapsed_time1/parameter[6]));
+//        ginh *= exp(-(elapsed_time1/parameter[7]));
+//        ggj *= exp(-(elapsed_time1/parameter[8]));
+
+
+//        StateGPU[index5]=vm;
+//        StateGPU[index5+1]=gampa;
+//        StateGPU[index5+2]=gnmda;
+//        StateGPU[index5+3]=ginh;
+//        StateGPU[index5+4]=ggj;
+//        LastUpdateGPU[index]=CurrentTime;
+
+//        index+=blockDim.x*gridDim.x;
+//    }
+//}
+
+
+
 __global__ void UpdateState(float * parameter, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime){
-	float inv_param_4=1/parameter[4];
+    float inv_param_4=1.e-9/parameter[4];
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
-	int index2, index3;
+    int index4, index5;
 
-	double elapsed_time =CurrentTime - LastUpdateGPU[index];
-	float elapsed_time1 =elapsed_time;
+    double elapsed_time =CurrentTime - LastUpdateGPU[index];
+    float elapsed_time1 =elapsed_time;
 
-	float exponential1=exp(-(elapsed_time1/parameter[5]));
-	float exponential2=exp(-(elapsed_time1/parameter[6]));
+	float exp_gampa = exp(-(elapsed_time1/parameter[5]));
+	float exp_gnmda = exp(-(elapsed_time1/parameter[6]));
+	float exp_ginh = exp(-(elapsed_time1/parameter[7]));
+	float exp_ggj = exp(-(elapsed_time1/parameter[8]));
 
-	while (index<SizeStates){
-		index2 = index*2;
-		index3 = index*3;
+    while (index<SizeStates){
+        index4 = index*4;
+        index5 = index*5;
 
-		double last_spike=LastSpikeTimeGPU[index]+elapsed_time;
-		LastSpikeTimeGPU[index]+=elapsed_time;
+        LastSpikeTimeGPU[index]+=elapsed_time;
+        double last_spike=LastSpikeTimeGPU[index];
 
-		float vm = StateGPU[index3];
-		float gexc = StateGPU[index3+1]+AuxStateGPU[index2];
-		float ginh = StateGPU[index3+2]+AuxStateGPU[index2+1];
+        float vm = StateGPU[index5];
+        float gampa = StateGPU[index5+1]+AuxStateGPU[index4];
+        float gnmda = StateGPU[index5+2]+AuxStateGPU[index4+1];
+        float ginh = StateGPU[index5+3]+AuxStateGPU[index4+2];
+        float ggj = StateGPU[index5+4]+AuxStateGPU[index4+3];
 
-		bool spike=false;
+        bool spike=false;
 
-		if (last_spike > parameter[7]) {
-			vm = vm + elapsed_time * ( gexc * (parameter[0] - vm) + ginh * (parameter[1] - vm) + parameter[8] * (parameter[2] - vm))*inv_param_4;
-			if (vm > parameter[3]){
-				LastSpikeTimeGPU[index]=0;
-				spike = true;
-				vm = parameter[2];
-			}
-		}
+        if (last_spike > parameter[9]) {
+            float iampa = gampa*(parameter[0]-vm);
+            //float gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*1.2/3.57);
+			float gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*0.336134453);
+            float inmda = gnmda*gnmdainf*(parameter[0]-vm);
+            float iinh = ginh*(parameter[1]-vm);
+            vm = vm + elapsed_time * (iampa + inmda + iinh + parameter[10]* (parameter[2]-vm))*inv_param_4;
 
-		InternalSpikeGPU[index]=spike;
+            float vm_cou = vm + parameter[11] * ggj;
+
+
+            if (vm_cou > parameter[3]){
+                LastSpikeTimeGPU[index]=0;
+                spike = true;
+                vm = parameter[2];
+            }
+        }
+
+        InternalSpikeGPU[index]=spike;
 	
-		gexc = gexc * exponential1;
-		ginh = ginh * exponential2;
+        gampa *= exp_gampa;
+        gnmda *= exp_gnmda;
+        ginh *= exp_ginh;
+        ggj *= exp_ggj;
 
-		StateGPU[index3]=vm;
-		StateGPU[index3+1]=gexc;
-		StateGPU[index3+2]=ginh;
+
+        StateGPU[index5]=vm;
+        StateGPU[index5+1]=gampa;
+        StateGPU[index5+2]=gnmda;
+        StateGPU[index5+3]=ginh;
+        StateGPU[index5+4]=ggj;
         LastUpdateGPU[index]=CurrentTime;
 
-		index+=blockDim.x*gridDim.x;
-	}
+        index+=blockDim.x*gridDim.x;
+    }
 }
 
 
-//__global__ void UpdateState(float * parameter, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime){
-//	int index = blockIdx.x * blockDim.x + threadIdx.x;
-//	int index2, index3;
-//
-//	while (index<SizeStates){
-//		index2 = index*2;
-//		index3 = index*3;
-//
-//		double elapsed_time =CurrentTime - LastUpdateGPU[index];
-//		float elapsed_time1 =elapsed_time;
-//		LastSpikeTimeGPU[index]+=elapsed_time;
-//		double last_spike=LastSpikeTimeGPU[index];
-//
-//		float vm = StateGPU[index3];
-//		float gexc = StateGPU[index3+1]+AuxStateGPU[index2];
-//		float ginh = StateGPU[index3+2]+AuxStateGPU[index2+1];
-//
-//		bool spike=false;
-//
-//		if (last_spike > parameter[7]) {
-//			vm = vm + elapsed_time * ( gexc * (parameter[0] - vm) + ginh * (parameter[1] - vm) + parameter[8] * (parameter[2] - vm))/parameter[4];
-//			if (vm > parameter[3]){
-//				LastSpikeTimeGPU[index]=0;
-//				spike = true;
-//				vm = parameter[2];
-//			}
-//		}
-//
-//		InternalSpikeGPU[index]=spike;
-//	
-//		gexc = gexc * exp(-(elapsed_time1/parameter[5]));
-//		ginh = ginh * exp(-(elapsed_time1/parameter[6]));
-//
-//		StateGPU[index3]=vm;
-//		StateGPU[index3+1]=gexc;
-//		StateGPU[index3+2]=ginh;
-//        LastUpdateGPU[index]=CurrentTime;
-//
-//		index+=blockDim.x*gridDim.x;
-//	}
-//}
 
 
 void UpdateStateGPU(float * parameter, float * AuxStateGPU, float * AuxStateCPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, bool * InternalSpikeCPU, int SizeStates, double CurrentTime){
@@ -207,12 +244,12 @@ void UpdateStateGPU(float * parameter, float * AuxStateGPU, float * AuxStateCPU,
 			}
 		}
 
-		HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU, AuxStateCPU, sizeof(float)*2*size[0] , cudaMemcpyHostToDevice, stream[0]));
+		HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU, AuxStateCPU, sizeof(float)*4*size[0] , cudaMemcpyHostToDevice, stream[0]));
 		for (int i = 0; i < N_Stream_use; ++i) {
 			if((i+1)<N_Stream_use){
-				HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU + offset[i+1] * 2, AuxStateCPU + offset[i+1] * 2, sizeof(float)*2*size[i+1] , cudaMemcpyHostToDevice, stream[i+1]));
+				HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU + offset[i+1] * 4, AuxStateCPU + offset[i+1] * 4, sizeof(float)*4*size[i+1] , cudaMemcpyHostToDevice, stream[i+1]));
 			}
-			UpdateState<<<N_block,N_thread,0,stream[i]>>>(parameter, AuxStateGPU+ offset[i] * 2, StateGPU+ offset[i] * 3, LastUpdateGPU + offset[i], LastSpikeTimeGPU + offset[i], InternalSpikeGPU + offset[i], size[i], CurrentTime);
+			UpdateState<<<N_block,N_thread,0,stream[i]>>>(parameter, AuxStateGPU+ offset[i] * 4, StateGPU+ offset[i] * 5, LastUpdateGPU + offset[i], LastSpikeTimeGPU + offset[i], InternalSpikeGPU + offset[i], size[i], CurrentTime);
 			HANDLE_ERROR(cudaMemcpyAsync(InternalSpikeCPU + offset[i], InternalSpikeGPU + offset[i], sizeof(bool)*size[i],cudaMemcpyDeviceToHost, stream[i]));
 		}
 		for (int i = 0; i < N_Stream; ++i){
@@ -222,7 +259,7 @@ void UpdateStateGPU(float * parameter, float * AuxStateGPU, float * AuxStateCPU,
 	
     //GPU uses memory transferences
 	else{
-		HANDLE_ERROR(cudaMemcpy(AuxStateGPU,AuxStateCPU,2*SizeStates*sizeof(float),cudaMemcpyHostToDevice));
+		HANDLE_ERROR(cudaMemcpy(AuxStateGPU,AuxStateCPU,4*SizeStates*sizeof(float),cudaMemcpyHostToDevice));
 		N_thread = 128;
 		N_block=prop.multiProcessorCount*4;
 		if((SizeStates+N_thread-1)/N_thread < N_block){
@@ -306,12 +343,12 @@ void UpdateStateGPU(float * elapsed_time, float * parameter, float * AuxStateGPU
 			    }
 		    }
 
-		    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU, AuxStateCPU, sizeof(float)*2*size[0] , cudaMemcpyHostToDevice, stream[0]));
+		    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU, AuxStateCPU, sizeof(float)*4*size[0] , cudaMemcpyHostToDevice, stream[0]));
 		    for (int i = 0; i < N_Stream_use; ++i) {
 			    if((i+1)<N_Stream_use){
-				    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU + offset[i+1] * 2, AuxStateCPU + offset[i+1] * 2, sizeof(float)*2*size[i+1] , cudaMemcpyHostToDevice, stream[i+1]));
+				    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU + offset[i+1] * 4, AuxStateCPU + offset[i+1] * 4, sizeof(float)*4*size[i+1] , cudaMemcpyHostToDevice, stream[i+1]));
 			    }
-			    UpdateState<<<N_block,N_thread,0,stream[i]>>>(parameter, AuxStateGPU+ offset[i] * 2, StateGPU+ offset[i] * 3, LastUpdateGPU + offset[i], LastSpikeTimeGPU + offset[i], InternalSpikeGPU + offset[i], size[i], CurrentTime);
+			    UpdateState<<<N_block,N_thread,0,stream[i]>>>(parameter, AuxStateGPU+ offset[i] * 4, StateGPU+ offset[i] * 5, LastUpdateGPU + offset[i], LastSpikeTimeGPU + offset[i], InternalSpikeGPU + offset[i], size[i], CurrentTime);
 			    HANDLE_ERROR(cudaMemcpyAsync(InternalSpikeCPU + offset[i], InternalSpikeGPU + offset[i], sizeof(bool)*size[i],cudaMemcpyDeviceToHost, stream[i]));
 		    }
 		    for (int i = 0; i < N_Stream; ++i){
@@ -321,7 +358,7 @@ void UpdateStateGPU(float * elapsed_time, float * parameter, float * AuxStateGPU
     	
         //GPU uses memory transferences
 	    else{
-		    HANDLE_ERROR(cudaMemcpy(AuxStateGPU,AuxStateCPU,2*SizeStates*sizeof(float),cudaMemcpyHostToDevice));
+		    HANDLE_ERROR(cudaMemcpy(AuxStateGPU,AuxStateCPU,4*SizeStates*sizeof(float),cudaMemcpyHostToDevice));
 		    N_thread = 128;
 		    N_block=prop.multiProcessorCount*4;
 		    if((SizeStates+N_thread-1)/N_thread < N_block){
@@ -343,142 +380,220 @@ void UpdateStateGPU(float * elapsed_time, float * parameter, float * AuxStateGPU
 }
 
 
+
+//------------------------Runge Kutta------------------------
+
+//__global__ void UpdateStateRK(float * parameter, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime){
+//    int index = blockIdx.x * blockDim.x + threadIdx.x;
+//    int index4, index5;
+
+//    while (index<SizeStates){
+//        index4 = index*4;
+//        index5 = index*5;
+
+//        double elapsed_time =CurrentTime - LastUpdateGPU[index];
+//        float elapsed_time1 =elapsed_time;
+//        LastSpikeTimeGPU[index]+=elapsed_time;
+//        double last_spike=LastSpikeTimeGPU[index];
+
+//        float vm = StateGPU[index5];
+//        float gampa = StateGPU[index5+1]+AuxStateGPU[index4];
+//        float gnmda = StateGPU[index5+2]+AuxStateGPU[index4+1];
+//        float ginh = StateGPU[index5+3]+AuxStateGPU[index4+2];
+//        float ggj = StateGPU[index5+4]+AuxStateGPU[index4+3];
+
+//        float nextgampa = gampa * exp(-(elapsed_time1/parameter[5]));
+//        float nextgnmda = gnmda * exp(-(elapsed_time1/parameter[6]));
+//        float nextginh = ginh * exp(-(elapsed_time1/parameter[7]));
+//        float nextggj = ggj * exp(-(elapsed_time1/parameter[8]));
+
+//        bool spike=false;
+
+//        if (last_spike > parameter[9]) {
+//            // 4th order Runge-Kutta terms
+//            // 1st term
+//            float iampa = gampa*(parameter[0]-vm);
+//            float gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*1.2/3.57);
+//            float inmda = gnmda*gnmdainf*(parameter[0]-vm);
+//            float iinh = ginh*(parameter[1]-vm);
+			
+//            float k1 = (iampa + inmda + iinh + parameter[10] * (parameter[2]-vm))*1.e-9/parameter[4];
+
+//            // 2nd term
+//            float gampaaux = gampa * exp(-((elapsed_time1/2)/parameter[5]));
+//            float gnmdaaux = gnmda * exp(-((elapsed_time1/2)/parameter[6]));
+//            float ginhaux = ginh * exp(-((elapsed_time1/2)/parameter[7]));
+//            float yaux = vm+(k1*elapsed_time/2);
+			
+//            float iampaaux = gampaaux*(parameter[0]-yaux);
+//            float gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+//            float inmdaaux = gnmdaaux*gnmdainfaux*(parameter[0]-yaux);
+//            float iinhaux = ginhaux*(parameter[1]-yaux);
+					
+//            float k2 = (iampaaux + inmdaaux + iinhaux + parameter[10] * (parameter[2] - yaux))*1.e-9/parameter[4];
+
+//            // 3rd term
+//            yaux = vm+(k2*elapsed_time/2);
+
+//            iampaaux = gampaaux*(parameter[0]-yaux);
+//            gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+//            inmdaaux = gnmdaaux*gnmdainfaux*(parameter[0]-yaux);
+//            iinhaux = ginhaux*(parameter[1]-yaux);
+			
+//            float k3 = (iampaaux + inmdaaux + iinhaux + parameter[10] * (parameter[2] - yaux))*1.e-9/parameter[4];
+
+//            // 4rd term
+//            yaux = vm+(k3*elapsed_time);
+
+//            iampaaux = nextgampa*(parameter[0]-yaux);
+//            gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+//            inmdaaux = nextgampa*gnmdainfaux*(parameter[0]-yaux);
+//            iinhaux = nextginh*(parameter[1]-yaux);
+			
+//            float k4 = (iampaaux + inmdaaux + iinhaux + parameter[10] * (parameter[2] - yaux))*1.e-9/parameter[4];
+
+//            vm = vm + (k1+2*k2+2*k3+k4)*elapsed_time/6;
+
+//            float vm_cou = vm + parameter[11] * ggj;
+
+
+//            if (vm_cou > parameter[3]){
+//                LastSpikeTimeGPU[index]=0;
+//                spike = true;
+//                vm = parameter[2];
+//            }
+//        }
+
+//        InternalSpikeGPU[index]=spike;
+	
+//        gampa = nextgampa;
+//        gnmda = nextgnmda;
+//        ginh = nextginh;
+//        ggj = nextggj;
+
+
+//        StateGPU[index5]=vm;
+//        StateGPU[index5+1]=gampa;
+//        StateGPU[index5+2]=gnmda;
+//        StateGPU[index5+3]=ginh;
+//        StateGPU[index5+4]=ggj;
+//        LastUpdateGPU[index]=CurrentTime;
+
+//        index+=blockDim.x*gridDim.x;
+//    }
+//}
+
+
 __global__ void UpdateStateRK(float * parameter, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime){
-	float inv_param_4=1/parameter[4];
-	
-	int index = blockIdx.x * blockDim.x + threadIdx.x;
-	int index2, index3;
-	double elapsed_time =CurrentTime - LastUpdateGPU[index];
-	
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index4, index5;
+
+    double elapsed_time =CurrentTime - LastUpdateGPU[index];
 	float elapsed_time1 =elapsed_time;
-	float elapsed_time2 =elapsed_time/2;
 
-	
-	float exponential1=exp(-(elapsed_time1/parameter[5]));
-	float exponential2=exp(-(elapsed_time1/parameter[6]));
+	float exp_gampa = exp(-(elapsed_time1/parameter[5]));
+	float exp_gnmda = exp(-(elapsed_time1/parameter[6]));
+	float exp_ginh = exp(-(elapsed_time1/parameter[7]));
+	float exp_ggj = exp(-(elapsed_time1/parameter[8]));
 
-	float exponential3=exp(-((elapsed_time2)/parameter[5]));
-	float exponential4=exp(-((elapsed_time2)/parameter[6]));
+	float exp_gampa2 = exp(-((elapsed_time1/2)/parameter[5]));
+	float exp_gnmda2 = exp(-((elapsed_time1/2)/parameter[6]));
+	float exp_ginh2 = exp(-((elapsed_time1/2)/parameter[7]));
 
-	while (index<SizeStates){
-		index2 = index*2;
-		index3 = index*3;
-	
-		double last_spike=LastSpikeTimeGPU[index]+elapsed_time;
-		LastSpikeTimeGPU[index]+=elapsed_time;
+    while (index<SizeStates){
+        index4 = index*4;
+        index5 = index*5;
 
-		float vm = StateGPU[index3];
-		float gexc = StateGPU[index3+1]+AuxStateGPU[index2];
-		float ginh = StateGPU[index3+2]+AuxStateGPU[index2+1];
+        LastSpikeTimeGPU[index]+=elapsed_time;
+        double last_spike=LastSpikeTimeGPU[index];
 
-		bool spike=false;
+        float vm = StateGPU[index5];
+        float gampa = StateGPU[index5+1]+AuxStateGPU[index4];
+        float gnmda = StateGPU[index5+2]+AuxStateGPU[index4+1];
+        float ginh = StateGPU[index5+3]+AuxStateGPU[index4+2];
+        float ggj = StateGPU[index5+4]+AuxStateGPU[index4+3];
 
+		float nextgampa = gampa * exp_gampa;
+		float nextgnmda = gnmda * exp_gnmda;
+		float nextginh = ginh * exp_ginh;
+		float nextggj = ggj * exp_ggj;
 
-		float nextgexc = gexc * exponential1;
-		float nextginh = ginh * exponential2;
-		if (last_spike > parameter[7]) {
+        bool spike=false;
+
+        if (last_spike > parameter[9]) {
 			// 4th order Runge-Kutta terms
 			// 1st term
-			float k1 = (gexc * (parameter[0] - vm) + ginh * (parameter[1] - vm) + parameter[8] * (parameter[2]-vm))*inv_param_4;
+			float iampa = gampa*(parameter[0]-vm);
+			float gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*1.2/3.57);
+			float inmda = gnmda*gnmdainf*(parameter[0]-vm);
+			float iinh = ginh*(parameter[1]-vm);
+			
+			float k1 = (iampa + inmda + iinh + parameter[10] * (parameter[2]-vm))*1.e-9/parameter[4];
 
 			// 2nd term
-			float gexcaux = gexc * exponential3;
-			float ginhaux = ginh * exponential4;
+			float gampaaux = gampa * exp_gampa2;
+			float gnmdaaux = gnmda * exp_gnmda2;
+			float ginhaux = ginh * exp_ginh2;
 			float yaux = vm+(k1*elapsed_time/2);
-			float k2 = (gexcaux * (parameter[0] - yaux) + ginhaux * (parameter[1] - yaux) + parameter[8] * (parameter[2] - yaux))*inv_param_4;
+			
+			float iampaaux = gampaaux*(parameter[0]-yaux);
+			float gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+			float inmdaaux = gnmdaaux*gnmdainfaux*(parameter[0]-yaux);
+			float iinhaux = ginhaux*(parameter[1]-yaux);
+					
+			float k2 = (iampaaux + inmdaaux + iinhaux + parameter[10] * (parameter[2] - yaux))*1.e-9/parameter[4];
 
 			// 3rd term
 			yaux = vm+(k2*elapsed_time/2);
-			float k3 = (gexcaux * (parameter[0] - yaux) + ginhaux * (parameter[1] - yaux) + parameter[8] * (parameter[2] - yaux))*inv_param_4;
+
+			iampaaux = gampaaux*(parameter[0]-yaux);
+			gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+			inmdaaux = gnmdaaux*gnmdainfaux*(parameter[0]-yaux);
+			iinhaux = ginhaux*(parameter[1]-yaux);
+			
+			float k3 = (iampaaux + inmdaaux + iinhaux + parameter[10] * (parameter[2] - yaux))*1.e-9/parameter[4];
 
 			// 4rd term
-			gexcaux = nextgexc;
-			ginhaux = nextginh;
 			yaux = vm+(k3*elapsed_time);
-			float k4 = (gexcaux * (parameter[0] - yaux) + ginhaux * (parameter[1] - yaux) + parameter[8] * (parameter[2] - yaux))*inv_param_4;
 
-			vm = vm + (k1+2*(k2+k3)+k4)*elapsed_time/6;
+			iampaaux = nextgampa*(parameter[0]-yaux);
+			gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+			inmdaaux = nextgampa*gnmdainfaux*(parameter[0]-yaux);
+			iinhaux = nextginh*(parameter[1]-yaux);
+			
+			float k4 = (iampaaux + inmdaaux + iinhaux + parameter[10] * (parameter[2] - yaux))*1.e-9/parameter[4];
 
-			if (vm > parameter[3]){
-				LastSpikeTimeGPU[index]=0;
-				spike = true;
-				vm = parameter[2];
-			}
-		}
+			vm = vm + (k1+2*k2+2*k3+k4)*elapsed_time/6;
 
-		InternalSpikeGPU[index]=spike;
+			float vm_cou = vm + parameter[11] * ggj;
+
+
+            if (vm_cou > parameter[3]){
+                LastSpikeTimeGPU[index]=0;
+                spike = true;
+                vm = parameter[2];
+            }
+        }
+
+        InternalSpikeGPU[index]=spike;
 	
-		StateGPU[index3]=vm;
-		StateGPU[index3+1]=nextgexc;
-		StateGPU[index3+2]=nextginh;
+        gampa = nextgampa;
+        gnmda = nextgnmda;
+        ginh = nextginh;
+        ggj = nextggj;
+
+
+        StateGPU[index5]=vm;
+        StateGPU[index5+1]=gampa;
+        StateGPU[index5+2]=gnmda;
+        StateGPU[index5+3]=ginh;
+        StateGPU[index5+4]=ggj;
         LastUpdateGPU[index]=CurrentTime;
 
-		index+=blockDim.x*gridDim.x;
-	}
+        index+=blockDim.x*gridDim.x;
+    }
 }
 
-//__global__ void UpdateStateRK(float * parameter, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime){
-//	int index = blockIdx.x * blockDim.x + threadIdx.x;
-//	int index2, index3;
-//
-//	while (index<SizeStates){
-//		index2 = index*2;
-//		index3 = index*3;
-//
-//		double elapsed_time =CurrentTime - LastUpdateGPU[index];
-//		LastSpikeTimeGPU[index]+=elapsed_time;
-//		double last_spike=LastSpikeTimeGPU[index];
-//
-//		float vm = StateGPU[index3];
-//		float gexc = StateGPU[index3+1]+AuxStateGPU[index2];
-//		float ginh = StateGPU[index3+2]+AuxStateGPU[index2+1];
-//
-//		bool spike=false;
-//
-//
-//		float nextgexc = gexc * exp(-(elapsed_time/parameter[5]));
-//		float nextginh = ginh * exp(-(elapsed_time/parameter[6]));
-//
-//		if (last_spike > parameter[7]) {
-//			// 4th order Runge-Kutta terms
-//			// 1st term
-//			float k1 = (gexc * (parameter[0] - vm) + ginh * (parameter[1] - vm) + parameter[8] * (parameter[2]-vm))/parameter[4];
-//
-//			// 2nd term
-//			float gexcaux = gexc * exp(-((elapsed_time/2)/parameter[5]));
-//			float ginhaux = ginh * exp(-((elapsed_time/2)/parameter[6]));
-//			float yaux = vm+(k1*elapsed_time/2);
-//			float k2 = (gexcaux * (parameter[0] - yaux) + ginhaux * (parameter[1] - yaux) + parameter[8] * (parameter[2] - yaux))/parameter[4];
-//
-//			// 3rd term
-//			yaux = vm+(k2*elapsed_time/2);
-//			float k3 = (gexcaux * (parameter[0] - yaux) + ginhaux * (parameter[1] - yaux) + parameter[8] * (parameter[2] - yaux))/parameter[4];
-//
-//			// 4rd term
-//			gexcaux = nextgexc;
-//			ginhaux = nextginh;
-//			yaux = vm+(k3*elapsed_time);
-//			float k4 = (gexcaux * (parameter[0] - yaux) + ginhaux * (parameter[1] - yaux) + parameter[8] * (parameter[2] - yaux))/parameter[4];
-//
-//			vm = vm + (k1+2*k2+2*k3+k4)*elapsed_time/6;
-//
-//			if (vm > parameter[3]){
-//				LastSpikeTimeGPU[index]=0;
-//				spike = true;
-//				vm = parameter[2];
-//			}
-//		}
-//
-//		InternalSpikeGPU[index]=spike;
-//	
-//		StateGPU[index3]=vm;
-//		StateGPU[index3+1]=nextgexc;
-//		StateGPU[index3+2]=nextginh;
-//        LastUpdateGPU[index]=CurrentTime;
-//
-//		index+=blockDim.x*gridDim.x;
-//	}
-//}
 
 
 void UpdateStateRKGPU(float * parameter, float * AuxStateGPU, float * AuxStateCPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, bool * InternalSpikeCPU, int SizeStates, double CurrentTime){
@@ -490,90 +605,87 @@ void UpdateStateRKGPU(float * parameter, float * AuxStateGPU, float * AuxStateCP
     //GPU can use MapHostMemory
     if(prop.canMapHostMemory){
         N_thread = 128;
-        N_block=prop.multiProcessorCount*4;
-        if((SizeStates+N_thread-1)/N_thread < N_block){
-            N_block = (SizeStates+N_thread-1)/N_thread;
-        }
-        UpdateStateRK<<<N_block,N_thread>>>(parameter, AuxStateGPU, StateGPU, LastUpdateGPU, LastSpikeTimeGPU, InternalSpikeGPU, SizeStates, CurrentTime);
+		N_block=prop.multiProcessorCount*4;
+		if((SizeStates+N_thread-1)/N_thread < N_block){
+			N_block = (SizeStates+N_thread-1)/N_thread;
+		}
+		UpdateStateRK<<<N_block,N_thread>>>(parameter, AuxStateGPU, StateGPU, LastUpdateGPU, LastSpikeTimeGPU, InternalSpikeGPU, SizeStates, CurrentTime);
 
     }
 
     //GPU can transfer memory and execute kernel at same time.
-    else{ 
-        if(prop.deviceOverlap){
-		    N_thread = 128;
-		    N_block=prop.multiProcessorCount*4;
-		    if((SizeStates+N_thread-1)/N_thread < N_block){
-			    N_block = (SizeStates+N_thread-1)/N_thread;
-		    }
+	else if(prop.deviceOverlap){
+		N_thread = 128;
+		N_block=prop.multiProcessorCount*4;
+		if((SizeStates+N_thread-1)/N_thread < N_block){
+			N_block = (SizeStates+N_thread-1)/N_thread;
+		}
 
-		    const int N_Stream=4;
-    		
-		    cudaStream_t stream[N_Stream];
-		    for (int i = 0; i < N_Stream; ++i){
-			    HANDLE_ERROR(cudaStreamCreate(&stream[i]));
-		    }
+		const int N_Stream=4;
+		
+		cudaStream_t stream[N_Stream];
+		for (int i = 0; i < N_Stream; ++i){
+			HANDLE_ERROR(cudaStreamCreate(&stream[i]));
+		}
 
-		    int size[N_Stream];
-		    int offset[N_Stream];
+		int size[N_Stream];
+		int offset[N_Stream];
 
-		    int N_Stream_use;
-		    int aux=SizeStates/(N_thread*N_block);
-		    if(aux<N_Stream){
-			    if(aux==0){
-				    N_Stream_use=1;
-			    }else{
-				    N_Stream_use=aux;
-			    }
-			    for (int i = 0; i < N_Stream_use; ++i){
-				    offset[i]=i*N_thread*N_block;
-				    if(i==(N_Stream_use-1)){
-					    size[i]=SizeStates-offset[i];
-				    }else{
-					    size[i]=N_thread*N_block;
-				    }
-			    }
-		    }else{
-			    N_Stream_use=N_Stream;
-			    for (int i = 0; i < N_Stream_use; ++i){
-				    offset[i]=i*N_thread*N_block * (aux/N_Stream_use);
-				    if(i==(N_Stream_use-1)){
-					    size[i]=SizeStates-offset[i];
-				    }else{
-					    size[i]=N_thread*N_block * (aux/N_Stream_use);
-				    }
-			    }
-		    }
+		int N_Stream_use;
+		int aux=SizeStates/(N_thread*N_block);
+		if(aux<N_Stream){
+			if(aux==0){
+				N_Stream_use=1;
+			}else{
+				N_Stream_use=aux;
+			}
+			for (int i = 0; i < N_Stream_use; ++i){
+				offset[i]=i*N_thread*N_block;
+				if(i==(N_Stream_use-1)){
+					size[i]=SizeStates-offset[i];
+				}else{
+					size[i]=N_thread*N_block;
+				}
+			}
+		}else{
+			N_Stream_use=N_Stream;
+			for (int i = 0; i < N_Stream_use; ++i){
+				offset[i]=i*N_thread*N_block * (aux/N_Stream_use);
+				if(i==(N_Stream_use-1)){
+					size[i]=SizeStates-offset[i];
+				}else{
+					size[i]=N_thread*N_block * (aux/N_Stream_use);
+				}
+			}
+		}
 
-		    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU, AuxStateCPU, sizeof(float)*2*size[0] , cudaMemcpyHostToDevice, stream[0]));
-		    for (int i = 0; i < N_Stream_use; ++i) {
-			    if((i+1)<N_Stream_use){
-				    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU + offset[i+1] * 2, AuxStateCPU + offset[i+1] * 2, sizeof(float)*2*size[i+1] , cudaMemcpyHostToDevice, stream[i+1]));
-			    }
-			    UpdateStateRK<<<N_block,N_thread,0,stream[i]>>>(parameter, AuxStateGPU+ offset[i] * 2, StateGPU+ offset[i] * 3, LastUpdateGPU + offset[i], LastSpikeTimeGPU + offset[i], InternalSpikeGPU + offset[i], size[i], CurrentTime);
-			    HANDLE_ERROR(cudaMemcpyAsync(InternalSpikeCPU + offset[i], InternalSpikeGPU + offset[i], sizeof(bool)*size[i],cudaMemcpyDeviceToHost, stream[i]));
-		    }
-		    for (int i = 0; i < N_Stream; ++i){
-			    HANDLE_ERROR(cudaStreamDestroy(stream[i]));
-		    }
-	    }
-    	
-        //GPU uses memory transferences
-	    else{
-		    HANDLE_ERROR(cudaMemcpy(AuxStateGPU,AuxStateCPU,2*SizeStates*sizeof(float),cudaMemcpyHostToDevice));
-		    N_thread = 128;
-		    N_block=prop.multiProcessorCount*4;
-		    if((SizeStates+N_thread-1)/N_thread < N_block){
-			    N_block = (SizeStates+N_thread-1)/N_thread;
-		    }
-		    UpdateStateRK<<<N_block,N_thread>>>(parameter, AuxStateGPU, StateGPU, LastUpdateGPU, LastSpikeTimeGPU, InternalSpikeGPU, SizeStates, CurrentTime);
-		    HANDLE_ERROR(cudaMemcpy(InternalSpikeCPU,InternalSpikeGPU,SizeStates*sizeof(bool),cudaMemcpyDeviceToHost));
-	    }
-    }
+		HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU, AuxStateCPU, sizeof(float)*4*size[0] , cudaMemcpyHostToDevice, stream[0]));
+		for (int i = 0; i < N_Stream_use; ++i) {
+			if((i+1)<N_Stream_use){
+				HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU + offset[i+1] * 4, AuxStateCPU + offset[i+1] * 4, sizeof(float)*4*size[i+1] , cudaMemcpyHostToDevice, stream[i+1]));
+			}
+			UpdateStateRK<<<N_block,N_thread,0,stream[i]>>>(parameter, AuxStateGPU+ offset[i] * 4, StateGPU+ offset[i] * 5, LastUpdateGPU + offset[i], LastSpikeTimeGPU + offset[i], InternalSpikeGPU + offset[i], size[i], CurrentTime);
+			HANDLE_ERROR(cudaMemcpyAsync(InternalSpikeCPU + offset[i], InternalSpikeGPU + offset[i], sizeof(bool)*size[i],cudaMemcpyDeviceToHost, stream[i]));
+		}
+		for (int i = 0; i < N_Stream; ++i){
+			HANDLE_ERROR(cudaStreamDestroy(stream[i]));
+		}
+	}
+	
+    //GPU uses memory transferences
+	else{
+		HANDLE_ERROR(cudaMemcpy(AuxStateGPU,AuxStateCPU,4*SizeStates*sizeof(float),cudaMemcpyHostToDevice));
+		N_thread = 128;
+		N_block=prop.multiProcessorCount*4;
+		if((SizeStates+N_thread-1)/N_thread < N_block){
+			N_block = (SizeStates+N_thread-1)/N_thread;
+		}
+		UpdateStateRK<<<N_block,N_thread>>>(parameter, AuxStateGPU, StateGPU, LastUpdateGPU, LastSpikeTimeGPU, InternalSpikeGPU, SizeStates, CurrentTime);
+		HANDLE_ERROR(cudaMemcpy(InternalSpikeCPU,InternalSpikeGPU,SizeStates*sizeof(bool),cudaMemcpyDeviceToHost));
+	}
+
 	HANDLE_ERROR(cudaDeviceSynchronize());
 }
-
-
 
 
 void UpdateStateRKGPU(float * elapsed_time, float * parameter, float * AuxStateGPU, float * AuxStateCPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, bool * InternalSpikeCPU, int SizeStates, double CurrentTime){
@@ -646,12 +758,12 @@ void UpdateStateRKGPU(float * elapsed_time, float * parameter, float * AuxStateG
 			    }
 		    }
 
-		    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU, AuxStateCPU, sizeof(float)*2*size[0] , cudaMemcpyHostToDevice, stream[0]));
+		    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU, AuxStateCPU, sizeof(float)*4*size[0] , cudaMemcpyHostToDevice, stream[0]));
 		    for (int i = 0; i < N_Stream_use; ++i) {
 			    if((i+1)<N_Stream_use){
-				    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU + offset[i+1] * 2, AuxStateCPU + offset[i+1] * 2, sizeof(float)*2*size[i+1] , cudaMemcpyHostToDevice, stream[i+1]));
+				    HANDLE_ERROR(cudaMemcpyAsync(AuxStateGPU + offset[i+1] * 4, AuxStateCPU + offset[i+1] * 4, sizeof(float)*4*size[i+1] , cudaMemcpyHostToDevice, stream[i+1]));
 			    }
-			    UpdateStateRK<<<N_block,N_thread,0,stream[i]>>>(parameter, AuxStateGPU+ offset[i] * 2, StateGPU+ offset[i] * 3, LastUpdateGPU + offset[i], LastSpikeTimeGPU + offset[i], InternalSpikeGPU + offset[i], size[i], CurrentTime);
+			    UpdateStateRK<<<N_block,N_thread,0,stream[i]>>>(parameter, AuxStateGPU+ offset[i] * 4, StateGPU+ offset[i] * 5, LastUpdateGPU + offset[i], LastSpikeTimeGPU + offset[i], InternalSpikeGPU + offset[i], size[i], CurrentTime);
 			    HANDLE_ERROR(cudaMemcpyAsync(InternalSpikeCPU + offset[i], InternalSpikeGPU + offset[i], sizeof(bool)*size[i],cudaMemcpyDeviceToHost, stream[i]));
 		    }
 		    for (int i = 0; i < N_Stream; ++i){
@@ -661,7 +773,7 @@ void UpdateStateRKGPU(float * elapsed_time, float * parameter, float * AuxStateG
     	
         //GPU uses memory transferences
 	    else{
-		    HANDLE_ERROR(cudaMemcpy(AuxStateGPU,AuxStateCPU,2*SizeStates*sizeof(float),cudaMemcpyHostToDevice));
+		    HANDLE_ERROR(cudaMemcpy(AuxStateGPU,AuxStateCPU,4*SizeStates*sizeof(float),cudaMemcpyHostToDevice));
 		    N_thread = 128;
 		    N_block=prop.multiProcessorCount*4;
 		    if((SizeStates+N_thread-1)/N_thread < N_block){
@@ -679,9 +791,8 @@ void UpdateStateRKGPU(float * elapsed_time, float * parameter, float * AuxStateG
     HANDLE_ERROR(cudaEventElapsedTime(elapsed_time,start,end));
     HANDLE_ERROR(cudaEventDestroy(start));
     HANDLE_ERROR(cudaEventDestroy(end));
-//printf("Elapsed time: %f\n",*elapsed_time);
+    //printf("Elapsed time: %f\n",*elapsed_time);
 }
-
 
 void InformationGPU(){
 	cudaDeviceProp prop;

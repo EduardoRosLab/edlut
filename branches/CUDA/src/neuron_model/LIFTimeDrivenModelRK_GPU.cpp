@@ -49,10 +49,10 @@ bool LIFTimeDrivenModelRK_GPU::UpdateState(int index, VectorNeuronState * State,
 	}
 	
 
-	memset(state->AuxStateCPU,0,2*state->SizeStates*sizeof(float));
+	memset(state->AuxStateCPU,0,4*state->SizeStates*sizeof(float));
 
 	if(this->GetVectorNeuronState()->Get_Is_Monitored()){
-		HANDLE_ERROR(cudaMemcpy(state->VectorNeuronStates,state->VectorNeuronStates_GPU,3*state->SizeStates*sizeof(float),cudaMemcpyDeviceToHost));
+		HANDLE_ERROR(cudaMemcpy(state->VectorNeuronStates,state->VectorNeuronStates_GPU,state->GetNumberOfVariables()*state->SizeStates*sizeof(float),cudaMemcpyDeviceToHost));
 		HANDLE_ERROR(cudaMemcpy(state->LastUpdate,state->LastUpdateGPU,state->SizeStates*sizeof(double),cudaMemcpyDeviceToHost));
 		HANDLE_ERROR(cudaMemcpy(state->LastSpikeTime,state->LastSpikeTimeGPU,state->SizeStates*sizeof(double),cudaMemcpyDeviceToHost));
 		synchronizeGPU_CPU();

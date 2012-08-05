@@ -30,221 +30,240 @@ LIFTimeDrivenModelRK::LIFTimeDrivenModelRK(string NeuronTypeID, string NeuronMod
 LIFTimeDrivenModelRK::~LIFTimeDrivenModelRK(){
 
 }
-		
+
+
 //bool LIFTimeDrivenModelRK::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
 //
 //	bool * internalSpike=State->getInternalSpike();
-//
 //	int Size=State->GetSizeState();
 //
-//	int i;
-//	double last_update,elapsed_time,last_spike;
-//	float vm,gexc,ginh;
-//	bool spike;
-//	float nextgexc,nextginh,k1,gexcaux,ginhaux,yaux,k2,k3,k4;
+//	for (int i=0; i< Size; i++){
+//		float last_update = State->GetLastUpdateTime(i);
+//		
+//		float elapsed_time = CurrentTime - last_update;
 //
-//#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime) private(i,last_update,elapsed_time,last_spike,vm,gexc,ginh,spike,nextgexc,nextginh,k1,gexcaux,ginhaux,yaux,k2,k3,k4)
-//	for (int i=0; i<Size ; i++){
+//		State->AddElapsedTime(i,elapsed_time);
+//		
+//		float last_spike = State->GetLastSpikeTime(i);
 //
-//		last_update = State->GetLastUpdateTime(i);
-//		elapsed_time = CurrentTime - last_update;
-//	
-//		State->AddElapsedTime(i, elapsed_time);
-//	
-//		last_spike = State->GetLastSpikeTime(i);
+//		float vm = State->GetStateVariableAt(i,0);
+//		float gampa = State->GetStateVariableAt(i,1);
+//		float gnmda = State->GetStateVariableAt(i,2);
+//		float ginh = State->GetStateVariableAt(i,3);
+//		float ggj = State->GetStateVariableAt(i,4);
 //
-//		vm = State->GetStateVariableAt(i,0);
-//		gexc = State->GetStateVariableAt(i,1);
-//		ginh = State->GetStateVariableAt(i,2);
+//		float nextgampa = gampa * exp(-(elapsed_time/this->tampa));
+//		float nextgnmda = gnmda * exp(-(elapsed_time/this->tnmda));
+//		float nextginh = ginh * exp(-(elapsed_time/this->tinh));
+//		float nextggj = ggj * exp(-(elapsed_time/this->tgj));
+//		
 //
-//		spike = false;
-//
-//		nextgexc = gexc * exp(-(elapsed_time/this->texc));
-//		nextginh = ginh * exp(-(elapsed_time/this->tinh));
+//		bool spike = false;
 //
 //		if (last_spike > this->tref) {
 //			// 4th order Runge-Kutta terms
 //			// 1st term
-//			k1 = (gexc * (this->eexc - vm) + ginh * (this->einh - vm) + grest * (this->erest-vm))/this->cm;
+//			float iampa = gampa*(this->eexc-vm);
+//			float gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*1.2/3.57);
+//			float inmda = gnmda*gnmdainf*(this->eexc-vm);
+//			float iinh = ginh*(this->einh-vm);
+//			
+//			float k1 = (iampa + inmda + iinh + grest * (this->erest-vm))*1.e-9/this->cm;
 //
 //			// 2nd term
-//			gexcaux = gexc * exp(-((elapsed_time/2)/this->texc));
-//			ginhaux = ginh * exp(-((elapsed_time/2)/this->tinh));
-//			yaux = vm+(k1*elapsed_time/2);
-//			k2 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))/this->cm;
+//			float gampaaux = gampa * exp(-((elapsed_time/2)/this->tampa));
+//			float gnmdaaux = gnmda * exp(-((elapsed_time/2)/this->tnmda));
+//			float ginhaux = ginh * exp(-((elapsed_time/2)/this->tinh));
+//			float yaux = vm+(k1*elapsed_time/2);
+//			
+//			float iampaaux = gampaaux*(this->eexc-yaux);
+//			float gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+//			float inmdaaux = gnmdaaux*gnmdainfaux*(this->eexc-yaux);
+//			float iinhaux = ginhaux*(this->einh-yaux);
+//					
+//			float k2 = (iampaaux + inmdaaux + iinhaux + grest * (this->erest - yaux))*1.e-9/this->cm;
 //
 //			// 3rd term
 //			yaux = vm+(k2*elapsed_time/2);
-//			k3 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))/this->cm;
+//
+//			iampaaux = gampaaux*(this->eexc-yaux);
+//			gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+//			inmdaaux = gnmdaaux*gnmdainfaux*(this->eexc-yaux);
+//			iinhaux = ginhaux*(this->einh-yaux);
+//			
+//			float k3 = (iampaaux + inmdaaux + iinhaux + grest * (this->erest - yaux))*1.e-9/this->cm;
 //
 //			// 4rd term
-//			gexcaux = nextgexc;
-//			ginhaux = nextginh;
 //			yaux = vm+(k3*elapsed_time);
-//			k4 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))/this->cm;
+//
+//			iampaaux = nextgampa*(this->eexc-yaux);
+//			gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+//			inmdaaux = nextgampa*gnmdainfaux*(this->eexc-yaux);
+//			iinhaux = nextginh*(this->einh-yaux);
+//			
+//			float k4 = (iampaaux + inmdaaux + iinhaux + grest * (this->erest - yaux))*1.e-9/this->cm;
 //
 //			vm = vm + (k1+2*k2+2*k3+k4)*elapsed_time/6;
 //
-//			if (vm > this->vthr){
+//			float vm_cou = vm + this->fgj * ggj;
+//
+//			if (vm_cou > this->vthr){
 //				State->NewFiredSpike(i);
 //				spike = true;
 //				vm = this->erest;
 //			}
 //		}
+//		
 //		internalSpike[i]=spike;
 //
-//		gexc = nextgexc;
+//		gampa = nextgampa;
+//		gnmda = nextgnmda;
 //		ginh = nextginh;
+//		ggj = nextggj;
 //
 //		State->SetStateVariableAt(i,0,vm);
-//		State->SetStateVariableAt(i,1,gexc);
-//		State->SetStateVariableAt(i,2,ginh);
+//		State->SetStateVariableAt(i,1,gampa);
+//		State->SetStateVariableAt(i,2,gnmda);
+//		State->SetStateVariableAt(i,3,ginh);
+//		State->SetStateVariableAt(i,4,ggj);
 //		State->SetLastUpdateTime(i,CurrentTime);
 //	}
 //	return false;
 //}
 
 
-
-
 bool LIFTimeDrivenModelRK::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
-	float inv_cm=1/this->cm;
+
+	float inv_cm=1.e-9/this->cm;
 	
-	double last_update = State->GetLastUpdateTime(0);
-	float elapsed_time = CurrentTime - last_update;
-
-	float exponential1=exp(-(elapsed_time/this->texc));
-	float exponential2=exp(-(elapsed_time/this->tinh));
-	float exponential3=exp(-((elapsed_time/2)/this->texc));
-	float exponential4=exp(-((elapsed_time/2)/this->tinh));
-
 	bool * internalSpike=State->getInternalSpike();
-
-
 	int Size=State->GetSizeState();
 
-	int i;
-	double last_spike;
-	float vm,gexc,ginh;
+	float last_update = State->GetLastUpdateTime(0);
+	
+	float elapsed_time = CurrentTime - last_update;
+
+	float last_spike;
+
+	float exp_gampa = exp(-(elapsed_time/this->tampa));
+	float exp_gnmda = exp(-(elapsed_time/this->tnmda));
+	float exp_ginh = exp(-(elapsed_time/this->tinh));
+	float exp_ggj = exp(-(elapsed_time/this->tgj));
+
+	float exp_gampa2 = exp(-((elapsed_time/2)/this->tampa));
+	float exp_gnmda2 = exp(-((elapsed_time/2)/this->tnmda));
+	float exp_ginh2 = exp(-((elapsed_time/2)/this->tinh));
+
+	float vm, gampa, gnmda, ginh, ggj;
+
+	float nextgampa, nextgnmda, nextginh, nextggj;
+
 	bool spike;
-	float nextgexc,nextginh,k1,gexcaux,ginhaux,yaux,k2,k3,k4;
 
-	if(Size>1000){
-#pragma omp parallel for default(none) shared(Size,last_update, elapsed_time, State, internalSpike, CurrentTime,exponential1,exponential2,exponential3,exponential4,inv_cm) private(i,last_spike,vm,gexc,ginh,spike,nextgexc,nextginh,k1,gexcaux,ginhaux,yaux,k2,k3,k4)
-	for (i=0; i<Size ; i++){
-	
-		State->AddElapsedTime(i, elapsed_time);
-	
+	float k1, k2, k3, k4;
+
+	float iampa, gnmdainf, inmda, iinh;
+
+	float gampaaux, gnmdaaux, ginhaux, yaux, iampaaux, gnmdainfaux, inmdaaux, iinhaux;
+
+	float vm_cou;
+
+	int i;
+
+	#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime, elapsed_time, exp_gampa, exp_gnmda, exp_ginh, exp_ggj, inv_cm, exp_gampa2, exp_gnmda2, exp_ginh2) private(i,last_spike,vm, gampa, gnmda, ginh, ggj,nextgampa, nextgnmda, nextginh, nextggj, spike, k1, k2, k3, k4, iampa, gnmdainf, inmda, iinh, gampaaux, gnmdaaux, ginhaux, yaux, iampaaux, gnmdainfaux, inmdaaux, iinhaux, vm_cou)
+	for (i=0; i< Size; i++){
+
+		State->AddElapsedTime(i,elapsed_time);
+		
 		last_spike = State->GetLastSpikeTime(i);
 
 		vm = State->GetStateVariableAt(i,0);
-		gexc = State->GetStateVariableAt(i,1);
-		ginh = State->GetStateVariableAt(i,2);
+		gampa = State->GetStateVariableAt(i,1);
+		gnmda = State->GetStateVariableAt(i,2);
+		ginh = State->GetStateVariableAt(i,3);
+		ggj = State->GetStateVariableAt(i,4);
+
+		nextgampa = gampa * exp_gampa;
+		nextgnmda = gnmda * exp_gnmda;
+		nextginh = ginh * exp_ginh;
+		nextggj = ggj * exp_ggj;
+		
 
 		spike = false;
-
-//SI EXPONENTIAL1 O EXPONENTIAL2 VALE (0.5, 1] -> CurrentTime<=0.000346, EL TIEMPO NECESARIO PARA LA
-//MULTIPLICACIÓN SE DISPARA.
-		nextgexc = gexc * exponential1;
-		nextginh = ginh * exponential2;
-
 
 		if (last_spike > this->tref) {
 			// 4th order Runge-Kutta terms
 			// 1st term
-			k1 = (gexc * (this->eexc - vm) + ginh * (this->einh - vm) + grest * (this->erest-vm))*inv_cm;
-		
+			iampa = gampa*(this->eexc-vm);
+			//gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*1.2/3.57);
+			gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*0.336134453);
+			inmda = gnmda*gnmdainf*(this->eexc-vm);
+			iinh = ginh*(this->einh-vm);
+			
+			k1 = (iampa + inmda + iinh + grest * (this->erest-vm))*inv_cm;
+
 			// 2nd term
-			gexcaux = gexc * exponential3;
-			ginhaux = ginh * exponential4;
+			gampaaux = gampa * exp_gampa2;
+			gnmdaaux = gnmda * exp_gnmda2;
+			ginhaux = ginh * exp_ginh2;
 			yaux = vm+(k1*elapsed_time/2);
-			k2 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))*inv_cm;
+			
+			iampaaux = gampaaux*(this->eexc-yaux);
+			//gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+			gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*0.336134453);
+			inmdaaux = gnmdaaux*gnmdainfaux*(this->eexc-yaux);
+			iinhaux = ginhaux*(this->einh-yaux);
+					
+			k2 = (iampaaux + inmdaaux + iinhaux + grest * (this->erest - yaux))*inv_cm;
 
 			// 3rd term
 			yaux = vm+(k2*elapsed_time/2);
-			k3 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))*inv_cm;
+
+			iampaaux = gampaaux*(this->eexc-yaux);
+			//gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+			gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*0.336134453);
+			inmdaaux = gnmdaaux*gnmdainfaux*(this->eexc-yaux);
+			iinhaux = ginhaux*(this->einh-yaux);
+			
+			k3 = (iampaaux + inmdaaux + iinhaux + grest * (this->erest - yaux))*inv_cm;
 
 			// 4rd term
-			gexcaux = nextgexc;
-			ginhaux = nextginh;
 			yaux = vm+(k3*elapsed_time);
-			k4 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))*inv_cm;
 
-			vm += (k1+2*(k2+k3)+k4)*elapsed_time/6;
+			iampaaux = nextgampa*(this->eexc-yaux);
+			//gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*1.2/3.57);
+			gnmdainfaux = 1.0/(1.0 + exp(-62.0*yaux)*0.336134453);
+			inmdaaux = nextgampa*gnmdainfaux*(this->eexc-yaux);
+			iinhaux = nextginh*(this->einh-yaux);
+			
+			k4 = (iampaaux + inmdaaux + iinhaux + grest * (this->erest - yaux))*inv_cm;
 
-			if (vm > this->vthr){
+			vm = vm + (k1+2*k2+2*k3+k4)*elapsed_time/6;
+
+			vm_cou = vm + this->fgj * ggj;
+			
+			if (vm_cou > this->vthr){
 				State->NewFiredSpike(i);
 				spike = true;
 				vm = this->erest;
 			}
 		}
-		internalSpike[i]=spike;
-
-		State->SetStateVariableAt(i,0,vm);
-		State->SetStateVariableAt(i,1,nextgexc);
-		State->SetStateVariableAt(i,2,nextginh);
-
-		State->SetLastUpdateTime(i,CurrentTime);
-	}
-	}
-
-	else{
-	for (i=0; i<Size ; i++){
-	
-		State->AddElapsedTime(i, elapsed_time);
-	
-		last_spike = State->GetLastSpikeTime(i);
-
-		vm = State->GetStateVariableAt(i,0);
-		gexc = State->GetStateVariableAt(i,1);
-		ginh = State->GetStateVariableAt(i,2);
-
-		spike = false;
-
-//SI EXPONENTIAL1 O EXPONENTIAL2 VALE (0.5, 1] -> CurrentTime<=0.000346, EL TIEMPO NECESARIO PARA LA
-//MULTIPLICACIÓN SE DISPARA.
-		nextgexc = gexc * exponential1;
-		nextginh = ginh * exponential2;
-
-
-		if (last_spike > this->tref) {
-			// 4th order Runge-Kutta terms
-			// 1st term
-			k1 = (gexc * (this->eexc - vm) + ginh * (this->einh - vm) + grest * (this->erest-vm))*inv_cm;
 		
-			// 2nd term
-			gexcaux = gexc * exponential3;
-			ginhaux = ginh * exponential4;
-			yaux = vm+(k1*elapsed_time/2);
-			k2 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))*inv_cm;
-
-			// 3rd term
-			yaux = vm+(k2*elapsed_time/2);
-			k3 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))*inv_cm;
-
-			// 4rd term
-			gexcaux = nextgexc;
-			ginhaux = nextginh;
-			yaux = vm+(k3*elapsed_time);
-			k4 = (gexcaux * (this->eexc - yaux) + ginhaux * (this->einh - yaux) + grest * (this->erest - yaux))*inv_cm;
-
-			vm += (k1+2*(k2+k3)+k4)*elapsed_time/6;
-
-			if (vm > this->vthr){
-				State->NewFiredSpike(i);
-				spike = true;
-				vm = this->erest;
-			}
-		}
 		internalSpike[i]=spike;
 
-		State->SetStateVariableAt(i,0,vm);
-		State->SetStateVariableAt(i,1,nextgexc);
-		State->SetStateVariableAt(i,2,nextginh);
 
+		gampa = nextgampa;
+		gnmda = nextgnmda;
+		ginh = nextginh;
+		ggj = nextggj;
+
+		State->SetStateVariableAt(i,0,vm);
+		State->SetStateVariableAt(i,1,gampa);
+		State->SetStateVariableAt(i,2,gnmda);
+		State->SetStateVariableAt(i,3,ginh);
+		State->SetStateVariableAt(i,4,ggj);
 		State->SetLastUpdateTime(i,CurrentTime);
 	}
-	}
-
 	return false;
 }
+
