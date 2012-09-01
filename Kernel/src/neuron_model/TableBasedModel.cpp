@@ -16,7 +16,7 @@
 
 #include "../../include/neuron_model/TableBasedModel.h"
 #include "../../include/neuron_model/NeuronModelTable.h"
-#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/VectorNeuronState.h"
 #include "../../include/neuron_model/NeuronModel.h"
 
 #include "../../include/spike/InternalSpike.h"
@@ -56,23 +56,27 @@ void TableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExcepti
 			skip_comments(fh,Currentline);
 
 			float InitValue;
+			InitValues=new float[NumStateVar+1]();
 
 			// Create a new initial state
-       		this->InitialState = (NeuronState *) new NeuronState(this->NumStateVar+1);
-       		this->InitialState->SetLastUpdateTime(0);
-       		this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
-       		this->InitialState->SetStateVariableAt(0,0);
+       		this->InitialState = (VectorNeuronState *) new VectorNeuronState(this->NumStateVar+1, false);
+//       		this->InitialState->SetLastUpdateTime(0);
+//       		this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
+//      		this->InitialState->SetStateVariableAt(0,0);
 
        		for(nv=0;nv<this->NumStateVar;nv++){
        			if(fscanf(fh,"%f",&InitValue)!=1){
        				throw EDLUTFileException(13,42,3,1,Currentline);
 					delete [] TablesIndex;
        			} else {
-       				this->InitialState->SetStateVariableAt(nv+1,InitValue);
+					InitValues[nv+1]=InitValue;
+//       			this->InitialState->SetStateVariableAt(nv+1,InitValue);
        			}
        		}
 
-
+			// Allocate temporal state vars
+			this->TempStateVars = (float *) new float [this->InitialState->GetNumberOfVariables()];
+			
    			skip_comments(fh,Currentline);
    			unsigned int FiringIndex, FiringEndIndex;
    			if(fscanf(fh,"%i",&FiringIndex)==1){
@@ -167,10 +171,10 @@ void TableBasedModel::LoadTables(string TableFile) throw (EDLUTException){
 	}
 }
 
-TableBasedModel::TableBasedModel(string NeuronModelID): EventDrivenNeuronModel(NeuronModelID),
+TableBasedModel::TableBasedModel(string NeuronTypeID, string NeuronModelID): EventDrivenNeuronModel(NeuronTypeID, NeuronModelID),
 		NumStateVar(0), NumTimeDependentStateVar(0), NumSynapticVar(0), SynapticVar(0),
 		StateVarOrder(0), StateVarTable(0), FiringTable(0), EndFiringTable(0),
-		NumTables(0), Tables(0) {
+		NumTables(0), Tables(0), TempStateVars(0) {
 
 }
 
@@ -191,6 +195,10 @@ TableBasedModel::~TableBasedModel() {
 	if (this->Tables!=0) {
 		delete [] this->Tables;
 	}
+
+	if (this->TempStateVars!=0) {
+		delete [] this->TempStateVars;
+	}
 }
 
 void TableBasedModel::LoadNeuronModel() throw (EDLUTFileException){
@@ -201,17 +209,18 @@ void TableBasedModel::LoadNeuronModel() throw (EDLUTFileException){
 
 }
 
-NeuronState * TableBasedModel::InitializeState(){
-	return (NeuronState *) new NeuronState(*(this->InitialState));
+VectorNeuronState * TableBasedModel::InitializeState(){
+	//return (NeuronState *) new NeuronState(*(this->InitialState));
+	return InitialState;
 }
 
 InternalSpike * TableBasedModel::GenerateInitialActivity(Neuron *  Cell){
-	double Predicted = this->NextFiringPrediction(Cell->GetNeuronState());
+	double Predicted = this->NextFiringPrediction(Cell->GetIndex_VectorNeuronState(),Cell->GetVectorNeuronState());
 
 	InternalSpike * spike = 0;
 
 	if(Predicted != NO_SPIKE_PREDICTED){
-		Predicted += Cell->GetNeuronState()->GetLastUpdateTime();
+		Predicted += Cell->GetVectorNeuronState()->GetLastUpdateTime(Cell->GetIndex_VectorNeuronState());
 
 		spike = new InternalSpike(Predicted,Cell);
 	}
@@ -219,87 +228,86 @@ InternalSpike * TableBasedModel::GenerateInitialActivity(Neuron *  Cell){
 	return spike;
 }
 
-void TableBasedModel::UpdateState(NeuronState * State, double CurrentTime){
+void TableBasedModel::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
 	unsigned int ivar,orderedvar;
 
-	State->SetStateVariableAt(0,CurrentTime-State->GetLastUpdateTime());
-
-	float * vars = (float *) new float [State->GetNumberOfVariables()];
+	State->SetStateVariableAt(index,0,CurrentTime-State->GetLastUpdateTime(index));
 
 	for(ivar=0;ivar<this->NumTimeDependentStateVar;ivar++){
 		orderedvar=this->StateVarOrder[ivar];
-		vars[orderedvar]=this->StateVarTable[orderedvar]->TableAccess(State);
+		this->TempStateVars[orderedvar]=this->StateVarTable[orderedvar]->TableAccess(index,State);
 	}
 
 	for(ivar=0;ivar<this->NumTimeDependentStateVar;ivar++){
 		orderedvar=this->StateVarOrder[ivar];
-		State->SetStateVariableAt(orderedvar+1,vars[orderedvar]);
+		State->SetStateVariableAt(index,orderedvar+1,this->TempStateVars[orderedvar]);
 	}
 
 	for(ivar=this->NumTimeDependentStateVar;ivar<this->NumStateVar;ivar++){
 		orderedvar=this->StateVarOrder[ivar];
-		State->SetStateVariableAt(orderedvar+1,this->StateVarTable[orderedvar]->TableAccess(State));
+		State->SetStateVariableAt(index,orderedvar+1,this->StateVarTable[orderedvar]->TableAccess(index,State));
 	}
 
-	State->SetLastUpdateTime(CurrentTime);
+	State->SetLastUpdateTime(index,CurrentTime);
 
-	delete [] vars;
 }
 
-void TableBasedModel::SynapsisEffect(NeuronState * State, Interconnection * InputConnection){
-	float Value = State->GetStateVariableAt(this->SynapticVar[InputConnection->GetType()]+1);
-	State->SetStateVariableAt(this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*WEIGHTSCALE);
+void TableBasedModel::SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection){
+	float Value = State->GetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1);
+	State->SetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*WEIGHTSCALE);
 }
 
-double TableBasedModel::NextFiringPrediction(NeuronState * State){
-	return this->FiringTable->TableAccess(State);
+double TableBasedModel::NextFiringPrediction(int index, VectorNeuronState * State){
+	return this->FiringTable->TableAccess(index, State);
 }
 
-double TableBasedModel::EndRefractoryPeriod(NeuronState * State){
-	return this->EndFiringTable->TableAccess(State);
+double TableBasedModel::EndRefractoryPeriod(int index, VectorNeuronState * State){
+	return this->EndFiringTable->TableAccess(index, State);
 }
 
 InternalSpike * TableBasedModel::ProcessInputSpike(PropagatedSpike *  InputSpike){
 
 	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(InputSpike->GetTarget());
 
+	int TargetIndex=inter->GetTarget()->GetIndex_VectorNeuronState();
+
 	Neuron * TargetCell = inter->GetTarget();
 
-	NeuronState * CurrentState = TargetCell->GetNeuronState();
+	VectorNeuronState * CurrentState = TargetCell->GetVectorNeuronState();
 
 	// Update the neuron state until the current time
-	this->UpdateState(CurrentState,InputSpike->GetTime());
+	this->UpdateState(TargetIndex,CurrentState,InputSpike->GetTime());
 
 	// Add the effect of the input spike
-	this->SynapsisEffect(CurrentState,inter);
+	this->SynapsisEffect(TargetIndex,CurrentState,inter);
 
 	InternalSpike * GeneratedSpike = 0;
 
 	// Check if an spike will be fired
-	double NextSpike = this->NextFiringPrediction(CurrentState);
+	double NextSpike = this->NextFiringPrediction(TargetIndex,CurrentState);
 	if (NextSpike != NO_SPIKE_PREDICTED){
-		NextSpike += CurrentState->GetLastUpdateTime();
+		NextSpike += CurrentState->GetLastUpdateTime(TargetIndex);
 
-		if (NextSpike>CurrentState->GetEndRefractoryPeriod()){
+		if (NextSpike>CurrentState->GetEndRefractoryPeriod(TargetIndex)){
 			GeneratedSpike = new InternalSpike(NextSpike,TargetCell);
 		} else { // Only for neurons which never stop firing
 			// The generated spike was at refractory period -> Check after refractoriness
 
-			NeuronState newState(*CurrentState);
+			VectorNeuronState newState(*CurrentState, TargetIndex);
 
-			this->UpdateState(&newState,newState.GetEndRefractoryPeriod());
+			this->UpdateState(0,&newState,newState.GetEndRefractoryPeriod(0));
 
-			NextSpike = this->NextFiringPrediction(&newState);
+			NextSpike = this->NextFiringPrediction(0,&newState);
 
 			if(NextSpike != NO_SPIKE_PREDICTED){
-				NextSpike += CurrentState->GetEndRefractoryPeriod();
+				NextSpike += CurrentState->GetEndRefractoryPeriod(TargetIndex);
 
 				GeneratedSpike = new InternalSpike(NextSpike,TargetCell);
 			}
 		}
 	}
 
-	CurrentState->SetNextPredictedSpikeTime(NextSpike);
+	CurrentState->SetNextPredictedSpikeTime(TargetIndex,NextSpike);
 
 	return GeneratedSpike;
 }
@@ -308,13 +316,15 @@ InternalSpike * TableBasedModel::GenerateNextSpike(InternalSpike *  OutputSpike)
 
 	Neuron * SourceCell = OutputSpike->GetSource();
 
-	NeuronState * CurrentState = SourceCell->GetNeuronState();
+	int SourceIndex=SourceCell->GetIndex_VectorNeuronState();
+
+	VectorNeuronState * CurrentState = SourceCell->GetVectorNeuronState();
 
 	InternalSpike * NextSpike = 0;
 
-	this->UpdateState(CurrentState,OutputSpike->GetTime());
+	this->UpdateState(SourceIndex,CurrentState,OutputSpike->GetTime());
 
-	double EndRefractory = this->EndRefractoryPeriod(CurrentState);
+	double EndRefractory = this->EndRefractoryPeriod(SourceIndex,CurrentState);
 
 	if(EndRefractory != NO_SPIKE_PREDICTED){
 		EndRefractory += OutputSpike->GetTime();
@@ -323,29 +333,29 @@ InternalSpike * TableBasedModel::GenerateNextSpike(InternalSpike *  OutputSpike)
 		cerr << "Warning: firing table and firing-end table discrepance (using default ref period)" << endl;
 	}
 
-	CurrentState->SetEndRefractoryPeriod(EndRefractory);
+	CurrentState->SetEndRefractoryPeriod(SourceIndex,EndRefractory);
 
 	// Check if some auto-activity is generated after the refractory period
-	NeuronState PostFiringState (*CurrentState);
+	VectorNeuronState PostFiringState (*CurrentState, SourceIndex);
 
-	this->UpdateState(&PostFiringState,CurrentState->GetEndRefractoryPeriod());
+	this->UpdateState(0,&PostFiringState,CurrentState->GetEndRefractoryPeriod(SourceIndex));
 
-	double PredictedSpike = this->NextFiringPrediction(&PostFiringState);
+	double PredictedSpike = this->NextFiringPrediction(0,&PostFiringState);
 
 	if(PredictedSpike != NO_SPIKE_PREDICTED){
-		PredictedSpike += CurrentState->GetEndRefractoryPeriod();
+		PredictedSpike += CurrentState->GetEndRefractoryPeriod(SourceIndex);
 
 		NextSpike = new InternalSpike(PredictedSpike,SourceCell);
 	}
 
-	CurrentState->SetNextPredictedSpikeTime(PredictedSpike);
+	CurrentState->SetNextPredictedSpikeTime(SourceIndex,PredictedSpike);
 
 	return NextSpike;
 }
 
 
 bool TableBasedModel::DiscardSpike(InternalSpike *  OutputSpike){
-	return (OutputSpike->GetSource()->GetNeuronState()->GetNextPredictedSpikeTime()!=OutputSpike->GetTime());
+	return (OutputSpike->GetSource()->GetVectorNeuronState()->GetNextPredictedSpikeTime(OutputSpike->GetSource()->GetIndex_VectorNeuronState())!=OutputSpike->GetTime());
 }
 
 ostream & TableBasedModel::PrintInfo(ostream & out) {
@@ -364,3 +374,7 @@ ostream & TableBasedModel::PrintInfo(ostream & out) {
 	return out;
 }
 
+
+void TableBasedModel::InitializeStates(int N_neurons){
+	InitialState->InitializeStates(N_neurons, InitValues);
+}

@@ -1,8 +1,8 @@
 /***************************************************************************
  *                           SRMTimeDrivenModel.cpp                        *
  *                           -------------------                           *
- * copyright            : (C) 2011 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2011 by Jesus Garrido and Francisco Naveros  *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,8 +19,8 @@
 #include <string>
 
 #include "../../include/neuron_model/SRMTimeDrivenModel.h"
-#include "../../include/neuron_model/SRMState.h"
-#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/VectorSRMState.h"
+#include "../../include/neuron_model/VectorNeuronState.h"
 
 #include "../../include/spike/EDLUTFileException.h"
 #include "../../include/spike/Neuron.h"
@@ -101,43 +101,41 @@ void SRMTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 	}
 
 	// Initialize the neuron state
-	this->InitialState = (SRMState *) new SRMState(5,this->NumberOfChannels);
+	this->InitialState = (VectorSRMState *) new VectorSRMState(5,this->NumberOfChannels, true);
 
-	// Initialize the amplitude of each buffer
-	for (unsigned int i=0; i<this->NumberOfChannels; ++i){
-		((SRMState *) this->InitialState)->SetBufferAmplitude(i,8*this->tau[i]);
-	}
+	//// Initialize the amplitude of each buffer
+	//for (unsigned int i=0; i<this->NumberOfChannels; ++i){
+	//	((VectorSRMState *) this->InitialState)->SetBufferAmplitude(i,8*this->tau[i]);
+	//}
 
-	// Initialize the state variables
-	for (unsigned int i=0; i<5; ++i){
-		this->InitialState->SetStateVariableAt(i,0.0);
-	}
+	//// Initialize the state variables
+	//for (unsigned int i=0; i<5; ++i){
+	//	this->InitialState->SetStateVariableAt(i,0.0);
+	//}
 
-	this->InitialState->SetLastUpdateTime(0);
-	this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
+	//this->InitialState->SetLastUpdateTime(0);
+	//this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 }
 
-void SRMTimeDrivenModel::SynapsisEffect(SRMState * State, Interconnection * InputConnection){
-	State->AddActivity(InputConnection);
+void SRMTimeDrivenModel::SynapsisEffect(int index, VectorSRMState * State, Interconnection * InputConnection){
+	State->AddActivity(index, InputConnection);
 }
 
-double SRMTimeDrivenModel::PotentialIncrement(SRMState * State){
-	double Increment = 0;
+float SRMTimeDrivenModel::PotentialIncrement(int index, VectorSRMState * State){
+	float Increment = 0;
 
 	for (unsigned int i=0; i<this->NumberOfChannels; ++i){
-		BufferedState::Iterator itEnd = State->End();
+		VectorBufferedState::Iterator itEnd = State->End();
+		
+		for (VectorBufferedState::Iterator it=State->Begin(index,i); it!=itEnd; ++it){
+			float TimeDifference = it.GetSpikeTime();
+			float Weight = it.GetConnection()->GetWeight();
 
-		for (BufferedState::Iterator it=State->Begin(i); it!=itEnd; ++it){
-			double TimeDifference = it.GetSpikeTime();
-			double Weight = it.GetConnection()->GetWeight();
+			float EPSPMax = sqrt(this->tau[i]/2)*exp(-0.5);
 
-			//int Position = round(TimeDifference/this->EPSPStep);
-			double EPSPMax = sqrt(this->tau[i]/2)*exp(-0.5);
-
-			double EPSP = sqrt(TimeDifference)*exp(-(TimeDifference/this->tau[i]))/EPSPMax;
+			float EPSP = sqrt(TimeDifference)*exp(-(TimeDifference/this->tau[i]))/EPSPMax;
 
 			// Inhibitory channels must define negative W values
-			//Increment += Weight*this->W*EPSP[Position];
 			Increment += Weight*this->W[i]*EPSP;
 		}
 	}
@@ -145,12 +143,12 @@ double SRMTimeDrivenModel::PotentialIncrement(SRMState * State){
 	return Increment;
 }
 
-bool SRMTimeDrivenModel::CheckSpikeAt(SRMState * State, double CurrentTime){
-	double Probability = State->GetStateVariableAt(4);
+bool SRMTimeDrivenModel::CheckSpikeAt(int index, VectorSRMState * State, double CurrentTime){
+	double Probability = State->GetStateVariableAt(index,4);
 	return (((double) rand())/RAND_MAX<Probability);
 }
 
-SRMTimeDrivenModel::SRMTimeDrivenModel(string NeuronModelID): TimeDrivenNeuronModel(NeuronModelID), tau(0), vr(0), W(0), r0(0), v0(0), vf(0),
+SRMTimeDrivenModel::SRMTimeDrivenModel(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel(NeuronTypeID, NeuronModelID), tau(0), vr(0), W(0), r0(0), v0(0), vf(0),
 		tauabs(0), taurel(0) {
 
 }
@@ -167,8 +165,9 @@ void SRMTimeDrivenModel::LoadNeuronModel() throw (EDLUTFileException) {
 	this->LoadNeuronModel(this->GetModelID() + ".cfg");
 }
 
-NeuronState * SRMTimeDrivenModel::InitializeState(){
-	return (SRMState *) new SRMState(*((SRMState *) this->InitialState));
+VectorNeuronState * SRMTimeDrivenModel::InitializeState(){
+	//return (VectorSRMState *) new VectorSRMState(*((VectorSRMState *) this->InitialState));
+	return ((VectorSRMState *) InitialState);
 }
 
 InternalSpike * SRMTimeDrivenModel::ProcessInputSpike(PropagatedSpike *  InputSpike){
@@ -176,64 +175,153 @@ InternalSpike * SRMTimeDrivenModel::ProcessInputSpike(PropagatedSpike *  InputSp
 
 	Neuron * TargetCell = inter->GetTarget();
 
-	NeuronState * CurrentState = TargetCell->GetNeuronState();
+	VectorNeuronState * CurrentState = TargetCell->GetVectorNeuronState();
 
 	InternalSpike * ProducedSpike = 0;
 
 	// Update Cell State
-	if (this->UpdateState(TargetCell->GetNeuronState(),InputSpike->GetTime())){
+	if (this->UpdateState(inter->GetTarget()->GetIndex_VectorNeuronState(),TargetCell->GetVectorNeuronState(),InputSpike->GetTime())){
 		ProducedSpike = new InternalSpike(InputSpike->GetTime(),TargetCell);
 	}
 
 	// Add the effect of the input spike
-	this->SynapsisEffect((SRMState *)CurrentState,inter);
+	this->SynapsisEffect(inter->GetTarget()->GetIndex_VectorNeuronState(),(VectorSRMState *)CurrentState,inter);
 
 	return ProducedSpike;
 }
 
-bool SRMTimeDrivenModel::UpdateState(NeuronState * State, double CurrentTime){
 
-	double ElapsedTime = CurrentTime-State->GetLastUpdateTime();
+bool SRMTimeDrivenModel::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
 
-	State->AddElapsedTime(ElapsedTime);
+	if(index!=-1){
+		double ElapsedTime = CurrentTime-State->GetLastUpdateTime(index);
 
-	double Potential = this->vr + this->PotentialIncrement((SRMState *) State);
-	State->SetStateVariableAt(1,Potential);
+		State->AddElapsedTime(index, ElapsedTime);
 
-	double FiringRate;
+		float Potential = this->vr + this->PotentialIncrement(index,(VectorSRMState *) State);
+		State->SetStateVariableAt(index,1,Potential);
 
-	if((Potential-this->v0) > (10*this->vf)){
-		FiringRate = this->r0*(Potential-this->v0)/this->vf;
-	} else {
-		double texp=exp((Potential-this->v0)/this->vf);
-	    FiringRate =this->r0*log(1+texp);
+		float FiringRate;
+
+		if((Potential-this->v0) > (10*this->vf)){
+			FiringRate = this->r0*(Potential-this->v0)/this->vf;
+		} else {
+			float texp=exp((Potential-this->v0)/this->vf);
+		    FiringRate =this->r0*log(1+texp);
+		}
+
+		//double texp = exp((Potential-this->v0)/this->vf);
+		//double FiringRate = this->r0 * log(1+texp);
+		State->SetStateVariableAt(index,2,FiringRate);
+
+		double TimeSinceSpike = State->GetLastSpikeTime(index);
+		float Aux = TimeSinceSpike-this->tauabs;
+		float Refractoriness = 0;
+
+		if (TimeSinceSpike>this->tauabs){
+			Refractoriness = 1./(1.+(this->taurel*this->taurel)/(Aux*Aux));
+		}
+		State->SetStateVariableAt(index,3,Refractoriness);
+
+		float Probability = (1 - exp(-FiringRate*Refractoriness*((float)ElapsedTime)));
+		State->SetStateVariableAt(index,4,Probability);
+
+		State->SetLastUpdateTime(index,CurrentTime);
+
+		if (this->CheckSpikeAt(index,(VectorSRMState *) State, CurrentTime)){
+			State->NewFiredSpike(index);
+			return true;
+		}
+
+		return false;
+	
+	
+	}else{
+
+		float * sqrt_tau = new float[this->NumberOfChannels];
+		for (unsigned int i=0; i<this->NumberOfChannels; ++i){
+			sqrt_tau[i]=sqrt(this->tau[i]/2)*exp(-0.5);
+		}
+
+		VectorSRMState * SRMstate=(VectorSRMState *)State;
+
+		bool * internalSpike=State->getInternalSpike();
+		int Size=State->GetSizeState();
+		int i;
+		double ElapsedTime;
+
+#pragma omp parallel for default(none) shared(Size, State, SRMstate, sqrt_tau, internalSpike, CurrentTime) private(i,ElapsedTime)
+		for (i=0; i<Size; i++){
+			ElapsedTime = CurrentTime-State->GetLastUpdateTime(i);
+
+			State->AddElapsedTime(i, ElapsedTime);
+
+			///////////////////////////
+			float Increment = 0;
+			
+			for (unsigned int j=0; j<this->NumberOfChannels; ++j){
+				VectorBufferedState::Iterator itEnd = SRMstate->End();
+				
+				for (VectorBufferedState::Iterator it=SRMstate->Begin(i,j); it!=itEnd; ++it){
+					float TimeDifference = it.GetSpikeTime();
+					float Weight = it.GetConnection()->GetWeight();
+
+					float EPSPMax = sqrt_tau[j];
+
+					float EPSP = sqrt(TimeDifference)*exp(-(TimeDifference/this->tau[j]))/EPSPMax;
+
+					// Inhibitory channels must define negative W values
+					Increment += Weight*this->W[j]*EPSP;
+				}
+			}
+
+			///////////////////////////
+
+
+			float Potential = this->vr + Increment;
+			State->SetStateVariableAt(i,1,Potential);
+
+			float FiringRate;
+
+			if((Potential-this->v0) > (10*this->vf)){
+				FiringRate = this->r0*(Potential-this->v0)/this->vf;
+			} else {
+				float texp=exp((Potential-this->v0)/this->vf);
+			    FiringRate =this->r0*log(1+texp);
+			}
+
+			//double texp = exp((Potential-this->v0)/this->vf);
+			//double FiringRate = this->r0 * log(1+texp);
+			State->SetStateVariableAt(i,2,FiringRate);
+
+			double TimeSinceSpike = State->GetLastSpikeTime(i);
+			float Aux = TimeSinceSpike-this->tauabs;
+			float Refractoriness = 0;
+
+			if (TimeSinceSpike>this->tauabs){
+				Refractoriness = 1./(1.+(this->taurel*this->taurel)/(Aux*Aux));
+			}
+			State->SetStateVariableAt(i,3,Refractoriness);
+
+			float Probability = (1 - exp(-FiringRate*Refractoriness*((float)ElapsedTime)));
+			State->SetStateVariableAt(i,4,Probability);
+
+			State->SetLastUpdateTime(i,CurrentTime);
+
+			if (this->CheckSpikeAt(i,(VectorSRMState *) State, CurrentTime)){
+				State->NewFiredSpike(i);
+				internalSpike[i]=true;
+			}else{
+				internalSpike[i]=false;
+			}
+		}
+		delete [] sqrt_tau;
 	}
-
-	//double texp = exp((Potential-this->v0)/this->vf);
-	//double FiringRate = this->r0 * log(1+texp);
-	State->SetStateVariableAt(2,FiringRate);
-
-	double TimeSinceSpike = State->GetLastSpikeTime();
-	double Aux = TimeSinceSpike-this->tauabs;
-	double Refractoriness = 0;
-
-	if (TimeSinceSpike>this->tauabs){
-		Refractoriness = 1./(1.+(this->taurel*this->taurel)/(Aux*Aux));
-	}
-	State->SetStateVariableAt(3,Refractoriness);
-
-	double Probability = (1 - exp(-FiringRate*Refractoriness*ElapsedTime));
-	State->SetStateVariableAt(4,Probability);
-
-	State->SetLastUpdateTime(CurrentTime);
-
-	if (this->CheckSpikeAt((SRMState *) State, CurrentTime)){
-		State->NewFiredSpike();
-		return true;
-	}
-
 	return false;
 }
+
+
+
 
 ostream & SRMTimeDrivenModel::PrintInfo(ostream & out) {
 	out << "- SRM Time-Driven Model: " << this->GetModelID() << endl;
@@ -258,4 +346,26 @@ ostream & SRMTimeDrivenModel::PrintInfo(ostream & out) {
 	out << "\tGain Factor: " << this->vf << "\tAbsolute Refractory Period: " << this->tauabs << "s\tRelative Refractory Period: " << this->taurel << "s" << endl;
 
 	return out;
+}
+
+enum NeuronModelType SRMTimeDrivenModel::GetModelType(){
+	return TIME_DRIVEN_MODEL_CPU;
+}
+
+
+void SRMTimeDrivenModel::InitializeStates(int N_neurons){
+
+	VectorSRMState * state = (VectorSRMState *) this->InitialState;
+
+	float inicialization[] = {0.0,0.0,0.0,0.0,0.0};
+	//Initialize the state variables
+	state->InitializeSRMStates(N_neurons, inicialization);
+
+	for (int j=0; j<N_neurons; j++){
+		// Initialize the amplitude of each buffer
+		for (unsigned int i=0; i<this->NumberOfChannels; ++i){
+			state->SetBufferAmplitude(j,i,8*this->tau[i]);
+		}
+	}
+
 }

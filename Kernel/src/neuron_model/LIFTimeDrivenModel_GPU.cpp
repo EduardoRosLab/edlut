@@ -14,16 +14,13 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/neuron_model/LIFTimeDrivenModel.h"
+#include "../../include/neuron_model/LIFTimeDrivenModel_GPU.h"
 #include "../../include/neuron_model/VectorNeuronState.h"
+#include "../../include/neuron_model/VectorNeuronState_GPU.h"
 
 #include <iostream>
 #include <cmath>
 #include <string>
-
-#ifdef _OPENMP
-	#include <omp.h>
-#endif
 
 #include "../../include/spike/EDLUTFileException.h"
 #include "../../include/spike/Neuron.h"
@@ -33,7 +30,12 @@
 
 #include "../../include/simulation/Utils.h"
 
-void LIFTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
+#include "../../include/neuron_model/LIFTimeDrivenModel_CUDA.h"
+#include "../../include/cudaError.h"
+//Library for CUDA
+#include <cutil_inline.h>
+
+void LIFTimeDrivenModel_GPU::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 	FILE *fh;
 	long Currentline = 0L;
 	fh=fopen(ConfigFile.c_str(),"rt");
@@ -75,16 +77,22 @@ void LIFTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 													if(fscanf(fh,"%f",&this->fgj)==1){
 														skip_comments(fh,Currentline);
 
-														this->InitialState = (VectorNeuronState *) new VectorNeuronState(5, true);
+HANDLE_ERROR(cudaMalloc((void**)&parameter, 12*sizeof(float)));
+float Parameter[12] ={eexc,einh,erest,vthr,cm,tampa,tnmda,tinh,tgj,tref,grest,fgj};
+HANDLE_ERROR(cudaMemcpy(parameter,Parameter,12*sizeof(float),cudaMemcpyHostToDevice));
+this->InitialState = (VectorNeuronState_GPU *) new VectorNeuronState_GPU(5);
 
-														//for (unsigned int i=0; i<5; ++i){
-														//	this->InitialState->SetStateVariableAt(i,0.0);
-														//}
 
-														//this->InitialState->SetStateVariableAt(0,this->erest);
+			//											this->InitialState = (NeuronState *) new NeuronState(5);
 
-														//this->InitialState->SetLastUpdateTime(0);
-														//this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
+			//											for (unsigned int i=0; i<5; ++i){
+			//												this->InitialState->SetStateVariableAt(i,0.0);
+			//											}
+
+			//											this->InitialState->SetStateVariableAt(0,this->erest);
+
+			//											this->InitialState->SetLastUpdateTime(0);
+			//											this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 													} else {
 														throw EDLUTFileException(13,60,3,1,Currentline);
 													}
@@ -124,150 +132,91 @@ void LIFTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 	}
 }
 
-void LIFTimeDrivenModel::SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection){
+void LIFTimeDrivenModel_GPU::SynapsisEffect(int index, VectorNeuronState_GPU * state, Interconnection * InputConnection){
 
 	switch (InputConnection->GetType()){
 		case 0: {
-			float gampa = State->GetStateVariableAt(index,1);
-			gampa += InputConnection->GetWeight();
-			State->SetStateVariableAt(index,1,gampa);
+			//gampa
+			state->AuxStateCPU[4*index]+=InputConnection->GetWeight();
 			break;
 		}case 1:{
-			float gnmda = State->GetStateVariableAt(index,2);
-			gnmda += InputConnection->GetWeight();
-			State->SetStateVariableAt(index,2,gnmda);
+			//gnmda
+			state->AuxStateCPU[4*index+1]+=InputConnection->GetWeight();
 			break;
 		}case 2:{
-			float ginh = State->GetStateVariableAt(index,3);
-			ginh += InputConnection->GetWeight();
-			State->SetStateVariableAt(index,3,ginh);
+			//ginh
+			state->AuxStateCPU[4*index+2]+=InputConnection->GetWeight();
 			break;
 		}case 3:{
-			float ggj = State->GetStateVariableAt(index,4);
-			ggj += InputConnection->GetWeight();
-			State->SetStateVariableAt(index,4,ggj);
+			//ggj
+			state->AuxStateCPU[4*index+3]+=InputConnection->GetWeight();
 			break;
 		}
 	}
 }
 
-LIFTimeDrivenModel::LIFTimeDrivenModel(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel(NeuronTypeID, NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), tampa(0), tnmda(0), tinh(0), tgj(0),
-		tref(0), grest(0){
+LIFTimeDrivenModel_GPU::LIFTimeDrivenModel_GPU(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel(NeuronTypeID, NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), tampa(0), tnmda(0), tinh(0), tgj(0),
+		tref(0), grest(0),time(0), counter(0), size(100){
 }
 
-LIFTimeDrivenModel::~LIFTimeDrivenModel(void)
-{
+LIFTimeDrivenModel_GPU::~LIFTimeDrivenModel_GPU(void){
+	destroySynchronize();
+	HANDLE_ERROR(cudaFree(parameter));
 }
 
-void LIFTimeDrivenModel::LoadNeuronModel() throw (EDLUTFileException){
+void LIFTimeDrivenModel_GPU::LoadNeuronModel() throw (EDLUTFileException){
 	this->LoadNeuronModel(this->GetModelID()+".cfg");
 }
 
-VectorNeuronState * LIFTimeDrivenModel::InitializeState(){
-	//return (VectorNeuronState *) new VectorNeuronState(*((VectorNeuronState *) this->InitialState));
+VectorNeuronState * LIFTimeDrivenModel_GPU::InitializeState(){
+//	return (NeuronState *) new NeuronState(*((NeuronState *) this->InitialState));
 	return this->GetVectorNeuronState();
 }
 
 
-InternalSpike * LIFTimeDrivenModel::ProcessInputSpike(PropagatedSpike *  InputSpike){
+InternalSpike * LIFTimeDrivenModel_GPU::ProcessInputSpike(PropagatedSpike *  InputSpike){
 	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(InputSpike->GetTarget());
 
 	Neuron * TargetCell = inter->GetTarget();
 
-	VectorNeuronState * CurrentState = TargetCell->GetVectorNeuronState();
+	int indexGPU =TargetCell->GetIndex_VectorNeuronState();
 
+	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->InitialState;
 
 	// Add the effect of the input spike
-	this->SynapsisEffect(inter->GetTarget()->GetIndex_VectorNeuronState(),(VectorNeuronState *)CurrentState,inter);
-
+	this->SynapsisEffect(inter->GetTarget()->GetIndex_VectorNeuronState(), state, inter);
 
 	return 0;
 }
 
-	
-bool LIFTimeDrivenModel::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
-
-	float inv_cm=1.e-9/this->cm;
-	
-	bool * internalSpike=State->getInternalSpike();
-	int Size=State->GetSizeState();
-
-	float last_update = State->GetLastUpdateTime(0);
-	
-	float elapsed_time = CurrentTime - last_update;
-
-	float last_spike;
-
-	float exp_gampa = exp(-(elapsed_time/this->tampa));
-	float exp_gnmda = exp(-(elapsed_time/this->tnmda));
-	float exp_ginh = exp(-(elapsed_time/this->tinh));
-	float exp_ggj = exp(-(elapsed_time/this->tgj));
-
-	float vm, gampa, gnmda, ginh, ggj;
-
-	bool spike;
-
-	float iampa, gnmdainf, inmda, iinh;
-
-	float vm_cou;
-
-	int i;
-
-	#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime, elapsed_time, exp_gampa, exp_gnmda, exp_ginh, exp_ggj, inv_cm) private(i,last_spike,vm, gampa, gnmda, ginh, ggj, spike, iampa, gnmdainf, inmda, iinh, vm_cou)
-	for (int i=0; i< Size; i++){
-
-		State->AddElapsedTime(i,elapsed_time);
 		
-		last_spike = State->GetLastSpikeTime(i);
+bool LIFTimeDrivenModel_GPU::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
+	
+	counter++;
 
-		vm = State->GetStateVariableAt(i,0);
-		gampa = State->GetStateVariableAt(i,1);
-		gnmda = State->GetStateVariableAt(i,2);
-		ginh = State->GetStateVariableAt(i,3);
-		ggj = State->GetStateVariableAt(i,4);
+	VectorNeuronState_GPU *state = (VectorNeuronState_GPU *) State;
+	if((counter%size)==0){
+		float elapsed_time;
+		UpdateStateGPU(&elapsed_time,parameter, state->AuxStateGPU, state->AuxStateCPU, state->VectorNeuronStates_GPU, state->LastUpdateGPU, state->LastSpikeTimeGPU, state->InternalSpikeGPU, state->InternalSpikeCPU, state->SizeStates, CurrentTime);
+		time+=elapsed_time;
+	}else{
+		UpdateStateGPU(parameter, state->AuxStateGPU, state->AuxStateCPU, state->VectorNeuronStates_GPU, state->LastUpdateGPU, state->LastSpikeTimeGPU, state->InternalSpikeGPU, state->InternalSpikeCPU, state->SizeStates, CurrentTime);
+	}
 
-		spike = false;
+	memset(state->AuxStateCPU,0,4*state->SizeStates*sizeof(float));
 
-		if (last_spike > this->tref) {
-			iampa = gampa*(this->eexc-vm);
-			//gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*1.2/3.57);
-			gnmdainf = 1.0/(1.0 + exp(-62.0*vm)*0.336134453);
-			inmda = gnmda*gnmdainf*(this->eexc-vm);
-			iinh = ginh*(this->einh-vm);
-			vm = vm + elapsed_time * (iampa + inmda + iinh + this->grest* (this->erest-vm))*inv_cm;
-
-			vm_cou = vm + this->fgj * ggj;
-
-			if (vm_cou > this->vthr){
-				State->NewFiredSpike(i);
-				spike = true;
-				vm = this->erest;
-			}
-		}
-
-		internalSpike[i]=spike;
-
-		gampa *= exp_gampa;
-		gnmda *= exp_gnmda;
-		ginh *= exp_ginh;
-		ggj *= exp_ggj;
-
-		State->SetStateVariableAt(i,0,vm);
-		State->SetStateVariableAt(i,1,gampa);
-		State->SetStateVariableAt(i,2,gnmda);
-		State->SetStateVariableAt(i,3,ginh);
-		State->SetStateVariableAt(i,4,ggj);
-		State->SetLastUpdateTime(i,CurrentTime);
+	if(this->GetVectorNeuronState()->Get_Is_Monitored()){
+		HANDLE_ERROR(cudaMemcpy(state->VectorNeuronStates,state->VectorNeuronStates_GPU,state->GetNumberOfVariables()*state->SizeStates*sizeof(float),cudaMemcpyDeviceToHost));
+		HANDLE_ERROR(cudaMemcpy(state->LastUpdate,state->LastUpdateGPU,state->SizeStates*sizeof(double),cudaMemcpyDeviceToHost));
+		HANDLE_ERROR(cudaMemcpy(state->LastSpikeTime,state->LastSpikeTimeGPU,state->SizeStates*sizeof(double),cudaMemcpyDeviceToHost));
+		synchronizeGPU_CPU();
 	}
 
 	return false;
+
 }
 
-
-//-------------------------------------------------------
-
-
-ostream & LIFTimeDrivenModel::PrintInfo(ostream & out){
+ostream & LIFTimeDrivenModel_GPU::PrintInfo(ostream & out){
 	out << "- Leaky Time-Driven Model: " << this->GetModelID() << endl;
 
 	out << "\tExc. Reversal Potential: " << this->eexc << "V\tInh. Reversal Potential: " << this->einh << "V\tResting potential: " << this->erest << "V" << endl;
@@ -280,13 +229,17 @@ ostream & LIFTimeDrivenModel::PrintInfo(ostream & out){
 }	
 
 
-enum NeuronModelType LIFTimeDrivenModel::GetModelType(){
-	return TIME_DRIVEN_MODEL_CPU;
+enum NeuronModelType LIFTimeDrivenModel_GPU::GetModelType(){
+	return TIME_DRIVEN_MODEL_GPU;
 }
 
-
-void LIFTimeDrivenModel::InitializeStates(int N_neurons){
+void LIFTimeDrivenModel_GPU::InitializeStates(int N_neurons){
+	createSynchronize();
+	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->InitialState;
+	
 	float inicialization[] = {erest,0.0,0.0,0.0,0.0};
-	InitialState->InitializeStates(N_neurons, inicialization);
+	state->InitializeStatesGPU(N_neurons, inicialization);
 }
+
+
 

@@ -57,6 +57,11 @@ ifeq ($(simulinksupport),true)
   LDFLAGS	+= 
 endif
 
+ifeq ($(cuda_enabled),true)
+  NVCCFLAGS 	+= -I$(CUDAPATH)/include
+  LFLAGS 	+= -L$(CUDAPATH)/lib64 -lcuda -lcudart -lm -lncurses -arch=sm_20
+endif
+
 CXXFLAGS += -fno-strict-aliasing
 
 ARFLAGS = ruv

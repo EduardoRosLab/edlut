@@ -1,8 +1,9 @@
 /***************************************************************************
  *                           Simulation.cpp                                *
  *                           -------------------                           *
- * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2012 by Jesus Garrido, Richard Carrillo and  *
+ *						: Francisco Naveros                                *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,9 +15,15 @@
  *                                                                         *
  ***************************************************************************/
 
+/*
+ * \note: this file Simulation_GPU.cpp must be used instead of file Simulation.cpp to 
+ * implement a CPU-GPU hybrid architecture.
+*/
+
 #include "../../include/simulation/Simulation.h"
 #include "../../include/simulation/StopSimulationEvent.h"
 #include "../../include/simulation/TimeEvent.h"
+#include "../../include/simulation/TimeEvent_GPU.h"
 
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Spike.h"
@@ -113,7 +120,13 @@ void Simulation::InitSimulation() throw (EDLUTException){
 		this->Queue->InsertEvent(new TimeEvent(this->TimeDrivenStep));
 	}
 
+	// Add the time-driven simulation event for GPU
+	if (this->TimeDrivenStepGPU>0.0F){
+		this->Queue->InsertEvent(new TimeEvent_GPU(this->TimeDrivenStepGPU));
+	}
+
 	SetTotalSpikeCounter(0);
+
 }
 
 void Simulation::RunSimulation()  throw (EDLUTException){

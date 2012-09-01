@@ -16,7 +16,7 @@
 
 #include "../../include/neuron_model/SRMTableBasedModel.h"
 #include "../../include/neuron_model/NeuronModelTable.h"
-#include "../../include/neuron_model/SRMState.h"
+#include "../../include/neuron_model/VectorSRMState.h"
 
 #include "../../include/spike/InternalSpike.h"
 #include "../../include/spike/Neuron.h"
@@ -51,18 +51,20 @@ void SRMTableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 			skip_comments(fh,Currentline);
 
 			float InitValue;
+			InitValues=new float[NumStateVar+3]();
 
 			// Create a new initial state
-			this->InitialState = (SRMState *) new SRMState(this->NumStateVar+3,0);
-			this->InitialState->SetLastUpdateTime(0);
-			this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
-			this->InitialState->SetStateVariableAt(0,0);
+			this->InitialState = (VectorSRMState *) new VectorSRMState(this->NumStateVar+3,0, false);
+//			this->InitialState->SetLastUpdateTime(0);
+//			this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
+//			this->InitialState->SetStateVariableAt(0,0);
 
 			for(nv=0;nv<this->NumStateVar;nv++){
 				if(fscanf(fh,"%f",&InitValue)!=1){
 					throw EDLUTFileException(13,42,3,1,Currentline);
 				} else {
-					this->InitialState->SetStateVariableAt(nv+1,InitValue);
+					InitValues[nv+1]=InitValue;
+//					this->InitialState->SetStateVariableAt(nv+1,InitValue);
 				}
 			}
 
@@ -143,32 +145,32 @@ void SRMTableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 	}
 }
 
-void SRMTableBasedModel::UpdateState(NeuronState * State, double CurrentTime){
-	double AuxTime = State->GetLastUpdateTime();
+void SRMTableBasedModel::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
+	double AuxTime = State->GetLastUpdateTime(index);
 
-	SRMState * StateAux = (SRMState *) State;
+	VectorSRMState * StateAux = (VectorSRMState *) State;
 
-	StateAux->AddElapsedTime(CurrentTime-AuxTime);
+	StateAux->AddElapsedTime(index, CurrentTime-AuxTime);
 
-	TableBasedModel::UpdateState(State, CurrentTime);
+	TableBasedModel::UpdateState(index, State, CurrentTime);
 }
 
-void SRMTableBasedModel::SynapsisEffect(NeuronState * State, Interconnection * InputConnection){
-	float Value = State->GetStateVariableAt(this->SynapticVar[InputConnection->GetType()]+1);
-	State->SetStateVariableAt(this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*exp(1.0));
+void SRMTableBasedModel::SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection){
+	float Value = State->GetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1);
+	State->SetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*exp(1.0));
 }
 
-double SRMTableBasedModel::NextFiringPrediction(NeuronState * State){
-	State->SetStateVariableAt(this->LastSpikeVar+1,((SRMState *) State)->GetLastSpikeTime());
-	State->SetStateVariableAt(this->SeedVar+1,rand()%10);
-	return this->FiringTable->TableAccess(State);
+double SRMTableBasedModel::NextFiringPrediction(int index, VectorNeuronState * State){
+	State->SetStateVariableAt(index,this->LastSpikeVar+1,((VectorSRMState *) State)->GetLastSpikeTime(index));
+	State->SetStateVariableAt(index,this->SeedVar+1,rand()%10);
+	return this->FiringTable->TableAccess(index,State);
 }
 
-double SRMTableBasedModel::EndRefractoryPeriod(NeuronState * State){
+double SRMTableBasedModel::EndRefractoryPeriod(int index, VectorNeuronState * State){
 	return 0.0;
 }
 
-SRMTableBasedModel::SRMTableBasedModel(string NeuronModelID): TableBasedModel(NeuronModelID){
+SRMTableBasedModel::SRMTableBasedModel(string NeuronTypeID, string NeuronModelID): TableBasedModel(NeuronTypeID, NeuronModelID){
 
 }
 
@@ -176,29 +178,36 @@ SRMTableBasedModel::~SRMTableBasedModel(){
 
 }
 
-NeuronState * SRMTableBasedModel::InitializeState(){
-	return (SRMState *) new SRMState(*((SRMState *) this->InitialState));
+VectorNeuronState * SRMTableBasedModel::InitializeState(){
+	//return (VectorSRMState *) new VectorSRMState(*((VectorSRMState *) this->InitialState));
+	return InitialState;
 }
 
 InternalSpike * SRMTableBasedModel::GenerateNextSpike(InternalSpike *  OutputSpike){
 
 	Neuron * SourceCell = OutputSpike->GetSource();
 
-	NeuronState * CurrentState = SourceCell->GetNeuronState();
+	int SourceIndex=SourceCell->GetIndex_VectorNeuronState();
+
+	VectorNeuronState * CurrentState = SourceCell->GetVectorNeuronState();
 
 	InternalSpike * NextSpike = 0;
 
-	this->UpdateState((SRMState *)CurrentState,OutputSpike->GetTime());
+	this->UpdateState(SourceIndex,(VectorSRMState *)CurrentState,OutputSpike->GetTime());
 
-	double PredictedSpike = this->NextFiringPrediction((SRMState *)CurrentState);
+	double PredictedSpike = this->NextFiringPrediction(SourceIndex,(VectorSRMState *)CurrentState);
 
 	if (PredictedSpike!=NO_SPIKE_PREDICTED){
-		PredictedSpike += CurrentState->GetLastUpdateTime();
+		PredictedSpike += CurrentState->GetLastUpdateTime(SourceIndex);
 
 		NextSpike = new InternalSpike(PredictedSpike,SourceCell);
 	}
 
-	SourceCell->GetNeuronState()->SetNextPredictedSpikeTime(PredictedSpike);
+	SourceCell->GetVectorNeuronState()->SetNextPredictedSpikeTime(SourceIndex,PredictedSpike);
 
 	return NextSpike;
+}
+
+void SRMTableBasedModel::InitializeStates(int N_neurons){
+	InitialState->InitializeStates(N_neurons, InitValues);
 }

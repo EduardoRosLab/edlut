@@ -20,6 +20,8 @@
 
 #define A 1./2.
 
+#define TERMSLUT 1000 // +5000 terms in the LUT produces an error
+
 const float SinState::terms[11][11]  = {{1,0,0,0,0,0,0,0,0,0,0},
 	{A,-A,0,0,0,0,0,0,0,0,0},
 	{3./2.*pow(A,2),-4./2.*pow(A,2),1./2.*pow(A,2),0,0,0,0,0,0,0,0},
@@ -32,6 +34,11 @@ const float SinState::terms[11][11]  = {{1,0,0,0,0,0,0,0,0,0,0},
 	{12155./128.*pow(A,9),-21879./128.*pow(A,9),1989./16.*pow(A,9),-4641./64.*pow(A,9),1071./32.*pow(A,9),-765./64.*pow(A,9),51./16.*pow(A,9),-153./256.*pow(A,9),9./128.*pow(A,9),-1./256.*pow(A,9),0},
 	{46189./256.*pow(A,10),-20995./64.*pow(A,10),62985./256.*pow(A,10),-4845./32.*pow(A,10),4845./64.*pow(A,10),-969./32.*pow(A,10),4845./512.*pow(A,10),-285./128.*pow(A,10),95./256.*pow(A,10),-5./128.*pow(A,10),1./512.*pow(A,10)}};
 
+bool SinState::InitializedLUT = false;
+
+float SinState::LUTStep = 0;
+
+float SinState::SinLUT[2*TERMSLUT];
 
 SinState::SinState(int NewExponent, float NewMaxpos): ConnectionState(NewExponent+2), exponent(NewExponent), maxpos(NewMaxpos){
 	for (int i=0; i<NewExponent+2; ++i){
@@ -39,10 +46,24 @@ SinState::SinState(int NewExponent, float NewMaxpos): ConnectionState(NewExponen
 	}
 
 	this->tau = this->maxpos/atan((float)exponent);
-	this->factor = 1./(exp(-atan((float)this->exponent))*pow(sin(atan((float)this->exponent)),this->exponent));
+	this->factor = 1./(exp(-atan((float)this->exponent))*pow(sin(atan((float)this->exponent)),(int) this->exponent));
 
 	if (this->tau==0){
 		this->tau = 1e-6;
+	}
+
+	// Initialize LUT
+	if (!this->InitializedLUT){
+		this->InitializedLUT = true;
+		
+		double const Pi=4*atan(1.);
+
+		this->LUTStep = 2*Pi/TERMSLUT;
+
+		for (unsigned int i=0; i<TERMSLUT; ++i){
+			this->SinLUT[2*i] = sinf(this->LUTStep*i);
+			this->SinLUT[2*i+1] = cosf(this->LUTStep*i);
+		}
 	}
 }
 
@@ -72,35 +93,50 @@ double SinState::GetPrintableValuesAt(unsigned int position){
 }
 
 void SinState::AddElapsedTime(float ElapsedTime){
-	float expon = exp(-ElapsedTime/this->tau);
+	float ElapsedRelative = ElapsedTime/this->tau;
+	
+	float expon = exp(-ElapsedRelative);
 
 	// Update the activity value
-	float OldExpon = this->GetStateVariableAt(1);
 
-	float NewActivity = this->factor*OldExpon*this->terms[this->exponent/2][0]*expon;
+	float OldExpon = *(this->StateVars+1);
+
+	unsigned int ExponenLine = this->exponent>>1;
+
+	const float* TermPointer = this->terms[ExponenLine]; 
+
+	float NewActivity = this->factor*OldExpon*(*(TermPointer++))*expon;
 
 	float NewExpon = OldExpon * expon;
 
-	this->SetStateVariableAt(1,NewExpon);
+	*(this->StateVars+1) = NewExpon;
 
-	for (int grade=2; grade<=this->exponent; grade+=2){
-		float OldVarCos = this->GetStateVariableAt(grade);
-		float OldVarSin = this->GetStateVariableAt(grade+1);
+	for (unsigned int grade=2; grade<=this->exponent; grade+=2){
+		
+		float * StateVarCos = this->StateVars+grade;
+		float * StateVarSin = StateVarCos+1;
 
-		float SinVar = sin(grade*ElapsedTime/tau);
-		float CosVar = cos(grade*ElapsedTime/tau);
+		float OldVarCos = *StateVarCos;
+		float OldVarSin = *StateVarSin;
 
-		NewActivity += this->factor*(expon*this->terms[this->exponent/2][grade/2]*(OldVarCos*CosVar-OldVarSin*SinVar));
+		float SinPar = grade*ElapsedRelative;
 
+		float * index = this->SinLUT+((int)(SinPar/this->LUTStep)%(TERMSLUT<<1));
+		float SinVar = *index;
+		float CosVar = *(index+1);
+		
 		float NewVarCos = (OldVarCos*CosVar-OldVarSin*SinVar)*expon;
 		float NewVarSin = (OldVarSin*CosVar+OldVarCos*SinVar)*expon;
 
+		NewActivity += this->factor*(NewVarCos*(*(TermPointer++)));
+
+		
 		/*if(spike){  // if spike, we need to increase the e1 variable
 			NewVarCos += 1;
 		}*/
 
-		this->SetStateVariableAt(grade,NewVarCos);
-		this->SetStateVariableAt(grade+1,NewVarSin);
+		*StateVarCos = NewVarCos;
+		*StateVarSin = NewVarSin;
 	}
 
 	this->SetStateVariableAt(0,NewActivity);
@@ -113,7 +149,7 @@ void SinState::ApplyPresynapticSpike(){
 
 	this->SetStateVariableAt(1,OldExpon+1);
 
-	for (int grade=2; grade<=this->exponent; grade+=2){
+	for (unsigned int grade=2; grade<=this->exponent; grade+=2){
 		float OldVarCos = this->GetStateVariableAt(grade);
 		this->SetStateVariableAt(grade,OldVarCos+1);
 	}

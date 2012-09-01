@@ -21,7 +21,7 @@
 #include "../../include/spike/Interconnection.h"
 
 #include "../../include/neuron_model/NeuronModel.h"
-#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/VectorNeuronState.h"
 
 #include "../../include/simulation/EventQueue.h"
 
@@ -33,22 +33,37 @@ Neuron::Neuron(){
 }
 
 Neuron::Neuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput){
-	InitNeuron(NewIndex,Type,Monitored,IsOutput);
+	InitNeuron(NewIndex,-1,Type,Monitored,IsOutput);
 }
 
 Neuron::~Neuron(){
-	if (this->state!=0){
-		delete this->state;
+	//state is deleted en Neuron Model.
+	if (this->InputLearningConnections!=0){
+		delete [] this->InputLearningConnections;
+	}
+
+	if (this->OutputConnections!=0){
+		delete [] this->OutputConnections;
 	}
 }
 
-void Neuron::InitNeuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput){
+void Neuron::InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel * Type, bool Monitored, bool IsOutput){
 
 	this->type = Type;
 
 	this->state = Type->InitializeState();
 
+	this->OutputConnections = 0;
+
+	this->OutputConNumber = 0;
+
+	this->InputLearningConnections = 0;
+
+	this->InputConLearningNumber = 0;
+
 	this->index = NewIndex;
+
+	this->index_VectorNeuronState=index_VectorNeuronState;
 
 	this->monitored=Monitored;
 
@@ -61,40 +76,52 @@ long int Neuron::GetIndex() const{
 	return this->index;	
 }
 
-NeuronState * Neuron::GetNeuronState() const{
+VectorNeuronState * Neuron::GetVectorNeuronState() const{
 	return this->state;
 }
    		
-int Neuron::GetInputNumber() const{
-	return InputConnections.size();	
+unsigned int Neuron::GetInputNumberWithLearning() const{
+	return this->InputConLearningNumber;
 }
    		
-int Neuron::GetOutputNumber() const{
-	return OutputConnections.size();
+unsigned int Neuron::GetOutputNumber() const{
+	return this->OutputConNumber;
 }
 
-Interconnection * Neuron::GetInputConnectionAt(int index) const{
-	return InputConnections[index];
+Interconnection * Neuron::GetInputConnectionWithLearningAt(unsigned int index) const{
+	return *(this->InputLearningConnections+index);
 }
    		
-void Neuron::AddInputConnection(Interconnection * Connection){
-	InputConnections.push_back(Connection);	
+void Neuron::SetInputConnectionsWithLearning(Interconnection ** Connections, unsigned int NumberOfConnections){
+	if (this->InputLearningConnections!=0){
+		delete [] this->InputLearningConnections;
+	}
+	
+	this->InputLearningConnections = Connections;
+
+	this->InputConLearningNumber = NumberOfConnections;
 }
 
 bool Neuron::IsInputConnected() const{
-	return !InputConnections.empty();
+	return this->InputConLearningNumber!=0;
 }
    		
-Interconnection * Neuron::GetOutputConnectionAt(int index) const{
-	return OutputConnections[index];
+Interconnection * Neuron::GetOutputConnectionAt(unsigned int index) const{
+	return *(this->OutputConnections+index);
 }
    		
-void Neuron::AddOutputConnection(Interconnection * Connection){
-	OutputConnections.push_back(Connection);
+void Neuron::SetOutputConnections(Interconnection ** Connections, unsigned int NumberOfConnections){
+	if (this->OutputConnections!=0){
+		delete [] this->OutputConnections;
+	}
+	
+	this->OutputConnections = Connections;
+
+	this->OutputConNumber = NumberOfConnections;
 }
 
 bool Neuron::IsOutputConnected() const{
-	return !OutputConnections.empty();
+	return this->OutputConNumber!=0;
 }
    		
 bool Neuron::IsMonitored() const{
@@ -114,9 +141,9 @@ ostream & Neuron::PrintInfo(ostream & out) {
 
 	out << "\tType: " << this->type->GetModelID() << endl;
 
-	out << "\tInput Connections: " << this->InputConnections.size() << endl;
+	out << "\tInput Connections With Learning: " << this->InputConLearningNumber << endl;
 
-   	out << "\tOutput Connections: " << this->OutputConnections.size() << endl;
+	out << "\tOutput Connections: " << this->OutputConNumber << endl;
 
    	if (this->monitored) out << "\tMonitored" << endl;
    	else out << "\tNon-monitored" << endl;
@@ -135,4 +162,12 @@ void Neuron::SetSpikeCounter(long n) {
 /* For LSAM */
 long Neuron::GetSpikeCounter() {
   return this->spikeCounter;
+}
+
+void Neuron::SetIndex_VectorNeuronState(long int index){
+	index_VectorNeuronState=index;
+}
+
+long int Neuron::GetIndex_VectorNeuronState(){
+	return index_VectorNeuronState;
 }

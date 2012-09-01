@@ -2,7 +2,16 @@
 ################################ - MAKEFILE RULES - ############################
 ################################################################################
 
-compiler	:= g++
+
+
+#NVCC = ${CUDA_INSTALL_PATH}/bin/nvcc
+
+
+ifeq ($(cuda_enabled),true)
+#  compiler_GPU := ${CUDA_INSTALL_PATH }/bin/nvcc
+  NVCC := nvcc -ccbin /usr/bin
+endif
+compiler 	:= g++
 mex		:= mex
 CXX 		:= ${compiler}
 
@@ -13,7 +22,13 @@ $(exetarget) : $(exe-objects)
 	@echo ------------------ making executable
 	@echo
 	@mkdir -p $(bindir)
-	$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+#	ifeq ($(cuda_enabled),true)
+#		$(compiler_GPU) $(CXXFLAGS) $^ $(LFLAGS) -o $@
+		$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+#	else
+#		$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+#	endif
+
 
 .PHONY		: mex
 mex	: $(mextarget) 
@@ -147,6 +162,7 @@ ifneq "$(MAKECMDGOALS)" "clean"
   include $(dependencies)
 endif
 
+
 %.d : %.cc
 	@echo
 	@echo ------------------ creating dependencies for $@
@@ -164,6 +180,7 @@ endif
 	sed 's,\($(notdir $*)\.o\) *:,$(dir $@)\1 $@: ,' > $@.tmp
 	mv -f $@.tmp $@
 	@echo
+
 
 .PHONY : pkgfile
 pkgfile:

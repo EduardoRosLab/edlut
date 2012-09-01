@@ -16,7 +16,7 @@
 
 #include "../../include/neuron_model/EventDrivenNeuronModel.h"
 
-EventDrivenNeuronModel::EventDrivenNeuronModel(string NeuronModelID): NeuronModel(NeuronModelID) {
+EventDrivenNeuronModel::EventDrivenNeuronModel(string NeuronTypeID, string NeuronModelID): NeuronModel(NeuronTypeID, NeuronModelID) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -28,3 +28,4 @@ EventDrivenNeuronModel::~EventDrivenNeuronModel() {
 enum NeuronModelType EventDrivenNeuronModel::GetModelType(){
 	return EVENT_DRIVEN_MODEL;
 }
+
