@@ -67,29 +67,26 @@ void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,do
 
 	// Check if this is the teaching signal
 	if(this->trigger == 1){
-		for(int i=0; i<Connection->GetTarget()->GetInputNumber(); ++i){
-			Interconnection * interi=Connection->GetTarget()->GetInputConnectionAt(i);
+		for(int i=0; i<Connection->GetTarget()->GetInputNumberWithLearning(); ++i){
+			Interconnection * interi=Connection->GetTarget()->GetInputConnectionWithLearningAt(i);
 		    AdditiveKernelChange * wchani=(AdditiveKernelChange *)interi->GetWeightChange();
 
 		    // Apply sinaptic plasticity driven by teaching signal
-		    if (wchani!=0){
-		    	// Get connection state
-				ConnectionState * ConnectionStatePre = interi->GetConnectionState();
+		    // Get connection state
+			ConnectionState * ConnectionStatePre = interi->GetConnectionState();
 
-				// Update the presynaptic activity
-				ConnectionStatePre->AddElapsedTime(SpikeTime-ConnectionStatePre->GetLastUpdateTime());
+			// Update the presynaptic activity
+			ConnectionStatePre->AddElapsedTime(SpikeTime-ConnectionStatePre->GetLastUpdateTime());
 
-				// Update synaptic weight
-				float NewWeightPre = interi->GetWeight()+wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity();
+			// Update synaptic weight
+			float NewWeightPre = interi->GetWeight()+wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity();
 
-				if(NewWeightPre>interi->GetMaxWeight())
-					NewWeightPre=interi->GetMaxWeight();
-				else if(NewWeightPre<0.0)
-					NewWeightPre=0.0;
+			if(NewWeightPre>interi->GetMaxWeight())
+				NewWeightPre=interi->GetMaxWeight();
+			else if(NewWeightPre<0.0)
+				NewWeightPre=0.0;
 
-				interi->SetWeight(NewWeightPre);
-
-		    }
+			interi->SetWeight(NewWeightPre);
 		}
 	}
 }

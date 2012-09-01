@@ -18,19 +18,59 @@
 
 BufferedState::BufferedState(unsigned int NumVariables, unsigned int NumBuffers):
 	NeuronState(NumVariables), FirstElement(0), LastElement(0), BufferAmplitude(0), NumberOfElements(0), NumberOfBuffers(NumBuffers) {
-		FirstElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
-		LastElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
-		BufferAmplitude = (float *) new float [NumberOfBuffers];
-		NumberOfElements = (unsigned int *) new unsigned int [NumberOfBuffers];
+	FirstElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
+
+	for (unsigned int i=0; i<NumberOfBuffers; ++i){
+		this->FirstElement[i] = 0;
+	}
+		
+	LastElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
+
+	for (unsigned int i=0; i<NumberOfBuffers; ++i){
+		this->LastElement[i] = 0;
+	}
+		
+	BufferAmplitude = (float *) new float [NumberOfBuffers];
+
+	for (unsigned int i=0; i<NumberOfBuffers; ++i){
+		this->BufferAmplitude[i] = 0;
+	}
+		
+	NumberOfElements = (unsigned int *) new unsigned int [NumberOfBuffers];
+
+	for (unsigned int i=0; i<NumberOfBuffers; ++i){
+		this->NumberOfElements[i] = 0;
+	}
+		
 }
 
 BufferedState::BufferedState(const BufferedState & OldState): NeuronState(OldState), FirstElement(0), LastElement(0),
 		BufferAmplitude(0), NumberOfElements(0), NumberOfBuffers(OldState.NumberOfBuffers) {
 
 	FirstElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
+
+	for (unsigned int i=0; i<NumberOfBuffers; ++i){
+		this->FirstElement[i] = 0;
+	}
+		
 	LastElement = (ActivityNode **) new ActivityNode * [NumberOfBuffers];
+
+	for (unsigned int i=0; i<NumberOfBuffers; ++i){
+		this->LastElement[i] = 0;
+	}
+		
 	BufferAmplitude = (float *) new float [NumberOfBuffers];
+
+	for (unsigned int i=0; i<NumberOfBuffers; ++i){
+		this->BufferAmplitude[i] = 0;
+	}
+		
 	NumberOfElements = (unsigned int *) new unsigned int [NumberOfBuffers];
+
+	for (unsigned int i=0; i<NumberOfBuffers; ++i){
+		this->NumberOfElements[i] = 0;
+	}
+		
 
 	for (unsigned int i=0; i<this->NumberOfBuffers; ++i){
 		this->BufferAmplitude[i] = OldState.BufferAmplitude[i];

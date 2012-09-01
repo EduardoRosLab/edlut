@@ -1,8 +1,8 @@
 /***************************************************************************
- *                           TimeDrivenNeuronModel.h                       *
+ *                           LIFTimeDrivenModelRK_GPU.h                    *
  *                           -------------------                           *
- * copyright            : (C) 2012 by Jesus Garrido and Francisco Naveros  *
- * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
+ * copyright            : (C) 2012 by Francisco Naveros                    *
+ * email                : fnaveros@atc.ugr.es                              *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,20 +14,20 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef TIMEDRIVENNEURONMODEL_H_
-#define TIMEDRIVENNEURONMODEL_H_
+#ifndef LIFTIMEDRIVENMODELRK_GPU_H_
+#define LIFTIMEDRIVENMODELRK_GPU_H_
 
 /*!
- * \file TimeDrivenNeuronModel.h
+ * \file LIFTimeDrivenModelRK_GPU.h
  *
- * \author Jesus Garrido
  * \author Francisco Naveros
- * \date January 2011
+ * \date January 2012
  *
- * This file declares a class which abstracts an event-driven neuron model.
+ * This file declares a class which abstracts a Leaky Integrate-And-Fire neuron model
+ * using 4th order Runge-Kutta integration method.
  */
 
-#include "./NeuronModel.h"
+#include "./LIFTimeDrivenModel_GPU.h"
 
 #include <string>
 
@@ -35,13 +35,12 @@ using namespace std;
 
 class InputSpike;
 class VectorNeuronState;
-
-
+class Interconnection;
 
 /*!
- * \class TimeDrivenNeuronModel
+ * \class LIFTimeDrivenModelRK_GPU
  *
- * \brief Time-Driven Spiking neuron model
+ * \brief Leaky Integrate-And-Fire Time-Driven neuron model using 4th order Runge-Kutta integration method.
  *
  * This class abstracts the behavior of a neuron in a time-driven spiking neural network.
  * It includes internal model functions which define the behavior of the model
@@ -49,10 +48,10 @@ class VectorNeuronState;
  * This is only a virtual function (an interface) which defines the functions of the
  * inherited classes.
  *
- * \author Jesus Garrido
- * \date January 2011
+ * \author Francisco Naveros
+ * \date January 2012
  */
-class TimeDrivenNeuronModel : public NeuronModel {
+class LIFTimeDrivenModelRK_GPU : public LIFTimeDrivenModel_GPU {
 	public:
 
 		/*!
@@ -60,49 +59,31 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 *
 		 * It generates a new neuron model object without being initialized.
 		 *
+		 * \param NeuronTypeID Neuron type identificator
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		TimeDrivenNeuronModel(string NeuronTypeID, string NeuronModelID);
+		LIFTimeDrivenModelRK_GPU(string NeuronTypeID, string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
 		 *
 		 * It destroys an object of this class.
 		 */
-		virtual ~TimeDrivenNeuronModel();
+		virtual ~LIFTimeDrivenModelRK_GPU();
 
-		
 		/*!
 		 * \brief Update the neuron state variables.
 		 *
 		 * It updates the neuron state variables.
 		 *
-		 * \param index The cell index inside the vector. if index=-1, updating all cell. 
+		 * \param index The cell index inside the VectorNeuronState. if index=-1, updating all cell.
 		 * \param The current neuron state.
 		 * \param CurrentTime Current time.
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime) = 0;
-
-		/*!
-		 * \brief It gets the neuron model type (event-driven or time-driven).
-		 *
-		 * It gets the neuron model type (event-driven or time-driven).
-		 *
-		 * \return The type of the neuron model.
-		 */
-		virtual enum NeuronModelType GetModelType()=0;
-
-		/*!
-		 * \brief It initialice VectorNeuronState.
-		 *
-		 * It initialice VectorNeuronState.
-		 *
-		 * \param N_neurons cell number inside the VectorNeuronState.
-		 */
-		virtual void InitializeStates(int N_neurons)=0;
-
+		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime);
 };
 
-#endif /* NEURONMODEL_H_ */
+#endif /* LIFTIMEDRIVENMODELRK_GPU_H_ */
+

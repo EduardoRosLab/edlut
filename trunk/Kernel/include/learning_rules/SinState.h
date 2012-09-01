@@ -51,9 +51,24 @@ class SinState : public ConnectionState{
 		const static float terms [11][11];
 
 		/*!
+		 * Is the LUT initialized?
+		 */
+		static bool InitializedLUT;
+
+		/*!
+		 * Precalculated sin terms.
+		 */
+		static float SinLUT[];
+
+		/*!
+		 * Precalculated LUT Step.
+		 */
+		static float LUTStep;
+
+		/*!
 		 * The exponent of the sinuidal function.
 		 */
-		int exponent;
+		unsigned int exponent;
 
 		/*!
 		 * Time of the maximum response rate.

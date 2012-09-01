@@ -36,6 +36,10 @@
 #include "../include/spike/EDLUTException.h"
 #include "../include/spike/Network.h"
 
+//-----------
+#include "../include/neuron_model/NeuronModel.h"
+#include "../include/neuron_model/LIFTimeDrivenModel_GPU.h"
+
 //#include "google/profiler.h"
 //#include "vld.h"
 
@@ -55,16 +59,19 @@ using namespace std;
  * 			-sf File_Name	It saves the final weights in file File_Name.
  * 			-wt Save_Weight_Step	It sets the step time between weights saving.
  * 			-st Step_Time(in_seconds) It sets the step time in simulation.
- * 			-log File_Name	It saves the activity register in file File_Name.
+ *			-ts Time driven step time (in_seconds).
+ *			-tsGPU Time driven step time for GPU (in_seconds).
+ * 			-log File_Name It saves the activity register in file File_Name.
+ *          -logp File_Name It saves all events register in file File_Name.
  * 			-if Input_File	It adds the Input_File file in the input sources of the simulation.
  * 			-of Output_File	It adds the Output_File file in the output targets of the simulation.
- * 			-ic IPDirection:Port Server|Client	It adds the connection as a server or a client in the specified address in the input sources of the simulation.
- * 			-oc IPDirection:Port Server|Client	It adds the connection as a server or a client in the specified address in the output targets of the simulation.	 
- * 			-ioc IPDirection:Port Server|Client	It adds the connection as a server or a client in the specified address in the input sources and in the output targets of the simulation.	 
+ * 			-ic IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the input sources of the simulation.
+ * 			-oc IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the output targets of the simulation.
+ * 			-ioc IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the input sources and in the output targets.	 
  * 
   */ 
 int main(int ac, char *av[]) {
-   
+
 	clock_t startt,endt;
 	cout << "Loading tables..." << endl;
 
@@ -93,6 +100,10 @@ int main(int ac, char *av[]) {
 
 		if (Reader.GetTimeDrivenStepTime()!=-1){
 			Simul.SetTimeDrivenStep(Reader.GetTimeDrivenStepTime());
+		}
+
+		if (Reader.GetTimeDrivenStepTimeGPU()!=-1){
+			Simul.SetTimeDrivenStepGPU(Reader.GetTimeDrivenStepTimeGPU());
 		}
 					
 		if(Reader.CheckInfo()){
@@ -129,18 +140,41 @@ int main(int ac, char *av[]) {
 			OutputWeightDriver * Weights = Reader.GetOutputWeightDrivers()[i];
 			delete Weights;
 		}
-         
-		cout << "Oky doky" << endl;     
+
+		cout << "Oky doky" << endl;  
 
 		cout << "Elapsed time: " << (endt-startt)/(float)CLOCKS_PER_SEC << " sec" << endl;
 		cout << "Number of updates: " << Simul.GetSimulationUpdates() << endl;
+		cout << "Number of InternalSpike: " << Simul.GetTotalSpikeCounter() << endl;
 		cout << "Mean number of spikes in heap: " << Simul.GetHeapAcumSize()/(float)Simul.GetSimulationUpdates() << endl;
 		cout << "Updates per second: " << Simul.GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
+
+
+
+		float GPU_time=0;
+		float time=0;
+		for(int i=0; i<Simul.GetNetwork()->GetNneutypes();i++){
+			if(Simul.GetNetwork()->GetNeuronModelAt(i)->GetModelType()==2){
+				time=((LIFTimeDrivenModel_GPU *)Simul.GetNetwork()->GetNeuronModelAt(i))->time;
+				time/=(((LIFTimeDrivenModel_GPU *)Simul.GetNetwork()->GetNeuronModelAt(i))->counter)/(((LIFTimeDrivenModel_GPU *)Simul.GetNetwork()->GetNeuronModelAt(i))->size);
+				time*=(((LIFTimeDrivenModel_GPU *)Simul.GetNetwork()->GetNeuronModelAt(i))->counter);
+			}
+			GPU_time+=time;
+			time=0;
+		}
+		GPU_time/=1000.0;
+
+		cout << "Elapsed time in GPU: " << GPU_time << " sec" << endl;
+		cout << "Time GPU/Time CPU: "<< GPU_time/((endt-startt)/(float)CLOCKS_PER_SEC)<<endl;
+
+
+
 	} catch (ParameterException Exc){
 		cerr << Exc << endl;
 		cerr << av[0] << " -time Simulation_Time -nf Network_File -wf Weights_File";
-		cerr << " [-info] [-sf Final_Weights_File] [-wt Save_Weight_Step] [-st Simulation_Step_Time] [-log Activity_Register_File] [-if Input_File] ";
-		cerr << "[-ic IPAddress:Port Server|Client] [-of Output_File] [-oc IPAddress:Port Server|Client] [-ioc IPAddress:Port Server|Client]" << endl;	
+		cerr << " [-info] [-sf Final_Weights_File] [-wt Save_Weight_Step] [-st Simulation_Step_Time] [-ts Time_Driven_Step]"; 
+		cerr << " [-tsGPU Time_Driven_Step_GPU] [-log Activity_Register_File] [-logp Activity_Register_File] [-if Input_File]";
+		cerr << " [-ic IPAddress:Port Server|Client] [-of Output_File] [-oc IPAddress:Port Server|Client] [-ioc IPAddress:Port Server|Client]" << endl;	
 	} catch (ConnectionException Exc){
 		cerr << Exc << endl;
 		return 1;
@@ -151,5 +185,6 @@ int main(int ac, char *av[]) {
 		cerr << Exc << endl;
 		return Exc.GetErrorNum();
 	}
+
 	return 0;
 }

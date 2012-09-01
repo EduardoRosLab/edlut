@@ -110,7 +110,6 @@ const char * EDLUTException::Errormsgs[] ={
 	"Can't read the membrane capacitance",
 	"Can't read the firing threshold",
 	"Can't read the resting potential",
-
 	"Can't read the inhibitory reversal potential",
 	"Can't read the excitatory reversal potential"
 

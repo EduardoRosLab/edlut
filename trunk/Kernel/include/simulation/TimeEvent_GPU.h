@@ -1,8 +1,8 @@
 /***************************************************************************
- *                           TimeEvent.h                                   *
+ *                           TimeEvent_GPU.h                                *
  *                           -------------------                           *
- * copyright            : (C) 2011 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2011 by Francisco Naveros                    *
+ * email                : fnaveros@atc.ugr.es                              *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,34 +14,34 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef TIMEEVENT_H_
-#define TIMEEVENT_H_
+#ifndef TIMEEVENT_GPU_H_
+#define TIMEEVENT_GPU_H_
 
 /*!
- * \file TimeEvent.h
+ * \file TimeEvent_GPU.h
  *
- * \author Jesus Garrido
- * \date January 2011
+ * \author Francisco Naveros
+ * \date January 2012
  *
  * This file declares a class which implements the behaviour of time-driven
- * neuron model events. Each time that a time-driven step happens this class will
+ * neuron model events in a GPU. Each time that a time-driven step happens this class will
  * call the update methods from each cell.
  */
 
 #include "../simulation/Event.h"
 
 /*!
- * \class TimeEvent
+ * \class TimeEvent_GPU
  *
  * \brief Time-driven cell model event.
  *
- * This class abstract the concept of time-driven update state. It implements the method
- * which updates the state variables from each time-driven cell.
+ * This class abstract the concept of time-driven update state in a GPU. It implements the method
+ * which updates the state variables from each time-driven cell in a GPU.
  *
- * \author Jesus Garrido
- * \date January 2011
+ * \author Francisco Naveros
+ * \date January 2012
  */
-class TimeEvent : public Event{
+class TimeEvent_GPU : public Event{
 
 public:
 
@@ -52,19 +52,19 @@ public:
 	 * 
 	 * \param NewTime Time of the next state variable update.
 	 */
-	TimeEvent(double NewTime);
+	TimeEvent_GPU(double NewTime);
 	
 	/*!
 	 * \brief Class destructor.
 	 * 
 	 * It destroies an object of this class.
 	 */
-	~TimeEvent();
+	~TimeEvent_GPU();
 
 	/*!
-	 * \brief It updates the state of every time-driven cell in the network.
+	 * \brief It updates the state of every time-driven cell in GPU in the network.
 	 * 
-	 * It updates the state of every time-driven cell in the network.
+	 * It updates the state of every time-driven cell in GPU in the network.
 	 * 
 	 * \param CurrentSimulation The simulation object where the event is working.
 	 */

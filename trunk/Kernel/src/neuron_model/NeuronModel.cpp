@@ -1,8 +1,8 @@
 /***************************************************************************
  *                           NeuronModel.cpp                               *
  *                           -------------------                           *
- * copyright            : (C) 2011 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2012 by Jesus Garrido and Francisco Naveros  *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -16,9 +16,9 @@
 
 #include "../../include/neuron_model/NeuronModel.h"
 
-#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/VectorNeuronState.h"
 
-NeuronModel::NeuronModel(string NeuronModelID): ModelID(NeuronModelID), InitialState(0) {
+NeuronModel::NeuronModel(string NeuronTypeID, string NeuronModelID): TypeID(NeuronTypeID),ModelID(NeuronModelID), InitialState(0) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -30,6 +30,14 @@ NeuronModel::~NeuronModel() {
 	}
 }
 
+string NeuronModel::GetTypeID(){
+	return this->TypeID;
+}
+
 string NeuronModel::GetModelID(){
 	return this->ModelID;
+}
+
+VectorNeuronState * NeuronModel::GetVectorNeuronState(){
+	return this->InitialState;
 }

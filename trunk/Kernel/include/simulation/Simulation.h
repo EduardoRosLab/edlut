@@ -99,9 +99,14 @@ class Simulation : public PrintableObject{
 		double SimulationStep;
 
 		/*!
-		 * Simulation step
+		 * Simulation Time Driven step
 		 */
 		double TimeDrivenStep;
+
+		/*!
+		 * Simulation Time Driven step for GPU
+		 */
+		double TimeDrivenStepGPU;
 		
 		/*!
 		 * Save weight step
@@ -240,6 +245,24 @@ class Simulation : public PrintableObject{
 		 * \return The simulation step time (in seconds). 0 values don't simulate by step.
 		 */
 		double GetTimeDrivenStep();
+
+		/*!
+		 * \brief It sets the time-driven model step for GPU.
+		 * 
+		 * It sets the time-driven model step for GPU.
+		 * 
+		 * \param NewTimeDrivenStepGPU The time-driven model step time for GPU(in seconds). 0 values represents variable step (not implemented yet).
+		 */
+		void SetTimeDrivenStepGPU(double NewTimeDrivenStepGPU);
+		
+		/*!
+		 * \brief It gets the simulation step time for GPU.
+		 * 
+		 * It gets the simulation step time for GPU.
+		 * 
+		 * \return The simulation step time for GPU(in seconds). 0 values don't simulate by step.
+		 */
+		double GetTimeDrivenStepGPU();
 		
 		/*!
 		 * \brief It ends the simulation before the next event.

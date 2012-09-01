@@ -58,7 +58,7 @@ unsigned int NeuronState::GetNumberOfVariables(){
 }
 
 float NeuronState::GetStateVariableAt(unsigned int position){
-	return this->StateVars[position];
+	return *(this->StateVars+position);
 }
 
 double NeuronState::GetLastUpdateTime(){

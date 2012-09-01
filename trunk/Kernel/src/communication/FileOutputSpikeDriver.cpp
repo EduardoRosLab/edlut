@@ -16,7 +16,7 @@
  
 #include "../../include/communication/FileOutputSpikeDriver.h"
 
-#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/VectorNeuronState.h"
 
 #include "../../include/spike/Spike.h"
 #include "../../include/spike/Neuron.h"
@@ -42,8 +42,8 @@ void FileOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUT
 	if(fprintf(this->Handler,"%f\t%li",Time,Source->GetIndex()) < 0)
 		throw EDLUTException(3,3,2,0);
 
-	for (unsigned int i=0; i<Source->GetNeuronState()->GetNumberOfPrintableValues(); ++i){
-		if(fprintf(this->Handler,"\t%f",Source->GetNeuronState()->GetPrintableValuesAt(i)) < 0)
+	for (unsigned int i=0; i<Source->GetVectorNeuronState()->GetNumberOfPrintableValues(); ++i){
+		if(fprintf(this->Handler,"\t%1.12f",Source->GetVectorNeuronState()->GetPrintableValuesAt(Source->GetIndex_VectorNeuronState(),i)) < 0)
 				throw EDLUTException(3,3,2,0);
 	}
 

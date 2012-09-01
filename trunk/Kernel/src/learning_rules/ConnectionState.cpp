@@ -29,7 +29,7 @@ ConnectionState::~ConnectionState() {
 }
 
 void ConnectionState::SetStateVariableAt(unsigned int position,float NewValue){
-	this->StateVars[position] = NewValue;
+	*(this->StateVars+position) = NewValue;
 }
 
 unsigned int ConnectionState::GetNumberOfVariables(){
@@ -37,7 +37,7 @@ unsigned int ConnectionState::GetNumberOfVariables(){
 }
 
 float ConnectionState::GetStateVariableAt(unsigned int position){
-	return this->StateVars[position];
+	return *(this->StateVars+position);
 }
 
 double ConnectionState::GetLastUpdateTime(){

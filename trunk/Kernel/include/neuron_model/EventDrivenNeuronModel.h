@@ -61,7 +61,7 @@ class EventDrivenNeuronModel : public NeuronModel {
 		 *
 		 * \param NeuronModelID Neuron model identificator.
 		 */
-		EventDrivenNeuronModel(string NeuronModelID);
+		EventDrivenNeuronModel(string NeuronTypeID, string NeuronModelID);
 
 		/*!
 		 * \brief Class destructor.
@@ -117,6 +117,10 @@ class EventDrivenNeuronModel : public NeuronModel {
 		 * \return The type of the neuron model.
 		 */
 		enum NeuronModelType GetModelType();
+
+
+virtual void InitializeStates(int N_neurons)=0;
+
 
 };
 

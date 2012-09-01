@@ -1,7 +1,7 @@
 /***************************************************************************
- *                           Network.cpp                                   *
+ *                           Network_GPU.cpp                               *
  *                           -------------------                           *
- * copyright            : (C) 2009 by Jesus Garrido, Richard Carrillo and  *
+ * copyright            : (C) 2012 by Jesus Garrido, Richard Carrillo and  *
  *						: Francisco Naveros                                *
  * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
@@ -14,6 +14,12 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+
+/*
+ * \note: this file Network_GPU.cpp must be used instead of file Network.cpp to 
+ * implement a CPU-GPU hybrid architecture.
+*/
+
 
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Interconnection.h"
@@ -28,6 +34,8 @@
 #include "../../include/neuron_model/SRMTimeDrivenModel.h"
 #include "../../include/neuron_model/LIFTimeDrivenModelRK.h"
 #include "../../include/neuron_model/LIFTimeDrivenModel.h"
+#include "../../include/neuron_model/LIFTimeDrivenModelRK_GPU.h"
+#include "../../include/neuron_model/LIFTimeDrivenModel_GPU.h"
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 #include "../../include/neuron_model/EventDrivenNeuronModel.h"
 #include "../../include/neuron_model/TableBasedModel.h"
@@ -166,6 +174,10 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int * ni)
 			neutypes[ni[0]] = (LIFTimeDrivenModelRK *) new LIFTimeDrivenModelRK(ident_type, neutype);
 		} else if (ident_type=="LIFTimeDrivenModel"){
 			neutypes[ni[0]] = (LIFTimeDrivenModel *) new LIFTimeDrivenModel(ident_type, neutype);
+		}else if (ident_type=="LIFTimeDrivenModelRK_GPU"){
+			neutypes[ni[0]] = (LIFTimeDrivenModelRK_GPU *) new LIFTimeDrivenModelRK_GPU(ident_type, neutype);
+		}else if (ident_type=="LIFTimeDrivenModel_GPU"){
+			neutypes[ni[0]] = (LIFTimeDrivenModel_GPU *) new LIFTimeDrivenModel_GPU(ident_type, neutype);
 		}else if (ident_type=="SRMTimeDrivenModel"){
 			neutypes[ni[0]] = (SRMTimeDrivenModel *) new SRMTimeDrivenModel(ident_type, neutype);
 		} else if (ident_type=="TableBasedModel"){
@@ -186,12 +198,13 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int * ni)
 	return(type);
 }
 
+
+
 void Network::InitializeStates(int * N_neurons){
 	for( int z=0; z< this->nneutypes; z++){
 		neutypes[z]->InitializeStates(N_neurons[z]);
 	}
 }
-
 
 
 void Network::InitNetPredictions(EventQueue * Queue){
@@ -258,25 +271,23 @@ Neuron * Network::GetTimeDrivenNeuronAt(int index0,int index1) const{
 }
 
 Neuron * Network::GetTimeDrivenNeuronGPUAt(int index0, int index1) const{
-	return 0;
+	return this->timedrivenneurons_GPU[index0][index1];
 }
    		
 int * Network::GetTimeDrivenNeuronNumber() const{
 	return this->ntimedrivenneurons;
 }
 
-
 int Network::GetNneutypes() const{
 	return this->nneutypes;
 }
 int * Network::GetTimeDrivenNeuronNumberGPU() const{
-	return 0;
+	return this->ntimedrivenneurons_GPU;
 }
 
 NeuronModel * Network::GetNeuronModelAt(int index) const{
 	return this->neutypes[index];
 }
-
 
 LearningRule * Network::GetLearningRuleAt(int index) const{
 	return this->wchanges[index];
@@ -308,12 +319,16 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
             		char ident[MAXIDSIZE+1];
             		char ident_type[MAXIDSIZE+1];
             		this->neurons=(Neuron *) new Neuron [this->nneurons];
-
+					
 					ntimedrivenneurons= new int [this->nneutypes]();
 					int ** time_driven_index = (int **) new int *[this->nneurons];
 					
+					ntimedrivenneurons_GPU= new int [this->nneutypes]();
+					int ** time_driven_index_GPU=(int **) new int *[this->nneutypes];
+
 					for (int z=0; z<this->nneutypes; z++){
 						time_driven_index[z]=new int [this->nneurons]();
+						time_driven_index_GPU[z]=new int [this->nneurons]();
 					}
 
 					int * N_neurons= new int [this->nneutypes]();
@@ -330,10 +345,9 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
                         		savedcurrentline=Currentline;
                         		type=LoadNetTypes(ident_type, ident, &ni);
                         		Currentline=savedcurrentline;
-
-	                    		for(nind=0;nind<nn;nind++){
+                        
+                        		for(nind=0;nind<nn;nind++){
                         			neurons[nind+tind].InitNeuron(nind+tind, N_neurons[ni], type,(bool) monit, (bool)outn);
-								
 									//If some neuron is monitored.
 									if(monit){
 										type->GetVectorNeuronState()->Set_Is_Monitored(true);
@@ -343,6 +357,10 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
 									if (type->GetModelType()==TIME_DRIVEN_MODEL_CPU){
 										time_driven_index[ni][this->ntimedrivenneurons[ni]] = nind+tind;
 										this->ntimedrivenneurons[ni]=this->ntimedrivenneurons[ni]+1;
+									}
+									if (type->GetModelType()==TIME_DRIVEN_MODEL_GPU){
+										time_driven_index_GPU[ni][this->ntimedrivenneurons_GPU[ni]]=nind+tind;
+										this->ntimedrivenneurons_GPU[ni]=this->ntimedrivenneurons_GPU[ni]+1;
 									}
                         		}
                         	}else{
@@ -363,6 +381,18 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
 							}
 						}
 
+						// Create the time-driven cell arrays for GPU
+						timedrivenneurons_GPU=(Neuron ***) new Neuron ** [this->nneutypes];
+						for (int z=0; z<this->nneutypes; z++){ 
+							if (this->ntimedrivenneurons_GPU[z]>0){
+								this->timedrivenneurons_GPU[z]=(Neuron **) new Neuron * [this->ntimedrivenneurons_GPU[z]];
+
+								for (int i=0; i<this->ntimedrivenneurons_GPU[z]; ++i){
+									this->timedrivenneurons_GPU[z][i] = &(this->neurons[time_driven_index_GPU[z][i]]);
+								}							
+							}
+						}
+
 						// Initialize states. 
 						InitializeStates(N_neurons);
 						
@@ -370,10 +400,14 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
             			throw EDLUTFileException(4,5,28,0,Currentline);
             		}
 
+					
+
 					for (int z=0; z<this->nneutypes; z++){
 						delete [] time_driven_index[z];
+						delete [] time_driven_index_GPU[z];
 					} 
 					delete [] time_driven_index;
+					delete [] time_driven_index_GPU;
 					delete [] N_neurons;
 
             		/////////////////////////////////////////////////////////

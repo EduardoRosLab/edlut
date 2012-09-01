@@ -24,22 +24,35 @@
  * \author Richard Carrido
  * \date August 2008
  *
- * This file declares a class which abstracts an event queue.
+ * This file declares a class which abstracts an event queue by using standard arrays.
  */
  
 #include <cstdlib>
-#include <vector>
+
+#define MIN_SIZE 100
+#define RESIZE_FACTOR 100
 
 using namespace std;
 
 class Event;
 
 /*!
+ * \brief Auxiliary struct to take advantage of cache saving event time and pointer in the same array.
+ *
+ * Auxiliary struct to take advantage of cache saving event time and pointer in the same array.
+ */
+struct EventForQueue {
+	Event * EventPtr;
+	 
+	double Time;
+ };
+
+/*!
  * \class EventQueue
  *
  * \brief Event queue
  *
- * This class abstract the behaviour of an sorted by event time queue.
+ * This class abstract the behaviour of an sorted by event time queue by using standard arrays.
  *
  * \author Jesus Garrido
  * \author Richard Carrillo
@@ -51,12 +64,31 @@ class EventQueue {
 		/*!
 		 * Spikes vector.
 		 */
-		vector<Event *> Events;
+		EventForQueue * Events;
+
+		/*!
+		 * Number of elements introduced in the queue.
+		 */
+		unsigned int NumberOfElements;
+
+		/*!
+		 * Number of elements allocated in the array.
+		 */
+		unsigned int AllocatedSize;
    
    		/*!
    		 * It swaps the position of two events.
    		 */
-   		void SwapEvents(int c1, int c2);
+   		void SwapEvents(unsigned int c1, unsigned int c2);
+
+		/*!
+   		 * \brief Resize the event queue to a new size keeping the same elements inside.
+		 *
+		 * Resize the event queue to a new size keeping the same elements inside.
+		 *
+		 * \param NewSize The new size of the event queue.
+   		 */
+   		void Resize(unsigned int NewSize);
    		
    	public:
    	
@@ -81,7 +113,7 @@ class EventQueue {
    		 * 
    		 * \return The number of events in the queue.
    		 */
-   		long long Size() const;
+   		unsigned int Size() const;
    		
    		/*!
    		 * \brief It inserts a spike in the event queue.

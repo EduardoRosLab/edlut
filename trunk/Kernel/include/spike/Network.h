@@ -1,8 +1,9 @@
 /***************************************************************************
  *                           Network.h                                     *
  *                           -------------------                           *
- * copyright            : (C) 2009 by Jesus Garrido and Richard Carrillo   *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2009 by Jesus Garrido, Richard Carrillo and  *
+ *						: Francisco Naveros                                *
+ * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
  ***************************************************************************/
 
 /***************************************************************************
@@ -22,10 +23,15 @@
  *
  * \author Jesus Garrido
  * \author Richard Carrido
+ * \author Francisco Naveros
  * \date August 2008
  *
  * \note Modified on January 2011 in order to include time-driven simulation support.
  * New state variables (ntimedrivenneurons and timedrivenneurons)
+ *
+ * \note Modified on January 2012 in order to include time-driven simulation support in GPU.
+ * New state variables (timedrivenneurons, ntimedrivenneurons, ntimedrivenneurons_GPU and 
+ * timedrivenneurons_GPU)
  *
  * This file declares a class which abstracts a spiking neural network.
  */
@@ -54,6 +60,7 @@ class EventQueue;
  *
  * \author Jesus Garrido
  * \author Richard Carrillo
+ * \author Francisco Naveros
  * \date August 2008
  */
 class Network : public PrintableObject{
@@ -92,13 +99,23 @@ class Network : public PrintableObject{
 		/*!
 		 * \brief Time-driven cell (model) array.
 		 */
-		Neuron ** timedrivenneurons;
+		Neuron *** timedrivenneurons;
 
 		/*!
    		 * \brief Number of time-driven neurons.
    		 */
-		int ntimedrivenneurons;
-   		
+		int * ntimedrivenneurons;
+
+		/*!
+		 * \brief Number of time-driven neurons for every model in GPU.
+		 */
+		int * ntimedrivenneurons_GPU;
+
+		/*!
+		 * \brief Time-driven cell (model) arrays in GPU.
+		 */
+		Neuron *** timedrivenneurons_GPU;
+
    		/*!
    		 * \brief Learning rules.
    		 */
@@ -168,8 +185,17 @@ class Network : public PrintableObject{
    		 * \return The loaded (or existing) neuron type.
    		 * \throw EDLUTException If the neuron model file hasn't been able to be correctly readed. 
    		 */
-   		NeuronModel * LoadNetTypes(string ident_type, string neutype) throw (EDLUTException);
-   		
+   		NeuronModel * LoadNetTypes(string ident_type, string neutype, int * ni) throw (EDLUTException);
+
+  		/*!
+  		 * \brief It Initialize all Vector Neuron State.
+  		 * 
+  		 * It Initialize all Vector Neuron State.
+  		 * 
+		 * \param N_neurons Neuron number for each neuron model.
+  		 */
+		void InitializeStates(int * N_neurons);
+
    		/*!
    		 * \brief It inits the spikes predictions of every neuron in the network.
    		 * 
@@ -251,28 +277,67 @@ class Network : public PrintableObject{
    		int GetNeuronNumber() const;
 
 		/*!
-   		 * \brief It gets a time-driven neuron by the index.
+   		 * \brief It gets a time-driven neuron by the index0 and index1.
    		 * 
-   		 * It returns a time-driven neuron from the index.
+   		 * It returns a time-driven neuron from array index0 and position index1.
    		 * 
-   		 * \param index The index of the time-driven neuron to get.
+   		 * \param index0 The array of the time-driven neuron to use.
+		 * \param index1 The index of the time-driven neuron to get.
 		 *
-		 * \note The param index is not the neuron index. It is the index
-		 * including only time-driven cells.
-   		 * 
-   		 * \return The time-driven neuron whose index is the parameter.
+   		 * \return The time-driven neuron whose index is the parameter index1 in array index0.
    		 */
-   		Neuron * GetTimeDrivenNeuronAt(int index) const;
-   		
-   		/*!
-   		 * \brief It gets the number of time-driven neurons in the network.
+		Neuron * GetTimeDrivenNeuronAt(int index0, int index1) const;
+
+		/*!
+   		 * \brief It gets a time-driven neuron in GPU by the index0 and index1.
    		 * 
-   		 * It gets the number of time-driven neurons in the network.
+   		 * It returns a time-driven neuron in GPU from array index0 and position index1.
    		 * 
-   		 * \return The number of time-driven neurons.
+   		 * \param index0 The array of the time-driven neuron to use.
+		 * \param index1 The index of the time-driven neuron to get.
+		 *
+   		 * \return The time-driven neuron whose index is the parameter index1 in array index0.
    		 */
-   		int GetTimeDrivenNeuronNumber() const;
-   		
+		Neuron * GetTimeDrivenNeuronGPUAt(int index0, int index1) const;
+
+		/*!
+		 * \brief It gets the numbers of time-driven neurons for every model in the network.
+		 *
+		 * It gets the numbers of time-driven neurons for every model in the network
+		 *
+		 * \return the numbers of time-driven neurons for every model in the network
+		 */
+		int * GetTimeDrivenNeuronNumber() const;
+
+		/*!
+		 * \brief It gets the numbers of time-driven neurons in GPU for every model in the network.
+		 *
+		 * It gets the numbers of time-driven neurons in GPU for every model in the network
+		 *
+		 * \return the numbers of time-driven neurons in GPU for every model in the network
+		 */
+		int * GetTimeDrivenNeuronNumberGPU() const;
+
+		/*!
+		 * \brief It gets the number of neuron model in the network.
+		 *
+		 * It gets the number of neuron model in the network.
+		 *
+		 * \return The number of neuron model.
+		 */
+		int GetNneutypes() const;
+
+		 /*!
+		 * \brief It gets a neuron model by the index.
+		 *
+		 * It returns a neuron model from the index.
+		 *
+		 * \param index The index of the neuron model to get.
+		 *
+		 * \return The neuron model whose index is the parameter.
+		 */
+		NeuronModel * GetNeuronModelAt(int index) const;
+
    		/*!
 		 * \brief It gets a learning rule by the index.
 		 *
