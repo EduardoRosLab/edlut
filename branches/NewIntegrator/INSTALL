@@ -1,0 +1,45 @@
+Basic Installation
+==================
+
+   These are generic installation instructions.
+
+   The simplest way to compile this package is:
+
+  1. `cd' to the directory containing the package's source code and 
+  type `make' to compile the package.
+
+  2. Type `make install' to install the programs and any data files and
+  documentation.
+
+  3. You can remove the program binaries and object files from the
+     source code directory by typing `make clean'.  
+
+Other Installations
+===================
+
+   You can use differents targets with make command. In this installation package,
+the following ones are allowed:
+
+- (nothing)   : makes the executable : by default src/main.cpp is included to the sources list
+              and used in the exe-build. Change its value with exe-source-file variable
+- library     : generates the library
+- tags        : generates etags files
+- dox         : generates the doxygen documentation if Doxyfile exists
+- doxclean    : cleans up the documentation
+- clean       : cleans up .o lib and exe files
+- distclean   : cleans everything except source+headers
+- install     : installs the library
+- install-dev : installs the library along with documentation+header files
+- install-exe : installs the executable
+- uninstall   : uninstalls the library
+- pkgfile     : generates the pkg-config file
+- flags       : shows the flags that will be used
+- gflat       : shows gprof profiler flat view result
+- gcall       : shows gprof profiler call graph view result
+- rules       : shows this text
+- state       : show the configuration state of the package
+- export      : export the makefile : produces a self-contained makefile by inserting rules,
+              flags and static-variable files
+- revert      : moves makefile.in to makefile
+- clear       : clears #* & dependency files
+
