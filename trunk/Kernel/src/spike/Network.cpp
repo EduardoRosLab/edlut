@@ -23,6 +23,7 @@
 #include "../../include/learning_rules/ExpWeightChange.h"
 #include "../../include/learning_rules/SinWeightChange.h"
 #include "../../include/learning_rules/STDPWeightChange.h"
+#include "../../include/learning_rules/STDPLSWeightChange.h"
 
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/SRMTimeDrivenModel.h"
@@ -403,6 +404,8 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         							this->wchanges[wcind] = new SinWeightChange();
         						} else if (string(ident_type)==string("STDP")){
         							this->wchanges[wcind] = new STDPWeightChange();
+        						} else if (string(ident_type)==string("STDPLS")){
+        							this->wchanges[wcind] = new STDPLSWeightChange();
         						} else {
                            			throw EDLUTFileException(4,28,23,1,Currentline);
         						}

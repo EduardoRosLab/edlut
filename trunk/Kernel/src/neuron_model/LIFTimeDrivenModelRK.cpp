@@ -70,7 +70,7 @@ bool LIFTimeDrivenModelRK::UpdateState(int index, VectorNeuronState * State, dou
 
 	int i;
 
-	#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime, elapsed_time, exp_gampa, exp_gnmda, exp_ginh, exp_ggj, inv_cm, exp_gampa2, exp_gnmda2, exp_ginh2) private(i,last_spike,vm, gampa, gnmda, ginh, ggj,nextgampa, nextgnmda, nextginh, nextggj, spike, k1, k2, k3, k4, iampa, gnmdainf, inmda, iinh, gampaaux, gnmdaaux, ginhaux, yaux, iampaaux, gnmdainfaux, inmdaaux, iinhaux, vm_cou)
+	#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime, elapsed_time, exp_gampa, exp_gnmda, exp_ginh, exp_ggj, inv_cm, exp_gampa2, exp_gnmda2, exp_ginh2) private(i,last_spike,vm, gampa, gnmda, ginh, ggj,nextgampa, nextgnmda, nextginh, nextggj, spike, k1, k2, k3, k4, iampa, gnmdainf, inmda, iinh, gampaaux, gnmdaaux, ginhaux, yaux, iampaaux, gnmdainfaux, inmdaaux, iinhaux, vm_cou) 
 	for (i=0; i< Size; i++){
 
 		State->AddElapsedTime(i,elapsed_time);
