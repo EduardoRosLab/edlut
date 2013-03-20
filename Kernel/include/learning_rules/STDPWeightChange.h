@@ -42,7 +42,7 @@ class Interconnection;
  * \date March 2010
  */
 class STDPWeightChange: public LearningRule {
-	private:
+	protected:
 		/*!
 		 * \brief Decay parameter LTD
 		 */
