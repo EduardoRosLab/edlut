@@ -157,29 +157,29 @@ void Network::FindInConnections(){
 	}
 }
 
-NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int * ni) throw (EDLUTException){
+NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int & ni) throw (EDLUTException){
 	NeuronModel * type;
    	
-   	for(ni[0]=0;ni[0]<nneutypes && neutypes[ni[0]]!=0 && ( neutypes[ni[0]]->GetModelID()==neutype && neutypes[ni[0]]->GetTypeID()!=ident_type || neutypes[ni[0]]->GetModelID()!=neutype);ni[0]=ni[0]+1);
+   	for(ni=0;ni<nneutypes && neutypes[ni]!=0 && ( neutypes[ni]->GetModelID()==neutype && neutypes[ni]->GetTypeID()!=ident_type || neutypes[ni]->GetModelID()!=neutype);++ni);
 
-   	if (ni[0]<nneutypes && neutypes[ni[0]]==0){
+   	if (ni<nneutypes && neutypes[ni]==0){
 		if (ident_type=="LIFTimeDrivenModelRK"){
-			neutypes[ni[0]] = (LIFTimeDrivenModelRK *) new LIFTimeDrivenModelRK(ident_type, neutype);
+			neutypes[ni] = (LIFTimeDrivenModelRK *) new LIFTimeDrivenModelRK(ident_type, neutype);
 		} else if (ident_type=="LIFTimeDrivenModel"){
-			neutypes[ni[0]] = (LIFTimeDrivenModel *) new LIFTimeDrivenModel(ident_type, neutype);
+			neutypes[ni] = (LIFTimeDrivenModel *) new LIFTimeDrivenModel(ident_type, neutype);
 		}else if (ident_type=="SRMTimeDrivenModel"){
-			neutypes[ni[0]] = (SRMTimeDrivenModel *) new SRMTimeDrivenModel(ident_type, neutype);
+			neutypes[ni] = (SRMTimeDrivenModel *) new SRMTimeDrivenModel(ident_type, neutype);
 		} else if (ident_type=="TableBasedModel"){
-   			neutypes[ni[0]] = (TableBasedModel *) new TableBasedModel(ident_type, neutype);
+   			neutypes[ni] = (TableBasedModel *) new TableBasedModel(ident_type, neutype);
 		} else if (ident_type=="SRMTableBasedModel"){
-			neutypes[ni[0]] = (SRMTableBasedModel *) new SRMTableBasedModel(ident_type, neutype);
+			neutypes[ni] = (SRMTableBasedModel *) new SRMTableBasedModel(ident_type, neutype);
 		} else {
 			throw EDLUTException(13,58,30,0);
 		}
-   		type = neutypes[ni[0]];
+   		type = neutypes[ni];
    		type->LoadNeuronModel();
-   	} else if (ni[0]<nneutypes) {
-		type = neutypes[ni[0]];
+   	} else if (ni<nneutypes) {
+		type = neutypes[ni];
 	} else {
 		throw EDLUTException(13,44,20,0);
 	}
@@ -311,7 +311,8 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
             		this->neurons=(Neuron *) new Neuron [this->nneurons];
 
 					ntimedrivenneurons= new int [this->nneutypes]();
-					int ** time_driven_index = (int **) new int *[this->nneurons];
+					//int ** time_driven_index = (int **) new int *[this->nneurons];
+					int ** time_driven_index = (int **) new int *[this->nneutypes];
 					
 					for (int z=0; z<this->nneutypes; z++){
 						time_driven_index[z]=new int [this->nneurons]();
@@ -327,9 +328,9 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
                      				throw EDLUTFileException(4,7,6,1,Currentline);
                      				break;
                      			}
-								int ni=1;                        
+								int ni;                   
                         		savedcurrentline=Currentline;
-                        		type=LoadNetTypes(ident_type, ident, &ni);
+                        		type=LoadNetTypes(ident_type, ident, ni);
                         		Currentline=savedcurrentline;
 
 	                    		for(nind=0;nind<nn;nind++){
@@ -343,7 +344,7 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
 									N_neurons[ni]=N_neurons[ni]+1;
 									if (type->GetModelType()==TIME_DRIVEN_MODEL_CPU){
 										time_driven_index[ni][this->ntimedrivenneurons[ni]] = nind+tind;
-										this->ntimedrivenneurons[ni]=this->ntimedrivenneurons[ni]+1;
+										this->ntimedrivenneurons[ni]++;
 									}
                         		}
                         	}else{

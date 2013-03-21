@@ -181,11 +181,12 @@ class Network : public PrintableObject{
    		 * 
    		 * \param ident_type Type of the neuron model. At this moment, only "SRMTimeDriven" and "TableBasedModel" are implemented.
    		 * \param neutype The name of the neuron type to load.
+		 * \param ni Index of the neuron type
    		 * 
    		 * \return The loaded (or existing) neuron type.
    		 * \throw EDLUTException If the neuron model file hasn't been able to be correctly readed. 
    		 */
-   		NeuronModel * LoadNetTypes(string ident_type, string neutype, int * ni) throw (EDLUTException);
+   		NeuronModel * LoadNetTypes(string ident_type, string neutype, int & ni) throw (EDLUTException);
 
   		/*!
   		 * \brief It Initialize all Vector Neuron State.
