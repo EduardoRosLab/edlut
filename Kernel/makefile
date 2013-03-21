@@ -95,8 +95,8 @@ fortran77support := false
 
 # if optimized -> no debug info is produced --> applies -O3 flag if
 # set to true
-optimize := false
-# optimize    := true
+optimize := true
+# optimize    := false
 
 # this is for laptops and stuff with intel pentium M processors, if
 # you are not sure of your system, just set 'specialize' to false. if
