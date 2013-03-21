@@ -95,7 +95,7 @@ fortran77support := false
 
 # if optimized -> no debug info is produced --> applies -O3 flag if
 # set to true
-optimize := true
+optimize := false
 # optimize    := false
 
 # this is for laptops and stuff with intel pentium M processors, if
@@ -159,126 +159,101 @@ sfunction-source-file := ${srcdir}/EDLUTSfunction.cpp
 # what to compile ? include .cpp and .c files here in your project
 # if you don't have a main() function in one of the sources, you'll get an error
 # if you're building an executable. for a library, it won't complain for anything.
-communication-sources	:= $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
-			   $(srcdir)/communication/ArrayOutputSpikeDriver.cpp \
-			   $(srcdir)/communication/CdSocket.cpp \
-                           $(srcdir)/communication/ClientSocket.cpp \
-                           $(srcdir)/communication/CommunicationDevice.cpp \
-                           $(srcdir)/communication/ConnectionException.cpp \
-                           $(srcdir)/communication/FileInputSpikeDriver.cpp \
-                           $(srcdir)/communication/FileOutputSpikeDriver.cpp \
-                           $(srcdir)/communication/FileOutputWeightDriver.cpp \
-                           $(srcdir)/communication/InputBooleanArrayDriver.cpp \
-                           $(srcdir)/communication/InputSpikeDriver.cpp \
-                           $(srcdir)/communication/OutputBooleanArrayDriver.cpp \
-                           $(srcdir)/communication/OutputSpikeDriver.cpp \
-                           $(srcdir)/communication/OutputWeightDriver.cpp \
-                           $(srcdir)/communication/ServerSocket.cpp \
-                           $(srcdir)/communication/TCPIPInputOutputSpikeDriver.cpp \
-                           $(srcdir)/communication/TCPIPInputSpikeDriver.cpp \
-                           $(srcdir)/communication/TCPIPOutputSpikeDriver.cpp
+communication-sources	:= 	$(srcdir)/communication/ArrayInputSpikeDriver.cpp \
+							$(srcdir)/communication/ArrayOutputSpikeDriver.cpp \
+							$(srcdir)/communication/CdSocket.cpp \
+							$(srcdir)/communication/ClientSocket.cpp \
+							$(srcdir)/communication/CommunicationDevice.cpp \
+							$(srcdir)/communication/ConnectionException.cpp \
+							$(srcdir)/communication/FileInputSpikeDriver.cpp \
+							$(srcdir)/communication/FileOutputSpikeDriver.cpp \
+							$(srcdir)/communication/FileOutputWeightDriver.cpp \
+							$(srcdir)/communication/InputBooleanArrayDriver.cpp \
+							$(srcdir)/communication/InputSpikeDriver.cpp \
+							$(srcdir)/communication/OutputBooleanArrayDriver.cpp \
+							$(srcdir)/communication/OutputSpikeDriver.cpp \
+							$(srcdir)/communication/OutputWeightDriver.cpp \
+							$(srcdir)/communication/ServerSocket.cpp \
+							$(srcdir)/communication/TCPIPInputOutputSpikeDriver.cpp \
+							$(srcdir)/communication/TCPIPInputSpikeDriver.cpp \
+							$(srcdir)/communication/TCPIPOutputSpikeDriver.cpp
 
-interface-sources	:= $(srcdir)/interface/C_Interface.cpp
+interface-sources	:= 		$(srcdir)/interface/C_Interface.cpp
 
-learning_rules-sources	:= $(srcdir)/learning_rules/ActivityRegister.cpp \
-                           $(srcdir)/learning_rules/AdditiveKernelChange.cpp \
-                           $(srcdir)/learning_rules/SinWeightChange.cpp \
-                           $(srcdir)/learning_rules/ExpWeightChange.cpp \
-                           $(srcdir)/learning_rules/STDPWeightChange.cpp \
-                           $(srcdir)/learning_rules/ConnectionState.cpp \
-                           $(srcdir)/learning_rules/ExpState.cpp \
-                           $(srcdir)/learning_rules/SinState.cpp \
-                           $(srcdir)/learning_rules/STDPState.cpp
+learning_rules-sources	:= 	$(srcdir)/learning_rules/ActivityRegister.cpp \
+                           	$(srcdir)/learning_rules/AdditiveKernelChange.cpp \
+                           	$(srcdir)/learning_rules/ConnectionState.cpp \
+                           	$(srcdir)/learning_rules/ExpState.cpp \
+                           	$(srcdir)/learning_rules/ExpWeightChange.cpp \
+                           	$(srcdir)/learning_rules/SinState.cpp \
+                           	$(srcdir)/learning_rules/SinWeightChange.cpp \
+                           	$(srcdir)/learning_rules/STDPLSState.cpp \
+							$(srcdir)/learning_rules/STDPLSWeightChange.cpp \
+                           	$(srcdir)/learning_rules/STDPState.cpp \
+							$(srcdir)/learning_rules/STDPWeightChange.cpp
+                           	
+
+neuron_model-sources	:= 	$(srcdir)/neuron_model/VectorBufferedState.cpp \
+                           	$(srcdir)/neuron_model/EventDrivenNeuronModel.cpp \
+                           	$(srcdir)/neuron_model/LIFTimeDrivenModel.cpp \
+                           	$(srcdir)/neuron_model/LIFTimeDrivenModelRK.cpp \
+                           	$(srcdir)/neuron_model/NeuronModel.cpp \
+                           	$(srcdir)/neuron_model/NeuronModelTable.cpp \
+                           	$(srcdir)/neuron_model/VectorNeuronState.cpp \
+                           	$(srcdir)/neuron_model/VectorSRMState.cpp \
+                           	$(srcdir)/neuron_model/SRMTableBasedModel.cpp \
+                           	$(srcdir)/neuron_model/SRMTimeDrivenModel.cpp \
+                           	$(srcdir)/neuron_model/TableBasedModel.cpp \
+                           	$(srcdir)/neuron_model/TimeDrivenNeuronModel.cpp
+
+ifeq ($(cuda_enabled),true)
+neuron_model-sources	+= 	$(srcdir)/neuron_model/LIFTimeDrivenModel_GPU.cpp \
+                           	$(srcdir)/neuron_model/LIFTimeDrivenModelRK_GPU.cpp \
+                           	$(srcdir)/neuron_model/LIFTimeDrivenModel_CUDA.cu
+endif
+
+simulation-sources	:= 		$(srcdir)/simulation/CommunicationEvent.cpp \
+                           	$(srcdir)/simulation/EndSimulationEvent.cpp \
+                           	$(srcdir)/simulation/Event.cpp \
+                           	$(srcdir)/simulation/EventQueue.cpp \
+                           	$(srcdir)/simulation/ParameterException.cpp \
+                           	$(srcdir)/simulation/ParamReader.cpp \
+                           	$(srcdir)/simulation/SaveWeightsEvent.cpp \
+                           	$(srcdir)/simulation/StopSimulationEvent.cpp \
+                           	$(srcdir)/simulation/TimeEvent.cpp \
+                           	$(srcdir)/simulation/Utils.cpp
 
 
 ifeq ($(cuda_enabled),true)
-  neuron_model-sources	:= $(srcdir)/neuron_model/VectorBufferedState.cpp \
-                           $(srcdir)/neuron_model/EventDrivenNeuronModel.cpp \
-                           $(srcdir)/neuron_model/LIFTimeDrivenModel.cpp \
-                           $(srcdir)/neuron_model/LIFTimeDrivenModelRK.cpp \
-                           $(srcdir)/neuron_model/LIFTimeDrivenModel_GPU.cpp \
-                           $(srcdir)/neuron_model/LIFTimeDrivenModelRK_GPU.cpp \
-                           $(srcdir)/neuron_model/LIFTimeDrivenModel_CUDA.cu \
-                           $(srcdir)/neuron_model/NeuronModel.cpp \
-                           $(srcdir)/neuron_model/NeuronModelTable.cpp \
-                           $(srcdir)/neuron_model/VectorNeuronState.cpp \
-                           $(srcdir)/neuron_model/VectorSRMState.cpp \
-                           $(srcdir)/neuron_model/SRMTableBasedModel.cpp \
-                           $(srcdir)/neuron_model/SRMTimeDrivenModel.cpp \
-                           $(srcdir)/neuron_model/TableBasedModel.cpp \
-                           $(srcdir)/neuron_model/TimeDrivenNeuronModel.cpp
-else
-  neuron_model-sources	:= $(srcdir)/neuron_model/VectorBufferedState.cpp \
-                           $(srcdir)/neuron_model/EventDrivenNeuronModel.cpp \
-                           $(srcdir)/neuron_model/LIFTimeDrivenModel.cpp \
-                           $(srcdir)/neuron_model/LIFTimeDrivenModelRK.cpp \
-                           $(srcdir)/neuron_model/NeuronModel.cpp \
-                           $(srcdir)/neuron_model/NeuronModelTable.cpp \
-                           $(srcdir)/neuron_model/VectorNeuronState.cpp \
-                           $(srcdir)/neuron_model/VectorSRMState.cpp \
-                           $(srcdir)/neuron_model/SRMTableBasedModel.cpp \
-                           $(srcdir)/neuron_model/SRMTimeDrivenModel.cpp \
-                           $(srcdir)/neuron_model/TableBasedModel.cpp \
-                           $(srcdir)/neuron_model/TimeDrivenNeuronModel.cpp
+simulation-sources	+= 		$(srcdir)/simulation/Simulation_GPU.cpp \
+                           	$(srcdir)/simulation/TimeEvent_GPU.cpp
+else                        
+simulation-sources	+= 		$(srcdir)/simulation/Simulation.cpp
 endif
 
 
-ifeq ($(cuda_enabled),true)
-  simulation-sources	:= $(srcdir)/simulation/CommunicationEvent.cpp \
-                           $(srcdir)/simulation/EndSimulationEvent.cpp \
-                           $(srcdir)/simulation/Event.cpp \
-                           $(srcdir)/simulation/EventQueue.cpp \
-                           $(srcdir)/simulation/ParameterException.cpp \
-                           $(srcdir)/simulation/ParamReader.cpp \
-                           $(srcdir)/simulation/SaveWeightsEvent.cpp \
-                           $(srcdir)/simulation/Simulation_GPU.cpp \
-                           $(srcdir)/simulation/StopSimulationEvent.cpp \
-                           $(srcdir)/simulation/TimeEvent.cpp \
-                           $(srcdir)/simulation/TimeEvent_GPU.cpp \
-                           $(srcdir)/simulation/Utils.cpp
-else
-  simulation-sources	:= $(srcdir)/simulation/CommunicationEvent.cpp \
-                           $(srcdir)/simulation/EndSimulationEvent.cpp \
-                           $(srcdir)/simulation/Event.cpp \
-                           $(srcdir)/simulation/EventQueue.cpp \
-                           $(srcdir)/simulation/ParameterException.cpp \
-                           $(srcdir)/simulation/ParamReader.cpp \
-                           $(srcdir)/simulation/SaveWeightsEvent.cpp \
-                           $(srcdir)/simulation/Simulation.cpp \
-                           $(srcdir)/simulation/StopSimulationEvent.cpp \
-                           $(srcdir)/simulation/TimeEvent.cpp \
-                           $(srcdir)/simulation/Utils.cpp
-endif
+spike-sources		:= 		$(srcdir)/spike/EDLUTException.cpp \
+                           	$(srcdir)/spike/EDLUTFileException.cpp \
+                           	$(srcdir)/spike/InputSpike.cpp \
+                           	$(srcdir)/spike/Interconnection.cpp \
+                           	$(srcdir)/spike/InternalSpike.cpp \
+                           	$(srcdir)/spike/Neuron.cpp \
+                           	$(srcdir)/spike/PropagatedSpike.cpp \
+                           	$(srcdir)/spike/Spike.cpp
 
 ifeq ($(cuda_enabled),true)
-  spike-sources		:= $(srcdir)/spike/EDLUTException.cpp \
-                           $(srcdir)/spike/EDLUTFileException.cpp \
-                           $(srcdir)/spike/InputSpike.cpp \
-                           $(srcdir)/spike/Interconnection.cpp \
-                           $(srcdir)/spike/InternalSpike.cpp \
-                           $(srcdir)/spike/Network_GPU.cpp \
-                           $(srcdir)/spike/Neuron.cpp \
-                           $(srcdir)/spike/PropagatedSpike.cpp \
-                           $(srcdir)/spike/Spike.cpp
+spike-sources		+= 		$(srcdir)/spike/Network_GPU.cpp
 else
-  spike-sources		:= $(srcdir)/spike/EDLUTException.cpp \
-                           $(srcdir)/spike/EDLUTFileException.cpp \
-                           $(srcdir)/spike/InputSpike.cpp \
-                           $(srcdir)/spike/Interconnection.cpp \
-                           $(srcdir)/spike/InternalSpike.cpp \
-                           $(srcdir)/spike/Network.cpp \
-                           $(srcdir)/spike/Neuron.cpp \
-                           $(srcdir)/spike/PropagatedSpike.cpp \
-                           $(srcdir)/spike/Spike.cpp
+spike-sources		+= 		$(srcdir)/spike/Network.cpp
 endif
                            
 
-sources     := $(communication-sources) \
-               $(interface-sources) \
-               $(neuron_model-sources) \
-               $(learning_rules-sources) \
-               $(simulation-sources) \
-               $(spike-sources)
+sources     		:= 		$(communication-sources) \
+               				$(interface-sources) \
+               				$(neuron_model-sources) \
+               				$(learning_rules-sources) \
+               				$(simulation-sources) \
+               				$(spike-sources)
 
 
                
