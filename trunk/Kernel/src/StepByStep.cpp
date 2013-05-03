@@ -25,6 +25,9 @@
 #include "../include/simulation/Simulation.h"
 #include "../include/communication/ArrayInputSpikeDriver.h"
 #include "../include/communication/ArrayOutputSpikeDriver.h"
+#include "../include/communication/FileOutputSpikeDriver.h"
+#include "../include/communication/FileOutputWeightDriver.h"
+
 
 #include "../include/spike/EDLUTFileException.h"
 #include "../include/spike/EDLUTException.h"
@@ -45,8 +48,14 @@ int main(int ac, char *av[]) {
 	clock_t startt, endt;
 	
 	
-	const char * NetworkFile = "NetUPMC.dat";
-	const char * WeightsFile = "weightsInit.dat";
+	const char * NetworkFile = "NET_EDLUT_wght_end_1_0.20_0.01_clsdlp.dat";
+	const char * WeightsFile = "WGH_EDLUT_wght_end_1_0.20_0.01.dat";
+	const char * LogFile = "LogActivity.dat";
+	const char * FinalWeightFile = "FinalWeights.dat";
+
+	bool SaveFinalWeights = true; // True -> Save weight at the end of the simulation. False -> Do not save weights at the end.
+	float SavingWeightPeriod = 0; // Time period between sucessive saving of the weights. 0 -> Not save periodically.
+
 	double SimulationTime = 1;
 	double StepTime = 0.10;
 
@@ -62,6 +71,16 @@ int main(int ac, char *av[]) {
 	// Create a new output object to get output spikes
 	ArrayOutputSpikeDriver * OutputDriver = new ArrayOutputSpikeDriver();
 	Simul->AddOutputSpikeDriver(OutputDriver);
+
+	// Create a new monitor driver object to record the network activity
+	Simul->AddMonitorActivityDriver(new FileOutputSpikeDriver (LogFile,false));
+	
+		
+	// Create a new weight driver object to record the weights
+	Simul->AddOutputWeightDriver(new FileOutputWeightDriver(FinalWeightFile));
+	if (SavingWeightPeriod>0){
+		Simul->SetSaveStep(SavingWeightPeriod);
+	}
 	
 	// Get the external initial inputs (none in this simulation)
 	Simul->InitSimulation();
@@ -106,6 +125,9 @@ int main(int ac, char *av[]) {
 	}
 	
 	endt = clock();
+
+	// Final weight saving.
+	Simul->SaveWeights();
 
 	cout << "Oky doky" << endl;
 
