@@ -30,7 +30,10 @@ FileOutputSpikeDriver::FileOutputSpikeDriver(const char * NewFileName, bool Writ
 }
 		
 FileOutputSpikeDriver::~FileOutputSpikeDriver(){
-	fclose(this->Handler);
+	if (this->Handler){
+		fclose(this->Handler);
+		this->Handler=NULL;
+	}
 }
 
 void FileOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){

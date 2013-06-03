@@ -46,10 +46,12 @@ Simulation::Simulation(const Simulation & ant):Net(ant.Net), Queue(ant.Queue), I
 Simulation::~Simulation(){
 	if (this->Net!=0){
 		delete this->Net;
+		this->Net=NULL;
 	}
 
 	if (this->Queue){
 		delete this->Queue;
+		this->Queue=NULL;
 	}
 }
 
@@ -100,7 +102,9 @@ void Simulation::InitSimulation() throw (EDLUTException){
 	this->GetInput();
 	
 	// Add a final simulation event
-	this->Queue->InsertEvent(new EndSimulationEvent(this->Totsimtime));
+	if (this->Totsimtime >= 0){
+		this->Queue->InsertEvent(new EndSimulationEvent(this->Totsimtime));
+	}
 	
 	// Add the first save weight event
 	if (this->SaveWeightStep>0.0F){
@@ -237,7 +241,7 @@ void Simulation::SaveWeights(){
 }
 
 void Simulation::SendOutput(){
-	cout << "Sending outputs in time " << this->CurrentSimulationTime << endl;
+//	cout << "Sending outputs in time " << this->CurrentSimulationTime << endl;
 	for (list<OutputSpikeDriver *>::iterator it=this->OutputSpike.begin(); it!=this->OutputSpike.end(); ++it){
 		if ((*it)->IsBuffered()){
 			(*it)->FlushBuffers();	
@@ -246,7 +250,7 @@ void Simulation::SendOutput(){
 }
 
 void Simulation::GetInput(){
-	cout << "Getting inputs in time " << this->CurrentSimulationTime << endl;
+//	cout << "Getting inputs in time " << this->CurrentSimulationTime << endl;
 	for (list<InputSpikeDriver *>::iterator it=this->InputSpike.begin(); it!=this->InputSpike.end(); ++it){
 		if (!(*it)->IsFinished()){
 			(*it)->LoadInputs(this->Queue, this->Net);
