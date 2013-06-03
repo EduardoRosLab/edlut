@@ -29,6 +29,7 @@
 #include "../../include/learning_rules/ExpWeightChange.h"
 #include "../../include/learning_rules/SinWeightChange.h"
 #include "../../include/learning_rules/STDPWeightChange.h"
+#include "../../include/learning_rules/STDPLSWeightChange.h"
 
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/SRMTimeDrivenModel.h"
