@@ -32,7 +32,10 @@ FileInputSpikeDriver::FileInputSpikeDriver(const char * NewFileName) throw (EDLU
 }
 		
 FileInputSpikeDriver::~FileInputSpikeDriver(){
-	fclose(this->Handler);
+	if (this->Handler){
+		fclose(this->Handler);
+		this->Handler=NULL;
+	}
 }
 	
 void FileInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException){
