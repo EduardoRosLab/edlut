@@ -33,15 +33,20 @@
 
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/SRMTimeDrivenModel.h"
-#include "../../include/neuron_model/LIFTimeDrivenModelRK.h"
-#include "../../include/neuron_model/LIFTimeDrivenModel.h"
-#include "../../include/neuron_model/LIFTimeDrivenModelRK_GPU.h"
-#include "../../include/neuron_model/LIFTimeDrivenModel_GPU.h"
+#include "../../include/neuron_model/LIFTimeDrivenModel_1_2.h"
+#include "../../include/neuron_model/LIFTimeDrivenModel_1_4.h"
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 #include "../../include/neuron_model/EventDrivenNeuronModel.h"
 #include "../../include/neuron_model/TableBasedModel.h"
 #include "../../include/neuron_model/SRMTableBasedModel.h"
 #include "../../include/neuron_model/VectorNeuronState.h"
+#include "../../include/neuron_model/EgidioGranuleCell_TimeDriven.h"
+#include "../../include/neuron_model/Vanderpol.h"
+
+#include "../../include/neuron_model/TimeDrivenNeuronModel_GPU.h"
+#include "../../include/neuron_model/LIFTimeDrivenModel_1_4_GPU.h"
+#include "../../include/neuron_model/LIFTimeDrivenModel_1_2_GPU.h"
+#include "../../include/neuron_model/EgidioGranuleCell_TimeDriven_GPU.h"
 
 #include "../../include/simulation/EventQueue.h"
 #include "../../include/simulation/Utils.h"
@@ -171,21 +176,27 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int & ni)
    	for(ni=0;ni<nneutypes && neutypes[ni]!=0 && ( neutypes[ni]->GetModelID()==neutype && neutypes[ni]->GetTypeID()!=ident_type || neutypes[ni]->GetModelID()!=neutype);++ni);
 
    	if (ni<nneutypes && neutypes[ni]==0){
-		if (ident_type=="LIFTimeDrivenModelRK"){
-			neutypes[ni] = (LIFTimeDrivenModelRK *) new LIFTimeDrivenModelRK(ident_type, neutype);
-		} else if (ident_type=="LIFTimeDrivenModel"){
-			neutypes[ni] = (LIFTimeDrivenModel *) new LIFTimeDrivenModel(ident_type, neutype);
-		}else if (ident_type=="LIFTimeDrivenModelRK_GPU"){
-			neutypes[ni] = (LIFTimeDrivenModelRK_GPU *) new LIFTimeDrivenModelRK_GPU(ident_type, neutype);
-		}else if (ident_type=="LIFTimeDrivenModel_GPU"){
-			neutypes[ni] = (LIFTimeDrivenModel_GPU *) new LIFTimeDrivenModel_GPU(ident_type, neutype);
-		}else if (ident_type=="SRMTimeDrivenModel"){
+		if (ident_type=="LIFTimeDrivenModel_1_4"){
+			neutypes[ni] = (LIFTimeDrivenModel_1_4 *) new LIFTimeDrivenModel_1_4(ident_type, neutype);
+		}else if (ident_type=="LIFTimeDrivenModel_1_2"){
+			neutypes[ni] = (LIFTimeDrivenModel_1_2 *) new LIFTimeDrivenModel_1_2(ident_type, neutype);
+		} else if (ident_type=="SRMTimeDrivenModel"){
 			neutypes[ni] = (SRMTimeDrivenModel *) new SRMTimeDrivenModel(ident_type, neutype);
 		} else if (ident_type=="TableBasedModel"){
    			neutypes[ni] = (TableBasedModel *) new TableBasedModel(ident_type, neutype);
 		} else if (ident_type=="SRMTableBasedModel"){
 			neutypes[ni] = (SRMTableBasedModel *) new SRMTableBasedModel(ident_type, neutype);
-		} else {
+		} else if (ident_type=="EgidioGranuleCell_TimeDriven"){
+			neutypes[ni] = (EgidioGranuleCell_TimeDriven *) new EgidioGranuleCell_TimeDriven(ident_type, neutype);
+		}else if (ident_type=="Vanderpol"){
+			neutypes[ni] = (Vanderpol *) new Vanderpol(ident_type, neutype);
+		}else if (ident_type=="LIFTimeDrivenModel_1_2_GPU"){
+			neutypes[ni] = (LIFTimeDrivenModel_1_2_GPU *) new LIFTimeDrivenModel_1_2_GPU(ident_type, neutype);
+		}else if (ident_type=="LIFTimeDrivenModel_1_4_GPU"){
+			neutypes[ni] = (LIFTimeDrivenModel_1_4_GPU *) new LIFTimeDrivenModel_1_4_GPU(ident_type, neutype);
+		}else if (ident_type=="EgidioGranuleCell_TimeDriven_GPU"){
+			neutypes[ni] = (EgidioGranuleCell_TimeDriven_GPU *) new EgidioGranuleCell_TimeDriven_GPU(ident_type, neutype);
+		}else {
 			throw EDLUTException(13,58,30,0);
 		}
    		type = neutypes[ni];
@@ -198,7 +209,6 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int & ni)
 
 	return(type);
 }
-
 
 
 void Network::InitializeStates(int * N_neurons){
