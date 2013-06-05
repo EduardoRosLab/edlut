@@ -121,6 +121,24 @@ VectorBufferedState::~VectorBufferedState() {
 	this->LastElement = 0;
 }
 
+void VectorBufferedState::ClearBuffer(int index, unsigned int NumBuffer){
+	// TODO Auto-generated destructor stub
+	ActivityNode * Iterator = this->FirstElement[index][NumBuffer];
+
+	while (Iterator!=0){
+		ActivityNode * NextElement = Iterator->NextNode;
+
+		delete Iterator;
+
+		Iterator = NextElement;
+	}
+
+	this->NumberOfElements[index][NumBuffer] = 0;
+	this->FirstElement[index][NumBuffer] = 0;
+	this->LastElement[index][NumBuffer] = 0;
+}
+
+
 void VectorBufferedState::AddActivity(int index, Interconnection * InputConnection){
 	ActivityNode * NewElement = (ActivityNode *) new ActivityNode;
 
