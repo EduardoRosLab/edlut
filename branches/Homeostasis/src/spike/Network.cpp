@@ -27,6 +27,7 @@
 
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/SRMTimeDrivenModel.h"
+#include "../../include/neuron_model/SRMDetTimeDrivenModel.h"
 #include "../../include/neuron_model/LIFTimeDrivenModelRK.h"
 #include "../../include/neuron_model/LIFTimeDrivenModel.h"
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
@@ -169,6 +170,8 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int & ni)
 			neutypes[ni] = (LIFTimeDrivenModel *) new LIFTimeDrivenModel(ident_type, neutype);
 		}else if (ident_type=="SRMTimeDrivenModel"){
 			neutypes[ni] = (SRMTimeDrivenModel *) new SRMTimeDrivenModel(ident_type, neutype);
+		}else if (ident_type=="SRMDetTimeDrivenModel"){
+			neutypes[ni] = (SRMDetTimeDrivenModel *) new SRMDetTimeDrivenModel(ident_type, neutype);
 		} else if (ident_type=="TableBasedModel"){
    			neutypes[ni] = (TableBasedModel *) new TableBasedModel(ident_type, neutype);
 		} else if (ident_type=="SRMTableBasedModel"){

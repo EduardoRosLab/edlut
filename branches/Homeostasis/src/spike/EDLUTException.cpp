@@ -99,8 +99,8 @@ const char * EDLUTException::Errormsgs[] ={
 	"Can't read the number of channels in the time-driven neuron model",
 	"Can't read the decay time constant parameter",
 	"Invalid type of the neuron model",
-
 	"Can't read the gap junction factor",
+
 	"Can't read the resting conductance",
 	"Can't read the refractory period",
 	"Can't read the gap junction time constant",
@@ -111,9 +111,15 @@ const char * EDLUTException::Errormsgs[] ={
 	"Can't read the firing threshold",
 	"Can't read the resting potential",
 	"Can't read the inhibitory reversal potential",
-	"Can't read the excitatory reversal potential"
-
-
+	
+	"Can't read the excitatory reversal potential",
+	"Can't read the membrane time constant",
+	"Can't read the synaptic time constant",
+	"Can't read the firing threshold",
+	"Can't read the k1 parameter",
+	"Can't read the k2 parameter",
+	"Can't read the buffer amplitude",
+	"Can't read the refractory period"
 };
 
 const char * EDLUTException::Repairmsgs[] ={

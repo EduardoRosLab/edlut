@@ -136,6 +136,16 @@ class VectorBufferedState: public VectorNeuronState {
 		void SetBufferAmplitude(int index, unsigned int NumBuffer, float BufferAmpl);
 
 		/*!
+		 * \brief It removes all the previous activity stored in one of the buffers.
+		 *
+		 * It removes all the previous activity stored in one of the buffers
+		 *
+		 * \param index The cell index inside the vector.
+		 * \param NumBuffer Number of the buffer to be empty.
+		 */
+		void ClearBuffer(int index, unsigned int NumBuffer);
+
+		/*!
 		 * \brief It adds a new input spike into the buffer of activity for a cell.
 		 *
 		 * It adds a new input spike into the buffer of activity for a cell. The spike insertion
