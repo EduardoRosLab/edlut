@@ -2,18 +2,12 @@
 ################################ - MAKEFILE RULES - ############################
 ################################################################################
 
+compiler 	:= @compiler@
+mex			:= $(matlabrootdir)/bin/mex
+cudacompiler	:= $(cudarootdir)/bin/nvcc
 
 
-#NVCC = ${CUDA_INSTALL_PATH}/bin/nvcc
-
-
-ifeq ($(cuda_enabled),true)
-#  compiler_GPU := ${CUDA_INSTALL_PATH }/bin/nvcc
-  NVCC := nvcc -ccbin /usr/bin
-endif
-compiler 	:= g++
-mex		:= mex
-CXX 		:= ${compiler}
+all	: $(exetarget) $(steptarget) $(precisiontarget) @mextarget@ @sfunctiontarget@ library 
 
 .PHONY         : $(exetarget)
 $(exetarget) : $(exe-objects)
@@ -22,12 +16,25 @@ $(exetarget) : $(exe-objects)
 	@echo ------------------ making executable
 	@echo
 	@mkdir -p $(bindir)
-#	ifeq ($(cuda_enabled),true)
-#		$(compiler_GPU) $(CXXFLAGS) $^ $(LFLAGS) -o $@
-		$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
-#	else
-#		$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
-#	endif
+	$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+.PHONY         : $(steptarget)
+$(steptarget) : $(step-objects)
+	@echo compiler path = ${compiler}
+	@echo
+	@echo ------------------ making step-by-step example
+	@echo
+	@mkdir -p $(bindir)
+	$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+.PHONY         : $(precisiontarget)
+$(precisiontarget) : $(precision-objects)
+	@echo compiler path = ${compiler}
+	@echo
+	@echo ------------------ making step-by-step example
+	@echo
+	@mkdir -p $(bindir)
+	$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 
 .PHONY		: mex
@@ -71,13 +78,6 @@ $(libtarget): $(objects)
 	@mkdir -p $(libdir)
 	$(AR) $(ARFLAGS) $@ $^
 
-.PHONY : tags
-tags   :
-	@echo
-	@echo ------------------ creating tag entries
-	@echo
-	@etags $(includedir)/*.h $(includedir)/*.h $(srcdir)/*.cpp $(srcdir)/*.cc $(srcdir)/*.c
-
 .PHONY : dox
 dox    : Doxyfile
 	@echo
@@ -111,7 +111,7 @@ clear :
 	@rm -rf \#* ${dependencies}
 
 .PHONY: install
-install: $(libtarget) pkgfile uninstall
+install: $(libtarget) pkgfile uninstall install-exe
 	@echo
 	@echo ------------------ installing library and header files
 	@echo
@@ -156,7 +156,7 @@ uninstall:
 	@rm -f   $(installdir)/$(libtarget)
 	@rm -rf $(installdir)/src/$(packagename)
 	@rm -f   $(installdir)/lib/pkgconfig/$(pkgconfigfile)
-	@rm -f   $(installdir)/bin/$(exetarget)
+	@rm -f   $(installdir)/bin/$(packagename)
 
 ifneq "$(MAKECMDGOALS)" "clean"
   include $(dependencies)
@@ -167,7 +167,7 @@ endif
 	@echo
 	@echo ------------------ creating dependencies for $@
 	@echo
-	$(compiler) $(CXXFLAGS) $(TARGET_ARCH) -MM $< | \
+	$(compiler) $(CXXFLAGS) -MM $< | \
 	sed 's,\($(notdir $*)\.o\) *:,$(dir $@)\1 $@: ,' > $@.tmp
 	mv -f $@.tmp $@
 	@echo
@@ -176,8 +176,17 @@ endif
 	@echo
 	@echo ------------------ creating dependencies for $@
 	@echo
-	$(compiler) $(CXXFLAGS) $(TARGET_ARCH) -MM $< | \
+	$(compiler) $(CXXFLAGS) -MM $< | \
 	sed 's,\($(notdir $*)\.o\) *:,$(dir $@)\1 $@: ,' > $@.tmp
+	mv -f $@.tmp $@
+	@echo
+	
+%.d : %.cu
+	@echo
+	@echo ------------------ creating dependencies for $@
+	@echo
+	$(cudacompiler) $(NVCCFLAGS) -MM $< | \
+	sed 's,\($(notdir $*)\.o\) *:-,$(dir $@)\1 $@: ,' > $@.tmp
 	mv -f $@.tmp $@
 	@echo
 
@@ -204,47 +213,6 @@ pkgfile:
 	@echo Cflags: -I$$\{includedir\} 		>> $(pkgconfigfile)
 	@echo 						>> $(pkgconfigfile)
 
-.PHONY : revert
-revert :
-	@mv -f makefile.in makefile
-
-
-.PHONY : export
-export :
-	@echo "#automatically generated makefile"         >  $(automakefile)
-	@echo packagename := ${packagename}               >> ${automakefile}
-	@echo version := ${version}                       >> ${automakefile}
-	@echo author := ${author}                         >> ${automakefile}
-	@echo description := "${description}"             >> ${automakefile}
-	@echo licence := ${licence}                       >> ${automakefile}
-	@echo "#........................................" >> ${automakefile}
-	@echo installdir := ${installdir}                 >> $(automakefile)
-	@echo external_sources := ${external_sources}     >> ${automakefile}
-	@echo external_libraries := ${external_libraries} >> ${automakefile}
-	@echo libdir := ${libdir}                         >> ${automakefile}
-	@echo srcdir := ${srcdir}                         >> ${automakefile}
-	@echo includedir:= ${includedir}                  >> ${automakefile}
-	@echo "#........................................" >> ${automakefile}
-	@echo optimize := ${optimize}                     >> ${automakefile}
-	@echo fortran77support := ${fortran77support}     >> ${automakefile}
-	@echo sse-iset := ${sse-iset}                     >> ${automakefile}
-	@echo multi-threading := ${multi-threading}       >> ${automakefile}
-	@echo parallelize := ${parallelize}               >> ${automakefile}
-	@echo profile := ${profile}                       >> ${automakefile}
-	@echo "#........................................" >> ${automakefile}
-	@echo specialize := ${specialize}                 >> ${automakefile}
-	@echo platform := ${platform}                     >> ${automakefile}
-	@echo "#........................................" >> ${automakefile}
-	@echo exe-source-file := ${exe-source-file}       >> ${automakefile}
-	@echo sources := ${sources}                       >> ${automakefile}
-	@echo                                             >> ${automakefile}
-	@cat ${MAKEFILE_HEAVEN}/static-variables.makefile >> ${automakefile}
-	@cat ${MAKEFILE_HEAVEN}/flags.makefile            >> ${automakefile}
-	@cat ${MAKEFILE_HEAVEN}/rules.makefile            >> ${automakefile}
-	@echo >> ${automakefile}
-	@mv makefile makefile.in
-	@mv ${automakefile} makefile
-
 .PHONY : flags
 flags :
 	@echo
@@ -253,43 +221,10 @@ flags :
 	@echo ldflags  = $(LDFLAGS)
 	@echo cxxflags = $(CXXFLAGS)
 	@echo mexflags = $(MEXFLAGS)
+	@echo nvccflags = $(NVCCFLAGS)
 	@echo sources = ${sources}
 	@echo objects = ${exe-objects}
 
-
-.PHONY : gflat
-gflat :
-	@gprof $(packagename) gmon.out -p | more
-
-.PHONY : gcall
-gcall :
-	@gprof $(packagename) gmon.out -q | more
-
-.PHONY : state
-state  :
-	@echo
-	@echo "package name      : ${packagename} v${version} by ${author}"
-	@echo "                   (${description}) "
-	@echo "------------------------------------------------------------------------"
-	@echo "install directory : ${installdir}"
-	@echo "external sources  : ${external_sources}"
-	@echo "external libs     : ${external_libraries}"
-	@echo "fortran support   : ${fortran77support}"
-	@echo "------------------------------------------------------------------------"
-	@echo "optimize          : ${optimize}"
-	@echo "parallelize       : ${parallelize}"
-	@echo "profile           : ${profile}"
-	@echo "sse-iset          : ${sse-iset}"
-	@echo "multi-threading   : ${multi-threading}"
-	@echo "------------------------------------------------------------------------"
-	@echo "specialize        : ${specialize} for ${platform}"
-	@echo "------------------------------------------------------------------------"
-	@echo "sources           : ${sources}"
-	@echo "------------------------------------------------------------------------"
-	@echo ldflags  = $(LDFLAGS)
-	@echo cxxflags = $(CXXFLAGS)
-	@echo sources = ${sources}
-	@echo objects = ${exe-objects}
 
 .PHONY : rules
 rules :
@@ -299,7 +234,6 @@ rules :
 	@echo "(nothing)   : makes the executable : by default src/main.cpp is included to the sources list"
 	@echo "              and used in the exe-build. Change its value with $exe-source-file variable"
 	@echo "library     : generates the library"
-	@echo "tags        : generates etags files"
 	@echo "dox         : generates the doxygen documentation if Doxyfile exists"
 	@echo "doxclean    : cleans up the documentation"
 	@echo "clean       : cleans up .o lib and exe files"
@@ -310,12 +244,7 @@ rules :
 	@echo "uninstall   : uninstalls the library"
 	@echo "pkgfile     : generates the pkg-config file"
 	@echo "flags       : shows the flags that will be used"
-	@echo "gflat       : shows gprof profiler flat view result"
-	@echo "gcall       : shows gprof profiler call graph view result"
 	@echo "rules       : shows this text"
-	@echo "state       : show the configuration state of the package"
-	@echo "export      : export the makefile"
-	@echo "revert      : moves makefile.in to makefile"
 	@echo "clear       : clears #* & dependency files"
 	@echo
 
