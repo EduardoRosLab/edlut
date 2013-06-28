@@ -28,7 +28,7 @@ CommunicationEvent::CommunicationEvent(double NewTime): Event(NewTime){
 CommunicationEvent::~CommunicationEvent(){
 }
 
-void CommunicationEvent::ProcessEvent(Simulation * CurrentSimulation){
+void CommunicationEvent::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
 	
 	// Send the outputs
 	CurrentSimulation->SendOutput();

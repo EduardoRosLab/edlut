@@ -72,14 +72,24 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 		float erest;
 
 		/*!
-		 * \brief Firing threshold
+		 * \brief Resting conductance
 		 */
-		float vthr;
+		float grest;
+
+		/*!
+		 * \brief Inverse membrane capacitance
+		 */
+		float inv_cm;
 
 		/*!
 		 * \brief Membrane capacitance
 		 */
 		float cm;
+
+		/*!
+		 * \brief Firing threshold
+		 */
+		float vthr;
 
 		/*!
 		 * \brief AMPA receptor time constant
@@ -96,10 +106,7 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 		 */
 		float tref;
 
-		/*!
-		 * \brief Resting conductance
-		 */
-		float grest;
+
 
 
 		/*!
@@ -194,6 +201,22 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 
 
 		/*!
+		 * \brief It processes a propagated spike (input spike in the cell).
+		 *
+		 * It processes a propagated spike (input spike in the cell).
+		 *
+		 * \note This function doesn't generate the next propagated spike. It must be externally done.
+		 *
+		 * \param inter the interconection which propagate the spike
+		 * \param target the neuron which receives the spike
+		 * \param time the time of the spike.
+		 *
+		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
+		 */
+		virtual InternalSpike * ProcessInputSpike(Interconnection * inter, Neuron * target, double time);
+
+
+		/*!
 		 * \brief Update the neuron state variables.
 		 *
 		 * It updates the neuron state variables.
@@ -248,7 +271,7 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 		 * \param NeuronState value of the neuron state variables where time dependent equations are evaluated.
 		 * \param elapsed_time integration time step.
 		 */
-		virtual void EvaluateTimeDependentEcuation(float * NeuronState, double elapsed_time);
+		virtual void EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time);
 
 };
 

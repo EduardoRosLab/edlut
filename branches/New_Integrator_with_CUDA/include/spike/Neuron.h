@@ -175,7 +175,10 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The current neuron state.
    		 */
-   		VectorNeuronState * GetVectorNeuronState() const;
+   		//VectorNeuronState * GetVectorNeuronState() const;
+		inline VectorNeuronState * GetVectorNeuronState() const{
+			return state;
+		}
    		
    		/*!
    		 * \brief It gets the number of inputs to the current neuron which have associated learning.
@@ -193,7 +196,10 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The number of output connections from the current neuron.
    		 */
-   		unsigned int GetOutputNumber() const;
+   		//unsigned int GetOutputNumber() const;
+		inline unsigned int GetOutputNumber() const{
+			return this->OutputConNumber;
+		}
    		
    		/*!
    		 * \brief It gets the input connection at an specified index.
@@ -232,7 +238,10 @@ class Neuron : public PrintableObject {
    		 * \param index The index of the output connection what we want to get.
    		 * \return The output connection of index index.
    		 */
-   		Interconnection * GetOutputConnectionAt(unsigned int index) const;
+   		//Interconnection * GetOutputConnectionAt(unsigned int index) const;
+		inline Interconnection * GetOutputConnectionAt(unsigned int index) const{
+			return *(this->OutputConnections+index);
+		}
    		
    		/*!
    		 * \brief It sets the output connections from this neuron.
@@ -260,7 +269,10 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return True if the neuron is monitored. False in other case.
    		 */
-		bool IsMonitored() const;
+		//bool IsMonitored() const;
+		inline bool IsMonitored() const{
+			return this->monitored;	
+		}
 		
 		/*!
    		 * \brief It checks if the neuron is output.
@@ -278,7 +290,10 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The neuron type of the current object.
    		 */
-		NeuronModel * GetNeuronModel() const;
+		//NeuronModel * GetNeuronModel() const;
+		inline NeuronModel * GetNeuronModel() const{
+			return type;
+		}
 
 		/*!
 		 * \brief It prints the neuron info.
@@ -325,7 +340,10 @@ class Neuron : public PrintableObject {
 		 * 
 		 * \return The neuron index.
 		 */
-		long int GetIndex_VectorNeuronState();
+		//long GetIndex_VectorNeuronState();
+		inline long GetIndex_VectorNeuronState(){
+			return index_VectorNeuronState;
+		}
 
 
 };

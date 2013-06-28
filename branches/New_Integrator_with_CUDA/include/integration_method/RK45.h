@@ -103,7 +103,7 @@ class RK45 : public FixedStep {
 		 * \param NumberOfEcuation number of differential ecuation.
 		 * \param elapsed_time integration time step.
 		 */
-		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index);
+		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index);
 
 		/*!
 		 * \brief It prints the integration method info.

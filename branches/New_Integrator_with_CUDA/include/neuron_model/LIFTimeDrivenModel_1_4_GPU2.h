@@ -33,7 +33,7 @@
 #include "../../include/integration_method/LoadIntegrationMethod_GPU2.h"
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 /*!
  * \class LIFTimeDrivenModel_GPU
@@ -186,6 +186,7 @@ class LIFTimeDrivenModel_1_4_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		__device__ void UpdateState(int index, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime)
 		{
 			double elapsed_time =CurrentTime - LastUpdateGPU[index];
+			float elapsed_time_f=elapsed_time;
 			
 			LastSpikeTimeGPU[index]+=elapsed_time;
 			double last_spike=LastSpikeTimeGPU[index];
@@ -199,7 +200,7 @@ class LIFTimeDrivenModel_1_4_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 			bool spike = false;
 
 			if (last_spike > this->tref) {
-				integrationMethod_GPU2->NextDifferentialEcuationValue(index, SizeStates, this, StateGPU, elapsed_time);
+				integrationMethod_GPU2->NextDifferentialEcuationValue(index, SizeStates, this, StateGPU, elapsed_time_f);
 				float vm_cou = StateGPU[0*SizeStates + index] + this->fgj * StateGPU[4*SizeStates + index];
 				if (vm_cou > this->vthr){
 					LastSpikeTimeGPU[index]=0;
@@ -208,7 +209,7 @@ class LIFTimeDrivenModel_1_4_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 					this->integrationMethod_GPU2->resetState(index);
 				}
 			}else{
-				EvaluateTimeDependentEcuation(index, SizeStates, StateGPU, elapsed_time);
+				EvaluateTimeDependentEcuation(index, SizeStates, StateGPU, elapsed_time_f);
 			}
 
 			InternalSpikeGPU[index]=spike;
@@ -231,11 +232,10 @@ class LIFTimeDrivenModel_1_4_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 */
 		__device__ void EvaluateDifferentialEcuation(int index, int SizeStates, float * NeuronState, float * AuxNeuronState){
 			float iampa = NeuronState[1*SizeStates + index]*(this->eexc-NeuronState[0*SizeStates + index]);
-			//float gnmdainf = 1.0/(1.0 + exp(-62.0*NeuronState[0])*1.2/3.57);
-			float gnmdainf = 1.0/(1.0 + exp(-62.0*NeuronState[0*SizeStates + index])*0.336134453);
+			float gnmdainf = 1.0f/(1.0f + exp(-62.0f*NeuronState[0*SizeStates + index])*(1.2f/3.57f));
 			float inmda = NeuronState[2*SizeStates + index]*gnmdainf*(this->eexc-NeuronState[0*SizeStates + index]);
 			float iinh = NeuronState[3*SizeStates + index]*(this->einh-NeuronState[0*SizeStates + index]);
-			AuxNeuronState[0*gridDim.x * blockDim.x + blockDim.x*blockIdx.x + threadIdx.x]=(iampa + inmda + iinh + this->grest* (this->erest-NeuronState[0*SizeStates + index]))*1.e-9/this->cm;
+			AuxNeuronState[0*gridDim.x * blockDim.x + blockDim.x*blockIdx.x + threadIdx.x]=(iampa + inmda + iinh + this->grest* (this->erest-NeuronState[0*SizeStates + index]))*1.e-9f/this->cm;
 		}
 
 
@@ -249,7 +249,7 @@ class LIFTimeDrivenModel_1_4_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 * \param NeuronState value of the neuron state variables where time dependent equations are evaluated.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ void EvaluateTimeDependentEcuation(int index, int SizeStates, float * NeuronState, double elapsed_time){
+		__device__ void EvaluateTimeDependentEcuation(int index, int SizeStates, float * NeuronState, float elapsed_time){
 			NeuronState[1*SizeStates + index]*= exp(-(elapsed_time/this->tampa));
 			NeuronState[2*SizeStates + index]*= exp(-(elapsed_time/this->tnmda));
 			NeuronState[3*SizeStates + index]*= exp(-(elapsed_time/this->tinh));

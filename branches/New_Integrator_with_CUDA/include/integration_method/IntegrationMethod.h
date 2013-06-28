@@ -134,7 +134,7 @@ class IntegrationMethod {
 		 * \param elapsed_time integration time step.
 		 * \param CPU_thread_index index of the OpenMP thread.
 		 */
-		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index) = 0;
+		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index) = 0;
 
 
 		/*!
@@ -192,6 +192,18 @@ class IntegrationMethod {
 		 */
 		void Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index);
 		
+		/*!
+		 * \brief It calculate numerically the Jacobian .
+		 *
+		 * It calculate numerically the Jacobian.
+		 *
+		 * \param Model neuron model.
+		 * \param NeuronState neuron state variables of one neuron.
+		 * \param jancum vector where is stored the Jacobian.
+		 * \param CPU_thread_index index of the OpenMP thread.
+		 * \param elapsed_time integration method step.
+		 */
+		void Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index, float elapsed_time);
 
 		/*!
 		 * \brief It calculate the inverse of a square matrix using Gauss-Jordan Method.

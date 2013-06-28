@@ -34,7 +34,9 @@ RK4::~RK4(){
 	free (AuxNeuronState4);
 }
 		
-void RK4::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index){
+
+void RK4::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
+	int j;
 	float * offset_AuxNeuronState = AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
 	float * offset_AuxNeuronState1 = AuxNeuronState1+(N_NeuronStateVariables*CPU_thread_index);
 	float * offset_AuxNeuronState2 = AuxNeuronState2+(N_NeuronStateVariables*CPU_thread_index);
@@ -45,36 +47,39 @@ void RK4::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model
 	Model->EvaluateDifferentialEcuation(NeuronState, offset_AuxNeuronState1);
 	
 	//2nd term
-	memcpy(offset_AuxNeuronState, NeuronState,sizeof(float)*N_NeuronStateVariables);
-	for (int j=0; j<N_DifferentialNeuronState; j++){
-		offset_AuxNeuronState[j]= NeuronState[j] + offset_AuxNeuronState1[j]*elapsed_time/2;
+	for (j=0; j<N_DifferentialNeuronState; j++){
+		offset_AuxNeuronState[j]= NeuronState[j] + offset_AuxNeuronState1[j]*elapsed_time*0.5f;
+	}
+	for (j=N_DifferentialNeuronState; j<N_NeuronStateVariables; j++){
+		offset_AuxNeuronState[j]= NeuronState[j];
 	}
 
-	Model->EvaluateTimeDependentEcuation(offset_AuxNeuronState, elapsed_time/2);
+	Model->EvaluateTimeDependentEcuation(offset_AuxNeuronState, elapsed_time*0.5f);
 	Model->EvaluateDifferentialEcuation(offset_AuxNeuronState, offset_AuxNeuronState2);
 
 	//3rd term
-	for (int j=0; j<N_DifferentialNeuronState; j++){
-		offset_AuxNeuronState[j]=NeuronState[j] + offset_AuxNeuronState2[j]*elapsed_time/2;
+	for (j=0; j<N_DifferentialNeuronState; j++){
+		offset_AuxNeuronState[j]=NeuronState[j] + offset_AuxNeuronState2[j]*elapsed_time*0.5f;
 	}
 
 	Model->EvaluateDifferentialEcuation(offset_AuxNeuronState, offset_AuxNeuronState3);
 
 	//4rd term
-	for (int j=0; j<N_DifferentialNeuronState; j++){
+	for (j=0; j<N_DifferentialNeuronState; j++){
 		offset_AuxNeuronState[j]=NeuronState[j] + offset_AuxNeuronState3[j]*elapsed_time;
 	}
 
-	Model->EvaluateTimeDependentEcuation(offset_AuxNeuronState, elapsed_time/2);
+	Model->EvaluateTimeDependentEcuation(offset_AuxNeuronState, elapsed_time*0.5f);
 	Model->EvaluateDifferentialEcuation(offset_AuxNeuronState, offset_AuxNeuronState4);
 
 
-	for (int j=0; j<N_DifferentialNeuronState; j++){
-		NeuronState[j]+=(offset_AuxNeuronState1[j]+2*(offset_AuxNeuronState2[j]+offset_AuxNeuronState3[j])+offset_AuxNeuronState4[j])*elapsed_time/6;
+	for (j=0; j<N_DifferentialNeuronState; j++){
+		NeuronState[j]+=(offset_AuxNeuronState1[j]+2*(offset_AuxNeuronState2[j]+offset_AuxNeuronState3[j])+offset_AuxNeuronState4[j])*elapsed_time*0.166666666667f;
 	}
 
 	Model->EvaluateTimeDependentEcuation(NeuronState, elapsed_time);
 }
+
 
 ostream & RK4::PrintInfo(ostream & out){
 	out << "Integration Method Type: " << this->GetType() << endl;

@@ -75,6 +75,10 @@ InternalSpike * Vanderpol::ProcessInputSpike(PropagatedSpike *  InputSpike){
 	return 0;
 }
 
+InternalSpike * Vanderpol::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
+	return 0;
+}
+
 	
 
 bool Vanderpol::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
@@ -83,23 +87,25 @@ bool Vanderpol::UpdateState(int index, VectorNeuronState * State, double Current
 	int Size=State->GetSizeState();
 	float last_update;
 	float elapsed_time;
+	float elapsed_time_f;
 	int i;
 	int CPU_thread_index;
 
 	float * NeuronState;
 
 	if(index==-1){
-		#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime, elapsed_time) private(i, last_update, NeuronState, CPU_thread_index)
+		#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime) private(i, last_update, NeuronState, CPU_thread_index, elapsed_time, elapsed_time_f)
 		for (int i=0; i< Size; i++){
 
 			last_update = State->GetLastUpdateTime(i);
 			elapsed_time = CurrentTime - last_update;
+			elapsed_time_f=elapsed_time;
 			State->AddElapsedTime(i,elapsed_time);
 
 			NeuronState=State->GetStateVariableAt(i);
 
 			CPU_thread_index=omp_get_thread_num();
-			this->integrationMethod->NextDifferentialEcuationValue(i, this, NeuronState, elapsed_time, CPU_thread_index);
+			this->integrationMethod->NextDifferentialEcuationValue(i, this, NeuronState, elapsed_time_f, CPU_thread_index);
 
 			State->SetLastUpdateTime(i,CurrentTime);
 		}
@@ -110,11 +116,12 @@ bool Vanderpol::UpdateState(int index, VectorNeuronState * State, double Current
 	else{
 		last_update = State->GetLastUpdateTime(index);
 		elapsed_time = CurrentTime - last_update;
+		elapsed_time_f=elapsed_time;
 		State->AddElapsedTime(index,elapsed_time);
 
 		NeuronState=State->GetStateVariableAt(index);
 
-		this->integrationMethod->NextDifferentialEcuationValue(index, this, NeuronState, elapsed_time, 0);
+		this->integrationMethod->NextDifferentialEcuationValue(index, this, NeuronState, elapsed_time_f, 0);
 
 		State->SetLastUpdateTime(index,CurrentTime);
 	}
@@ -133,7 +140,7 @@ ostream & Vanderpol::PrintInfo(ostream & out){
 
 void Vanderpol::InitializeStates(int N_neurons){
 	//Initialize neural state variables.
-	float initialization[] = {1.085,-6.0e-3};
+	float initialization[] = {1.085f,-6.0e-3f};
 	InitialState->InitializeStates(N_neurons, initialization);
 
 	//Initialize integration method state variables.
@@ -144,10 +151,10 @@ void Vanderpol::InitializeStates(int N_neurons){
 
 void Vanderpol::EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState){
 			AuxNeuronState[0]=NeuronState[1];
-			AuxNeuronState[1]=1000*(1.0-NeuronState[0]*NeuronState[0])*NeuronState[1]-NeuronState[0];
+			AuxNeuronState[1]=1000*(1.0f-NeuronState[0]*NeuronState[0])*NeuronState[1]-NeuronState[0];
 
 }
 
-void Vanderpol::EvaluateTimeDependentEcuation(float * NeuronState, double elapsed_time){
+void Vanderpol::EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time){
 }
 

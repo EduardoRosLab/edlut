@@ -19,15 +19,15 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel_GPU2.h"
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
-const float BDFn_GPU::Coeficient_CPU [7*7]={1.0,1.0,0.0,0.0,0.0,0.0,0.0,
-											1.0,1.0,0.0,0.0,0.0,0.0,0.0,
-											2.0/3.0,4.0/3.0,-1.0/3.0,0.0,0.0,0.0,0.0,
-											6.0/11.0,18.0/11.0,-9.0/11.0,2.0/11.0,0.0,0.0,0.0,
-											12.0/25.0,48.0/25.0,-36.0/25.0,16.0/25.0,-3.0/25.0,0.0,0.0,
-											60.0/137.0,300.0/137.0,-300.0/137.0,200.0/137.0,-75.0/137.0,12.0/137.0,0.0,
-											60.0/147.0,360.0/147.0,-450.0/147.0,400.0/147.0,-225.0/147.0,72.0/147.0,-10.0/147.0};
+const float BDFn_GPU::Coeficient_CPU [7*7]={1.0f,1.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
+						1.0f,1.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
+						2.0f/3.0f,4.0f/3.0f,-1.0f/3.0f,0.0f,0.0f,0.0f,0.0f,
+						6.0f/11.0f,18.0f/11.0f,-9.0f/11.0f,2.0f/11.0f,0.0f,0.0f,0.0f,
+						12.0f/25.0f,48.0f/25.0f,-36.0f/25.0f,16.0f/25.0f,-3.0f/25.0f,0.0f,0.0f,
+						60.0f/137.0f,300.0f/137.0f,-300.0f/137.0f,200.0f/137.0f,-75.0f/137.0f,12.0f/137.0f,0.0f,
+						60.0f/147.0f,360.0f/147.0f,-450.0f/147.0f,400.0f/147.0f,-225.0f/147.0f,72.0f/147.0f,-10.0f/147.0f};
 
 
 BDFn_GPU::BDFn_GPU(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int BDFOrder, char * intergrationMethod):IntegrationMethod_GPU(intergrationMethod, N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState),BDForder(BDFOrder){

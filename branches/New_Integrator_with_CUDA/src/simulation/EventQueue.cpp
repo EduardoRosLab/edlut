@@ -132,3 +132,29 @@ double EventQueue::FirstEventTime() const{
    
    	return(ti);		
 }
+
+void EventQueue::RemoveSpikes(){
+	EventForQueue * Temp = this->Events;
+	unsigned int OldAllocatedSize=this->AllocatedSize;
+	unsigned int OldNumberOfElements=this->NumberOfElements;
+
+	// Allocate the new array
+	this->Events = (EventForQueue *) new EventForQueue [MIN_SIZE];
+	this->AllocatedSize = MIN_SIZE;
+	this->NumberOfElements=1;
+
+	Event * AuxEvent;
+
+	// Copy all the elements from the original array
+	for (unsigned int i = 1; i<OldNumberOfElements; ++i){
+		AuxEvent=(Temp +i)->EventPtr;
+		if(!AuxEvent->IsSpike()){
+			InsertEvent(AuxEvent);
+		}else{
+			delete AuxEvent;
+		}		
+	}
+	
+	// Release old memory
+	delete [] Temp;
+}

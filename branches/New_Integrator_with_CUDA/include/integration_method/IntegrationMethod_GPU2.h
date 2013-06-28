@@ -31,7 +31,7 @@
 class TimeDrivenNeuronModel_GPU2;
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 
 

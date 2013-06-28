@@ -19,7 +19,7 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel_GPU.h"
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 
 IntegrationMethod_GPU::IntegrationMethod_GPU(char * integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState):N_NeuronStateVariables(N_neuronStateVariables), N_DifferentialNeuronState(N_differentialNeuronState), N_TimeDependentNeuronState(N_timeDependentNeuronState){

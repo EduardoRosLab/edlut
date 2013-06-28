@@ -253,8 +253,7 @@ void TableBasedModel::UpdateState(int index, VectorNeuronState * State, double C
 }
 
 void TableBasedModel::SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection){
-	float Value = State->GetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1);
-	State->SetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*WEIGHTSCALE);
+	State->IncrementStateVariableAtCPU(index, this->SynapticVar[InputConnection->GetType()]+1, InputConnection->GetWeight()*WEIGHTSCALE);
 }
 
 double TableBasedModel::NextFiringPrediction(int index, VectorNeuronState * State){
@@ -264,6 +263,7 @@ double TableBasedModel::NextFiringPrediction(int index, VectorNeuronState * Stat
 double TableBasedModel::EndRefractoryPeriod(int index, VectorNeuronState * State){
 	return this->EndFiringTable->TableAccess(index, State);
 }
+
 
 InternalSpike * TableBasedModel::ProcessInputSpike(PropagatedSpike *  InputSpike){
 
@@ -311,6 +311,52 @@ InternalSpike * TableBasedModel::ProcessInputSpike(PropagatedSpike *  InputSpike
 
 	return GeneratedSpike;
 }
+
+
+InternalSpike * TableBasedModel::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
+
+	int TargetIndex=target->GetIndex_VectorNeuronState();
+
+
+	VectorNeuronState * CurrentState = target->GetVectorNeuronState();
+
+	// Update the neuron state until the current time
+	this->UpdateState(TargetIndex,CurrentState,time);
+
+	// Add the effect of the input spike
+	this->SynapsisEffect(TargetIndex,CurrentState,inter);
+
+	InternalSpike * GeneratedSpike = 0;
+
+	// Check if an spike will be fired
+	double NextSpike = this->NextFiringPrediction(TargetIndex,CurrentState);
+	if (NextSpike != NO_SPIKE_PREDICTED){
+		NextSpike += CurrentState->GetLastUpdateTime(TargetIndex);
+
+		if (NextSpike>CurrentState->GetEndRefractoryPeriod(TargetIndex)){
+			GeneratedSpike = new InternalSpike(NextSpike,target);
+		} else { // Only for neurons which never stop firing
+			// The generated spike was at refractory period -> Check after refractoriness
+
+			VectorNeuronState newState(*CurrentState, TargetIndex);
+
+			this->UpdateState(0,&newState,newState.GetEndRefractoryPeriod(0));
+
+			NextSpike = this->NextFiringPrediction(0,&newState);
+
+			if(NextSpike != NO_SPIKE_PREDICTED){
+				NextSpike += CurrentState->GetEndRefractoryPeriod(TargetIndex);
+
+				GeneratedSpike = new InternalSpike(NextSpike,target);
+			}
+		}
+	}
+
+	CurrentState->SetNextPredictedSpikeTime(TargetIndex,NextSpike);
+
+	return GeneratedSpike;
+}
+
 
 InternalSpike * TableBasedModel::GenerateNextSpike(InternalSpike *  OutputSpike){
 

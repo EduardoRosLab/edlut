@@ -130,6 +130,22 @@ class Vanderpol : public TimeDrivenNeuronModel {
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
 		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
+
+
+		/*!
+		 * \brief It processes a propagated spike (input spike in the cell).
+		 *
+		 * It processes a propagated spike (input spike in the cell).
+		 *
+		 * \note This function doesn't generate the next propagated spike. It must be externally done.
+		 *
+		 * \param inter the interconection which propagate the spike
+		 * \param target the neuron which receives the spike
+		 * \param time the time of the spike.
+		 *
+		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
+		 */
+		virtual InternalSpike * ProcessInputSpike(Interconnection * inter, Neuron * target, double time);
 	
 
 		/*!
@@ -187,7 +203,7 @@ class Vanderpol : public TimeDrivenNeuronModel {
 		 * \param NeuronState value of the neuron state variables where time dependent equations are evaluated.
 		 * \param elapsed_time integration time step.
 		 */
-		virtual void EvaluateTimeDependentEcuation(float * NeuronState, double elapsed_time);
+		virtual void EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time);
 
 };
 

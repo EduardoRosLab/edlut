@@ -35,7 +35,7 @@
 
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 /*!
  * \class BDFn_GPU2

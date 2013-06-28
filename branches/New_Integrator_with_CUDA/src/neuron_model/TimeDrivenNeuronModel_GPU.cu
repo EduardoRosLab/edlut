@@ -21,7 +21,7 @@
 
 //Library for CUDA
 #include "../../include/cudaError.h"
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 #include <string>
 

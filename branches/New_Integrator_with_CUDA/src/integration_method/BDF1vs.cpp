@@ -29,8 +29,6 @@ BDF1vs::BDF1vs(int N_neuronStateVariables, int N_differentialNeuronState, int N_
 	jacnum = new float [N_DifferentialNeuronState*N_DifferentialNeuronState*N_CPU_thread];
 	J = new float [N_DifferentialNeuronState*N_DifferentialNeuronState*N_CPU_thread];
 	inv_J = new float [N_DifferentialNeuronState*N_DifferentialNeuronState*N_CPU_thread];
-
-	Epsilon = new float [N_CPU_thread];
 }
 
 BDF1vs::~BDF1vs(){
@@ -47,11 +45,9 @@ BDF1vs::~BDF1vs(){
 	free(J);
 	free(inv_J);
 
-	free(Epsilon);
-
 }
 		
-void BDF1vs::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index){
+void BDF1vs::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
 
 	float * offset_AuxNeuronState = AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
 	float * offset_AuxNeuronState_p = AuxNeuronState_p+(N_NeuronStateVariables*CPU_thread_index);
@@ -83,17 +79,17 @@ void BDF1vs::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mo
 		
 	Model->EvaluateTimeDependentEcuation(offset_AuxNeuronState_p,elapsed_time);
 
-	Epsilon[CPU_thread_index]=1.0;
+	float epsilon=1.0;
 	int k=0;
 
-	while (Epsilon[CPU_thread_index]>1e-16 && k<5){
+	while (epsilon>1e-16 && k<5){
 		Model->EvaluateDifferentialEcuation(offset_AuxNeuronState_p, offset_AuxNeuronState);
 		for (int j=0; j<N_DifferentialNeuronState; j++){
 			offset_AuxNeuronState_c[j]=NeuronState[j] + elapsed_time*offset_AuxNeuronState[j];
 		}
 
 		//jacobian.
-		Jacobian(Model, offset_AuxNeuronState_p, offset_jacnum, CPU_thread_index);
+		Jacobian(Model, offset_AuxNeuronState_p, offset_jacnum, CPU_thread_index, elapsed_time);
 	
 		for(int z=0; z<N_DifferentialNeuronState; z++){
 			for(int t=0; t<N_DifferentialNeuronState; t++){
@@ -118,16 +114,12 @@ void BDF1vs::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mo
 			aux=fabs(offset_AuxNeuronState_p1[z]-offset_AuxNeuronState_p[z]);
 			if(aux>aux2){
 				aux2=aux;
-			}if(aux!=aux){
-				Epsilon[CPU_thread_index]=1;
-				printf("ERROR1 %f\n",Epsilon[CPU_thread_index]);
-				return;
 			}
 		}
 
 		memcpy(offset_AuxNeuronState_p , offset_AuxNeuronState_p1 ,sizeof(float)* N_DifferentialNeuronState);
 
-		Epsilon[CPU_thread_index]=aux2;
+		epsilon=aux2;
 		k++;
 	}
 
@@ -142,8 +134,6 @@ void BDF1vs::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mo
 	}
 
 	memcpy(NeuronState, offset_AuxNeuronState_p ,sizeof(float)* N_DifferentialNeuronState);
-
-
 
 	Model->EvaluateTimeDependentEcuation(NeuronState, elapsed_time);
 

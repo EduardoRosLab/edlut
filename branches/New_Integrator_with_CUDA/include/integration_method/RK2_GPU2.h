@@ -34,7 +34,7 @@
 
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 /*!
  * \class RK2_GPU2
@@ -120,7 +120,7 @@ class RK2_GPU2 : public IntegrationMethod_GPU2 {
 			Model->EvaluateDifferentialEcuation(offset2, offset1, AuxNeuronState, AuxNeuronState2);
 
 			for (int j=0; j<N_DifferentialNeuronState; j++){
-				NeuronState[j*SizeStates + index]+=(AuxNeuronState1[j*offset1 + offset2]+AuxNeuronState2[j*offset1 + offset2])*elapsed_time*0.5;
+				NeuronState[j*SizeStates + index]+=(AuxNeuronState1[j*offset1 + offset2]+AuxNeuronState2[j*offset1 + offset2])*elapsed_time*0.5f;
 			}
 
 			//Finaly, we evaluate the neural state variables with time dependence.

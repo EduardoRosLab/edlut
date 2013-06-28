@@ -19,7 +19,7 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel_GPU2.h"
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 
 RK4_GPU::RK4_GPU(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState):IntegrationMethod_GPU("RK4", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState){

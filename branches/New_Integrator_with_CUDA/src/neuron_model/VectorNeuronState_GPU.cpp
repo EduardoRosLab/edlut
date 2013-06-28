@@ -21,7 +21,8 @@
 using namespace std;
 
 		//Library for CUDA
-		#include <cutil_inline.h>
+		#include <helper_cuda.h>
+		
 
 
 	VectorNeuronState_GPU::VectorNeuronState_GPU(unsigned int NumVariables):VectorNeuronState(NumVariables, true, true){

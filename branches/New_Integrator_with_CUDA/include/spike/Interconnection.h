@@ -153,7 +153,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The source neuron of the connection.
 		 */	
-		Neuron * GetSource() const;
+		//Neuron * GetSource() const;
+		inline Neuron * GetSource() const{
+			return this->source;	
+		}
 		
 		/*!
 		 * \brief It sets the source neuron.
@@ -171,7 +174,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The target neuron of the connection.
 		 */
-		Neuron * GetTarget() const;
+		//Neuron * GetTarget() const;
+		inline Neuron * GetTarget() const{
+			return this->target;
+		}
 		
 		/*!
 		 * \brief It sets the target neuron.
@@ -189,7 +195,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The connection delay.
 		 */
-		double GetDelay() const;
+		//inline double GetDelay() const;
+		inline double GetDelay() const{
+			return delay;
+		}
 		
 		/*!
 		 * \brief It sets the connection delay.
@@ -207,7 +216,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The connection type.
 		 */
-		int GetType() const;
+		//int GetType() const;
+		inline int GetType() const{
+			return type;
+		}
 		
 		/*!
 		 * \brief It sets the connection type.
@@ -225,7 +237,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The synaptic weight.
 		 */
-		float GetWeight() const;
+		//float GetWeight() const;
+		inline float GetWeight() const{
+			return weight;
+		}
 		
 		/*!
 		 * \brief It sets the synaptic weight.
@@ -261,7 +276,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
-		LearningRule * GetWeightChange() const;
+		//LearningRule * GetWeightChange() const;
+		inline LearningRule * GetWeightChange() const{
+			return this->wchange;
+		}
 		
 		/*!
 		 * \brief It sets the learning rule of this connection.

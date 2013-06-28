@@ -31,7 +31,7 @@ class IntegrationMethod_GPU2;
 
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 
 /*!
@@ -120,7 +120,7 @@ class TimeDrivenNeuronModel_GPU2{
 		 * \param NeuronState value of the neuron state variables where time dependent equations are evaluated.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ virtual void EvaluateTimeDependentEcuation(int index, int SizeStates, float * NeuronState, double elapsed_time){
+		__device__ virtual void EvaluateTimeDependentEcuation(int index, int SizeStates, float * NeuronState, float elapsed_time){
 		}
 
 };

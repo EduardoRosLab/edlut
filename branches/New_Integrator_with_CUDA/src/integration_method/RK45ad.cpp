@@ -30,7 +30,7 @@ RK45ad::~RK45ad(){
 	free(ValidPrediction);
 }
 		
-void RK45ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index){
+void RK45ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
 	float * offset_PredictedNeuronState = PredictedNeuronState+(N_NeuronStateVariables*index);
 	
 

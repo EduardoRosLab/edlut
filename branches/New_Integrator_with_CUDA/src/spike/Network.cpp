@@ -243,6 +243,12 @@ Network::~Network(){
 		delete [] timedrivenneurons;
 	}
 
+	if(ntimedrivenneurons!=0){
+		delete [] ntimedrivenneurons;
+	}
+
+
+
 	if (wchanges!=0) {
 		for (int i=0; i<this->nwchanges; ++i){
 			delete this->wchanges[i];
