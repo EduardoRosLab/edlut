@@ -19,7 +19,7 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel_GPU2.h"
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 
 Euler_GPU::Euler_GPU(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState):IntegrationMethod_GPU("Euler", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState){

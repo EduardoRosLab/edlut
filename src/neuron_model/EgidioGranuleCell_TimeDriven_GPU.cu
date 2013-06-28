@@ -34,7 +34,7 @@
 
 #include "../../include/cudaError.h"
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 void EgidioGranuleCell_TimeDriven_GPU::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 	FILE *fh;
@@ -116,10 +116,10 @@ void EgidioGranuleCell_TimeDriven_GPU::SynapsisEffect(int index, VectorNeuronSta
 
 	switch (InputConnection->GetType()){
 		case 0: {
-			state->AuxStateCPU[0*state->GetSizeState() + index]+=1e-9*InputConnection->GetWeight();
+			state->AuxStateCPU[0*state->GetSizeState() + index]+=1e-9f*InputConnection->GetWeight();
 			break;
 		}case 1:{
-			state->AuxStateCPU[1*state->GetSizeState() + index]+=1e-9*InputConnection->GetWeight();
+			state->AuxStateCPU[1*state->GetSizeState() + index]+=1e-9f*InputConnection->GetWeight();
 			break;
 		}
 	}
@@ -127,12 +127,12 @@ void EgidioGranuleCell_TimeDriven_GPU::SynapsisEffect(int index, VectorNeuronSta
 
 
 
-EgidioGranuleCell_TimeDriven_GPU::EgidioGranuleCell_TimeDriven_GPU(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel_GPU(NeuronTypeID, NeuronModelID), gMAXNa_f(0), gMAXNa_r(0), gMAXNa_p(0), gMAXK_V(0), gMAXK_A(0), gMAXK_IR(0), gMAXK_Ca(0),
-		gMAXCa(0), gMAXK_sl(0), gLkg1(5.68e-5), gLkg2(2.17e-5), VNa(87.39), VK(-84.69), VLkg1(-58), VLkg2(-65), V0_xK_Ai(-46.7),
-		K_xK_Ai(-19.8), V0_yK_Ai(-78.8), K_yK_Ai(8.4), V0_xK_sli(-30), B_xK_sli(6), F(96485.309), A(1e-04), d(0.2), betaCa(1.5),
-		Ca0(1e-04), R(8.3134), cao(2), Cm(1.0e-3), temper(30), Q10_20 ( pow(3,((temper-20)/10))), Q10_22 ( pow(3,((temper-22)/10))),
-		Q10_30 ( pow(3,((temper-30)/10))), Q10_6_3 ( pow(3,((temper-6.3)/10))),	/*I_inj_abs(11e-12)*/I_inj_abs(0),
-		I_inj(-I_inj_abs*1000/299.26058e-8), eexc(0.0), einh(-80), texc(0.5), tinh(10), vthr(-0.25){
+EgidioGranuleCell_TimeDriven_GPU::EgidioGranuleCell_TimeDriven_GPU(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel_GPU(NeuronTypeID, NeuronModelID), gMAXNa_f(0.0f), gMAXNa_r(0.0f), gMAXNa_p(0.0f), gMAXK_V(0.0f), gMAXK_A(0.0f), gMAXK_IR(0.0f), gMAXK_Ca(0.0f),
+		gMAXCa(0.0f), gMAXK_sl(0.0f), gLkg1(5.68e-5f), gLkg2(2.17e-5f), VNa(87.39f), VK(-84.69f), VLkg1(-58.0f), VLkg2(-65.0f), V0_xK_Ai(-46.7f),
+		K_xK_Ai(-19.8f), V0_yK_Ai(-78.8f), K_yK_Ai(8.4f), V0_xK_sli(-30.0f), B_xK_sli(6.0f), F(96485.309f), A(1e-04f), d(0.2f), betaCa(1.5f),
+		Ca0(1e-04f), R(8.3134f), cao(2.0f), Cm(1.0e-3f), temper(30.0f), Q10_20 ( pow(3,((temper-20.0f)/10.0f))), Q10_22 ( pow(3,((temper-22.0f)/10.0f))),
+		Q10_30 ( pow(3,((temper-30.0f)/10.0f))), Q10_6_3 ( pow(3,((temper-6.3f)/10.0f))),	/*I_inj_abs(11e-12f)*/I_inj_abs(0.0f),
+		I_inj(-I_inj_abs*1000.0f/299.26058e-8f), eexc(0.0f), einh(-80.0f), texc(0.5f), tinh(10.0f), vthr(-0.25f){
 }
 
 EgidioGranuleCell_TimeDriven_GPU::~EgidioGranuleCell_TimeDriven_GPU(void){
@@ -160,6 +160,17 @@ InternalSpike * EgidioGranuleCell_TimeDriven_GPU::ProcessInputSpike(PropagatedSp
 
 	// Add the effect of the input spike
 	this->SynapsisEffect(inter->GetTarget()->GetIndex_VectorNeuronState(), state, inter);
+
+	return 0;
+}
+
+InternalSpike * EgidioGranuleCell_TimeDriven_GPU::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
+	int indexGPU =target->GetIndex_VectorNeuronState();
+
+	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->InitialState;
+
+	// Add the effect of the input spike
+	this->SynapsisEffect(target->GetIndex_VectorNeuronState(), state, inter);
 
 	return 0;
 }
@@ -225,23 +236,23 @@ void EgidioGranuleCell_TimeDriven_GPU::InitializeStates(int N_neurons){
 	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->InitialState;
 
 	//Initial State
-	float xNa_f=0.00047309535;
-	float yNa_f=1.0;
-	float xNa_r=0.00013423511;
-	float yNa_r=0.96227829;
-	float xNa_p=0.00050020111;
-	float xK_V=0.010183001;
-	float xK_A=0.15685486;
-	float yK_A=0.53565367;
-	float xK_IR=0.37337035;
-	float xK_Ca=0.00012384122;
-	float xCa=0.0021951104;
-	float yCa=0.89509747;
-	float xK_sl=0.00024031171;
+	float xNa_f=0.00047309535f;
+	float yNa_f=1.0f;
+	float xNa_r=0.00013423511f;
+	float yNa_r=0.96227829f;
+	float xNa_p=0.00050020111f;
+	float xK_V=0.010183001f;
+	float xK_A=0.15685486f;
+	float yK_A=0.53565367f;
+	float xK_IR=0.37337035f;
+	float xK_Ca=0.00012384122f;
+	float xCa=0.0021951104f;
+	float yCa=0.89509747f;
+	float xK_sl=0.00024031171f;
 	float Ca=Ca0;
-	float V=-80.0;
-	float gexc=0.0;
-	float ginh=0.0;
+	float V=-80.0f;
+	float gexc=0.0f;
+	float ginh=0.0f;
 
 	//Initialize neural state variables.
 	float initialization[] = {xNa_f,yNa_f,xNa_r,yNa_r,xNa_p,xK_V,xK_A,yK_A,xK_IR,xK_Ca,xCa,yCa,xK_sl,Ca,V,gexc,ginh};

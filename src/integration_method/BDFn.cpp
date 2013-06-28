@@ -19,13 +19,13 @@
 
 #include <math.h>
 
-const float BDFn::Coeficient [7][7]={{1.0,1.0,0.0,0.0,0.0,0.0,0.0},
-{1.0,1.0,0.0,0.0,0.0,0.0,0.0},
-{2.0/3.0,4.0/3.0,-1.0/3.0,0.0,0.0,0.0,0.0},
-{6.0/11.0,18.0/11.0,-9.0/11.0,2.0/11.0,0.0,0.0,0.0},
-{12.0/25.0,48.0/25.0,-36.0/25.0,16.0/25.0,-3.0/25.0,0.0,0.0},
-{60.0/137.0,300.0/137.0,-300.0/137.0,200.0/137.0,-75.0/137.0,12.0/137.0,0.0},
-{60.0/147.0,360.0/147.0,-450.0/147.0,400.0/147.0,-225.0/147.0,72.0/147.0,-10.0/147.0}};
+const float BDFn::Coeficient [7][7]={{1.0f,1.0f,0.0f,0.0f,0.0f,0.0f,0.0f},
+{1.0f,1.0f,0.0f,0.0f,0.0f,0.0f,0.0f},
+{2.0f/3.0f,4.0f/3.0f,-1.0f/3.0f,0.0f,0.0f,0.0f,0.0f},
+{6.0f/11.0f,18.0f/11.0f,-9.0f/11.0f,2.0f/11.0f,0.0f,0.0f,0.0f},
+{12.0f/25.0f,48.0f/25.0f,-36.0f/25.0f,16.0f/25.0f,-3.0f/25.0f,0.0f,0.0f},
+{60.0f/137.0f,300.0f/137.0f,-300.0f/137.0f,200.0f/137.0f,-75.0f/137.0f,12.0f/137.0f,0.0f},
+{60.0f/147.0f,360.0f/147.0f,-450.0f/147.0f,400.0f/147.0f,-225.0f/147.0f,72.0f/147.0f,-10.0f/147.0f}};
 
 
 BDFn::BDFn(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread, int BDForder):FixedStep("BDFn", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread, true, true),BDForder(BDForder){
@@ -62,7 +62,7 @@ BDFn::~BDFn(){
 
 }
 		
-void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index){
+void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
 
 	float * offset_AuxNeuronState = AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
 	float * offset_AuxNeuronState_p = AuxNeuronState_p+(N_NeuronStateVariables*CPU_thread_index);
@@ -98,7 +98,7 @@ void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mode
 
 
 
-	float epsi=1.0;
+	float epsi=1.0f;
 	int k=0;
 
 	//This integration method is an implicit method. We use this loop to iteratively calculate the implicit value.
@@ -114,7 +114,7 @@ void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mode
 		}
 
 		//jacobian.
-		Jacobian(Model, offset_AuxNeuronState_p, offset_jacnum, CPU_thread_index);
+		Jacobian(Model, offset_AuxNeuronState_p, offset_jacnum, CPU_thread_index, elapsed_time);
 	
 		for(int z=0; z<N_DifferentialNeuronState; z++){
 			for(int t=0; t<N_DifferentialNeuronState; t++){
@@ -136,8 +136,8 @@ void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mode
 		}
 
 		//We calculate the difference between both aproximations.
-		float aux=0.0;
-		float aux2=0.0;
+		float aux=0.0f;
+		float aux2=0.0f;
 		for(int z=0; z<N_DifferentialNeuronState; z++){
 			aux=fabs(offset_AuxNeuronState_p1[z]-offset_AuxNeuronState_p[z]);
 			if(aux>aux2){

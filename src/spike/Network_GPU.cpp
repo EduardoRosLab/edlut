@@ -52,6 +52,9 @@
 #include "../../include/simulation/Utils.h"
 #include "../../include/simulation/Configuration.h"
 
+#include <string>
+
+
 int qsort_inters(const void *e1, const void *e2){
 	int ord;
 	float ordf;
@@ -258,6 +261,18 @@ Network::~Network(){
 
 	if (timedrivenneurons!=0) {
 		delete [] timedrivenneurons;
+	}
+
+	if(ntimedrivenneurons!=0){
+		delete [] ntimedrivenneurons;
+	}
+
+	if (timedrivenneurons_GPU!=0) {
+		delete [] timedrivenneurons_GPU;
+	}
+
+	if(ntimedrivenneurons_GPU!=0){
+		delete [] ntimedrivenneurons_GPU;
 	}
 
 	if (wchanges!=0) {
@@ -547,6 +562,264 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
 	
 	return;
 }
+
+
+//void Network::LoadNet(const char *netfile) throw (EDLUTException){
+//	char line[1024];
+//	char * elements;
+//	
+//	FILE *fh;
+//	long savedcurrentline;
+//	long Currentline;
+//	fh=fopen(netfile,"rt");
+//	if(fh){
+//		Currentline=1L;
+//		skip_comments(fh, Currentline);
+//		if(fscanf(fh,"%i",&(this->nneutypes))==1){
+//			this->neutypes=(NeuronModel **) new NeuronModel * [this->nneutypes];
+//			if(this->neutypes){
+//				int ni;
+//				for(ni=0;ni<this->nneutypes;ni++){
+//					this->neutypes[ni]=0;
+//				}
+//            	skip_comments(fh, Currentline);
+//            	if(fscanf(fh,"%i",&(this->nneurons))==1){
+//            		int tind,nind,nn,outn,monit;
+//            		NeuronModel * type;
+//            		char ident[MAXIDSIZE+1];
+//            		char ident_type[MAXIDSIZE+1];
+//            		this->neurons=(Neuron *) new Neuron [this->nneurons];
+//					
+//					ntimedrivenneurons= new int [this->nneutypes]();
+//					int ** time_driven_index = (int **) new int *[this->nneutypes];
+//					
+//					ntimedrivenneurons_GPU= new int [this->nneutypes]();
+//					int ** time_driven_index_GPU=(int **) new int *[this->nneutypes];
+//
+//					for (int z=0; z<this->nneutypes; z++){
+//						time_driven_index[z]=new int [this->nneurons]();
+//						time_driven_index_GPU[z]=new int [this->nneurons]();
+//					}
+//
+//					int * N_neurons= new int [this->nneutypes]();
+//
+//            		if(this->neurons){
+//            			for(tind=0;tind<this->nneurons;tind+=nn){
+//                     		skip_comments(fh,Currentline);
+//                     		if(fscanf(fh,"%i",&nn)==1 && fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident_type)==1 && fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident)==1 && fscanf(fh,"%i",&outn)==1 && fscanf(fh,"%i",&monit)==1){
+//                     			if(tind+nn>this->nneurons){
+//                     				throw EDLUTFileException(4,7,6,1,Currentline);
+//                     				break;
+//                     			}
+//								int ni;                        
+//                        		savedcurrentline=Currentline;
+//                        		type=LoadNetTypes(ident_type, ident, ni);
+//                        		Currentline=savedcurrentline;
+//                        
+//                        		for(nind=0;nind<nn;nind++){
+//                        			neurons[nind+tind].InitNeuron(nind+tind, N_neurons[ni], type,(bool) monit, (bool)outn);
+//									//If some neuron is monitored.
+//									if(monit){
+//										type->GetVectorNeuronState()->Set_Is_Monitored(true);
+//									}
+//
+//									N_neurons[ni]=N_neurons[ni]+1;
+//									if (type->GetModelType()==TIME_DRIVEN_MODEL_CPU){
+//										time_driven_index[ni][this->ntimedrivenneurons[ni]] = nind+tind;
+//										this->ntimedrivenneurons[ni]=this->ntimedrivenneurons[ni]+1;
+//									}
+//									if (type->GetModelType()==TIME_DRIVEN_MODEL_GPU){
+//										time_driven_index_GPU[ni][this->ntimedrivenneurons_GPU[ni]]=nind+tind;
+//										this->ntimedrivenneurons_GPU[ni]=this->ntimedrivenneurons_GPU[ni]+1;
+//									}
+//                        		}
+//                        	}else{
+//                        		throw EDLUTFileException(4,8,7,1,Currentline);
+//                        		break;
+//                        	}
+//                     	}
+//
+//
+//						// Create the time-driven cell array
+//						timedrivenneurons=(Neuron ***) new Neuron ** [this->nneutypes];
+//						for (int z=0; z<this->nneutypes; z++){ 
+//							if (this->ntimedrivenneurons[z]>0){
+//								this->timedrivenneurons[z]=(Neuron **) new Neuron * [this->ntimedrivenneurons[z]];
+//
+//								for (int i=0; i<this->ntimedrivenneurons[z]; ++i){
+//									this->timedrivenneurons[z][i] = &(this->neurons[time_driven_index[z][i]]);
+//								}							
+//							}
+//						}
+//
+//						// Create the time-driven cell arrays for GPU
+//						timedrivenneurons_GPU=(Neuron ***) new Neuron ** [this->nneutypes];
+//						for (int z=0; z<this->nneutypes; z++){ 
+//							if (this->ntimedrivenneurons_GPU[z]>0){
+//								this->timedrivenneurons_GPU[z]=(Neuron **) new Neuron * [this->ntimedrivenneurons_GPU[z]];
+//
+//								for (int i=0; i<this->ntimedrivenneurons_GPU[z]; ++i){
+//									this->timedrivenneurons_GPU[z][i] = &(this->neurons[time_driven_index_GPU[z][i]]);
+//								}							
+//							}
+//						}
+//
+//						// Initialize states. 
+//						InitializeStates(N_neurons);
+//						
+//            		}else{
+//            			throw EDLUTFileException(4,5,28,0,Currentline);
+//            		}
+//
+//					
+//
+//					for (int z=0; z<this->nneutypes; z++){
+//						delete [] time_driven_index[z];
+//						delete [] time_driven_index_GPU[z];
+//					} 
+//					delete [] time_driven_index;
+//					delete [] time_driven_index_GPU;
+//					delete [] N_neurons;
+//
+//            		/////////////////////////////////////////////////////////
+//            		// Check the number of neuron types
+//            		for(ni=0;ni<this->nneutypes && this->neutypes[ni]!=0;ni++);
+//
+//            		if (ni!=this->nneutypes){
+//            			throw EDLUTException(13,44,20,0);
+//            		}
+//            	}else{
+//            		throw EDLUTFileException(4,9,8,1,Currentline);
+//            	}
+//            	
+//            	skip_comments(fh,Currentline);
+//        		if(fscanf(fh,"%i",&(this->nwchanges))==1){
+//        			int wcind;
+//        			this->wchanges=new LearningRule * [this->nwchanges];
+//        			if(this->wchanges){
+//        				for(wcind=0;wcind<this->nwchanges;wcind++){
+//        					char ident_type[MAXIDSIZE+1];
+//        					skip_comments(fh,Currentline);
+//        					string LearningModel;
+//        					if(fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident_type)==1){
+//        						if (string(ident_type)==string("ExpAdditiveKernel")){
+//        							this->wchanges[wcind] = new ExpWeightChange();
+//        						} else if (string(ident_type)==string("SinAdditiveKernel")){
+//        							this->wchanges[wcind] = new SinWeightChange();
+//        						} else if (string(ident_type)==string("STDP")){
+//        							this->wchanges[wcind] = new STDPWeightChange();
+//        						} else if (string(ident_type)==string("STDPLS")){
+//        							this->wchanges[wcind] = new STDPLSWeightChange();
+//        						} else {
+//                           			throw EDLUTFileException(4,28,23,1,Currentline);
+//        						}
+//
+//        						this->wchanges[wcind]->LoadLearningRule(fh,Currentline);
+//
+//                       		}else{
+//                       			throw EDLUTFileException(4,28,23,1,Currentline);
+//                       			break;
+//                       		}
+//        				}
+//        			}else{
+//        				throw EDLUTFileException(4,5,4,0,Currentline);
+//        			}
+//        		}else{
+//        			throw EDLUTFileException(4,26,21,1,Currentline);
+//        		}
+//            	
+//            	
+//        		skip_comments(fh,Currentline);
+//        		if(fscanf(fh,"%li",&(this->ninters))==1){
+//        			int source,nsources,target,ntargets,nreps,wchange;
+//        			float delay,delayinc,maxweight;
+//        			int type;
+//        			int iind,sind,tind,rind,posc;
+//        			this->inters=(Interconnection *) new Interconnection [this->ninters];
+//        			this->wordination=(Interconnection **) new Interconnection * [this->ninters];
+//        			if(this->inters && this->wordination){
+//        				for(iind=0;iind<this->ninters;iind+=nsources*ntargets*nreps){
+//        					skip_comments(fh,Currentline);
+//
+//fgets(line,1024,fh);
+//source=strtol(line, &elements,10);
+//nsources=strtol(elements, &elements,10);
+//target=strtol(elements, &elements,10);
+//ntargets=strtol(elements, &elements,10);
+//nreps=strtol(elements, &elements,10);
+//delay=strtod(elements, &elements);
+//delayinc=strtod(elements, &elements);
+//type=strtol(elements, &elements,10);
+//maxweight=strtod(elements, &elements);
+//wchange=strtol(elements, NULL,10);
+//
+////        					if(fscanf(fh,"%i",&source)==1 && fscanf(fh,"%i",&nsources)==1 && fscanf(fh,"%i",&target)==1 && fscanf(fh,"%i",&ntargets)==1 && fscanf(fh,"%i",&nreps)==1 && fscanf(fh,"%f",&delay)==1 && fscanf(fh,"%f",&delayinc)==1 && fscanf(fh,"%i",&type)==1 && fscanf(fh,"%f",&maxweight)==1 && fscanf(fh,"%i",&wchange)==1){
+//        						if(iind+nsources*ntargets*nreps>this->ninters){
+//        							throw EDLUTFileException(4,10,9,1,Currentline);
+//        							break;
+//        						}else{
+//        							if(source+nreps*nsources>this->nneurons || target+nreps*ntargets>this->nneurons){
+//  										throw EDLUTFileException(4,11,10,1,Currentline);
+//  										break;
+//  									}else{
+//  										if(wchange >= this->nwchanges){
+//  											throw EDLUTFileException(4,29,24,1,Currentline);
+//  											break;
+//  										}
+//        							}
+//        						}
+//        						
+//        						for(rind=0;rind<nreps;rind++){
+//        							for(sind=0;sind<nsources;sind++){
+//        								for(tind=0;tind<ntargets;tind++){
+//        									posc=iind+rind*nsources*ntargets+sind*ntargets+tind;
+//        									this->inters[posc].SetIndex(posc);
+//        									this->inters[posc].SetSource(&(this->neurons[source+rind*nsources+sind]));
+//        									this->inters[posc].SetTarget(&(this->neurons[target+rind*ntargets+tind]));
+//        									//Net.inters[posc].target=target+rind*nsources+tind;  // other kind of neuron arrangement
+//        									this->inters[posc].SetDelay(delay+delayinc*tind);
+//        									this->inters[posc].SetType(type);
+//        									//this->inters[posc].nextincon=&(this->inters[posc]);       // temporaly used as weight index
+//        									this->inters[posc].SetWeight(maxweight);   //TODO: Use max interconnection conductance
+//        									this->inters[posc].SetMaxWeight(maxweight);
+//        									if(wchange >= 0){
+//        										this->inters[posc].SetWeightChange(this->wchanges[wchange]);
+//        										this->inters[posc].SetConnectionState(this->wchanges[wchange]->GetInitialState());
+//        									} else {
+//        										this->inters[posc].SetConnectionState(0);
+//        									}
+//                                		}
+//        							}
+//        						}
+////        					}else{
+////        						throw EDLUTFileException(4,12,11,1,Currentline);
+////        						break;
+////        					}
+//        				}
+//        				
+//        				FindOutConnections();
+//                    	SetWeightOrdination(); // must be before find_in_c() and after find_out_c()
+//                    	FindInConnections();
+//                    }else{
+//        				throw EDLUTFileException(4,5,28,0,Currentline);
+//        			}
+//        		}else{
+//        			throw EDLUTFileException(4,13,12,1,Currentline);
+//        		}
+//            }else{
+//            	throw EDLUTFileException(4,5,4,0,Currentline);
+//			}
+//		}else{
+//			throw EDLUTFileException(4,6,5,1,Currentline);
+//		}
+//		
+//		fclose(fh);
+//	}else{
+//		throw EDLUTFileException(4,14,13,0,Currentline);
+//	}
+//	
+//	return;
+//}
 
 void Network::LoadWeights(const char *wfile) throw (EDLUTFileException){
 	FILE *fh;

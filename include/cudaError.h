@@ -1,5 +1,5 @@
 		//Library for CUDA
-		#include <cutil_inline.h>
+		#include <helper_cuda.h>
 
 static void HandleError( cudaError_t err,
                          const char *file,

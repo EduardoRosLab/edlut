@@ -143,7 +143,7 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 * \param NeuronState value of the neuron state variables where time dependent equations are evaluated.
 		 * \param elapsed_time integration time step.
 		 */
-		virtual void EvaluateTimeDependentEcuation(float * NeuronState, double elapsed_time)=0;
+		virtual void EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time)=0;
 
 
 };

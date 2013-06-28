@@ -19,7 +19,7 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel_GPU2.h"
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 
 

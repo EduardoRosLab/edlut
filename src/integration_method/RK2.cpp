@@ -30,7 +30,7 @@ RK2::~RK2(){
 	free (AuxNeuronState2);
 }
 		
-void RK2::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index){
+void RK2::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
 	float * offset_AuxNeuronState=AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
 	float * offset_AuxNeuronState1=AuxNeuronState1+(N_NeuronStateVariables*CPU_thread_index);
 	float * offset_AuxNeuronState2=AuxNeuronState2+(N_NeuronStateVariables*CPU_thread_index);
@@ -50,7 +50,7 @@ void RK2::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model
 
 
 	for (int j=0; j<N_DifferentialNeuronState; j++){
-		NeuronState[j]+=(offset_AuxNeuronState1[j]+offset_AuxNeuronState2[j])*elapsed_time*0.5;
+		NeuronState[j]+=(offset_AuxNeuronState1[j]+offset_AuxNeuronState2[j])*elapsed_time*0.5f;
 	}
 
 	Model->EvaluateTimeDependentEcuation(NeuronState, elapsed_time);

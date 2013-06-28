@@ -26,7 +26,7 @@ Euler::~Euler(){
 	free (AuxNeuronState);
 }
 		
-void Euler::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index){
+void Euler::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
 	float * offset_AuxNeuronState=AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
 	
 	Model->EvaluateDifferentialEcuation(NeuronState, offset_AuxNeuronState);

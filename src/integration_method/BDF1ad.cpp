@@ -28,9 +28,12 @@ BDF1ad::~BDF1ad(){
 	delete BDF;
 	free(PredictedNeuronState);
 	free(ValidPrediction);
+	free(NextStepPredictedElapsedTime);
 }
 		
-void BDF1ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index){
+void BDF1ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
+	float tolerance=e_max;
+	
 	float * offset_PredictedNeuronState = PredictedNeuronState+(N_NeuronStateVariables*index);
 	
 	if(ValidPrediction[index]){
@@ -39,41 +42,59 @@ void BDF1ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mo
 		this->BDF->NextDifferentialEcuationValue(index, Model, NeuronState, elapsed_time, CPU_thread_index);
 		memcpy(offset_PredictedNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
 		ValidPrediction[index]=true;
+		NextStepPredictedElapsedTime[index]=h_min;
 	}
 
 
+
+
 	bool stop=false;
-	bool increment=false;
-	bool decrement=false;
+	float second_derivative;
 
 	while(!stop){
+		PredictedElapsedTime[index]=NextStepPredictedElapsedTime[index];
 		stop=true;
-
 		this->BDF->NextDifferentialEcuationValue(index, Model, offset_PredictedNeuronState, PredictedElapsedTime[index], CPU_thread_index);
 		
-		if ((PredictedElapsedTime[index]>h_min && (BDF->Epsilon[CPU_thread_index] > e_max))|| BDF->Epsilon[CPU_thread_index]!=BDF->Epsilon[CPU_thread_index]){
-			stop=false;
-			PredictedElapsedTime[index] *= 0.5;
-			memcpy(offset_PredictedNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
-			decrement=true;
-			BDF->ReturnToOriginalState(index);
-			if(BDF->Epsilon[CPU_thread_index]!=BDF->Epsilon[CPU_thread_index]){
-				printf("ERROR2\n");
-			}
+		second_derivative=0.0f;
+		float second_derivative2=0.0f;
+		for(int i=0; i<this->N_DifferentialNeuronState; i++){
+			second_derivative+=fabs(this->BDF->D[index*N_DifferentialNeuronState + i] - this->BDF->OriginalD[index*N_DifferentialNeuronState + i]);
+			second_derivative2+=this->BDF->D[index*N_DifferentialNeuronState + i];
 		}
-		else if (BDF->Epsilon[CPU_thread_index] < e_min && !decrement && !increment){
-			stop=false;
-			PredictedElapsedTime[index] *= 2;
-			memcpy(offset_PredictedNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
-			increment=true;
+		second_derivative/=PredictedElapsedTime[index];
+
+
+		if((second_derivative>=tolerance && NextStepPredictedElapsedTime[index]>h_min) || second_derivative2!=second_derivative2 ){
+			NextStepPredictedElapsedTime[index]*=0.5f;
 			BDF->ReturnToOriginalState(index);
+			memcpy(offset_PredictedNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
+			stop=false;
+		}else{
+			float ratio=0.0;
+			if(second_derivative>= (tolerance*0.5f)){
+				ratio=(tolerance*0.5f)/second_derivative;
+				ratio=pow(ratio,0.333f);
+				if(ratio<0.5){
+					ratio=0.5;
+				}else if(ratio>0.9){
+					ratio=0.9;
+				}
+			}else{
+				if(second_derivative>= (tolerance*0.0625f)){
+					ratio=1.0f;
+				}else{
+					ratio=2.0f;
+				}
+			}
+			NextStepPredictedElapsedTime[index]*=ratio;
 		}
 
-		if(PredictedElapsedTime[index]>h_max){
-			PredictedElapsedTime[index]=h_max;
+		if(NextStepPredictedElapsedTime[index]<h_min && second_derivative2==second_derivative2 ){
+			NextStepPredictedElapsedTime[index]=h_min;
 		}
-		if(PredictedElapsedTime[index]<h_min){
-			PredictedElapsedTime[index]=h_min;
+		if(NextStepPredictedElapsedTime[index]>h_max){
+			NextStepPredictedElapsedTime[index]=h_max;
 		}
 	}
 
@@ -90,14 +111,17 @@ void BDF1ad::InitializeStates(int N_neurons, float * initialization){
 	BDF->InitializeStates(N_neurons, initialization);
 	this->PredictedNeuronState=new float [N_neurons*N_NeuronStateVariables];
 	this->ValidPrediction=new bool [N_neurons]();
+	memset(ValidPrediction, 0, N_neurons);
 
 
 	double elapsedTime=PredictedElapsedTime[0];
 	free(PredictedElapsedTime);
 	PredictedElapsedTime=new double[N_neurons];
+	NextStepPredictedElapsedTime=new double[N_neurons];
 
 	for(int i=0; i<N_neurons; i++){
 		PredictedElapsedTime[i]=elapsedTime;
+		NextStepPredictedElapsedTime[i]=elapsedTime;
 	}
 }
 

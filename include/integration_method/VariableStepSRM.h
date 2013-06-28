@@ -96,7 +96,7 @@ class VariableStepSRM : public IntegrationMethod {
 		 * \param elapsed_time integration time step.
 		 * \param CPU_thread_index index of the OpenMP thread.
 		 */
-		void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index) ;
+		void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index) ;
 
 		/*!
 		 * \brief It prints the integration method info.

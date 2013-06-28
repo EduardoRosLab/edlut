@@ -33,7 +33,7 @@
 
 #include "../../include/cudaError.h"
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 void LIFTimeDrivenModel_1_2_GPU::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 	FILE *fh;
@@ -114,11 +114,11 @@ void LIFTimeDrivenModel_1_2_GPU::SynapsisEffect(int index, VectorNeuronState_GPU
 	switch (InputConnection->GetType()){
 		case 0: {
 			//gampa
-			state->AuxStateCPU[0*state->GetSizeState() + index]+=1e-9*InputConnection->GetWeight();
+			state->AuxStateCPU[0*state->GetSizeState() + index]+=1e-9f*InputConnection->GetWeight();
 			break;
 		}case 1:{
 			//gnmda
-			state->AuxStateCPU[1*state->GetSizeState() + index]+=1e-9*InputConnection->GetWeight();
+			state->AuxStateCPU[1*state->GetSizeState() + index]+=1e-9f*InputConnection->GetWeight();
 			break;
 		}
 	}
@@ -126,7 +126,7 @@ void LIFTimeDrivenModel_1_2_GPU::SynapsisEffect(int index, VectorNeuronState_GPU
 
 LIFTimeDrivenModel_1_2_GPU::LIFTimeDrivenModel_1_2_GPU(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel_GPU(NeuronTypeID, NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), texc(0), tinh(0),
 		tref(0), grest(0){
-
+	HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));
 }
 
 LIFTimeDrivenModel_1_2_GPU::~LIFTimeDrivenModel_1_2_GPU(void){
@@ -157,6 +157,17 @@ InternalSpike * LIFTimeDrivenModel_1_2_GPU::ProcessInputSpike(PropagatedSpike * 
 	return 0;
 }
 
+InternalSpike * LIFTimeDrivenModel_1_2_GPU::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
+	int indexGPU =target->GetIndex_VectorNeuronState();
+
+	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->InitialState;
+
+	// Add the effect of the input spike
+	this->SynapsisEffect(target->GetIndex_VectorNeuronState(), state, inter);
+
+	return 0;
+}
+
 
 __global__ void LIFTimeDrivenModel_1_2_GPU_UpdateState(TimeDrivenNeuronModel_GPU2 ** timeDrivenNeuronModel_GPU2, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime){
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -171,9 +182,7 @@ bool LIFTimeDrivenModel_1_2_GPU::UpdateState(int index, VectorNeuronState * Stat
 	VectorNeuronState_GPU *state = (VectorNeuronState_GPU *) State;
 
 	//----------------------------------------------
-	cudaDeviceProp prop;
-	HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));
-	if(prop.canMapHostMemory && true){
+	if(prop.canMapHostMemory){
 		LIFTimeDrivenModel_1_2_GPU_UpdateState<<<N_block,N_thread>>>(timeDrivenNeuronModel_GPU2, state->AuxStateGPU, state->VectorNeuronStates_GPU, state->LastUpdateGPU, state->LastSpikeTimeGPU, state->InternalSpikeGPU, state->SizeStates, CurrentTime);
 	}else{
 		HANDLE_ERROR(cudaMemcpy(state->AuxStateGPU,state->AuxStateCPU,4*state->SizeStates*sizeof(float),cudaMemcpyHostToDevice));

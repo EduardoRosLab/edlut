@@ -76,13 +76,29 @@ VectorNeuronState::~VectorNeuronState() {
 	}
 }
 
-void VectorNeuronState::SetStateVariableAt(int index, int position,float NewValue){
+void VectorNeuronState::SetStateVariableAt(int index, int position, float NewValue){
 	if(Is_GPU==false){
 		this->VectorNeuronStates[index*NumberOfVariables + position] = NewValue;
 	}else{
 		this->VectorNeuronStates[this->SizeStates*position + index] = NewValue;
 	}
 }
+
+void VectorNeuronState::IncrementStateVariableAt(int index, int position, float Increment){
+	if(Is_GPU==false){
+		this->VectorNeuronStates[index*NumberOfVariables + position]+= Increment;
+	}else{
+		this->VectorNeuronStates[this->SizeStates*position + index]+= Increment;
+	}
+}
+
+//void VectorNeuronState::IncrementStateVariableAtCPU(int index, int position, float Increment){
+//	this->VectorNeuronStates[index*NumberOfVariables + position]+= Increment;
+//}
+
+//void VectorNeuronState::IncrementStateVariableAtGPU(int index, int position, float Increment){
+//	this->VectorNeuronStates[this->SizeStates*position + index]+= Increment;
+//}
 
 void VectorNeuronState::SetLastUpdateTime(int index, double NewTime){
 	this->LastUpdate[index] = NewTime;
@@ -112,17 +128,17 @@ float * VectorNeuronState::GetStateVariableAt(int index){
 	return VectorNeuronStates+(index*NumberOfVariables);
 }
 
-double VectorNeuronState::GetLastUpdateTime(int index){
-	return this->LastUpdate[index];
-}
+//double VectorNeuronState::GetLastUpdateTime(int index){
+//	return this->LastUpdate[index];
+//}
 
 double VectorNeuronState::GetNextPredictedSpikeTime(int index){
 	return this->PredictedSpike[index];
 }
 
-double VectorNeuronState::GetEndRefractoryPeriod(int index){
-	return this->PredictionEnd[index];
-}
+//double VectorNeuronState::GetEndRefractoryPeriod(int index){
+//	return this->PredictionEnd[index];
+//}
 
 unsigned int VectorNeuronState::GetNumberOfPrintableValues(){
 	return this->GetNumberOfVariables()+3;
@@ -142,9 +158,9 @@ double VectorNeuronState::GetPrintableValuesAt(int index, int position){
 	} else return -1;
 }
 
-double VectorNeuronState::GetLastSpikeTime(int index){
-	return this->LastSpikeTime[index];
-}
+//double VectorNeuronState::GetLastSpikeTime(int index){
+//	return this->LastSpikeTime[index];
+//}
 
 void VectorNeuronState::NewFiredSpike(int index){
 	this->LastSpikeTime[index] = 0;

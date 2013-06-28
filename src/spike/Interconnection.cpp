@@ -47,41 +47,41 @@ void Interconnection::SetIndex(long int NewIndex){
 	this->index = NewIndex;
 }
 		
-Neuron * Interconnection::GetSource() const{
-	return this->source;	
-}
+//Neuron * Interconnection::GetSource() const{
+//	return this->source;	
+//}
 		
 void Interconnection::SetSource(Neuron * NewSource){
 	this->source = NewSource;	
 }
 		
-Neuron * Interconnection::GetTarget() const{
-	return this->target;
-}
+//Neuron * Interconnection::GetTarget() const{
+//	return this->target;
+//}
 		
 void Interconnection::SetTarget(Neuron * NewTarget){
 	this->target = NewTarget;
 }
 		
-double Interconnection::GetDelay() const{
-	return this->delay;
-}
+//double Interconnection::GetDelay() const{
+//	return this->delay;
+//}
 		
 void Interconnection::SetDelay(float NewDelay){
 	this->delay = NewDelay;
 }
 		
-int Interconnection::GetType() const{
-	return this->type;
-}
+//int Interconnection::GetType() const{
+//	return this->type;
+//}
 		
 void Interconnection::SetType(int NewType){
 	this->type = NewType;
 }
 		
-float Interconnection::GetWeight() const{
-	return this->weight;
-}
+//float Interconnection::GetWeight() const{
+//	return this->weight;
+//}
 		
 void Interconnection::SetWeight(float NewWeight){
 	this->weight = NewWeight;
@@ -95,9 +95,9 @@ void Interconnection::SetMaxWeight(float NewMaxWeight){
 	this->maxweight = NewMaxWeight;
 }
 		
-LearningRule * Interconnection::GetWeightChange() const{
-	return this->wchange;
-}
+//LearningRule * Interconnection::GetWeightChange() const{
+//	return this->wchange;
+//}
 		
 void Interconnection::SetWeightChange(LearningRule * NewWeightChange){
 	this->wchange=NewWeightChange;

@@ -118,14 +118,14 @@ ostream & VariableStepSRM::PrintInfo(ostream & out){
 }	
 
 
-void VariableStepSRM::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index) {
+void VariableStepSRM::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index) {
 	float p=NeuronState[4];
 
 	if(p<p_min){
 		PredictedElapsedTime[index]*=2;
 	}
 	if(p>p_max){
-		PredictedElapsedTime[index]*=0.5;
+		PredictedElapsedTime[index]*=0.5f;
 	}
 
 	if(PredictedElapsedTime[index]>h_max){

@@ -107,14 +107,15 @@ class Network : public PrintableObject{
 		int * ntimedrivenneurons;
 
 		/*!
+		 * \brief Time-driven cell (model) arrays in GPU.
+		 */
+		Neuron *** timedrivenneurons_GPU;
+
+		/*!
 		 * \brief Number of time-driven neurons for every model in GPU.
 		 */
 		int * ntimedrivenneurons_GPU;
 
-		/*!
-		 * \brief Time-driven cell (model) arrays in GPU.
-		 */
-		Neuron *** timedrivenneurons_GPU;
 
    		/*!
    		 * \brief Learning rules.

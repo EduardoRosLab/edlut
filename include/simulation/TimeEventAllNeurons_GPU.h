@@ -67,14 +67,17 @@ public:
 	 */
 	~TimeEventAllNeurons_GPU();
 
+
 	/*!
-	 * \brief It updates the state of every time-driven cell in GPU in the network.
+	 * \brief It process an event in the simulation.
 	 * 
-	 * It updates the state of every time-driven cell in GPU in the network.
+	 * It process the event in the simulation.
 	 * 
 	 * \param CurrentSimulation The simulation object where the event is working.
+	 * \param RealTimeRestriction This variable indicates whether we are making a 
+	 * real-time simulation and the watchdog is enabled.
 	 */
-	void ProcessEvent(Simulation * CurrentSimulation);
+	virtual void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction);
 
 	/*!
 	 * \brief It gets the index neuron model.

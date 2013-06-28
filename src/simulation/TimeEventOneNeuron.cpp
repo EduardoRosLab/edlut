@@ -35,7 +35,7 @@ TimeEventOneNeuron::~TimeEventOneNeuron(){
 }
 
 //Optimized version which executes the internal spikes instead of insert them in the queue.
-void TimeEventOneNeuron::ProcessEvent(Simulation * CurrentSimulation){
+void TimeEventOneNeuron::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
 	Network * CurrentNetwork = CurrentSimulation->GetNetwork();
 
 	double CurrentTime = this->GetTime();
@@ -50,23 +50,29 @@ void TimeEventOneNeuron::ProcessEvent(Simulation * CurrentSimulation){
 	//Updating all cell when using IndexNeuron=-1.
 	neuronModel->UpdateState(GetIndexNeuron(), State, CurrentTime);
 
-	//CPU write in this array if an internal spike must be generated.
-	bool * generateInternalSpike=State->getInternalSpike();
+	if(!RealTimeRestriction){
 
-	Neuron * Cell;
+		//CPU write in this array if an internal spike must be generated.
+		bool * generateInternalSpike=State->getInternalSpike();
 
-	Cell = CurrentNetwork->GetTimeDrivenNeuronAt(GetIndexNeuronModel(),GetIndexNeuron());
-	if(generateInternalSpike[GetIndexNeuron()]==true){
-		internalSpike=new InternalSpike(CurrentTime,Cell);
-		internalSpike->ProcessEvent(CurrentSimulation);
-		delete internalSpike;
+		Neuron * Cell;
+
+		Cell = CurrentNetwork->GetTimeDrivenNeuronAt(GetIndexNeuronModel(),GetIndexNeuron());
+		if(generateInternalSpike[GetIndexNeuron()]==true){
+			internalSpike=new InternalSpike(CurrentTime,Cell);
+			internalSpike->ProcessEvent(CurrentSimulation, false);
+			delete internalSpike;
+		}
+		if (Cell->IsMonitored()){
+			CurrentSimulation->WriteState(CurrentTime, Cell);
+		}
+
+		//Next TimeEvent for this cell
+		CurrentSimulation->GetQueue()->InsertEvent(new TimeEventOneNeuron(CurrentTime + neuronModel->integrationMethod->PredictedElapsedTime[IndexNeuron], GetIndexNeuronModel(), GetIndexNeuron()));
+	}else{
+		//Next TimeEvent for this cell
+		CurrentSimulation->GetQueue()->InsertEvent(new TimeEventOneNeuron(CurrentTime + neuronModel->integrationMethod->PredictedElapsedTime[IndexNeuron], GetIndexNeuronModel(), GetIndexNeuron()));
 	}
-	if (Cell->IsMonitored()){
-		CurrentSimulation->WriteState(CurrentTime, Cell);
-	}
-
-	//Next TimeEvent for this cell
-	CurrentSimulation->GetQueue()->InsertEvent(new TimeEventOneNeuron(CurrentTime + neuronModel->integrationMethod->PredictedElapsedTime[IndexNeuron], GetIndexNeuronModel(), GetIndexNeuron()));
 }
 
 int TimeEventOneNeuron::GetIndexNeuronModel(){

@@ -140,7 +140,15 @@ class EventQueue {
    		 * 
    		 * \return The time of the first event.
    		 */
-   		double FirstEventTime(void) const;		
+   		double FirstEventTime(void) const;	
+
+
+		/*!
+   		 * \brief It remove all spike events.
+   		 * 
+   		 * It remove all spike events.
+   		 */
+		void RemoveSpikes(void);
 };
 
 #endif /*EVENTQUEUE_H_*/

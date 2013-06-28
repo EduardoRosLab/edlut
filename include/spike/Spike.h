@@ -100,16 +100,27 @@ class Spike: public Event{
    		 */
    		void SetSource (Neuron * NewSource);
    		
+
    		/*!
    		 * \brief It process an event in the simulation.
    		 * 
    		 * It process the event in the simulation.
    		 * 
    		 * \param CurrentSimulation The simulation object where the event is working.
+		 * \param RealTimeRestriction This variable indicates whether we are making a 
+		 * real-time simulation and the watchdog is enabled.
    		 */
-   		virtual void ProcessEvent(Simulation * CurrentSimulation) = 0;
+   		virtual void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction) = 0;
    		
    		friend ostream & operator<< (ostream & out, Spike * spike);
+
+
+   		/*!
+   		 * \brief this method indicates if this event is and spike event.
+   		 * 
+   		 * This method indicates if this event is and spike event.
+		 */
+		bool IsSpike();
    	
 };
 

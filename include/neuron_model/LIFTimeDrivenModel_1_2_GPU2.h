@@ -33,7 +33,7 @@
 #include "../../include/integration_method/LoadIntegrationMethod_GPU2.h"
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 /*!
  * \class LIFTimeDrivenModel_1_2_GPU
@@ -168,6 +168,7 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		__device__ void UpdateState(int index, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime)
 		{
 			double elapsed_time =CurrentTime - LastUpdateGPU[index];
+			float elapsed_time_f=elapsed_time;
 			
 			LastSpikeTimeGPU[index]+=elapsed_time;
 			double last_spike=LastSpikeTimeGPU[index];
@@ -179,16 +180,16 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 
 
 			if (last_spike > this->tref) {
-				integrationMethod_GPU2->NextDifferentialEcuationValue(index, SizeStates, this, StateGPU, elapsed_time);
+				integrationMethod_GPU2->NextDifferentialEcuationValue(index, SizeStates, this, StateGPU, elapsed_time_f);
 				if (StateGPU[0*SizeStates + index] > this->vthr){
-					LastSpikeTimeGPU[index]=0;
+					LastSpikeTimeGPU[index]=0.0;
 					spike = true;
 					StateGPU[0*SizeStates + index] = this->erest;
 					this->integrationMethod_GPU2->resetState(index);
 				}
 			}
 			else{
-				EvaluateTimeDependentEcuation(index, SizeStates, StateGPU, elapsed_time);
+				EvaluateTimeDependentEcuation(index, SizeStates, StateGPU, elapsed_time_f);
 			}
 
 			InternalSpikeGPU[index]=spike;
@@ -222,7 +223,7 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 * \param NeuronState value of the neuron state variables where time dependent equations are evaluated.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ void EvaluateTimeDependentEcuation(int index, int SizeStates, float * NeuronState, double elapsed_time){
+		__device__ void EvaluateTimeDependentEcuation(int index, int SizeStates, float * NeuronState, float elapsed_time){
 			NeuronState[1*SizeStates + index]*= exp(-(elapsed_time/this->texc));
 			NeuronState[2*SizeStates + index]*= exp(-(elapsed_time/this->tinh));
 		}

@@ -189,6 +189,24 @@ InternalSpike * SRMTimeDrivenModel::ProcessInputSpike(PropagatedSpike *  InputSp
 	return ProducedSpike;
 }
 
+InternalSpike * SRMTimeDrivenModel::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
+
+
+	VectorNeuronState * CurrentState = target->GetVectorNeuronState();
+
+	InternalSpike * ProducedSpike = 0;
+
+	// Update Cell State
+	if (this->UpdateState(target->GetIndex_VectorNeuronState(),target->GetVectorNeuronState(),time)){
+		ProducedSpike = new InternalSpike(time,target);
+	}
+
+	// Add the effect of the input spike
+	this->SynapsisEffect(target->GetIndex_VectorNeuronState(),(VectorSRMState *)CurrentState,inter);
+
+	return ProducedSpike;
+}
+
 
 bool SRMTimeDrivenModel::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
 

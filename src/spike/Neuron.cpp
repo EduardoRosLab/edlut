@@ -76,17 +76,17 @@ long int Neuron::GetIndex() const{
 	return this->index;	
 }
 
-VectorNeuronState * Neuron::GetVectorNeuronState() const{
-	return this->state;
-}
+//VectorNeuronState * Neuron::GetVectorNeuronState() const{
+//	return this->state;
+//}
    		
 unsigned int Neuron::GetInputNumberWithLearning() const{
 	return this->InputConLearningNumber;
 }
    		
-unsigned int Neuron::GetOutputNumber() const{
-	return this->OutputConNumber;
-}
+//unsigned int Neuron::GetOutputNumber() const{
+//	return this->OutputConNumber;
+//}
 
 Interconnection * Neuron::GetInputConnectionWithLearningAt(unsigned int index) const{
 	return *(this->InputLearningConnections+index);
@@ -106,9 +106,9 @@ bool Neuron::IsInputConnected() const{
 	return this->InputConLearningNumber!=0;
 }
    		
-Interconnection * Neuron::GetOutputConnectionAt(unsigned int index) const{
-	return *(this->OutputConnections+index);
-}
+//Interconnection * Neuron::GetOutputConnectionAt(unsigned int index) const{
+//	return *(this->OutputConnections+index);
+//}
    		
 void Neuron::SetOutputConnections(Interconnection ** Connections, unsigned int NumberOfConnections){
 	if (this->OutputConnections!=0){
@@ -124,17 +124,17 @@ bool Neuron::IsOutputConnected() const{
 	return this->OutputConNumber!=0;
 }
    		
-bool Neuron::IsMonitored() const{
-	return this->monitored;	
-}
+//bool Neuron::IsMonitored() const{
+//	return this->monitored;	
+//}
 
 bool Neuron::IsOutput() const{
 	return this->isOutput;	
 }
 
-NeuronModel * Neuron::GetNeuronModel() const{
-	return this->type;
-}
+//NeuronModel * Neuron::GetNeuronModel() const{
+//	return this->type;
+//}
 
 ostream & Neuron::PrintInfo(ostream & out) {
 	out << "- Neuron: " << this->index << endl;
@@ -168,6 +168,6 @@ void Neuron::SetIndex_VectorNeuronState(long int index){
 	index_VectorNeuronState=index;
 }
 
-long int Neuron::GetIndex_VectorNeuronState(){
-	return index_VectorNeuronState;
-}
+//long Neuron::GetIndex_VectorNeuronState(){
+//	return index_VectorNeuronState;
+//}

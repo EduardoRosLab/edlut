@@ -33,6 +33,14 @@
 
 #include "./PrintableObject.h"
 
+/*!
+ * This constant defines how many events are processed before the RunSimulationSlot method
+ * checks that the specified MaxSlotConsumedTime is not violated. A higher number increases
+ * the computation overhead but reduces the excess time that this method execution could
+ * consume.
+ */
+#define NUM_EVENTS_PER_TIME_SLOT_CHECK 5UL
+
 class Network;
 class EventQueue;
 class InputSpikeDriver;
@@ -117,6 +125,11 @@ class Simulation : public PrintableObject{
 		 * Current simulation Time
 		 */
 		double CurrentSimulationTime;
+		
+		/*!
+		 * Maximum CPU time which a simulation slot is allowed to consume (in counter steps)
+		 */
+		unsigned long MaxSlotConsumedTime;
 		
 		/*!
 		 * End of simulation
@@ -265,6 +278,25 @@ class Simulation : public PrintableObject{
 		double GetTimeDrivenStepGPU();
 		
 		/*!
+		 * \brief It sets the maximum time that a simulation slot can consume.
+		 * 
+		 * It sets the maximum time that the method RunSimulationSlot() can take.
+		 * 
+		 * \param NewMaxSlotConsumedTime The maximum time that a simulation slot can consume (in seconds).
+		 * \param 0 value means infinite time, that is, the time consumed by is not RunSimulationSlot() limited.
+		 */
+		void SetMaxSlotConsumedTime(double NewMaxSlotConsumedTime);
+		
+		/*!
+		 * \brief It gets the maximum time that a simulation slot can consume.
+		 * 
+		 * It gets the maximum time that the method RunSimulationSlot() can take.
+		 * 
+		 * \return The maximum time that a simulation slot can consume (in seconds). 0 value means infinite time.
+		 */
+		double GetMaxSlotConsumedTime();
+
+		/*!
 		 * \brief It ends the simulation before the next event.
 		 * 
 		 * It ends the simulation before the next event.
@@ -289,6 +321,17 @@ class Simulation : public PrintableObject{
 		 void AddInputSpikeDriver(InputSpikeDriver * NewInput);
 		 
 		/*!
+		 * \brief It return the specified element of the InputSpikeDriver list.
+		 * 
+		 * It returns the InputSpikeDriver pointer in the specified position of the Simulation's
+		 * InputSpikeDriver list.
+		 * 
+		 * \param ElementPosition The position of the list. First element is in position 0.
+		 * \return The InputSpikeDriver in the specified position of the list.
+		 */
+		 InputSpikeDriver *GetInputSpikeDriver(unsigned int ElementPosition);
+		 
+		/*!
 		 * \brief It removes an input driver of the input driver list.
 		 * 
 		 * It removes an input driver of the input driver list.
@@ -306,6 +349,17 @@ class Simulation : public PrintableObject{
 		 */
 		 void AddOutputSpikeDriver(OutputSpikeDriver * NewOutput);
 		
+		/*!
+		 * \brief It return the specified element of the OutputSpikeDriver list.
+		 * 
+		 * It returns the OutputSpikeDriver pointer in the specified position of
+		 * the Simulation's InputSpikeDriver list.
+		 * 
+		 * \param ElementPosition The position of the list. First element is in position 0.
+		 * \return The OutputSpikeDriver in the specified position of the list.
+		 */
+		 OutputSpikeDriver *GetOutputSpikeDriver(unsigned int ElementPosition);
+
 		/*!
 		 * \brief It removes an output driver of the output driver list.
 		 * 
@@ -325,6 +379,17 @@ class Simulation : public PrintableObject{
 		 void AddMonitorActivityDriver(OutputSpikeDriver * NewMonitor);
 		
 		/*!
+		 * \brief It return the specified element of the MonitorActivityDriver list.
+		 * 
+		 * It returns the OutputSpikeDriver pointer in the specified position of
+		 * the Simulation's MonitorActivityDriver list.
+		 * 
+		 * \param ElementPosition The position of the list. First element is in position 0.
+		 * \return The OutputSpikeDriver in the specified position of the list.
+		 */
+		 OutputSpikeDriver *GetMonitorActivityDriver(unsigned int ElementPosition);
+
+		/*!
 		 * \brief It removes an output driver of the output monitor list.
 		 * 
 		 * It removes an output driver of the output monitor list.
@@ -342,6 +407,17 @@ class Simulation : public PrintableObject{
 		 */
 		 void AddOutputWeightDriver(OutputWeightDriver * NewOutput);
 		
+		/*!
+		 * \brief It return the specified element of the OutputWeightDriver list.
+		 * 
+		 * It returns the OutputWeightDriver pointer in the specified position of
+		 * the Simulation's OutputWeightDriver list.
+		 * 
+		 * \param ElementPosition The position of the list. First element is in position 0.
+		 * \return The OutputWeightDriver in the specified position of the list.
+		 */
+		 OutputWeightDriver *GetOutputWeightDriver(unsigned int ElementPosition);
+
 		/*!
 		 * \brief It removes an output weight driver of the output driver list.
 		 * 
@@ -421,6 +497,14 @@ class Simulation : public PrintableObject{
 		 * \param value is value to set the counter to.
 		 */
 		void SetTotalSpikeCounter(long int value);
+
+		/*!
+		 * \brief Set total spike count.
+		 *
+		 * Sets the total spike counter.
+		 * \param value is value to set the counter to.
+		 */
+		void IncrementTotalSpikeCounter();
 
 		/*!
 		 * \brief Get total spike count.

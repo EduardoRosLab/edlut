@@ -87,7 +87,7 @@ class Euler : public FixedStep {
 		 * \param elapsed_time integration time step.
 		 * \param CPU_thread_index index of the OpenMP thread.
 		 */
-		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, double elapsed_time, int CPU_thread_index);
+		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index);
 
 
 		/*!

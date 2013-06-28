@@ -70,6 +70,9 @@ using namespace std;
   */ 
 int main(int ac, char *av[]) {
 
+	clock_t starttotalt,endtotalt;
+	starttotalt=clock();
+
 	clock_t startt,endt;
 	cout << "Loading tables..." << endl;
 
@@ -146,6 +149,10 @@ int main(int ac, char *av[]) {
 		cout << "Number of InternalSpike: " << Simul.GetTotalSpikeCounter() << endl;
 		cout << "Mean number of spikes in heap: " << Simul.GetHeapAcumSize()/(float)Simul.GetSimulationUpdates() << endl;
 		cout << "Updates per second: " << Simul.GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
+		
+		endtotalt=clock();
+		cout << "Total elapsed time: " << (endtotalt-starttotalt)/(float)CLOCKS_PER_SEC << " sec" << endl;
+
 
 
 	} catch (ParameterException Exc){

@@ -36,7 +36,7 @@ using namespace std;
 #include "./RK4.h"
 //#include "./RK45.h"
 //#include "./RK45ad.h"
-//#include "./BDF1ad.h"
+#include "./BDF1ad.h"
 #include "./BDFn.h"
 
 #include "./FixedStepSRM.h"
@@ -81,8 +81,8 @@ class LoadIntegrationMethod {
 					Method=(RK45 *) new RK45(N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, N_CPU_thread);*/
 				}else if(strncmp(ident_type,"RK4",3)==0){
 					Method=(RK4 *) new RK4(N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, N_CPU_thread);
-				/*}else if(strncmp(ident_type,"BDF1ad",6)==0 ){
-					Method=(BDF1ad *) new BDF1ad(N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, N_CPU_thread);*/
+				}else if(strncmp(ident_type,"BDF1ad",6)==0 ){
+					Method=(BDF1ad *) new BDF1ad(N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, N_CPU_thread);
 				}else if(strncmp(ident_type,"BDF",3)==0 && atoi(&ident_type[3])>0 && atoi(&ident_type[3])<7){
 					Method=(BDFn *) new BDFn(N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, N_CPU_thread,atoi(&ident_type[3]));
 				}else if(strncmp(ident_type,"FixedStepSRM",12)==0){

@@ -33,7 +33,7 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel_GPU2.h"
 
 //Library for CUDA
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 /*!
  * \class RK4_GPU2
@@ -90,6 +90,7 @@ class RK4_GPU2 : public IntegrationMethod_GPU2 {
 		}
 		
 
+
 		/*!
 		 * \brief It calculate the next neural state varaibles of the model.
 		 *
@@ -111,19 +112,19 @@ class RK4_GPU2 : public IntegrationMethod_GPU2 {
 			
 			//2nd term
 			for (int j=0; j<N_DifferentialNeuronState; j++){
-				AuxNeuronState[j*offset1 + offset2]= NeuronState[j*SizeStates + index] + AuxNeuronState1[j*offset1 + offset2]*elapsed_time/2;
+				AuxNeuronState[j*offset1 + offset2]= NeuronState[j*SizeStates + index] + AuxNeuronState1[j*offset1 + offset2]*elapsed_time*0.5f;
 			}
 			for (int j=N_DifferentialNeuronState; j<N_NeuronStateVariables; j++){
 				AuxNeuronState[j*offset1 + offset2]=NeuronState[j*SizeStates + index];
 			}
 
 
-			Model->EvaluateTimeDependentEcuation(offset2, offset1, AuxNeuronState, elapsed_time/2);
+			Model->EvaluateTimeDependentEcuation(offset2, offset1, AuxNeuronState, elapsed_time*0.5f);
 			Model->EvaluateDifferentialEcuation(offset2, offset1, AuxNeuronState, AuxNeuronState2);
 
 			//3rd term
 			for (int j=0; j<N_DifferentialNeuronState; j++){
-				AuxNeuronState[j*offset1 + offset2]= NeuronState[j*SizeStates + index] + AuxNeuronState2[j*offset1 + offset2]*elapsed_time/2;
+				AuxNeuronState[j*offset1 + offset2]= NeuronState[j*SizeStates + index] + AuxNeuronState2[j*offset1 + offset2]*elapsed_time*0.5f;
 			}
 
 			Model->EvaluateDifferentialEcuation(offset2, offset1, AuxNeuronState, AuxNeuronState3);
@@ -133,12 +134,12 @@ class RK4_GPU2 : public IntegrationMethod_GPU2 {
 				AuxNeuronState[j*offset1 + offset2]= NeuronState[j*SizeStates + index] + AuxNeuronState3[j*offset1 + offset2]*elapsed_time;
 			}
 
-			Model->EvaluateTimeDependentEcuation(offset2, offset1, AuxNeuronState, elapsed_time/2);
+			Model->EvaluateTimeDependentEcuation(offset2, offset1, AuxNeuronState, elapsed_time*0.5);
 			Model->EvaluateDifferentialEcuation(offset2, offset1, AuxNeuronState, AuxNeuronState4);
 
 
 			for (int j=0; j<N_DifferentialNeuronState; j++){
-				NeuronState[j*SizeStates + index]+=(AuxNeuronState1[j*offset1 + offset2]+2*(AuxNeuronState2[j*offset1 + offset2]+AuxNeuronState3[j*offset1 + offset2])+AuxNeuronState4[j*offset1 + offset2])*elapsed_time/6;
+				NeuronState[j*SizeStates + index]+=(AuxNeuronState1[j*offset1 + offset2]+2*(AuxNeuronState2[j*offset1 + offset2]+AuxNeuronState3[j*offset1 + offset2])+AuxNeuronState4[j*offset1 + offset2])*elapsed_time*0.166666666667f;
 			}
 
 			//Finaly, we evaluate the neural state variables with time dependence.
