@@ -625,9 +625,18 @@ ac_subst_vars='LTLIBOBJS
 architecture
 optimize_code
 profile_code
+cudaminor
+cudamajor
+cudaversion
 cuda
 use_cuda
 CUDA
+CUDA_MINOR
+CUDA_MAJOR
+CUDA_VERSION
+CUDA_DRIVER_MINOR
+CUDA_DRIVER_MAJOR
+CUDA_DRIVER_VERSION
 mexext
 MEXEXT
 sfunctiontarget
@@ -645,6 +654,7 @@ EGREP
 GREP
 CXXCPP
 compiler
+AWK
 ac_ct_CC
 CFLAGS
 CC
@@ -2387,8 +2397,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-#m4_include([m4/mex.m4])
-#m4_include([m4/mexopt.m4])
 
 # AX_MEXEXT
 # ---------
@@ -2405,16 +2413,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # AX_CUDA
 # ---------
 # Check for Cuda.
-
-
-# AX_REQUIRE_CUDA
-# -----------------
-# Like AX_MATLAB but fail if Matlab support is disabled.
-
-
-# AX_CUDA_CONDITIONAL
-# ---------------------
-# Define Cuda conditional for GNU Automake.
 
 
 
@@ -3466,6 +3464,48 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+for ac_prog in gawk mawk nawk awk
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AWK+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AWK"; then
+  ac_cv_prog_AWK="$AWK" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AWK="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+AWK=$ac_cv_prog_AWK
+if test -n "$AWK"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AWK" >&5
+$as_echo "$AWK" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$AWK" && break
+done
 
 
 compiler=$CXX
@@ -4558,7 +4598,7 @@ else
 		    # Directory sanity check.
 		    ax_cv_cuda=`cd "${ax_dir-/}" > /dev/null 2>&1 && pwd`
 		    if test -n "$ax_cv_cuda" ; then
-			break
+			    break
 		    fi
 		fi
 	    done
@@ -4580,18 +4620,382 @@ $as_echo "$ax_cv_cuda" >&6; }
 $as_echo_n "checking whether to enable Cuda support... " >&6; }
 	if test x$ax_enable_cuda != xno ; then
 	    if test "${CUDA+set}" = set && test -d "$CUDA/include" && test -d "$CUDA/lib" ; then
-		ax_enable_cuda=yes
-	    elif test x$ax_enable_cuda = x ; then
-		ax_enable_cuda=no
+			ax_enable_cuda=yes
+	    	elif test x$ax_enable_cuda = x ; then
+			ax_enable_cuda=no
 	    else
-		# Fail if Matlab was explicitly enabled.
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: failure" >&5
+			# Fail if Cuda was explicitly enabled.
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: failure" >&5
 $as_echo "failure" >&6; }
-		as_fn_error $? "check your Cuda setup" "$LINENO" 5
+			as_fn_error $? "check your Cuda setup" "$LINENO" 5
 	    fi
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_enable_cuda" >&5
 $as_echo "$ax_enable_cuda" >&6; }
+	if test x$ax_enable_cuda = xyes ; then
+		# Check CUDA driver version
+
+		if ${mx_cv_CXXFLAGS+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  mx_cv_CXXFLAGS="${CXXFLAGS}"
+fi
+
+		if ${mx_cv_LDFLAGS+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  mx_cv_LDFLAGS="${LDFLAGS}"
+fi
+
+
+		CXXFLAGS="${CXXFLAGS} -I${CUDA}/include"
+
+		LDFLAGS="${LDFLAGS} -L${CUDA}/lib -lcudart"
+
+
+		if ${mx_cv_cuda_driver_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "${CUDA_DRIVER_VERSION+set}" = set ; then
+	    		mx_cv_cuda_driver_version=$CUDA_DRIVER_VERSION
+			else
+	    		mx_cv_cuda_driver_version=
+
+	    		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable Cuda compiling" >&5
+$as_echo_n "checking whether to enable Cuda compiling... " >&6; }
+	    		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+			    		#include <iostream>
+						#include <cstdlib>
+						#include <cuda.h>
+						#include <cuda_runtime.h>
+
+						int main(){
+							int deviceCount=0, driverVersion = 0;
+				    		cudaGetDeviceCount(&deviceCount);
+
+				    		if (deviceCount == 0) {
+				        		fprintf(stderr,"error: no devices supporting CUDA.\n");
+				        		exit(EXIT_FAILURE);
+				    		}
+				    		int dev = 0;
+				    		cudaSetDevice(dev);
+
+				    		cudaDriverGetVersion(&driverVersion);
+				    		printf("%d.%d",driverVersion/1000, (driverVersion%100)/10);
+				        }
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	    			{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "CUDA compiling execution failed
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+	    		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable Cuda linking" >&5
+$as_echo_n "checking whether to enable Cuda linking... " >&6; }
+	    		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+			    		#include <iostream>
+						#include <cstdlib>
+						#include <cuda.h>
+						#include <cuda_runtime.h>
+
+						int main(){
+							int deviceCount=0, driverVersion = 0;
+				    		cudaGetDeviceCount(&deviceCount);
+
+				    		if (deviceCount == 0) {
+				        		fprintf(stderr,"error: no devices supporting CUDA.\n");
+				        		exit(EXIT_FAILURE);
+				    		}
+				    		int dev = 0;
+				    		cudaSetDevice(dev);
+
+				    		cudaDriverGetVersion(&driverVersion);
+				    		printf("%d.%d",driverVersion/1000, (driverVersion%100)/10);
+				        }
+
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	    			{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "CUDA linking execution failed
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+	    		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable Cuda runing" >&5
+$as_echo_n "checking whether to enable Cuda runing... " >&6; }
+	    		if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+			    		#include <iostream>
+						#include <cstdlib>
+						#include <cuda.h>
+						#include <cuda_runtime.h>
+
+						int main(){
+							int deviceCount=0, driverVersion = 0;
+				    		cudaGetDeviceCount(&deviceCount);
+
+				    		if (deviceCount == 0) {
+				        		fprintf(stderr,"error: no devices supporting CUDA.\n");
+				        		exit(EXIT_FAILURE);
+				    		}
+				    		int dev = 0;
+				    		cudaSetDevice(dev);
+
+				    		cudaDriverGetVersion(&driverVersion);
+				    		printf("%d.%d",driverVersion/1000, (driverVersion%100)/10);
+				        }
+
+_ACEOF
+if ac_fn_cxx_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	    			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking CUDA Driver version" >&5
+$as_echo_n "checking CUDA Driver version... " >&6; }
+	    			mx_cv_cuda_driver_version=`./conftest"${EXEEXT}" > /tmp/testfile.log`
+	    			mx_cv_cuda_driver_version=`cat /tmp/testfile.log`
+	    			`rm /tmp/testfile.log`
+	    			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $mx_cv_cuda_driver_version" >&5
+$as_echo "$mx_cv_cuda_driver_version" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	    			{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "CUDA code execution failed
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+	    		CUDA_DRIVER_VERSION=$mx_cv_cuda_driver_version
+
+			    mx_cv_cuda_driver_major=`echo $mx_cv_cuda_driver_version | $AWK -F. '{print $ 1}'`
+			    mx_cv_cuda_driver_minor=`echo $mx_cv_cuda_driver_version | $AWK -F. '{print $ 2}'`
+			    CUDA_DRIVER_MAJOR=$mx_cv_cuda_driver_major
+
+			    CUDA_DRIVER_MINOR=$mx_cv_cuda_driver_minor
+
+			fi
+
+fi
+
+
+
+		if test x$CUDA_DRIVER_VERSION = x ; then
+	    	as_fn_error $? "can not determine CUDA driver version number" "$LINENO" 5
+		fi
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if CUDA driver version is sufficient" >&5
+$as_echo_n "checking if CUDA driver version is sufficient... " >&6; }
+		mx_version=5.0
+		case $mx_version in
+	  		[1-9] | [1-9][0-9])
+	    		mx_major=$mx_version
+	    		mx_minor=''
+	    		;;
+	  			[1-9].[0-9] | [1-9][0-9].[0-9])
+	    		mx_major=`echo $mx_version | sed 's/^\([0-9]*\)\.[0-9]*.*/\1/'`
+	    		mx_minor=`echo $mx_version | sed 's/^[0-9]*\.\([0-9]*\).*/\1/'`
+	    		;;
+	  			*)
+	    		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: failure" >&5
+$as_echo "failure" >&6; }
+	    		{ $as_echo "$as_me:${as_lineno-$LINENO}: report this bug to the responsible package maintainer" >&5
+$as_echo "$as_me: report this bug to the responsible package maintainer" >&6;}
+	    		as_fn_error $? "invalid CUDA Driver version number argument to AX_REQUIRE_CUDA_DRIVER_VERSION" "$LINENO" 5
+			    ;;
+		esac
+		mx_ans=yes
+		if test $CUDA_DRIVER_MAJOR -eq $mx_major ; then
+    		if test x$mx_minor != x && test $CUDA_DRIVER_MINOR -lt $mx_minor ; then
+				mx_ans=no
+    		fi
+		elif test $CUDA_DRIVER_MAJOR -lt $mx_major ; then
+    		mx_ans=no
+		fi
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $mx_ans" >&5
+$as_echo "$mx_ans" >&6; }
+
+		if test x$mx_ans = xno ; then
+			$ax_enable_cuda=no
+			$CUDA=
+    		{ $as_echo "$as_me:${as_lineno-$LINENO}: require CUDA Driver version $mx_version or above" >&5
+$as_echo "$as_me: require CUDA Driver version $mx_version or above" >&6;}
+		fi
+	fi
+
+	if test x$ax_enable_cuda = xyes ; then
+		# Check CUDA architecture
+		if ${mx_cv_cuda_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "${CUDA_VERSION+set}" = set ; then
+		    	mx_cv_cuda_version=$CUDA_VERSION
+			else
+		    	mx_cv_cuda_version=
+
+		    	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable Cuda runing" >&5
+$as_echo_n "checking whether to enable Cuda runing... " >&6; }
+		    	if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+			    		#include <iostream>
+						#include <cstdlib>
+						#include <cuda.h>
+						#include <cuda_runtime.h>
+
+						int main(){
+							int deviceCount;
+				    		cudaGetDeviceCount(&deviceCount);
+
+				    		if (deviceCount == 0) {
+				        		fprintf(stderr,"error: no devices supporting CUDA.\n");
+				        		exit(EXIT_FAILURE);
+				    		}
+				    		int dev = 0;
+				    		cudaSetDevice(dev);
+
+				    		cudaDeviceProp prop;
+				    		if (cudaGetDeviceProperties(&prop, dev) == cudaSuccess){
+				        		printf("%d.%d\n",(int)prop.major, (int)prop.minor);
+				            } else {
+				            	fprintf(stderr, "error: no device properties.\n");
+				        		exit(EXIT_FAILURE);
+				        	}
+				        }
+
+_ACEOF
+if ac_fn_cxx_try_run "$LINENO"; then :
+
+		    		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		    		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking CUDA architecture" >&5
+$as_echo_n "checking CUDA architecture... " >&6; }
+		    		mx_cv_cuda_version=`./conftest"${EXEEXT}" > /tmp/testfile.log`
+		    		mx_cv_cuda_version=`cat /tmp/testfile.log`
+		    		`rm /tmp/testfile.log`
+		    		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $mx_cv_cuda_version" >&5
+$as_echo "$mx_cv_cuda_version" >&6; }
+
+else
+
+		    		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		    		{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "CUDA code execution failed
+See \`config.log' for more details" "$LINENO" 5; }
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+			    CUDA_VERSION=$mx_cv_cuda_version
+
+			    mx_cv_cuda_major=`echo $mx_cv_cuda_version | $AWK -F. '{print $ 1}'`
+			    mx_cv_cuda_minor=`echo $mx_cv_cuda_version | $AWK -F. '{print $ 2}'`
+			    CUDA_MAJOR=$mx_cv_cuda_major
+
+			    CUDA_MINOR=$mx_cv_cuda_minor
+
+
+			    CXXFLAGS=$mx_cv_CXXFLAGS
+
+			    LDFLAGS=$mx_cv_LDFLAGS
+
+			fi
+
+fi
+
+
+		if test x$CUDA_VERSION = x ; then
+	    	as_fn_error $? "can not determine CUDA version number" "$LINENO" 5
+		fi
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if CUDA version is sufficient" >&5
+$as_echo_n "checking if CUDA version is sufficient... " >&6; }
+		mx_version=2.0
+		case $mx_version in
+  			[1-9] | [1-9][0-9])
+    		mx_major=$mx_version
+    		mx_minor=''
+    		;;
+  			[1-9].[0-9] | [1-9][0-9].[0-9])
+    		mx_major=`echo $mx_version | sed 's/^\([0-9]*\)\.[0-9]*.*/\1/'`
+    		mx_minor=`echo $mx_version | sed 's/^[0-9]*\.\([0-9]*\).*/\1/'`
+    		;;
+  		*)
+    		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: failure" >&5
+$as_echo "failure" >&6; }
+    		{ $as_echo "$as_me:${as_lineno-$LINENO}: report this bug to the responsible package maintainer" >&5
+$as_echo "$as_me: report this bug to the responsible package maintainer" >&6;}
+    		as_fn_error $? "invalid CUDA version number argument to AX_REQUIRE_CUDA_VERSION" "$LINENO" 5
+    		;;
+		esac
+
+		mx_ans=yes
+		if test $CUDA_MAJOR -eq $mx_major ; then
+    		if test x$mx_minor != x && test $CUDA_MINOR -lt $mx_minor ; then
+				mx_ans=no
+    		fi
+		elif test $CUDA_MAJOR -lt $mx_major ; then
+    		mx_ans=no
+		fi
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $mx_ans" >&5
+$as_echo "$mx_ans" >&6; }
+		if test x$mx_ans = xno ; then
+			$ax_enable_cuda=no
+			$CUDA=
+    		as_fn_error $? "require CUDA version $mx_version or above" "$LINENO" 5
+		fi
+	fi
+
+
 	if test x$ax_enable_cuda = xyes ; then
 
 $as_echo "#define HAVE_CUDA 1" >>confdefs.h
@@ -4607,10 +5011,15 @@ if test "x$CUDA" == "x"; then :
 else
   use_cuda=true
 
+ cuda=$CUDA
+
+ cudaversion=$CUDA_VERSION
+
+ cudamajor=$CUDA_MAJOR
+
+ cudaminor=$CUDA_MINOR
+
 fi
-
-cuda=$CUDA
-
 
 
 
@@ -5271,6 +5680,7 @@ gives unlimited permission to copy, distribute and modify it."
 
 ac_pwd='$ac_pwd'
 srcdir='$srcdir'
+AWK='$AWK'
 test -n "\$AWK" || AWK=awk
 _ACEOF
 

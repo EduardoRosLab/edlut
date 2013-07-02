@@ -68,7 +68,7 @@ else
 		    # Directory sanity check.
 		    ax_cv_cuda=`cd "${ax_dir-/}" > /dev/null 2>&1 && pwd`
 		    if test -n "$ax_cv_cuda" ; then
-			break
+			    break
 		    fi
 		fi
 	    done
@@ -86,43 +86,272 @@ else
 	AC_MSG_CHECKING([whether to enable Cuda support])
 	if test x$ax_enable_cuda != xno ; then
 	    if test "${CUDA+set}" = set && test -d "$CUDA/include" && test -d "$CUDA/lib" ; then
-		ax_enable_cuda=yes
-	    elif test x$ax_enable_cuda = x ; then
-		ax_enable_cuda=no
+			ax_enable_cuda=yes
+	    	elif test x$ax_enable_cuda = x ; then
+			ax_enable_cuda=no
 	    else
-		# Fail if Matlab was explicitly enabled.
-		AC_MSG_RESULT([failure])
-		AC_MSG_ERROR([check your Cuda setup])
+			# Fail if Cuda was explicitly enabled.
+			AC_MSG_RESULT([failure])
+			AC_MSG_ERROR([check your Cuda setup])
 	    fi
 	fi
 	AC_MSG_RESULT([$ax_enable_cuda])
 	if test x$ax_enable_cuda = xyes ; then
+		# Check CUDA driver version
+		
+		AC_CACHE_VAL(mx_cv_CXXFLAGS,mx_cv_CXXFLAGS="${CXXFLAGS}")
+		AC_CACHE_VAL(mx_cv_LDFLAGS,mx_cv_LDFLAGS="${LDFLAGS}")
+	    
+		AC_SUBST(CXXFLAGS,"${CXXFLAGS} -I${CUDA}/include")
+		AC_SUBST(LDFLAGS,"${LDFLAGS} -L${CUDA}/lib -lcudart")
+	    
+		AC_CACHE_VAL(mx_cv_cuda_driver_version,
+			if test "${CUDA_DRIVER_VERSION+set}" = set ; then
+	    		mx_cv_cuda_driver_version=$CUDA_DRIVER_VERSION
+			else
+	    		mx_cv_cuda_driver_version=    
+	    
+	    		AC_MSG_CHECKING([whether to enable Cuda compiling])
+	    		AC_COMPILE_IFELSE([
+		  			AC_LANG_SOURCE([[
+			    		#include <iostream> 	
+						#include <cstdlib> 		
+						#include <cuda.h>		
+						#include <cuda_runtime.h> 
+						
+						int main(){
+							int deviceCount=0, driverVersion = 0;												
+				    		cudaGetDeviceCount(&deviceCount);								
+				    
+				    		if (deviceCount == 0) {											
+				        		fprintf(stderr,"error: no devices supporting CUDA.\n");		
+				        		exit(EXIT_FAILURE);											
+				    		}																
+				    		int dev = 0;													
+				    		cudaSetDevice(dev);												
+				
+				    		cudaDriverGetVersion(&driverVersion);								
+				    		printf("%d.%d",driverVersion/1000, (driverVersion%100)/10);			
+				        }																
+					]])],
+	    			[AC_MSG_RESULT([yes])],
+	    			[AC_MSG_RESULT([no])
+	    			AC_MSG_FAILURE([CUDA compiling execution failed])]
+	    		)
+	    	
+	    		AC_MSG_CHECKING([whether to enable Cuda linking])
+	    		AC_LINK_IFELSE([
+	    			AC_LANG_SOURCE([[
+			    		#include <iostream> 	
+						#include <cstdlib> 		
+						#include <cuda.h>		
+						#include <cuda_runtime.h> 
+						
+						int main(){
+							int deviceCount=0, driverVersion = 0;												
+				    		cudaGetDeviceCount(&deviceCount);								
+				    
+				    		if (deviceCount == 0) {											
+				        		fprintf(stderr,"error: no devices supporting CUDA.\n");		
+				        		exit(EXIT_FAILURE);											
+				    		}																
+				    		int dev = 0;													
+				    		cudaSetDevice(dev);												
+				
+				    		cudaDriverGetVersion(&driverVersion);								
+				    		printf("%d.%d",driverVersion/1000, (driverVersion%100)/10);			
+				        }																			
+					]])],
+	    			[AC_MSG_RESULT([yes])],
+	    			[AC_MSG_RESULT([no])
+	    			AC_MSG_FAILURE([CUDA linking execution failed])]
+	    		)
+	    
+	    		AC_MSG_CHECKING([whether to enable Cuda runing])
+	    		AC_RUN_IFELSE([
+		  			AC_LANG_SOURCE([[
+			    		#include <iostream> 	
+						#include <cstdlib> 		
+						#include <cuda.h>		
+						#include <cuda_runtime.h> 
+						
+						int main(){
+							int deviceCount=0, driverVersion = 0;												
+				    		cudaGetDeviceCount(&deviceCount);								
+				    
+				    		if (deviceCount == 0) {											
+				        		fprintf(stderr,"error: no devices supporting CUDA.\n");		
+				        		exit(EXIT_FAILURE);											
+				    		}																
+				    		int dev = 0;													
+				    		cudaSetDevice(dev);												
+				
+				    		cudaDriverGetVersion(&driverVersion);								
+				    		printf("%d.%d",driverVersion/1000, (driverVersion%100)/10);			
+				        }												
+					]])],
+	    			[AC_MSG_RESULT([yes])
+	    			AC_MSG_CHECKING([CUDA Driver version])
+	    			mx_cv_cuda_driver_version=`./conftest"${EXEEXT}" > /tmp/testfile.log`
+	    			mx_cv_cuda_driver_version=`cat /tmp/testfile.log`
+	    			`rm /tmp/testfile.log`
+	    			AC_MSG_RESULT([$mx_cv_cuda_driver_version])],
+	    			[AC_MSG_RESULT([no])
+	    			AC_MSG_FAILURE([CUDA code execution failed])]
+	    		)
+	    	
+	    		AC_SUBST(CUDA_DRIVER_VERSION, $mx_cv_cuda_driver_version)
+			    mx_cv_cuda_driver_major=`echo $mx_cv_cuda_driver_version | $AWK -F. '{print $ 1}'`
+			    mx_cv_cuda_driver_minor=`echo $mx_cv_cuda_driver_version | $AWK -F. '{print $ 2}'`
+			    AC_SUBST(CUDA_DRIVER_MAJOR, $mx_cv_cuda_driver_major)
+			    AC_SUBST(CUDA_DRIVER_MINOR, $mx_cv_cuda_driver_minor)
+			fi
+		)
+		
+		
+		if test x$CUDA_DRIVER_VERSION = x ; then
+	    	AC_MSG_ERROR([can not determine CUDA driver version number])
+		fi
+	
+		AC_MSG_CHECKING([if CUDA driver version is sufficient])
+		mx_version=5.0
+		case $mx_version in
+	  		@<:@1-9@:>@ | @<:@1-9@:>@@<:@0-9@:>@)
+	    		mx_major=$mx_version
+	    		mx_minor=''
+	    		;;
+	  			@<:@1-9@:>@.@<:@0-9@:>@ | @<:@1-9@:>@@<:@0-9@:>@.@<:@0-9@:>@)
+	    		mx_major=`echo $mx_version | sed 's/^\(@<:@0-9@:>@*\)\.@<:@0-9@:>@*.*/\1/'`
+	    		mx_minor=`echo $mx_version | sed 's/^@<:@0-9@:>@*\.\(@<:@0-9@:>@*\).*/\1/'`
+	    		;;
+	  			*)
+	    		AC_MSG_RESULT([failure])
+	    		AC_MSG_NOTICE([report this bug to the responsible package maintainer])
+	    		AC_MSG_ERROR([invalid CUDA Driver version number argument to AX_REQUIRE_CUDA_DRIVER_VERSION])
+			    ;;
+		esac
+		mx_ans=yes
+		if test $CUDA_DRIVER_MAJOR -eq $mx_major ; then
+    		if test x$mx_minor != x && test $CUDA_DRIVER_MINOR -lt $mx_minor ; then
+				mx_ans=no
+    		fi
+		elif test $CUDA_DRIVER_MAJOR -lt $mx_major ; then
+    		mx_ans=no
+		fi
+		AC_MSG_RESULT([$mx_ans])
+		
+		if test x$mx_ans = xno ; then
+			$ax_enable_cuda=no
+			$CUDA=
+    		AC_MSG_NOTICE([require CUDA Driver version $mx_version or above])
+		fi
+	fi
+	
+	if test x$ax_enable_cuda = xyes ; then	
+		# Check CUDA architecture
+		AC_CACHE_VAL(mx_cv_cuda_version,
+
+			if test "${CUDA_VERSION+set}" = set ; then
+		    	mx_cv_cuda_version=$CUDA_VERSION
+			else
+		    	mx_cv_cuda_version=    
+		    
+		    	AC_MSG_CHECKING([whether to enable Cuda runing])
+		    	AC_RUN_IFELSE([
+			  		AC_LANG_SOURCE([[
+			    		#include <iostream> 	
+						#include <cstdlib> 		
+						#include <cuda.h>		
+						#include <cuda_runtime.h> 
+						
+						int main(){
+							int deviceCount;												
+				    		cudaGetDeviceCount(&deviceCount);								
+				    
+				    		if (deviceCount == 0) {											
+				        		fprintf(stderr,"error: no devices supporting CUDA.\n");		
+				        		exit(EXIT_FAILURE);											
+				    		}																
+				    		int dev = 0;													
+				    		cudaSetDevice(dev);												
+				
+				    		cudaDeviceProp prop;											
+				    		if (cudaGetDeviceProperties(&prop, dev) == cudaSuccess){		
+				        		printf("%d.%d\n",(int)prop.major, (int)prop.minor);			
+				            } else {														
+				            	fprintf(stderr, "error: no device properties.\n");		
+				        		exit(EXIT_FAILURE);											
+				        	}
+				        }																
+					]])],[
+		    		AC_MSG_RESULT([yes])
+		    		AC_MSG_CHECKING([CUDA architecture])
+		    		mx_cv_cuda_version=`./conftest"${EXEEXT}" > /tmp/testfile.log`
+		    		mx_cv_cuda_version=`cat /tmp/testfile.log`
+		    		`rm /tmp/testfile.log`
+		    		AC_MSG_RESULT([$mx_cv_cuda_version])
+		    		],[
+		    		AC_MSG_RESULT([no])
+		    		AC_MSG_FAILURE([CUDA code execution failed])
+		    		]
+		    	)
+		
+			    AC_SUBST(CUDA_VERSION, $mx_cv_cuda_version)
+			    mx_cv_cuda_major=`echo $mx_cv_cuda_version | $AWK -F. '{print $ 1}'`
+			    mx_cv_cuda_minor=`echo $mx_cv_cuda_version | $AWK -F. '{print $ 2}'`
+			    AC_SUBST(CUDA_MAJOR, $mx_cv_cuda_major)
+			    AC_SUBST(CUDA_MINOR, $mx_cv_cuda_minor)
+			    
+			    AC_SUBST(CXXFLAGS,$mx_cv_CXXFLAGS)
+			    AC_SUBST(LDFLAGS,$mx_cv_LDFLAGS)
+			fi
+		)
+		
+		if test x$CUDA_VERSION = x ; then
+	    	AC_MSG_ERROR([can not determine CUDA version number])
+		fi
+	
+		AC_MSG_CHECKING([if CUDA version is sufficient])
+		mx_version=2.0
+		case $mx_version in
+  			@<:@1-9@:>@ | @<:@1-9@:>@@<:@0-9@:>@)
+    		mx_major=$mx_version
+    		mx_minor=''
+    		;;
+  			@<:@1-9@:>@.@<:@0-9@:>@ | @<:@1-9@:>@@<:@0-9@:>@.@<:@0-9@:>@)
+    		mx_major=`echo $mx_version | sed 's/^\(@<:@0-9@:>@*\)\.@<:@0-9@:>@*.*/\1/'`
+    		mx_minor=`echo $mx_version | sed 's/^@<:@0-9@:>@*\.\(@<:@0-9@:>@*\).*/\1/'`
+    		;;
+  		*)
+    		AC_MSG_RESULT([failure])
+    		AC_MSG_NOTICE([report this bug to the responsible package maintainer])
+    		AC_MSG_ERROR([invalid CUDA version number argument to AX_REQUIRE_CUDA_VERSION])
+    		;;
+		esac
+		
+		mx_ans=yes
+		if test $CUDA_MAJOR -eq $mx_major ; then
+    		if test x$mx_minor != x && test $CUDA_MINOR -lt $mx_minor ; then
+				mx_ans=no
+    		fi
+		elif test $CUDA_MAJOR -lt $mx_major ; then
+    		mx_ans=no
+		fi
+		
+		AC_MSG_RESULT([$mx_ans])
+		if test x$mx_ans = xno ; then
+			$ax_enable_cuda=no
+			$CUDA=
+    		AC_MSG_ERROR([require CUDA version $mx_version or above])
+		fi
+	fi
+	
+	
+	if test x$ax_enable_cuda = xyes ; then	
 	    AC_DEFINE([HAVE_CUDA], [1], [Define if you have Cuda.])
 	fi
 fi
 AC_SUBST([CUDA])
 ])
 
-# AX_REQUIRE_CUDA
-# -----------------
-# Like AX_MATLAB but fail if Matlab support is disabled.
-AC_DEFUN([AX_REQUIRE_CUDA],
-[dnl
-AC_PREREQ([2.50])
-AC_REQUIRE([AX_CUDA])
-if test x$ax_enable_cuda = xno ; then
-    AC_MSG_ERROR([can not enable Cuda support])
-fi
-])
-
-# AX_CUDA_CONDITIONAL
-# ---------------------
-# Define Cuda conditional for GNU Automake.
-AC_DEFUN([AX_CUDA_CONDITIONAL],
-[dnl
-AC_PREREQ([2.50])
-AC_REQUIRE([AX_CUDA])
-AM_CONDITIONAL([CUDA], [test x$ax_enable_cuda = xyes])
-])
-
-dnl cuda3.m4 ends here
+dnl cuda.m4 ends here

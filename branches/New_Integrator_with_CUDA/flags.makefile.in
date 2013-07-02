@@ -7,38 +7,56 @@ LDFLAGS = -lm
 
 ifeq ($(optimize),true)
   CXXFLAGS += -Wall -O3 -DHAVE_INLINE
+  NVCCFLAGS	:= 
 else
   CXXFLAGS += -g -Wall
+  NVCCFLAGS	:= -g -G
 endif
 
-CXXFLAGS += @openmp_cxxflags@
+OPENMP_FLAGS = @openmp_cxxflags@
+
+CXXFLAGS += $(OPENMP_FLAGS)
+LDFLAGS  += $(OPENMP_FLAGS)
 
 ifeq ($(profile),true)
   LDFLAGS+= -lprofiler
 endif
 
-ifeq ($(matlabsupport),true)
-  CXXFLAGS	+= -I$(matlabinclude) -fPIC -ansi -DMATLAB_MEX_FILE
-  MEXFLAGS	+= -cxx CC='$(compiler)' CXX='$(compiler)' LD='$(compiler)'
-endif
-
-ifeq ($(simulinksupport),true)
-  CXXFLAGS	+= -I$(simulinkinclude) -fPIC -ansi -DMATLAB_MEX_FILE
-  MEXFLAGS	+= -cxx CC='$(compiler)' CXX='$(compiler)' LD='$(compiler)'
-endif
-
 ARCH 		:= $(shell getconf LONG_BIT)
+UNAME_S 	:= $(shell uname -s)
+
+ifeq ($(OS),Windows_NT)
+    OS_SYSTEM := WINNT
+else
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        OS_SYSTEM := LINUX
+    endif
+    ifeq ($(UNAME_S),Darwin)
+        OS_SYSTEM := OSX
+    endif
+endif
 
 
 ifeq ($(cuda_enabled),true)
-  CXXFLAGS	+= -I$(cudarootdir)/include
-  NVCCFLAGS	= -I$(cudarootdir)/include $(CXXFLAGS)
-  ifeq (@architecture@,64)
-  	LDFLAGS 	+= -L$(cudarootdir)/lib64
-  else
-    LDFLAGS 	+= -L$(cudarootdir)/lib
-  endif
-  LDFLAGS 	+= -lcuda -lcudart -lncurses -arch=sm_20
+  CXXFLAGS	+= -I$(cudarootdir)/include -I$(cudarootdir)/samples/common/inc/
+  NVCCFLAGS	+= -I$(cudarootdir)/include -I$(cudarootdir)/samples/common/inc/ -arch='sm_$(cudamajor)$(cudaminor)' -m=$(ARCH)
+  LDFLAGS 	+= -L$(cudarootdir)/lib -lcudart
 endif
 
 CXXFLAGS += -fno-strict-aliasing
+
+ifeq ($(matlabsupport),true)
+  CXXFLAGS	+= -I$(matlabinclude) -fPIC -ansi -DMATLAB_MEX_FILE
+  MEXFLAGS	:= -cxx CC='$(compiler)' CXX='$(compiler)' LD='$(compiler)'
+  ifeq ($(OS_SYSTEM),OSX)
+  	## Adding -undefined dynamic_loop -bundle to fix the MAC OS X bug as reported in http://www.mathworks.com/matlabcentral/newsreader/view_thread/299757
+  	MEXFLAGS	+= LDFLAGS='$(LDFLAGS) -undefined dynamic_lookup -bundle'
+  else
+  	MEXFLAGS	+= LDFLAGS='$(LDFLAGS)'
+  endif
+  
+  ifeq ($(simulinksupport),true)
+  	CXXFLAGS	+= -I$(simulinkinclude)
+  endif
+endif

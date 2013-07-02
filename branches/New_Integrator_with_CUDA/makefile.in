@@ -25,6 +25,8 @@ license     := GPL v3.0
 # this template to include/link libraries. get it from
 # http://pkg-config.freedesktop.org/wiki
 
+compiler 	:= @compiler@
+
 # if matlab support -> Matlab paths, includes and flags.
 #matlabsupport	:= false
 matlabsupport	:= @use_matlab@
@@ -87,6 +89,11 @@ cuda_enabled := @use_cuda@
 #CUDA_INSTALL_PATH := /usr/local/cuda
 cudarootdir := @cuda@
 
+# Set the architecture of CUDA
+cudaversion := @cudaversion@
+cudamajor 	:= @cudamajor@
+cudaminor	:= @cudaminor@
+
 # do not change for linux /usr type directory structures. this structure means
 # .cpp .cc files reside in ./srcdir and .h files reside in ./include/$(packagename)/
 # if you are building a library, the lib$(packagename).a will be in ./lib file.
@@ -144,7 +151,7 @@ integration-sources	:= $(srcdir)/integration_method/BDFn.cpp \
 			$(srcdir)/integration_method/RK2.cpp \
 			$(srcdir)/integration_method/RK4.cpp \
 			$(srcdir)/integration_method/VariableStep.cpp \
-			$(srcdir)/integration_method/VariableStepSRM.cpp
+			$(srcdir)/integration_method/VariableStepSRM.cpp  
 ifeq ($(cuda_enabled),true)
 integration-sources	+= $(srcdir)/integration_method/BDFn_GPU.cu \
 			$(srcdir)/integration_method/Euler_GPU.cu \
@@ -185,7 +192,7 @@ neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
 			$(srcdir)/neuron_model/Vanderpol.cpp \
 			$(srcdir)/neuron_model/VectorBufferedState.cpp \
 			$(srcdir)/neuron_model/VectorNeuronState.cpp \
-			$(srcdir)/neuron_model/VectorSRMState.cpp 
+			$(srcdir)/neuron_model/VectorSRMState.cpp
 ifeq ($(cuda_enabled),true)
 neuron_model-sources	+= $(srcdir)/neuron_model/EgidioGranuleCell_TimeDriven_GPU.cu \
 			$(srcdir)/neuron_model/LIFTimeDrivenModel_1_2_GPU.cu \
@@ -205,10 +212,10 @@ simulation-sources	:= $(srcdir)/simulation/CommunicationEvent.cpp \
 			$(srcdir)/simulation/StopSimulationEvent.cpp \
 			$(srcdir)/simulation/TimeEventOneNeuron.cpp \
 			$(srcdir)/simulation/TimeEventAllNeurons.cpp \
-			$(srcdir)/simulation/Utils.cpp
+			$(srcdir)/simulation/Utils.cpp 
 ifeq ($(cuda_enabled),true)
-simulation-sources	+= $(srcdir)/simulation/Simulation_GPU.cpp \
-			$(srcdir)/simulation/TimeEventAllNeurons_GPU.cpp
+simulation-sources	+= $(srcdir)/simulation/Simulation_GPU.cu \
+			$(srcdir)/simulation/TimeEventAllNeurons_GPU.cu
 else
 simulation-sources	+= $(srcdir)/simulation/Simulation.cpp
 endif
@@ -221,9 +228,9 @@ spike-sources		:= $(srcdir)/spike/EDLUTException.cpp \
 			$(srcdir)/spike/InternalSpike.cpp \
 			$(srcdir)/spike/Neuron.cpp \
 			$(srcdir)/spike/PropagatedSpike.cpp \
-			$(srcdir)/spike/Spike.cpp
+			$(srcdir)/spike/Spike.cpp 
 ifeq ($(cuda_enabled),true)
-spike-sources		+= $(srcdir)/spike/Network_GPU.cpp
+spike-sources		+= $(srcdir)/spike/Network_GPU.cu
 else
 spike-sources		+= $(srcdir)/spike/Network.cpp
 endif

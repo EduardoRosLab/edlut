@@ -18,12 +18,10 @@
 #include "../../include/cudaError.h"
 
 #include <iostream>
+//Library for CUDA
+#include <helper_cuda.h>
+
 using namespace std;
-
-		//Library for CUDA
-		#include <helper_cuda.h>
-		
-
 
 	VectorNeuronState_GPU::VectorNeuronState_GPU(unsigned int NumVariables):VectorNeuronState(NumVariables, true, true){
 	};
