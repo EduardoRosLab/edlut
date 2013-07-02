@@ -11,8 +11,6 @@ AC_INIT([edlutkernel], [2.0], [jgarridoalcazar@gmail.com])
 
 m4_include([m4/matlab.m4])
 m4_include([m4/simulink.m4])
-#m4_include([m4/mex.m4])
-#m4_include([m4/mexopt.m4])
 m4_include([m4/mexext.m4])
 m4_include([m4/cuda.m4])
 
@@ -20,6 +18,7 @@ m4_include([m4/cuda.m4])
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_AWK
 
 AC_SUBST(compiler,$CXX)
 
@@ -99,12 +98,14 @@ AX_CUDA
 
 AS_IF([test "x$CUDA" == "x"],
  [AC_SUBST(use_cuda, false)],
- [AC_SUBST(use_cuda, true)])
+ [AC_SUBST(use_cuda, true)
+ AC_SUBST(cuda, $CUDA)
+ AC_SUBST(cudaversion, $CUDA_VERSION)
+ AC_SUBST(cudamajor, $CUDA_MAJOR)
+ AC_SUBST(cudaminor, $CUDA_MINOR)])
  
-AC_SUBST(cuda, $CUDA) 
-
-
-
+ 
+ 
 ################################################################################
 
 # Enable profiling. Automatically set debugging to true

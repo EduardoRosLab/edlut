@@ -2,7 +2,7 @@
 ################################ - MAKEFILE RULES - ############################
 ################################################################################
 
-compiler 	:= @compiler@
+CXX			:= $(compiler)
 mex			:= $(matlabrootdir)/bin/mex
 cudacompiler	:= $(cudarootdir)/bin/nvcc
 
@@ -49,7 +49,7 @@ $(mextarget)	: $(mex-objects)
 	@echo ------------------ making mexfile
 	@echo
 	@mkdir -p $(mexdir)
-	$(mex) $(MEXFLAGS) $^ $(LDFLAGS) -o $@
+	$(mex) $(MEXFLAGS) $^ -o $@
 	
 .PHONY		: sfunction
 sfunction	: $(sfunctiontarget) 
@@ -63,7 +63,7 @@ $(sfunctiontarget)	: $(sfunction-objects)
 	@echo ------------------ making sfunction file
 	@echo
 	@mkdir -p $(sfunctiondir)
-	$(mex) $(MEXFLAGS) $^ $(LDFLAGS) -o $@
+	$(mex) $(MEXFLAGS) $^ -o $@
 
 .PHONY  : library
 library : $(libtarget)
@@ -163,18 +163,19 @@ ifneq "$(MAKECMDGOALS)" "clean"
 endif
 
 
-%.d : %.cc
-	@echo
-	@echo ------------------ creating dependencies for $@
-	@echo
-	$(compiler) $(CXXFLAGS) -MM $< | \
-	sed 's,\($(notdir $*)\.o\) *:,$(dir $@)\1 $@: ,' > $@.tmp
-	mv -f $@.tmp $@
-	@echo
+# %.d : %.cc
+# 	@echo
+#	@echo ------------------ compiling and creating dependencies for cc file $@
+#	@echo
+#	$(compiler) -c $(CFLAGS) $< | \
+#	$(compiler) $(CFLAGS) -MM $< | \
+#	sed 's,\($(notdir $*)\.o\) *:,$(dir $@)\1 $@: ,' > $@.tmp
+#	mv -f $@.tmp $@
+#	@echo
 
 %.d : %.cpp
 	@echo
-	@echo ------------------ creating dependencies for $@
+	@echo ------------------ creating dependencies for cpp file $@
 	@echo
 	$(compiler) $(CXXFLAGS) -MM $< | \
 	sed 's,\($(notdir $*)\.o\) *:,$(dir $@)\1 $@: ,' > $@.tmp
@@ -183,11 +184,25 @@ endif
 	
 %.d : %.cu
 	@echo
-	@echo ------------------ creating dependencies for $@
+	@echo ------------------ creating dependencies for cuda file $@
 	@echo
-	$(cudacompiler) $(NVCCFLAGS) -MM $< | \
+	$(cudacompiler) $(NVCCFLAGS) -M $< | \
 	sed 's,\($(notdir $*)\.o\) *:-,$(dir $@)\1 $@: ,' > $@.tmp
 	mv -f $@.tmp $@
+	@echo
+	
+%.o : %.cpp
+	@echo
+	@echo ------------------ compiling cpp file $@
+	@echo
+	$(compiler) -c $(CXXFLAGS) $< -o $@
+	@echo
+	
+%.o : %.cu
+	@echo
+	@echo ------------------ compiling cuda file $@
+	@echo
+	$(cudacompiler) -c $(NVCCFLAGS) $< -o $@
 	@echo
 
 
