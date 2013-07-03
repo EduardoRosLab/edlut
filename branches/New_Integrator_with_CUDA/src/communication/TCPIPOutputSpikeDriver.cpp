@@ -57,6 +57,7 @@ void TCPIPOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
 	
 	unsigned short size = (unsigned short)this->OutputBuffer.size();
 	this->Socket->sendBuffer(&size,sizeof(unsigned short));
+	cout << "Tamaño enviado: " << size << endl;
 	if (size>0){
 		OutputSpike * Array = new OutputSpike [size];
 		
