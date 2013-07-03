@@ -143,13 +143,17 @@ communication-sources	:= $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
 			$(srcdir)/communication/TCPIPOutputSpikeDriver.cpp
 
 
-integration-sources	:= $(srcdir)/integration_method/BDFn.cpp \
+integration-sources	:= $(srcdir)/integration_method/BDF1ad.cpp \
+			$(srcdir)/integration_method/BDF1vs.cpp \
+			$(srcdir)/integration_method/BDFn.cpp \
 			$(srcdir)/integration_method/Euler.cpp \
 			$(srcdir)/integration_method/FixedStep.cpp \
 			$(srcdir)/integration_method/FixedStepSRM.cpp \
 			$(srcdir)/integration_method/IntegrationMethod.cpp \
 			$(srcdir)/integration_method/RK2.cpp \
 			$(srcdir)/integration_method/RK4.cpp \
+			$(srcdir)/integration_method/RK45.cpp \
+			$(srcdir)/integration_method/RK45ad.cpp \
 			$(srcdir)/integration_method/VariableStep.cpp \
 			$(srcdir)/integration_method/VariableStepSRM.cpp  
 ifeq ($(cuda_enabled),true)
