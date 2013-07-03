@@ -63,7 +63,7 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRe
 				
 				CurrentSimulation->WriteSpike(this);
 				if (neuron->IsMonitored()){
-					CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(neuron->GetIndex_VectorNeuronState()), Cell);
+					CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(neuron->GetIndex_VectorNeuronState()), neuron);
 				}
 
 				// Generate the output activity

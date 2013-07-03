@@ -38,7 +38,7 @@ TimeEventAllNeurons_GPU::~TimeEventAllNeurons_GPU(){
 }
 
 //Optimized version which executes the internal spikes instead of insert them in the queue.
-void TimeEventAllNeurons_GPU::ProcessEvent(Simulation * CurrentSimulation){
+void TimeEventAllNeurons_GPU::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
 
 	Network * CurrentNetwork = CurrentSimulation->GetNetwork();
 
@@ -53,36 +53,42 @@ void TimeEventAllNeurons_GPU::ProcessEvent(Simulation * CurrentSimulation){
 	//Updating all cell when using index=-1.
 	neuronModel->UpdateState(-1,State, CurrentTime);
 
-	VectorNeuronState_GPU * state=(VectorNeuronState_GPU *) State;
-	//GPU write in this array if an internal spike must be generated.
-	bool * generateInternalSpike=state->getInternalSpike();
-	Neuron * Cell;
+	if(!RealTimeRestriction){
 
-	//We check if some neuron inside the model is monitored
-	if(neuronModel->GetVectorNeuronState()->Get_Is_Monitored()){
-		for (int t=0; t<N_TimeDrivenNeuronGPU[this->GetIndexNeuronModel()]; t++){
-			Cell = CurrentNetwork->GetTimeDrivenNeuronGPUAt(this->GetIndexNeuronModel(),t);
-			if(generateInternalSpike[t]==true){
-				internalSpike=new InternalSpike(CurrentTime,Cell);
-				internalSpike->ProcessEvent(CurrentSimulation);
-				delete internalSpike;
-			}
-			if (Cell->IsMonitored()){
-				CurrentSimulation->WriteState(CurrentTime, Cell);
-			}
-		}
-	}else{
-		for (int t=0; t<N_TimeDrivenNeuronGPU[this->GetIndexNeuronModel()]; t++){
-			if(generateInternalSpike[t]==true){
+		VectorNeuronState_GPU * state=(VectorNeuronState_GPU *) State;
+		//GPU write in this array if an internal spike must be generated.
+		bool * generateInternalSpike=state->getInternalSpike();
+		Neuron * Cell;
+
+		//We check if some neuron inside the model is monitored
+		if(neuronModel->GetVectorNeuronState()->Get_Is_Monitored()){
+			for (int t=0; t<N_TimeDrivenNeuronGPU[this->GetIndexNeuronModel()]; t++){
 				Cell = CurrentNetwork->GetTimeDrivenNeuronGPUAt(this->GetIndexNeuronModel(),t);
-				internalSpike=new InternalSpike(CurrentTime,Cell);
-				internalSpike->ProcessEvent(CurrentSimulation);
-				delete internalSpike;
+				if(generateInternalSpike[t]==true){
+					internalSpike=new InternalSpike(CurrentTime,Cell);
+					internalSpike->ProcessEvent(CurrentSimulation, false);
+					delete internalSpike;
+				}
+				if (Cell->IsMonitored()){
+					CurrentSimulation->WriteState(CurrentTime, Cell);
+				}
+			}
+		}else{
+			for (int t=0; t<N_TimeDrivenNeuronGPU[this->GetIndexNeuronModel()]; t++){
+				if(generateInternalSpike[t]==true){
+					Cell = CurrentNetwork->GetTimeDrivenNeuronGPUAt(this->GetIndexNeuronModel(),t);
+					internalSpike=new InternalSpike(CurrentTime,Cell);
+					internalSpike->ProcessEvent(CurrentSimulation, false);
+					delete internalSpike;
+				}
 			}
 		}
-	}
 
-	CurrentSimulation->GetQueue()->InsertEvent(new TimeEventAllNeurons_GPU(CurrentTime + neuronModel->GetTimeDrivenStep_GPU(), this->GetIndexNeuronModel()));
+		CurrentSimulation->GetQueue()->InsertEvent(new TimeEventAllNeurons_GPU(CurrentTime + neuronModel->GetTimeDrivenStep_GPU(), this->GetIndexNeuronModel()));
+
+	}else{
+		CurrentSimulation->GetQueue()->InsertEvent(new TimeEventAllNeurons_GPU(CurrentTime + neuronModel->GetTimeDrivenStep_GPU(), this->GetIndexNeuronModel()));
+	}
 }
 
 int TimeEventAllNeurons_GPU::GetIndexNeuronModel(){
