@@ -108,9 +108,9 @@ double Simulation::GetTimeDrivenStepGPU(){
 }
 
 void Simulation::SetMaxSlotConsumedTime(double NewMaxSlotConsumedTime){
-    LARGE_INTEGER freq;
-    this->MaxSlotConsumedTime = 0UL;
 #if defined(_WIN32) || defined(_WIN64)
+    this->MaxSlotConsumedTime = 0UL;
+    LARGE_INTEGER freq;
     if(QueryPerformanceFrequency(&freq)){
     	this->MaxSlotConsumedTime = (unsigned long)(freq.QuadPart*NewMaxSlotConsumedTime);
     }
@@ -119,10 +119,10 @@ void Simulation::SetMaxSlotConsumedTime(double NewMaxSlotConsumedTime){
 		
 double Simulation::GetMaxSlotConsumedTime(){
     double max_slot_consumed_time;
-    LARGE_INTEGER freq;
-   	max_slot_consumed_time=0UL;
+    max_slot_consumed_time=0UL;
 #if defined(_WIN32) || defined(_WIN64)
-    if(QueryPerformanceFrequency(&freq)){
+    LARGE_INTEGER freq;
+   	if(QueryPerformanceFrequency(&freq)){
     	max_slot_consumed_time=this->MaxSlotConsumedTime/(double)freq.QuadPart;
     }
 #endif
