@@ -46,8 +46,7 @@ void TCPIPInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw 
 	
 	this->Socket->receiveBuffer(&csize, sizeof(unsigned short));
 
-	cout << "Tamaño recibido: " << csize << endl;
-	
+
 	if (csize>0){
 		OutputSpike * InputSpikes = new OutputSpike [csize];
 	

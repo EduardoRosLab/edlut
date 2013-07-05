@@ -60,7 +60,7 @@ void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,do
 	ConnectionState * State = Connection->GetConnectionState();
 
 	// Update the presynaptic activity
-	State->AddElapsedTime(SpikeTime-State->GetLastUpdateTime());
+	State->SetNewUpdateTime(SpikeTime);
 
 	// Add the presynaptic spike influence
 	State->ApplyPresynapticSpike();
@@ -76,7 +76,7 @@ void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,do
 			ConnectionState * ConnectionStatePre = interi->GetConnectionState();
 
 			// Update the presynaptic activity
-			ConnectionStatePre->AddElapsedTime(SpikeTime-ConnectionStatePre->GetLastUpdateTime());
+			ConnectionStatePre->SetNewUpdateTime(SpikeTime);
 
 			// Update synaptic weight
 			float NewWeightPre = interi->GetWeight()+wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity();

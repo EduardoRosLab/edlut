@@ -64,7 +64,10 @@ class ConnectionState {
 		 *
 		 * \param NewUpdateTime The time when the last update happened.
 		 */
-		void SetLastUpdateTime(double NewUpdateTime);
+		//void SetLastUpdateTime(double NewUpdateTime);
+		inline void SetLastUpdateTime(double NewUpdateTime){
+			this->LastUpdate = NewUpdateTime;
+		}
 
 
 	public:
@@ -86,7 +89,24 @@ class ConnectionState {
 		 * \param position The position of the state variable.
 		 * \param NewValue The new value of that state variable.
 		 */
-		void SetStateVariableAt(unsigned int position,float NewValue);
+		//void SetStateVariableAt(unsigned int position,float NewValue);
+		inline void SetStateVariableAt(unsigned int position,float NewValue){
+			*(this->StateVars+position) = NewValue;
+		}
+
+		
+		/*!
+		 * \brief It increment the state variable in a specified position.
+		 *
+		 * It increment the state variable in a specified position.
+		 *
+		 * \param position The position of the state variable.
+		 * \param increment The increment of that state variable.
+		 */
+		inline void incrementStateVaraibleAt(unsigned int position, float increment){
+			*(this->StateVars+position) += increment;
+		}
+
 
 		/*!
 		 * \brief Class destructor.
@@ -112,7 +132,10 @@ class ConnectionState {
 		 * \param position The position of the state variable.
 		 * \return The value of the position-th state variable.
 		 */
-		float GetStateVariableAt(unsigned int position);
+		//float GetStateVariableAt(unsigned int position);
+		inline float GetStateVariableAt(unsigned int position){
+			return *(this->StateVars+position);
+		}
 
 		/*!
 		 * \brief It gets the time when the last update happened.
@@ -121,7 +144,10 @@ class ConnectionState {
 		 *
 		 * \return The time when the last update happened.
 		 */
-		double GetLastUpdateTime();
+		//double GetLastUpdateTime();
+		inline double GetLastUpdateTime(){
+			return this->LastUpdate;
+		}
 
 		/*!
 		 * \brief It gets the number of variables that you can print in this state.
@@ -159,14 +185,15 @@ class ConnectionState {
 		 */
 		virtual float GetPostsynapticActivity() = 0;
 
+
 		/*!
-		 * \brief Add elapsed time to spikes.
+		 * \brief set new time to spikes.
 		 *
-		 * It adds the elapsed time to spikes.
+		 * It set new time to spikes.
 		 *
-		 * \param ElapsedTime The time since the last update.
+		 * \param NewTime new time.
 		 */
-		virtual void AddElapsedTime(float ElapsedTime) = 0;
+		virtual void SetNewUpdateTime(double NewTime) = 0;
 
 
 		/*!

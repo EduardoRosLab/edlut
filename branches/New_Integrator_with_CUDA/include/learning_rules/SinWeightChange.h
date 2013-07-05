@@ -44,10 +44,6 @@
  */ 
 class SinWeightChange: public AdditiveKernelChange{
 	private:
-		/*!
-		 * Precalculated terms.
-		 */
-	    const static float terms [11][11];
 	
 		/*!
 		 * The exponent of the sinuidal function.

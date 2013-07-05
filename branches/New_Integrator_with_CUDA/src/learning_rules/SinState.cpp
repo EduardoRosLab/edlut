@@ -92,14 +92,16 @@ double SinState::GetPrintableValuesAt(unsigned int position){
 	} else return -1;
 }
 
-void SinState::AddElapsedTime(float ElapsedTime){
+void SinState::SetNewUpdateTime(double NewTime){
+	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime());
+
 	float ElapsedRelative = ElapsedTime/this->tau;
 	
 	float expon = exp(-ElapsedRelative);
 
 	// Update the activity value
 
-	float OldExpon = *(this->StateVars+1);
+	float OldExpon = this->GetStateVariableAt(1);
 
 	unsigned int ExponenLine = this->exponent>>1;
 
@@ -109,22 +111,17 @@ void SinState::AddElapsedTime(float ElapsedTime){
 
 	float NewExpon = OldExpon * expon;
 
-	*(this->StateVars+1) = NewExpon;
+	this->SetStateVariableAt(1,NewExpon);
 
 	for (unsigned int grade=2; grade<=this->exponent; grade+=2){
 		
-		float * StateVarCos = this->StateVars+grade;
-		float * StateVarSin = StateVarCos+1;
+		float OldVarCos = this->GetStateVariableAt(grade);
+		float OldVarSin = this->GetStateVariableAt(grade + 1);
 
-		float OldVarCos = *StateVarCos;
-		float OldVarSin = *StateVarSin;
-
-		float SinPar = grade*ElapsedRelative;
-
-		float * index = this->SinLUT+((int)(SinPar/this->LUTStep)%(TERMSLUT<<1));
+		float * index = this->SinLUT+((grade*((int)floor(ElapsedRelative/this->LUTStep + 0.5f)))%(TERMSLUT<<1));
 		float SinVar = *index;
 		float CosVar = *(index+1);
-		
+
 		float NewVarCos = (OldVarCos*CosVar-OldVarSin*SinVar)*expon;
 		float NewVarSin = (OldVarSin*CosVar+OldVarCos*SinVar)*expon;
 
@@ -135,23 +132,28 @@ void SinState::AddElapsedTime(float ElapsedTime){
 			NewVarCos += 1;
 		}*/
 
-		*StateVarCos = NewVarCos;
-		*StateVarSin = NewVarSin;
+		this->SetStateVariableAt(grade,NewVarCos);
+		this->SetStateVariableAt(grade + 1,NewVarSin);
+
 	}
 
 	this->SetStateVariableAt(0,NewActivity);
 
-	this->SetLastUpdateTime(this->GetLastUpdateTime()+ElapsedTime);
+	this->SetLastUpdateTime(NewTime);
 }
 
 void SinState::ApplyPresynapticSpike(){
-	float OldExpon = this->GetStateVariableAt(1);
+	//float OldExpon = this->GetStateVariableAt(1);
 
-	this->SetStateVariableAt(1,OldExpon+1);
+	//this->SetStateVariableAt(1,OldExpon+1);
 
+	//for (unsigned int grade=2; grade<=this->exponent; grade+=2){
+	//	float OldVarCos = this->GetStateVariableAt(grade);
+	//	this->SetStateVariableAt(grade,OldVarCos+1);
+	//}
+	this->incrementStateVaraibleAt(1,1.0f);
 	for (unsigned int grade=2; grade<=this->exponent; grade+=2){
-		float OldVarCos = this->GetStateVariableAt(grade);
-		this->SetStateVariableAt(grade,OldVarCos+1);
+		this->incrementStateVaraibleAt(grade,1.0f);
 	}
 }
 

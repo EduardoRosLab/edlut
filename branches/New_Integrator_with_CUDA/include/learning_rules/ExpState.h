@@ -107,13 +107,13 @@ class ExpState : public ConnectionState{
 
 
 		/*!
-		 * \brief Add elapsed time to spikes.
+		 * \brief set new time to spikes.
 		 *
-		 * It adds the elapsed time to spikes.
+		 * It set new time to spikes.
 		 *
-		 * \param ElapsedTime The time since the last update.
+		 * \param NewTime new time.
 		 */
-		virtual void AddElapsedTime(float ElapsedTime);
+		virtual void SetNewUpdateTime(double NewTime);
 
 
 		/*!

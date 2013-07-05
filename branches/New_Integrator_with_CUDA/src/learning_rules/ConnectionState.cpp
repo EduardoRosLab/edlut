@@ -28,25 +28,25 @@ ConnectionState::~ConnectionState() {
 	}
 }
 
-void ConnectionState::SetStateVariableAt(unsigned int position,float NewValue){
-	*(this->StateVars+position) = NewValue;
-}
+//void ConnectionState::SetStateVariableAt(unsigned int position,float NewValue){
+//	*(this->StateVars+position) = NewValue;
+//}
 
 unsigned int ConnectionState::GetNumberOfVariables(){
 	return this->NumberOfVariables;
 }
 
-float ConnectionState::GetStateVariableAt(unsigned int position){
-	return *(this->StateVars+position);
-}
+//float ConnectionState::GetStateVariableAt(unsigned int position){
+//	return *(this->StateVars+position);
+//}
 
-double ConnectionState::GetLastUpdateTime(){
-	return this->LastUpdate;
-}
+//double ConnectionState::GetLastUpdateTime(){
+//	return this->LastUpdate;
+//}
 
-void ConnectionState::SetLastUpdateTime(double NewUpdateTime){
-	this->LastUpdate = NewUpdateTime;
-}
+//void ConnectionState::SetLastUpdateTime(double NewUpdateTime){
+//	this->LastUpdate = NewUpdateTime;
+//}
 
 unsigned int ConnectionState::GetNumberOfPrintableValues(){
 	return this->GetNumberOfVariables()+1;

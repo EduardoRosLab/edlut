@@ -32,7 +32,7 @@ void STDPWeightChange::ApplyPreSynapticSpike(Interconnection * Connection,double
 	STDPState * State = (STDPState *) Connection->GetConnectionState();
 
 	// Apply synaptic activity decaying rule
-	State->AddElapsedTime(SpikeTime-State->GetLastUpdateTime());
+	State->SetNewUpdateTime(SpikeTime);
 
 	// Apply presynaptic spike
 	State->ApplyPresynapticSpike();
@@ -57,7 +57,7 @@ void STDPWeightChange::ApplyPostSynapticSpike(Interconnection * Connection,doubl
 	STDPState * State = (STDPState *) Connection->GetConnectionState();
 
 	// Apply synaptic activity decaying rule
-	State->AddElapsedTime(SpikeTime-State->GetLastUpdateTime());
+	State->SetNewUpdateTime(SpikeTime);
 
 	// Apply postsynaptic spike
 	State->ApplyPostsynapticSpike();
