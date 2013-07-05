@@ -40,15 +40,17 @@ double STDPState::GetPrintableValuesAt(unsigned int position){
 	} else return -1;
 }
 
-float STDPState::GetPresynapticActivity(){
-	return this->GetStateVariableAt(0);
-}
+//float STDPState::GetPresynapticActivity(){
+//	return this->GetStateVariableAt(0);
+//}
 
-float STDPState::GetPostsynapticActivity(){
-	return this->GetStateVariableAt(1);
-}
+//float STDPState::GetPostsynapticActivity(){
+//	return this->GetStateVariableAt(1);
+//}
 
-void STDPState::AddElapsedTime(float ElapsedTime){
+void STDPState::SetNewUpdateTime(double NewTime){
+	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime());
+
 	float PreActivity = this->GetPresynapticActivity();
 	float PostActivity = this->GetPostsynapticActivity();
 
@@ -60,27 +62,34 @@ void STDPState::AddElapsedTime(float ElapsedTime){
 	this->SetStateVariableAt(0,PreActivity);
 	this->SetStateVariableAt(1,PostActivity);
 
-	this->SetLastUpdateTime(this->GetLastUpdateTime()+ElapsedTime);
+	this->SetLastUpdateTime(NewTime);
 }
 
 void STDPState::ApplyPresynapticSpike(){
-	float PreActivity = this->GetPresynapticActivity();
+	//float PreActivity = this->GetPresynapticActivity();
 
-	// Accumulate new incoming activity
-	PreActivity += 1;
+	//// Accumulate new incoming activity
+	//PreActivity += 1;
 
-	// Store the activity in the state variable
-	this->SetStateVariableAt(0,PreActivity);
+	//// Store the activity in the state variable
+	//this->SetStateVariableAt(0,PreActivity);
+
+
+	// Increment the activity in the state variable
+	this->SetStateVariableAt(0,this->GetPresynapticActivity()+1.0f);
 }
 
 void STDPState::ApplyPostsynapticSpike(){
-	float PostActivity = this->GetPostsynapticActivity();
+	//float PostActivity = this->GetPostsynapticActivity();
 
-	// Accumulate new incoming activity
-	PostActivity += 1;
+	//// Accumulate new incoming activity
+	//PostActivity += 1;
 
-	// Store the activity in the state variable
-	this->SetStateVariableAt(1,PostActivity);
+	//// Store the activity in the state variable
+	//this->SetStateVariableAt(1,PostActivity);
+
+
+	// Increment the activity in the state variable
+	this->SetStateVariableAt(1,this->GetPostsynapticActivity()+1.0f);
 }
-
 

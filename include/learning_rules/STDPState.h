@@ -80,7 +80,10 @@ class STDPState : public ConnectionState{
 		 *
 		 * \return The accumulated presynaptic activity.
 		 */
-		virtual float GetPresynapticActivity();
+		//float GetPresynapticActivity();
+		inline float GetPresynapticActivity(){
+			return this->GetStateVariableAt(0);
+		}
 
 		/*!
 		 * \brief It gets the value of the accumulated postsynaptic activity.
@@ -89,7 +92,10 @@ class STDPState : public ConnectionState{
 		 *
 		 * \return The accumulated postsynaptic activity.
 		 */
-		float GetPostsynapticActivity();
+		//float GetPostsynapticActivity();
+		inline float GetPostsynapticActivity(){
+			return this->GetStateVariableAt(1);
+		}
 
 
 		/*!
@@ -112,13 +118,13 @@ class STDPState : public ConnectionState{
 
 
 		/*!
-		 * \brief Add elapsed time to spikes.
+		 * \brief set new time to spikes.
 		 *
-		 * It adds the elapsed time to spikes.
+		 * It set new time to spikes.
 		 *
-		 * \param ElapsedTime The time since the last update.
+		 * \param NewTime new time.
 		 */
-		virtual void AddElapsedTime(float ElapsedTime);
+		virtual void SetNewUpdateTime(double NewTime);
 
 
 		/*!

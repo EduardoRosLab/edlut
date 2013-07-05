@@ -27,23 +27,13 @@ STDPLSState::~STDPLSState() {
 }
 
 void STDPLSState::ApplyPresynapticSpike(){
-	float PreActivity = this->GetPresynapticActivity();
-
-	// Reset incoming activity
-	PreActivity = 1;
-
 	// Store the activity in the state variable
-	this->SetStateVariableAt(0,PreActivity);
+	this->SetStateVariableAt(0,1.0f);
 }
 
 void STDPLSState::ApplyPostsynapticSpike(){
-	float PostActivity = this->GetPostsynapticActivity();
-
-	// Reset incoming activity
-	PostActivity = 1;
-
 	// Store the activity in the state variable
-	this->SetStateVariableAt(1,PostActivity);
+	this->SetStateVariableAt(1,1.0f);
 }
 
 

@@ -52,27 +52,31 @@ float ExpState::GetPostsynapticActivity(){
 }
 
 
-void ExpState::AddElapsedTime(float ElapsedTime){
+void ExpState::SetNewUpdateTime(double NewTime){
+	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime());
+
 	float factor = ElapsedTime/this->tau;
 	float expon = exp(-factor);
 
 	// Update the activity value
-	float OldExpon1 = this->GetStateVariableAt(1);
 	float OldExpon = this->GetStateVariableAt(0);
+	float OldExpon1 = this->GetStateVariableAt(1);
 
-	float NewExpon1 = OldExpon1*expon;
 	float NewExpon = (OldExpon+factor*OldExpon1)*expon;
+	float NewExpon1 = OldExpon1*expon;
 
-	this->SetStateVariableAt(1,NewExpon1);
 	this->SetStateVariableAt(0,NewExpon);
+	this->SetStateVariableAt(1,NewExpon1);
 
-	this->SetLastUpdateTime(this->GetLastUpdateTime()+ElapsedTime);
+
+	this->SetLastUpdateTime(NewTime);
 }
 
 void ExpState::ApplyPresynapticSpike(){
-	float OldExpon = this->GetStateVariableAt(1);
+	//float OldExpon = this->GetStateVariableAt(1);
+	//this->SetStateVariableAt(1,OldExpon+1);
 
-	this->SetStateVariableAt(1,OldExpon+1);
+	this->incrementStateVaraibleAt(1,1.0f);
 }
 
 void ExpState::ApplyPostsynapticSpike(){
