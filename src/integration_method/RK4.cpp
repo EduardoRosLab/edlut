@@ -27,11 +27,11 @@ RK4::RK4(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDe
 }
 
 RK4::~RK4(){
-	free (AuxNeuronState);
-	free (AuxNeuronState1);
-	free (AuxNeuronState2);
-	free (AuxNeuronState3);
-	free (AuxNeuronState4);
+	delete [] AuxNeuronState;
+	delete [] AuxNeuronState1;
+	delete [] AuxNeuronState2;
+	delete [] AuxNeuronState3;
+	delete [] AuxNeuronState4;
 }
 		
 

@@ -155,7 +155,7 @@ Q10_30 ( pow(3,((temper-30)/10))),
 Q10_6_3 ( pow(3,((temper-6.3)/10))),
 
 //This is a constant current which can be externally injected to the cell.
-/*I_inj_abs(11e-12)*/I_inj_abs(0),
+I_inj_abs(11e-12)/*I_inj_abs(0)*/,
 I_inj(-I_inj_abs*1000/299.26058e-8),
 eexc(0.0),
 einh(-80),

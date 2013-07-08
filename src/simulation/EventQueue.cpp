@@ -134,27 +134,17 @@ double EventQueue::FirstEventTime() const{
 }
 
 void EventQueue::RemoveSpikes(){
-	EventForQueue * Temp = this->Events;
-	unsigned int OldAllocatedSize=this->AllocatedSize;
 	unsigned int OldNumberOfElements=this->NumberOfElements;
+	Event * TmpEvent;
 
-	// Allocate the new array
-	this->Events = (EventForQueue *) new EventForQueue [MIN_SIZE];
-	this->AllocatedSize = MIN_SIZE;
-	this->NumberOfElements=1;
-
-	Event * AuxEvent;
-
-	// Copy all the elements from the original array
+	this->NumberOfElements=1; // Initially resize occupied size of the heap so that all the events are out
+	// Reinsert in the heap only the events which are spikes 
 	for (unsigned int i = 1; i<OldNumberOfElements; ++i){
-		AuxEvent=(Temp +i)->EventPtr;
-		if(!AuxEvent->IsSpike()){
-			InsertEvent(AuxEvent);
+		TmpEvent=(this->Events+i)->EventPtr;
+		if(!TmpEvent->IsSpike()){
+			InsertEvent(TmpEvent);
 		}else{
-			delete AuxEvent;
+			delete TmpEvent;
 		}		
 	}
-	
-	// Release old memory
-	delete [] Temp;
 }

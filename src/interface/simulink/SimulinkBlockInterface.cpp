@@ -121,6 +121,8 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 		this->InputDriver = new InputBooleanArrayDriver(NumberOfElements, IntInputCells);
 		this->Simul->AddInputSpikeDriver(this->InputDriver);
 
+		delete [] IntInputCells;
+
 		real_T * OutputCells = (real_T *) mxGetData(PARAMOUTPUT);
 		unsigned int NumberOfElementsOut = (unsigned int) mxGetNumberOfElements(PARAMOUTPUT);
 		int * IntOutputCells = new int [NumberOfElementsOut];
@@ -132,6 +134,8 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 		// Create a new output object to get output spike
 		this->OutputDriver = new OutputBooleanArrayDriver(NumberOfElementsOut, IntOutputCells);
 		this->Simul->AddOutputSpikeDriver(this->OutputDriver);
+
+		delete [] IntOutputCells;
 
 		this->FileDriver = new FileOutputSpikeDriver(LogFile,false);
 		Simul->AddMonitorActivityDriver(this->FileDriver);
@@ -203,4 +207,6 @@ void SimulinkBlockInterface::AssignOutputs(SimStruct *S){
 	for (unsigned int i=0; i<NumberOfElements; ++i){
 		u[i] = (boolean_T) OutputSignals[i];
 	}
+
+	delete [] OutputSignals;
 }

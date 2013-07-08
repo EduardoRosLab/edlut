@@ -155,6 +155,23 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		cout << "Number of updates: " << Simul.GetSimulationUpdates() << endl;
 		cout << "Mean number of spikes in heap: " << Simul.GetHeapAcumSize()/(float)Simul.GetSimulationUpdates() << endl;
 		cout << "Updates per second: " << Simul.GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
+
+
+		// Closing simulation connections
+		for (unsigned int i=0; i<Reader.GetOutputSpikeDrivers().size(); ++i){
+			OutputSpikeDriver * Output = Reader.GetOutputSpikeDrivers()[i];
+			delete Output;
+		}
+				
+		for (unsigned int i=0; i<Reader.GetInputSpikeDrivers().size(); ++i){
+			InputSpikeDriver * Input = Reader.GetInputSpikeDrivers()[i];
+			delete Input;
+		}
+
+		for (unsigned int i=0; i<Reader.GetMonitorDrivers().size(); ++i){
+			OutputSpikeDriver * Monitor = Reader.GetMonitorDrivers()[i];
+			delete Monitor;
+		}
 	} catch (EDLUTFileException Exc){
 		cerr << Exc << ": " << Exc.GetErrorNum() << endl;
 	} catch (EDLUTException Exc){

@@ -32,7 +32,7 @@ TimeDrivenNeuronModel_GPU::TimeDrivenNeuronModel_GPU(string NeuronTypeID, string
 }
 
 TimeDrivenNeuronModel_GPU::~TimeDrivenNeuronModel_GPU() {
-	// TODO Auto-generated destructor stub
+	delete integrationMethod_GPU;
 	HANDLE_ERROR(cudaEventDestroy(stop));
 
 }

@@ -102,7 +102,7 @@ enum IntegrationMethodType VariableStepSRM::GetMethodType(){
 
 void VariableStepSRM::InitializeStates(int N_neurons, float * initialization){
 	float elapsedTime=PredictedElapsedTime[0];
-	free(PredictedElapsedTime);
+	delete [] PredictedElapsedTime;
 	PredictedElapsedTime=new double[N_neurons];
 
 	for(int i=0; i<N_neurons; i++){

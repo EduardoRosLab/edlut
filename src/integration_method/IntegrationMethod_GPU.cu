@@ -23,11 +23,12 @@
 
 
 IntegrationMethod_GPU::IntegrationMethod_GPU(char * integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState):N_NeuronStateVariables(N_neuronStateVariables), N_DifferentialNeuronState(N_differentialNeuronState), N_TimeDependentNeuronState(N_timeDependentNeuronState){
-	IntegrationMethodType=new char (strlen(integrationMethodType));
+	IntegrationMethodType=new char [strlen(integrationMethodType)];
 	strncpy(IntegrationMethodType,integrationMethodType,strlen(integrationMethodType));
 }
 
 IntegrationMethod_GPU::~IntegrationMethod_GPU(){
+	delete [] IntegrationMethodType;
 	cudaFree(Buffer_GPU);
 }
 
