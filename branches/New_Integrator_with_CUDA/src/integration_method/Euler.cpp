@@ -23,7 +23,7 @@ Euler::Euler(int N_neuronStateVariables, int N_differentialNeuronState, int N_ti
 }
 
 Euler::~Euler(){
-	free (AuxNeuronState);
+	delete [] AuxNeuronState;
 }
 		
 void Euler::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){

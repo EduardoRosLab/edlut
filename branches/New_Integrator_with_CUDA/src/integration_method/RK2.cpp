@@ -25,9 +25,9 @@ RK2::RK2(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDe
 }
 
 RK2::~RK2(){
-	free (AuxNeuronState);
-	free (AuxNeuronState1);
-	free (AuxNeuronState2);
+	delete [] AuxNeuronState;
+	delete [] AuxNeuronState1;
+	delete [] AuxNeuronState2;
 }
 		
 void RK2::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){

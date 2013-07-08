@@ -33,7 +33,7 @@ TimeDrivenNeuronModel::TimeDrivenNeuronModel(string NeuronTypeID, string NeuronM
 }
 
 TimeDrivenNeuronModel::~TimeDrivenNeuronModel() {
-	// TODO Auto-generated destructor stub
+	delete integrationMethod;
 }
 
 

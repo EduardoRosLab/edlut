@@ -39,15 +39,15 @@ RK45::RK45(int N_neuronStateVariables, int N_differentialNeuronState, int N_time
 }
 
 RK45::~RK45(){
-	free (AuxNeuronState);
-	free (AuxNeuronState1);
-	free (AuxNeuronState2);
-	free (AuxNeuronState3);
-	free (AuxNeuronState4);
-	free (AuxNeuronState5);
-	free (AuxNeuronState6);
-	free (x4);
-	free (epsilon);
+	delete [] AuxNeuronState;
+	delete [] AuxNeuronState1;
+	delete [] AuxNeuronState2;
+	delete [] AuxNeuronState3;
+	delete [] AuxNeuronState4;
+	delete [] AuxNeuronState5;
+	delete [] AuxNeuronState6;
+	delete [] x4;
+	delete [] epsilon;
 }
 		
 void RK45::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){

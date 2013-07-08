@@ -137,6 +137,17 @@ int main(int ac, char *av[]) {
 	cout << "Updates per second: " << Simul->GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
 	cout << "Total spikes handled: " << Simul->GetTotalSpikeCounter() << endl;
 
+	// Closing simulation connections
+	for (unsigned int i=0; i<Reader.GetMonitorDrivers().size(); ++i){
+		OutputSpikeDriver * Monitor = Reader.GetMonitorDrivers()[i];
+		delete Monitor;
+	}
+
+	for (unsigned int i=0; i<Reader.GetOutputWeightDrivers().size(); ++i){
+		OutputWeightDriver * Weights = Reader.GetOutputWeightDrivers()[i];
+		delete Weights;
+	}
+
 	delete Simul;
 	delete InputDriver;
 	delete OutputDriver;

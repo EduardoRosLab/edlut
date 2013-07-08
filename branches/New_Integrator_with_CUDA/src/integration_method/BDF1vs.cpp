@@ -32,18 +32,18 @@ BDF1vs::BDF1vs(int N_neuronStateVariables, int N_differentialNeuronState, int N_
 }
 
 BDF1vs::~BDF1vs(){
-	free(D);
-	free(OriginalD);
-	free(State);
-	free(OriginalState);
+	delete [] D;
+	delete [] OriginalD;
+	delete [] State;
+	delete [] OriginalState;
 
-	free(AuxNeuronState);
-	free(AuxNeuronState_p);
-	free(AuxNeuronState_p1);
-	free(AuxNeuronState_c);
-	free(jacnum);
-	free(J);
-	free(inv_J);
+	delete [] AuxNeuronState;
+	delete [] AuxNeuronState_p;
+	delete [] AuxNeuronState_p1;
+	delete [] AuxNeuronState_c;
+	delete [] jacnum;
+	delete [] J;
+	delete [] inv_J;
 
 }
 		

@@ -199,6 +199,10 @@ TableBasedModel::~TableBasedModel() {
 	if (this->TempStateVars!=0) {
 		delete [] this->TempStateVars;
 	}
+
+	if(this->InitValues!=0){
+		delete [] InitValues;
+	}
 }
 
 void TableBasedModel::LoadNeuronModel() throw (EDLUTFileException){

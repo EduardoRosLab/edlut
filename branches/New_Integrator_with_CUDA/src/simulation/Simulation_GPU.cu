@@ -206,7 +206,7 @@ void Simulation::RunSimulation()  throw (EDLUTException){
 		}
 			
 		this->CurrentSimulationTime=NewEvent->GetTime(); // only for checking
-
+ 
 		NewEvent->ProcessEvent(this, false);
 		
 		delete NewEvent;

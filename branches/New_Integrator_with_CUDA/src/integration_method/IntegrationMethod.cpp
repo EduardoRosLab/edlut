@@ -29,17 +29,25 @@ IntegrationMethod::IntegrationMethod(string integrationMethodType, int N_neuronS
 	if(inverse){
 		aux=new float[2*N_differentialNeuronState*N_CPU_thread];
 		auxDouble=new double[2*N_differentialNeuronState*N_CPU_thread];
+	}else{
+		aux=0;
+		auxDouble=0;
 	}
 }
 
 IntegrationMethod::~IntegrationMethod(){
-	free(AuxNeuronState);
-	free(AuxNeuronState_pos);
-	free(AuxNeuronState_neg);
+	delete [] AuxNeuronState;
+	delete [] AuxNeuronState_pos;
+	delete [] AuxNeuronState_neg;
 
-	free(aux);
-	free(auxDouble);
-	free(PredictedElapsedTime);
+	if(aux!=0){
+		delete [] aux;
+	}
+	if(auxDouble!=0){
+		delete [] auxDouble;
+	}
+
+	delete [] PredictedElapsedTime;
 }
 
 string IntegrationMethod::GetType(){
@@ -172,8 +180,8 @@ void IntegrationMethod::invermat(float *a, float *ainv, int CPU_thread_index) {
 			}
 		}
 		memcpy(ainv, local_ainv, sizeof(float)*N_DifferentialNeuronState*N_DifferentialNeuronState);
-		delete local_a;
-		delete local_ainv;
+		delete [] local_a;
+		delete [] local_ainv;
 	}
 }
 

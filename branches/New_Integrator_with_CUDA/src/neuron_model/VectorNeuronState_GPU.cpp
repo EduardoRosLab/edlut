@@ -27,13 +27,22 @@ using namespace std;
 	};
 
 	VectorNeuronState_GPU::~VectorNeuronState_GPU(){
-		//HANDLE_ERROR(cudaFree(AuxStateGPU));
 		HANDLE_ERROR(cudaFree(VectorNeuronStates_GPU));
 		HANDLE_ERROR(cudaFree(LastUpdateGPU));
 		HANDLE_ERROR(cudaFree(LastSpikeTimeGPU));
-		//HANDLE_ERROR(cudaFree(InternalSpikeGPU));
+
 		HANDLE_ERROR(cudaFreeHost(AuxStateCPU));
 		HANDLE_ERROR(cudaFreeHost(InternalSpikeCPU));
+
+		//Memory for GPU
+		cudaDeviceProp prop;
+		HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));	
+		
+		//GPU can use MapHostMemory
+		if(!prop.canMapHostMemory){
+			HANDLE_ERROR(cudaFree(AuxStateGPU));
+			HANDLE_ERROR(cudaFree(InternalSpikeGPU));
+		}
 	}
 
 

@@ -26,9 +26,9 @@ e_min(0), e_max(0), h_min(0), h_max(0)
 
 BDF1ad::~BDF1ad(){
 	delete BDF;
-	free(PredictedNeuronState);
-	free(ValidPrediction);
-	free(NextStepPredictedElapsedTime);
+	delete [] PredictedNeuronState;
+	delete [] ValidPrediction;
+	delete [] NextStepPredictedElapsedTime;
 }
 		
 void BDF1ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
@@ -115,7 +115,7 @@ void BDF1ad::InitializeStates(int N_neurons, float * initialization){
 
 
 	double elapsedTime=PredictedElapsedTime[0];
-	free(PredictedElapsedTime);
+	delete [] PredictedElapsedTime;
 	PredictedElapsedTime=new double[N_neurons];
 	NextStepPredictedElapsedTime=new double[N_neurons];
 

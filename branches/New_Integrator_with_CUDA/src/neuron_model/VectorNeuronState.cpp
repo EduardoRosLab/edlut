@@ -73,6 +73,8 @@ VectorNeuronState::~VectorNeuronState() {
 	if (!TimeDriven){
 		delete [] this->PredictedSpike;
 		delete [] this->PredictionEnd;
+	}else{
+		delete [] this->InternalSpike;
 	}
 }
 

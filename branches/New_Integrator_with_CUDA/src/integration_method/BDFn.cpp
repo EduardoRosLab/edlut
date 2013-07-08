@@ -41,24 +41,24 @@ BDFn::BDFn(int N_neuronStateVariables, int N_differentialNeuronState, int N_time
 BDFn::~BDFn(){
 	if(BDForder>1){
 		for(int i=0; i<BDForder-1; i++){
-			free(PreviousNeuronState[i]);
+			delete [] PreviousNeuronState[i];
 		}
-		free(PreviousNeuronState);
+		delete [] PreviousNeuronState;
 	}
 	
 	for(int i=0; i<BDForder; i++){
-		free(D[i]);
+		delete [] D[i];
 	}
-	free(D);
-	free(state);
+	delete [] D;
+	delete [] state;
 
-	free(AuxNeuronState);
-	free(AuxNeuronState_p);
-	free(AuxNeuronState_p1);
-	free(AuxNeuronState_c);
-	free(jacnum);
-	free(J);
-	free(inv_J);
+	delete [] AuxNeuronState;
+	delete [] AuxNeuronState_p;
+	delete [] AuxNeuronState_p1;
+	delete [] AuxNeuronState_c;
+	delete [] jacnum;
+	delete [] J;
+	delete [] inv_J;
 
 }
 		
