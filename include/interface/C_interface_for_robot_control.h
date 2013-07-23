@@ -1,0 +1,388 @@
+/***************************************************************************
+ *                    C_interface_for_robot_control.h                      *
+ *                    -------------------------------                      *
+ * copyright        : (C) 2013 by Richard R. Carrillo and Niceto R. Luque  *
+ * email            : rcarrillo at ugr.es                                  *
+ ***************************************************************************/
+
+/***************************************************************************
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ ***************************************************************************/
+
+#ifndef _EDLUT_INTERFACE_H_
+#define _EDLUT_INTERFACE_H_
+
+/*!
+ * \file C_interface_for_robot_control.h
+ *
+ * \author Richard R. Carrillo
+ * \author Niceto R. Luque
+ * \date 22 of July 2013
+ *
+ * This file declares the interface functions to access EDLUT's functionality
+ * for robot control.
+ */
+ 
+#ifndef EXTERN_C
+#  ifdef __cplusplus
+#    define EXTERN_C extern "C"
+#  else
+#    define EXTERN_C extern
+#  endif
+#endif
+
+
+#ifdef __cplusplus
+//#include "../include/simulation/Simulation.h"
+class Simulation;
+#else // incomplete typedef for Simulation
+typedef struct Simulation_tag Simulation;
+#endif
+
+/// \brief Duration of a inner control loop iteration (time slot)
+/// A smaller length provides a higher accuracy
+#define SIM_SLOT_LENGTH 0.002
+
+/// \brief Approximate maximum acceptable time which can be consunsed by EDLUT in each slot
+/// Used in real time only
+#define MAX_SIM_SLOT_CONSUMED_TIME SIM_SLOT_LENGTH*0.5
+
+/// \brief Time in seconds required to execute the desired trajectory once
+/// (simulated time)
+#define TRAJECTORY_TIME 1
+
+/// \brief Number of trajectories repetitions executed by the robot
+/// (integer value)
+#define TOTAL_TRAJ_EXECUTIONS 1000
+
+/// \brief Length of a EDLUT simulation step for time-driven neural models
+/// (should be smaller than SIM_SLOT_LENGTH)
+#define TIME_DRIVEN_STEP_TIME 0.001
+
+/// \brief Number of used robot's joints
+/// (depends on the number of joints moved during the performed trajectory)
+#define NUM_JOINTS 3
+
+/// \brief Number of RBFs to encode the trajectory in the cerebellum's mossy fibers
+/// (the correponsing distribution mathematical expression can be printed with printRBFs())
+#define NUM_RBFS 20
+/// \brief Number of cerebellum's input variables for the desired trajectory (encoded by mossy fibers)
+/// (usually 2 (position and velocity) per joint)
+#define NUM_TRAJECTORY_INPUT_VARS NUM_JOINTS*2 // ECEA
+/// \brief Number of cerebellum's input variables for the robot's state (encoded by mossy fibers)
+/// (usually 2 (position and velocity) per joint)
+#define NUM_ROBOT_STATE_INPUT_VARS NUM_JOINTS*2 // ICEA
+/// \brief Number of cerebellum's mossy fibers used to encode the cerebellar trajectory input variables
+/// (depends on NUM_INPUT_VARS and NUM_RBFS)
+#define NUM_TRAJECTORY_INPUT_NEURONS NUM_TRAJECTORY_INPUT_VARS*NUM_RBFS
+/// \brief Number of cerebellum's mossy fibers used to encode the cerebellar robot state variables
+/// (depends on NUM_INPUT_VARS and NUM_RBFS)
+#define NUM_ROBOT_STATE_INPUT_NEURONS NUM_ROBOT_STATE_INPUT_VARS*NUM_RBFS
+/// \brief Number of the first network neuron which correspong to a mossy fiber
+/// (depends on the neural network definition: EDLUT net input file)
+#define FIRST_INPUT_NEURON 8
+
+/// \brief Number of cerebellum's output variables (encoded by DNC cells)
+/// (usually 2 (positive and negative torque) per joint)
+#define NUM_OUTPUT_VARS NUM_JOINTS*2
+/// \brief number of cerebellum's DCN cells used to encode one cerebellar output variable
+/// (depends on the neural network definition)
+#define NUM_NEURONS_PER_OUTPUT_VAR 4
+/// \brief Total number of cerebellum's DCN cells used to encode the cerebellar output variables
+/// (depends on NUM_OUTPUT_VARS and NUM_NEURONS_PER_OUTPUT_VAR)
+#define NUM_OUTPUT_NEURONS NUM_OUTPUT_VARS*NUM_NEURONS_PER_OUTPUT_VAR
+/// \brief Number of the first network neuron which correspong to a DCN cell
+/// (depends on the neural network definition: EDLUT net input file)
+#define FIRST_OUTPUT_NEURON 1796
+
+/// \brief Number of the first network neuron which correspong to a climbing fiber
+/// (depends on the neural network definition: EDLUT net input file)
+#define FIRST_LEARNING_NEURON 1823
+/// \brief Number of cerebellum's climbing fibers which correspond to one cerebellar output variable
+/// (depends on the neural network definition)
+#define NUM_LEARNING_NEURONS_PER_OUTPUT_VAR 8
+/// \brief Total number of cerebellum's climbing fibers
+/// (depends on NUM_JOINTS and NUM_LEARNING_NEURONS_PER_OUTPUT_VAR)
+#define NUM_LEARNING_NEURONS NUM_JOINTS*2*NUM_LEARNING_NEURONS_PER_OUTPUT_VAR
+
+/// \brief Maximum applicable torque for each robot's joint (in N/m)
+/// (used to calculate the performed trajectory error)
+static const double MAX_ROBOT_JOINT_TORQUE[NUM_JOINTS]={100, 100, 100};
+
+/// \brief proportional and derivative error factor for each robot's joint
+/// (used to calculate the performed trajectory error and therefore the corresponding activity of climbing fibers)
+static const double ROBOT_JOINT_ERROR_KP[NUM_JOINTS] = {10.0*36,10.0*6,10.0*12}; // proportional error
+static const double ROBOT_JOINT_ERROR_KD[NUM_JOINTS] = {23.0*36,23.0*6,23.0*12}; // derivative error;
+
+/// \brief A structure definiton used to specify radial basis function (RBF) shape
+/// (used to encode input variables in mossy fibers)
+struct rbf_set
+  {
+   int num_rbfs;
+   double bell_amp;
+   double bell_overlap;
+   double first_bell_pos, last_bell_pos;
+  };
+
+///////////////////////////// SIMULATION MANAGEMENT //////////////////////////
+
+/// \brief Creates and initializes a neural network simulation.
+/// In the end, the simulation must be finished (by calling finish_neural_simulation())
+/// \param net_file A pointer to the neural-network definition file name to load
+/// \param input_weight_file A pointer to the network weight file name 
+/// \param input_spike_file A pointer to the neural activity input file name (use NULL in order no to load an activity file)
+/// \param output_weight_file A pointer to the weight output file name (use NULL in order no to save network weights)
+/// \param output_spike_file A pointer to the output neural activity file name (use NULL in order no to save neural activity)
+/// \param weight_save_period Time interval used to save network weights in \a output_weight_file
+/// \param real_time_simulation Indicates if the simulation must be performed in real time (1=real time, 0=normal simulation)
+/// \return A pointer to the created neural network
+EXTERN_C Simulation *create_neural_simulation(const char *net_file, const char *input_weight_file, const char *input_spike_file, const char *output_weight_file, const char *output_spike_file, double weight_save_period, int real_time_simulation);
+
+/// \brief Finishes and deletes a neural network simulation.
+/// Neural simulation output data is stored in the previously-specified files
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation()
+EXTERN_C void finish_neural_simulation(Simulation *neural_sim);
+
+/// \brief Performs a single network simulation time slot.
+/// The neural network is simulated since the last simulated time till \a slot_end_time
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation()
+/// \param slot_end_time last time of the time slot to be simulated
+/// \return Error occurred during the function execution (0 if it is successfully executed)
+/// \note If the real_time_simulation parameter is set to 1 (true) when the neural simulation
+/// \note was crated (create_neural_simulation function), the processing of some events can
+/// \note be skipped in order not to exceed the computation time limit in a time slot (SIM_SLOT_LENGTH)
+EXTERN_C int run_neural_simulation_slot(Simulation *neural_sim, double slot_end_time);
+
+/// \brief Saves the neural network weights.
+/// All the neural network weights are save in a text file which name is specified when creating the network.
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation()
+/// \pre Weights must be saved before finishing the simulation
+EXTERN_C void save_neural_weights(Simulation *neural_sim); 
+
+/// \brief Resets the neural network simulation
+/// The neural activity remaining in the network from the last slot simulation is discarded.
+/// This function is called at the beginning of a new trajectory execution.
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation()
+EXTERN_C void reset_neural_simulation(Simulation *neural_sim);
+
+/// \brief Returns the number of spikes processed by the neural network
+/// This value is related to the consumed computation time
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation()
+/// \return Number of processed spikes
+EXTERN_C long get_neural_simulation_spike_counter(Simulation *neural_sim);
+
+/// \brief Returns the number of events processed by the neural network
+/// This value is used for statistics and to obtain information about the simulation
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation()
+/// \return Number of processed events
+EXTERN_C long long get_neural_simulation_event_counter(Simulation *neural_sim);
+
+/// \brief Returns the total number of events processed by the simulator
+/// This value is used for statistics and to obtain information about the simulation
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation()
+/// \return Total number of processed events
+EXTERN_C long long get_accumulated_heap_occupancy_counter(Simulation *neural_sim);
+
+///////////////////////////// INPUT TRAJECTORY //////////////////////////
+
+/// \brief Calculates the value of a Gaussian function
+/// The value is calculated accoring to the expression: f(x) = a e^{- { \frac{(x-b)^2 }{ 2 c^2} } }
+/// This value is used to calculate the RBFs shape and therefore the current injected in
+///  mossy fibers depending on the input variables.
+/// \param a Amplitide
+/// \param b Center
+/// \param c Width
+/// \param x Position
+/// \return Gaussian function value
+double gaussian_function(double a, double b, double c, double x);
+
+/// \brief Calculates the desired robot's trajectory to be performed
+/// This function returns the position, velocity and acceleration of a point of the trajectory
+/// \param inp Pointer to a vector where the trajectory point will be stored
+///            In the first NUM_JOINTS positions of \a inp the positions for each robot's joint are stored.
+///            In the next NUM_JOINTS positions of \a inp the velocities are stored.
+///            In the next NUM_JOINTS positions of \a inp the accelerations are stored.
+/// \param amplitude trajectory amplitude
+/// \param tsimul time corresponing to the trajectory point which must be calculated (0.0=trajectoy beginning)
+EXTERN_C void calculate_input_trajectory(double *inp, double amplitude, double tsimul);
+
+/// \brief Calculates maximum and minimum values of the trajectory positions, velocities and accelerations.
+/// These values are used to set the rages of the input variables which will be encoded in mossy fiber activity
+/// \param amplitude Amplitide of the trajectory
+/// \param min_traj_amplitude Pointer to an array in which the minimum values for the position, velocity and acceleration will be stored.
+/// \param max_traj_amplitude Pointer to an array in which the maximum values for the position, velocity and acceleration will be stored.
+EXTERN_C void calculate_input_trajectory_max_amplitude(double amplitude, double *min_traj_amplitude, double *max_traj_amplitude);
+
+/// \brief Calculates the RBF (Gaussian bell) width for a given overlap
+/// This value is used to automatically configure RBFs shape
+/// \param rbf_distance Distance between two consecutive RBFs
+/// \param overlap Overlap between RBFs (0,1)
+/// \return The RBF c parameter (bell width) depending on the desired intersection between RBFs
+double calculate_RBF_width(double rbf_distance, double overlap);
+
+/// \brief Prints the mathematical expression corresponding to an RBF set.
+/// Creates a Derive mathematical expression which can be plotted to check the correct overlapping of RBF functions.
+/// example:
+/// \code{.cpp}
+/// struct rbf_set rbfs;
+/// rbfs.bell_amp=1.0; rbfs.bell_overlap=0.2; rbfs.first_bell_pos=-0.1; rbfs.last_bell_pos=0.1; rbfs.num_rbfs=20;
+/// printRBFs(&rbfs);
+/// \endcode
+/// \param rbfs RBF definition structure.
+EXTERN_C void printRBFs(struct rbf_set *rbfs);
+
+/// \brief Generates the population neural activity during a simulation slot for a specified input variable.
+/// The generated neural activity is inserted in the simulation to be precessed in the
+/// next call to run_neural_simulation_slot().
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation().
+/// \param cur_slot_time The simulation time of the beginning of the slot that will be simulated next.
+/// \param rbfs Pointer to the RBF definitions that will be used for the encoding into neural activity
+/// \param input_var Input variable to be encoded
+/// \param first_input_neuron Number (index) of the first mossy fiber which encode this input variable
+/// \param last_spk_times Pointer to an array which contains the times in which each mossy fiber trasmitted the last spike (this array is updated by this function).
+/// \param max_spk_freq Maximum firing frequency for a mossy fiber
+void generate_activityRBF(Simulation *sim, double cur_slot_time, struct rbf_set *rbfs, double input_var, long first_input_neuron, double *last_spk_times, double max_spk_freq);
+
+/// \brief Generates the population neural activity during a simulation slot for a specified input variable set.
+/// The generated neural activity is inserted in the simulation to be precessed in the
+/// next call to run_neural_simulation_slot().
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation().
+/// \param cur_slot_time The simulation time of the beginning of the slot that will be simulated next.
+/// \param input_var Pointer to an array which contains the input variables to be encoded
+/// \param min_traj_amplitude Pointer to an array in which the minimum values for the position and velocity will be stored.
+/// \param max_traj_amplitude Pointer to an array in which the maximum values for the position and velocity will be stored.
+EXTERN_C void generate_input_traj_activity(Simulation *neural_sim, double cur_slot_time, double *input_vars, double *min_traj_amplitude, double *max_traj_amplitude);
+
+/// \brief Generates the population neural activity during a simulation slot for a specified input variable set.
+/// The generated neural activity is inserted in the simulation to be precessed in the
+/// next call to run_neural_simulation_slot().
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation().
+/// \param cur_slot_time The simulation time of the beginning of the slot that will be simulated next.
+/// \param robot_state_vars Pointer to an array which contains the robot input variables to be encoded
+/// \param min_traj_amplitude Pointer to an array in which the minimum values for the position and velocity will be stored.
+/// \param max_traj_amplitude Pointer to an array in which the maximum values for the position and velocity will be stored.
+EXTERN_C void generate_robot_state_activity(Simulation *neural_sim, double cur_slot_time, double *robot_state_vars, double *min_traj_amplitude, double *max_traj_amplitude);
+
+/////////////////////// GENERATE LEARNING ACTIVITY ///////////////////
+
+/// \brief Calculates and weighs the robot's obtained errors in positions and velocities.
+/// The input values should be obtained from the control loop variables. 
+/// This function is called at each simulation step.
+/// \param desired_position Desired Position of the corresponding robot link.
+/// \param desired_velocity Desired Velocity of the corresponding robot link.
+/// \param actual_position Actual Position of the corresponding robot link.
+/// \param actual_velocity Actual Velocity of the corresponding robot link.
+/// \param kp Proportial Gain Value				
+/// \param kv Derivative Gain Value
+/// \return Error per link: The final combined and weighted error value per robot link
+double compute_PD_error(double desired_position, double desired_velocity, double actual_position, double actual_velocity, double kp, double kd);
+
+/// \brief Calculates the learning signal from the torque error using a sigmoid function.
+/// This function is called by calculate_learning_signals().
+/// \param error_torque Actual generated torque error value.
+/// \param max_error_torque Maximum torque value for the correponding joint.
+/// \return Value related to the error which can be used as learning signal.
+double error_sigmoid(double error_torque, double max_error_torque);
+
+/// \brief Generates the population neural activity from a specified inferior olive input current.
+/// This function must be called at each simulation step.
+/// \param cur_slot_init The simulation time of the beginning of the slot that will be simulated next.
+/// \param input_current Input current to be injected in the inferior olive neurons related to the performed error.
+/// \param first_input_neuron Number (index) of network neuron corresponding to the first climbing fiber to receive the activity.
+/// \param num_learning_neurons Number of neurons (climbing fibers), belonging to the neural network, that will be activated.
+/// \param last_spk_times Pointer to an array containing the last time that each climbing fiber was active (this array is updated by this function).
+/// \param max_spk_freq Maximum firing frecuency of climbing fibers (inferior olive neurons).
+void generate_stochastic_activity(double cur_slot_init, double input_current, long first_learning_neuron, long num_learning_neurons, double *last_spk_times, double max_spk_freq);
+
+/// \brief Calculates the error signal from the robot's actual and desired joint position and volocity.
+/// This function is called in the control loop.
+/// \param input_vars Desired positions and velocities (what the robot's links should have).
+/// \param state_vars Actual positions and velocities  (what the robot's links currently have).
+/// \param error_vars Pointer to an array in which the ponderated error for each robot link will be stored.
+EXTERN_C void calculate_error_signals(double *input_vars, double *state_vars, double *error_vars);
+
+/// \brief Calculates the actuator learning signals from the robot's joint performed error.
+/// Depending on the error sign the agonist or the antagonist learning is activated.
+/// This function is called in the control loop.
+/// \param error_vars Pointer to an array which must contain the ponderated error for each robot's link 
+/// \param output_vars Pointer to an array which must contain the splitted cerebellar corrective torque
+///   values (agonist/antagonist muscle). NUM_JOINTS*2 values in total.
+/// \param learning_vars Pointer to an array in which the calculated learning variables will be stored.
+///   They are coded as splitted input current values (agonist/antagonist muscle), which correspond to
+///   the estimated current to be injected in the corresponding inferior olive neurons.
+EXTERN_C void calculate_learning_signals(double *error_vars, double *output_vars, double *learning_vars);
+
+/// \brief This function injects activity in the neural network (learning activity) depending
+///        on the climbing-fiber-realted input current which is estimated from the obtained
+///        error in the control loop. 
+/// This function must be called at each simulation step.
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation().
+/// \param cur_slot_init The simulation time of the beginning of the slot that will be simulated next.
+/// \param learning_vars Pointer to an array which contains the calculated learning variables.
+///     They are splitted input currents (agonist/antagonist muscle) retated to the estimated error signal
+///     (injected current in their corresponding inferior olive neurons)
+EXTERN_C void generate_learning_activity(Simulation *neural_sim, double cur_slot_init, double *learning_vars);
+
+
+//////////////////////////// GENERATE OUTPUT /////////////////////////
+
+/// \brief Computes the output variables from the neural activity that the network generates.
+/// This function is called at each simulation step.
+/// \param neural_sim Pointer to a Simulation created by create_neural_simulation().
+/// \output_vars Calculated Output variables correponding to the network output activity.
+/// \return Number of generated spikes
+EXTERN_C int compute_output_activity(Simulation *neural_sim, double *output_vars);
+
+///////////////////////////// VARIABLES LOG //////////////////////////
+/// \brief Comment string used in the text files
+///  It is used to add comments in the log file
+#define COMMENT_CHARS "%"
+/// \brief Total number of registers that will be stored in the computer memory during the simulation
+///  It is used to specify the size of log structure
+#define N_LOG_REGS TOTAL_TRAJ_EXECUTIONS*(int)((TRAJECTORY_TIME-(SIM_SLOT_LENGTH/2.0))/(float)SIM_SLOT_LENGTH + 1)
+/// \brief An structure where the variables are logged during the simulation
+///  It's size depends on N_LOG_REGS TOTAL_TRAJ_EXECUTIONS
+struct log
+  {
+   int nregs;
+  
+   float cereb_input_vars[N_LOG_REGS][NUM_JOINTS*3];
+   float robot_state_vars[N_LOG_REGS][NUM_JOINTS*3];
+   float robot_torque_vars[N_LOG_REGS][NUM_JOINTS];
+   float cereb_output_vars[N_LOG_REGS][NUM_OUTPUT_VARS];
+   float cereb_learning_vars[N_LOG_REGS][NUM_OUTPUT_VARS];
+   float robot_error_vars[N_LOG_REGS][NUM_JOINTS];
+   float times[N_LOG_REGS];
+   float consumed_time[N_LOG_REGS];
+   unsigned long spk_counter[N_LOG_REGS];
+  };
+
+/// \brief Initializes the log register.
+/// This function must be called once at the beginnig of the logging process.
+EXTERN_C void init_log(void);
+
+/// \brief Stores all the interesting variables during the simulation process. 
+///   These variables are logged during the simulation process.
+/// This function must be called at each simulation step.
+/// \param time Simulation time of the simulation process.
+/// \param input_vars Desired Position Velocity and Acceleration Values.
+/// \param state_vars Actual Position Velocity and Acceleration Values.
+/// \param torque_vars Torque Values calculated by the crude inverse dynamics.
+/// \param output_vars Cerebellum output variables (corerctive torque values).
+/// \param learning_vars Learning variables calculated from the performed error.
+/// \param error_vars Actual Position Velocity and Acceleration Values-Desired Position Velocity and Acceleration Values.
+/// \param elapsed_time Computation time consumed by a control loop iteration.
+/// \param spk_counter Processed events during a control loop iteration.
+EXTERN_C void log_vars(double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter);
+
+/// \brief Saves the previously stored log registers in a text file.
+/// This function must be called at the end of the logging process.
+/// \param file_name Pointer to an array containing the name of the output log file.
+/// \pre The log must be previously initialized (calling init_log())
+/// \return Error occurred during the function execution (0 if it is successfully executed)
+EXTERN_C int save_log(char *file_name);
+
+#endif /*_EDLUT_INTERFACE_H_*/
