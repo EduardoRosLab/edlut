@@ -380,7 +380,9 @@ InternalSpike * TableBasedModel::GenerateNextSpike(InternalSpike *  OutputSpike)
 		EndRefractory += OutputSpike->GetTime();
 	}else{
 		EndRefractory = OutputSpike->GetTime()+DEF_REF_PERIOD;
-		cerr << "Warning: firing table and firing-end table discrepance (using default ref period)" << endl;
+#ifdef _DEBUG
+		cerr << "Warning: firing table and firing-end table discrepance (using def. ref. period)" << endl;
+#endif
 	}
 
 	CurrentState->SetEndRefractoryPeriod(SourceIndex,EndRefractory);
