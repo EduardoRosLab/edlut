@@ -26,6 +26,7 @@ license     := GPL v3.0
 # http://pkg-config.freedesktop.org/wiki
 
 compiler 	:= @compiler@
+ccompiler	:= @ccompiler@
 
 # if matlab support -> Matlab paths, includes and flags.
 #matlabsupport	:= false
@@ -61,6 +62,9 @@ simulinkinclude	:= @matlab@/simulink/include
 #mex32suffix	:= mexglx
 #mex64suffix	:= mexa64
 mexsuffix	:= @mexext@
+
+# if generate_robot -> robot source codes and library will be builded.
+generate_robot    := @robot_generation@
 
 # if optimized -> no debug info is produced --> applies -O3 flag if
 # set to true
@@ -112,6 +116,7 @@ sfunctiondir	:= ./sfunction
 exe-source-file := ${srcdir}/EDLUTKernel.cpp
 step-source-file := ${srcdir}/StepByStep.cpp
 prec-source-file := ${srcdir}/PrecisionTest.cpp
+robot-source-file := ${srcdir}/SimulatedRobotControl.c
 
 
 # default file to be included when the mex build is required
@@ -165,7 +170,8 @@ integration-sources	+= $(srcdir)/integration_method/BDFn_GPU.cu \
 endif
 			   
 
-interface-sources	:= $(srcdir)/interface/C_Interface.cpp
+interface-sources	:= $(srcdir)/interface/C_Interface.cpp \
+			$(srcdir)/interface/C_interface_for_robot_control.cpp
 
 learning_rules-sources	:= 	$(srcdir)/learning_rules/ActivityRegister.cpp \
 			$(srcdir)/learning_rules/AdditiveKernelChange.cpp \
@@ -239,6 +245,10 @@ else
 spike-sources		+= $(srcdir)/spike/Network.cpp
 endif
 
+robot-arm-sources		:= $(srcdir)/arm_robot_simulator/ArmRobotSimulation.c \
+			$(srcdir)/arm_robot_simulator/MatrixOperations.c \
+			$(srcdir)/arm_robot_simulator/RobotRecursiveInverseDynamics.c 
+
 sources     := $(communication-sources) \
 			$(integration-sources) \
 			$(interface-sources) \
@@ -246,6 +256,10 @@ sources     := $(communication-sources) \
 			$(learning_rules-sources) \
 			$(simulation-sources) \
 			$(spike-sources)
+			
+ifeq ($(generate_robot),true)
+sources		+= $(robot-arm-sources)
+endif
 
 
 

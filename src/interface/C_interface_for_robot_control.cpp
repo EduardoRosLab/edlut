@@ -17,9 +17,9 @@
  /*!
  * \file C_interface_for_robot_control.cpp
  *
- * \author Richard R. Carrido
+ * \author Richard R. Carrillo
  * \author Niceto R. Luque
- * \date 11 of July 2013
+ * \date 18 of September 2013
  *
  * This file defines the interface functions to access EDLUT's functionality.
  */
@@ -50,8 +50,6 @@
 
 #include "../../include/interface/C_interface_for_robot_control.h"
 
-struct log Var_log; // Log of simulation variables
-
 ///////////////////////////// SIMULATION MANAGEMENT //////////////////////////
 
 extern "C" Simulation *create_neural_simulation(const char *net_file, const char *input_weight_file, const char *input_spike_file, const char *output_weight_file, const char *output_spike_file, double weight_save_period, int real_time_simulation)
@@ -70,7 +68,7 @@ extern "C" Simulation *create_neural_simulation(const char *net_file, const char
       if(output_weight_file) // Driver to save neural-network weights
         { 
          neural_sim->AddOutputWeightDriver(new FileOutputWeightDriver(output_weight_file));
-         neural_sim->SetSaveStep(weight_save_period);
+         neural_sim->SetSaveStep((float)weight_save_period);
         }
 
       neural_sim->AddOutputSpikeDriver(new ArrayOutputSpikeDriver()); // OutputSpikeDriver used to send activity to the robot interface. This output driver must be inserted first
@@ -265,7 +263,7 @@ extern "C" void calculate_input_trajectory(double *inp, double amplitude, double
   }
 */
 
-extern "C" void calculate_input_trajectory_max_amplitude(double amplitude, double *min_traj_amplitude, double *max_traj_amplitude)
+extern "C" void calculate_input_trajectory_max_amplitude(double trajectory_time, double amplitude, double *min_traj_amplitude, double *max_traj_amplitude)
   {
    double inp[NUM_JOINTS*3],traj_val;
    double tsimul;
@@ -275,7 +273,7 @@ extern "C" void calculate_input_trajectory_max_amplitude(double amplitude, doubl
       min_traj_amplitude[nmagnit]=-log(0.0L); // +Infinite
       max_traj_amplitude[nmagnit]=log(0.0L); // -Infinite
      }
-   for(tsimul=0.0;tsimul<TRAJECTORY_TIME;tsimul+=SIM_SLOT_LENGTH)
+   for(tsimul=0.0;tsimul<trajectory_time;tsimul+=SIM_SLOT_LENGTH)
      {
       calculate_input_trajectory(inp,amplitude,tsimul);
       for(njoint=0;njoint<NUM_JOINTS;njoint++)
@@ -586,39 +584,46 @@ extern "C" int compute_output_activity(Simulation *neural_sim, double *output_va
 
 ///////////////////////////// VARIABLES LOG //////////////////////////
 
-extern "C" void init_log(void)
+extern "C" int create_log(struct log *log, int total_traj_executions, int trajectory_time)
   {
-   Var_log.nregs=0;
+  //Total number of registers that will be stored in the computer memory during the simulation
+   int n_log_regs=total_traj_executions*(int)((trajectory_time-((SIM_SLOT_LENGTH)/2.0))/(float)(SIM_SLOT_LENGTH) + 1);
+   int errorn;
+   log->nregs=0;
+   log->regs=(struct log_reg *)malloc(sizeof(struct log_reg)*n_log_regs);
+   if(log)
+      errorn=0;
+   else
+      errorn=-1;
+   return(errorn);
   }
 
-extern "C" void log_vars(double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter)
+extern "C" void log_vars(struct log *log, double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter)
   {
    int nvar;
-   struct log *log=&Var_log;
-   log->times[log->nregs]=(float)time;
-   log->spk_counter[log->nregs]=spk_counter;
-   log->consumed_time[log->nregs]=elapsed_time;
+   log->regs[log->nregs].time=(float)time;
+   log->regs[log->nregs].spk_counter=spk_counter;
+   log->regs[log->nregs].consumed_time=elapsed_time;
    for(nvar=0;nvar<NUM_JOINTS*3;nvar++)
-      log->cereb_input_vars[log->nregs][nvar]=input_vars?(float)input_vars[nvar]:0;
+      log->regs[log->nregs].cereb_input_vars[nvar]=input_vars?(float)input_vars[nvar]:0;
    for(nvar=0;nvar<NUM_JOINTS*3;nvar++)
-      log->robot_state_vars[log->nregs][nvar]=state_vars?(float)state_vars[nvar]:0;
+      log->regs[log->nregs].robot_state_vars[nvar]=state_vars?(float)state_vars[nvar]:0;
    for(nvar=0;nvar<NUM_JOINTS;nvar++)
-      log->robot_torque_vars[log->nregs][nvar]=torque_vars?(float)torque_vars[nvar]:0;
+      log->regs[log->nregs].robot_torque_vars[nvar]=torque_vars?(float)torque_vars[nvar]:0;
    for(nvar=0;nvar<NUM_OUTPUT_VARS;nvar++)
-      log->cereb_output_vars[log->nregs][nvar]=output_vars?(float)output_vars[nvar]:0;
+      log->regs[log->nregs].cereb_output_vars[nvar]=output_vars?(float)output_vars[nvar]:0;
    for(nvar=0;nvar<NUM_OUTPUT_VARS;nvar++)
-      log->cereb_learning_vars[log->nregs][nvar]=learning_vars?(float)learning_vars[nvar]:0;
+      log->regs[log->nregs].cereb_learning_vars[nvar]=learning_vars?(float)learning_vars[nvar]:0;
    for(nvar=0;nvar<NUM_JOINTS;nvar++)
-      log->robot_error_vars[log->nregs][nvar]=error_vars?(float)error_vars[nvar]:0;
+      log->regs[log->nregs].robot_error_vars[nvar]=error_vars?(float)error_vars[nvar]:0;
    log->nregs++;
   }
 
-extern "C" int save_log(char *file_name)
+extern "C" int save_and_finish_log(struct log *log, char *file_name)
   {
    int ret;
    int cur_reg,cur_var;
    FILE *fd;
-   struct log *log=&Var_log;
    fd=fopen(file_name,"wt");
    if(fd)
      {
@@ -637,24 +642,25 @@ extern "C" int save_log(char *file_name)
       fprintf(fd,"\n%s Numer of registers: %i. Columns per register: time consumed_time spk_counter %i_input_vars %i_state_vars %i_torque_vars %i_output_vars %i_learning_vars %i_error_vars\n\n",COMMENT_CHARS,log->nregs,NUM_JOINTS*3,NUM_JOINTS*3,NUM_JOINTS,NUM_OUTPUT_VARS,NUM_OUTPUT_VARS,NUM_JOINTS);
       for(cur_reg=0;cur_reg<log->nregs;cur_reg++)
         {
-         ret|=!fprintf(fd,"%g ",log->times[cur_reg]);
-         ret|=!fprintf(fd,"%g ",log->consumed_time[cur_reg]);
-         ret|=!fprintf(fd,"%lu ",log->spk_counter[cur_reg]);
+         ret|=!fprintf(fd,"%g ",log->regs[cur_reg].time);
+         ret|=!fprintf(fd,"%g ",log->regs[cur_reg].consumed_time);
+         ret|=!fprintf(fd,"%lu ",log->regs[cur_reg].spk_counter);
          for(cur_var=0;cur_var<NUM_JOINTS*3;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->cereb_input_vars[cur_reg][cur_var]);
+            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].cereb_input_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_JOINTS*3;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->robot_state_vars[cur_reg][cur_var]);
+            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].robot_state_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_JOINTS;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->robot_torque_vars[cur_reg][cur_var]);
+            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].robot_torque_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_OUTPUT_VARS;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->cereb_output_vars[cur_reg][cur_var]);
+            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].cereb_output_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_OUTPUT_VARS;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->cereb_learning_vars[cur_reg][cur_var]);
+            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].cereb_learning_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_JOINTS;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->robot_error_vars[cur_reg][cur_var]);
+            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].robot_error_vars[cur_var]);
          fprintf(fd,"\n");
         }
       fclose(fd);
+      free(log->regs);
      }
    else
       ret=1;

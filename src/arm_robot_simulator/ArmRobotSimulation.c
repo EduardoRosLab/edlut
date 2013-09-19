@@ -1630,7 +1630,7 @@ for (i=0;i<n_joints;i++){
 	*		qdd[i]=-4*pow(M_PI,2)*Amplitude*sin(2*M_PI*tsimul+(1.0/4.0)*i*M_PI);
 	*/
 	
-    // modified trajectory by means of a cubic spline: -4·pi·t^3 + 6·pi·t^2 (qd[0] = 0 and qd[1] = 0 and q[0] = 0 and q[1] = 2*pi)
+    // modified trajectory by means of a cubic spline: -4sum(pisum(t^3)) + 6sum(pisum(t^2)) (qd[0] = 0 and qd[1] = 0 and q[0] = 0 and q[1] = 2*pi)
 	q[i]=Amplitude*sin((-4*M_PI*tsimul*tsimul*tsimul + 6*M_PI*tsimul*tsimul) + i*M_PI/4);
 	qd[i]=Amplitude*12*M_PI*tsimul*(1 - tsimul)*cos(4*M_PI*tsimul*tsimul*tsimul - 6*M_PI*tsimul*tsimul - M_PI*i/4);
 	qdd[i]=Amplitude*(12*M_PI*(1-2*tsimul)*cos(4*M_PI*tsimul*tsimul*tsimul - 6*M_PI*tsimul*tsimul - M_PI*i/4) + 144*M_PI*M_PI*tsimul*tsimul*(tsimul - 1)*(tsimul - 1)*sin(4*M_PI*tsimul*tsimul*tsimul - 6*M_PI*tsimul*tsimul - M_PI*i/4));

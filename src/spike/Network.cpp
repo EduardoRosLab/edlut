@@ -337,7 +337,6 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
                      		if(fscanf(fh,"%i",&nn)==1 && fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident_type)==1 && fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident)==1 && fscanf(fh,"%i",&outn)==1 && fscanf(fh,"%i",&monit)==1){
                      			if(tind+nn>this->nneurons){
                      				throw EDLUTFileException(4,7,6,1,Currentline);
-                     				break;
                      			}
 								int ni;                    
                         		savedcurrentline=Currentline;
@@ -360,7 +359,6 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
                         		}
                         	}else{
                         		throw EDLUTFileException(4,8,7,1,Currentline);
-                        		break;
                         	}
                      	}
 
@@ -426,7 +424,6 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
 
                        		}else{
                        			throw EDLUTFileException(4,28,23,1,Currentline);
-                       			break;
                        		}
         				}
         			}else{
@@ -451,15 +448,12 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         					if(fscanf(fh,"%i",&source)==1 && fscanf(fh,"%i",&nsources)==1 && fscanf(fh,"%i",&target)==1 && fscanf(fh,"%i",&ntargets)==1 && fscanf(fh,"%i",&nreps)==1 && fscanf(fh,"%f",&delay)==1 && fscanf(fh,"%f",&delayinc)==1 && fscanf(fh,"%i",&type)==1 && fscanf(fh,"%f",&maxweight)==1 && fscanf(fh,"%i",&wchange)==1){
         						if(iind+nsources*ntargets*nreps>this->ninters){
         							throw EDLUTFileException(4,10,9,1,Currentline);
-        							break;
         						}else{
         							if(source+nreps*nsources>this->nneurons || target+nreps*ntargets>this->nneurons){
   										throw EDLUTFileException(4,11,10,1,Currentline);
-  										break;
   									}else{
   										if(wchange >= this->nwchanges){
   											throw EDLUTFileException(4,29,24,1,Currentline);
-  											break;
   										}
         							}
         						}
@@ -488,7 +482,6 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         						}
         					}else{
         						throw EDLUTFileException(4,12,11,1,Currentline);
-        						break;
         					}
         				}
         				
@@ -531,7 +524,6 @@ void Network::LoadWeights(const char *wfile) throw (EDLUTFileException){
 			if(fscanf(fh,"%i",&nweights)==1 && fscanf(fh,"%f",&weight)==1){
 				if(nweights < 0 || nweights + connind > this->ninters){
 					throw EDLUTFileException(11,32,26,1,Currentline);
-					break;
 				}
 				
 				if(nweights == 0){
@@ -544,7 +536,6 @@ void Network::LoadWeights(const char *wfile) throw (EDLUTFileException){
 				}
 			}else{
 				throw EDLUTFileException(11,31,25,1,Currentline);
-				break;
 			}
 		}
 		fclose(fh);
@@ -579,7 +570,6 @@ void Network::SaveWeights(const char *wfile) throw (EDLUTException){
 				if(nantw > 0){
 					if(fprintf(fh,"%i %g\n",nantw,antweight) <= 0){
 						throw EDLUTException(12,33,4,0);
-						break;
 					}
 				}
 				

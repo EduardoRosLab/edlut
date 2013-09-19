@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 # By defult all the options are enabled and search the paths. 
 # Parameters: --with-matlab=/path/matlab --without-matlab --without-simulink
-# --enable-debugging --enable-profiling --disable-openmp --with-cuda=/cudapath
+# --enable-robot --enable-debugging --enable-profiling --disable-openmp --with-cuda=/cudapath
 # --without-cuda
 
 
@@ -11,6 +11,7 @@ AC_INIT([edlutkernel], [2.0], [jgarridoalcazar@gmail.com])
 
 m4_include([m4/matlab.m4])
 m4_include([m4/simulink.m4])
+m4_include([m4/robot.m4])
 m4_include([m4/mexext.m4])
 m4_include([m4/cuda.m4])
 
@@ -21,6 +22,7 @@ AC_PROG_CC
 AC_PROG_AWK
 
 AC_SUBST(compiler,$CXX)
+AC_SUBST(ccompiler, $CC)
 
 # Define default language
 AC_LANG([C++])
@@ -103,6 +105,21 @@ AS_IF([test "x$CUDA" == "x"],
  AC_SUBST(cudaversion, $CUDA_VERSION)
  AC_SUBST(cudamajor, $CUDA_MAJOR)
  AC_SUBST(cudaminor, $CUDA_MINOR)])
+ 
+ 
+################################################################################
+
+# Checks for robot simulator installation and if so, defines `enable_robot' to true. 
+# For the moment, --with-matlab option is required in order to compile the robot simulator.
+
+AX_ROBOT
+
+AC_SUBST(robot_generation, $USEROBOT)
+AS_IF([test "x$USEROBOT" == "xno"],
+ [AC_SUBST(robot_generation, false)
+ AC_SUBST(robottarget)],
+ [AC_SUBST(robot_generation, true)
+ AC_SUBST(robottarget,\$\(robottarget\))])
  
  
  
