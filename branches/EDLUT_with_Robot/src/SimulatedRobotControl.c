@@ -17,8 +17,7 @@
  *
  * \author Niceto R. Luque
  * \author Richard R. Carrillo
- * \date 22 July 2013
- *
+ * \date 18 of September 2013
  * In this file the main robot-control loop is implemented.
  */
 
@@ -27,7 +26,14 @@
 #   include <crtdbg.h> // To check for memory leaks
 #endif
 
-#include <windows.h>
+#if (defined(_WIN32) || defined(_WIN64))
+#	define REAL_TIME_WINNT
+#endif
+
+#if defined(REAL_TIME_WINNT)
+#	include <windows.h>
+#endif
+
 #include <stdio.h>
 
 #include "../include/interface/C_interface_for_robot_control.h"
@@ -49,6 +55,8 @@
 #define ROBOT_SIMUL_VAR_NAME "RRedKuKadet10" // Variable name in ROBOT_VAR_FILE_NAME which contains the simulated robot specifications.
 
 #define TRAJ_POS_AMP 0.1 // Amplitude of the desired robot's trajectory
+#define TRAJECTORY_TIME 1 // Simulation time in seconds required to execute the desired trajectory once
+#define MAX_TRAJ_EXECUTIONS 2 // Maximum number of trajectories repetitions that will be executed by the robot
 
 const double ROBOT_GRAVITY[3]={0, 0, 9.81}; // Earth's standard acceleration due to gravity [Gx Gy Gz]
 const double ROBOT_EXTERNAL_FORCE[6]={0, 0, 0, 0, 0, 0}; // External force on manipulator tip [Fx Fy Fz MOMENTUMx MOMENTUMy MOMENTUMz]
@@ -75,102 +83,129 @@ int main(int ac, char *av[])
    double sim_time,cur_traject_time;
    float slot_elapsed_time,sim_elapsed_time;
    int n_traj_exec;
+
+#if defined(REAL_TIME_WINNT)
    // Variables for consumed-CPU-time measurement
    LARGE_INTEGER startt,endt,freq;
+#endif
+   // Variable for logging the simulation state variables
+   struct log var_log;
+
 #if defined(_DEBUG) && (defined(_WIN32) || defined(_WIN64))
-   _CrtMemState state0;
+//   _CrtMemState state0;
    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
    _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
 #endif
 
+#if defined(REAL_TIME_WINNT)
    if(!QueryPerformanceFrequency(&freq))
       puts("QueryPerformanceFrequency failed");
+#endif
 
    // Load Matlab robot objects from Matlab files
-   if(!load_robot(ROBOT_VAR_FILE_NAME,ROBOT_BASE_VAR_NAME,&n_robot_joints,&robot_inv_dyn_object) && \
-      !load_robot(ROBOT_VAR_FILE_NAME,ROBOT_SIMUL_VAR_NAME,NULL,&robot_dir_dyn_object))
+   if(!(errorn=load_robot(ROBOT_VAR_FILE_NAME,ROBOT_BASE_VAR_NAME,&n_robot_joints,&robot_inv_dyn_object)) && \
+      !(errorn=load_robot(ROBOT_VAR_FILE_NAME,ROBOT_SIMUL_VAR_NAME,NULL,&robot_dir_dyn_object)))
      {
-      if(!allocate_integration_buffers(&num_integration_buffers,n_robot_joints)) // Initialize the buffers for numerical integration using the initial desired robot's state
+      if(!(errorn=allocate_integration_buffers(&num_integration_buffers,n_robot_joints))) // Initialize the buffers for numerical integration using the initial desired robot's state
         {
-         // Initialize EDLUT and load neural network files
-         neural_sim=create_neural_simulation(NET_FILE, INPUT_WEIGHT_FILE, INPUT_ACTIVITY_FILE, OUTPUT_WEIGHT_FILE, OUTPUT_ACTIVITY_FILE, WEIGHT_SAVE_PERIOD, REAL_TIME_NEURAL_SIM);
-         if(neural_sim)
+         // Initialize variable log
+         if(!(errorn=create_log(&var_log, MAX_TRAJ_EXECUTIONS, TRAJECTORY_TIME)))
            {
-            double min_traj_amplitude[3], max_traj_amplitude[3]; // Position, velocity and acceleration
-            calculate_input_trajectory_max_amplitude(TRAJ_POS_AMP, min_traj_amplitude, max_traj_amplitude); // Calcula the maximum and minimum values of the desired trajectory
-            
-            init_log(); // Initialize variable log regtister
-            total_output_spks=0L;
-            puts("Simulating...");
-            sim_elapsed_time=0.0;
-            errorn=0;
-//    _CrtMemCheckpoint(&state0);
-            for(n_traj_exec=0;n_traj_exec<TOTAL_TRAJ_EXECUTIONS && !errorn;n_traj_exec++)
+            // Initialize EDLUT and load neural network files
+            neural_sim=create_neural_simulation(NET_FILE, INPUT_WEIGHT_FILE, INPUT_ACTIVITY_FILE, OUTPUT_WEIGHT_FILE, OUTPUT_ACTIVITY_FILE, WEIGHT_SAVE_PERIOD, REAL_TIME_NEURAL_SIM);
+            if(neural_sim)
               {
-               calculate_input_trajectory(robot_state_vars, TRAJ_POS_AMP, 0.0); // Initialize simulated robot's actual state from the desired state (input trajectory) (position, velocity and acceleration)
-               initialize_integration_buffers(robot_state_vars,&num_integration_buffers,n_robot_joints); // For the robot's direct 
-               reset_neural_simulation(neural_sim); // after each trajectory execution the network simulation state must be reset (pending activity events are discarded)
-               cur_traject_time=0.0;
-               do
+               double min_traj_amplitude[3], max_traj_amplitude[3]; // Position, velocity and acceleration
+               calculate_input_trajectory_max_amplitude(TRAJECTORY_TIME,TRAJ_POS_AMP, min_traj_amplitude, max_traj_amplitude); // Calcula the maximum and minimum values of the desired trajectory
+
+               total_output_spks=0L;
+               puts("Simulating...");
+               sim_elapsed_time=0.0;
+               errorn=0;
+//    _CrtMemCheckpoint(&state0);
+               for(n_traj_exec=0;n_traj_exec<MAX_TRAJ_EXECUTIONS && !errorn;n_traj_exec++)
                  {
-                  int n_joint;
-                  QueryPerformanceCounter(&startt);
-                  // control loop iteration starts
-                  sim_time=(double)n_traj_exec*TRAJECTORY_TIME + cur_traject_time; // Calculate absolute simulation time
-                  calculate_input_trajectory(input_traject_vars, TRAJ_POS_AMP, cur_traject_time); // Calculate desired input trajectory
-                  //ECEA
-                  generate_input_traj_activity(neural_sim, sim_time, input_traject_vars, min_traj_amplitude, max_traj_amplitude); // Translates desired trajectory (position and velocity) into spikes
-                  generate_robot_state_activity(neural_sim, sim_time, input_traject_vars, min_traj_amplitude, max_traj_amplitude); // Translates desired trajectory into spikes again to improve the input codification (using the robot's state input neurons)
-				  //ICEA
-//                generate_robot_state_activity(neural_sim, sim_time, robot_state_vars, min_traj_amplitude, max_traj_amplitude); // Translates robot's current state (position and velocity) into spikes
+                  calculate_input_trajectory(robot_state_vars, TRAJ_POS_AMP, 0.0); // Initialize simulated robot's actual state from the desired state (input trajectory) (position, velocity and acceleration)
+                  initialize_integration_buffers(robot_state_vars,&num_integration_buffers,n_robot_joints); // For the robot's direct 
+                  reset_neural_simulation(neural_sim); // after each trajectory execution the network simulation state must be reset (pending activity events are discarded)
+                  cur_traject_time=0.0;
+                  do
+                    {
+                     int n_joint;
 
-                  compute_robot_inv_dynamics(robot_inv_dyn_object,input_traject_vars,ROBOT_EXTERNAL_FORCE,ROBOT_GRAVITY,robot_inv_dyn_torque); // Calculate crude inverse dynamics of the base robot. They constitude the base robot's input torque
-                  for(n_joint=0;n_joint<NUM_JOINTS;n_joint++) // Calculate total torque from forward controller (cerebellum) torque plus base controller torque
-                     total_torque[n_joint]=robot_inv_dyn_torque[n_joint]+cerebellar_output_vars[n_joint*2]-cerebellar_output_vars[n_joint*2+1];
-                  compute_robot_dir_dynamics(robot_dir_dyn_object,robot_state_vars,total_torque,robot_state_vars,&num_integration_buffers,ROBOT_EXTERNAL_FORCE,ROBOT_GRAVITY,SIM_SLOT_LENGTH); // Simulate the robot (direct dynamics).
+#if defined(REAL_TIME_WINNT)
+                     QueryPerformanceCounter(&startt);
+#endif
+
+                     // control loop iteration starts
+                     sim_time=(double)n_traj_exec*TRAJECTORY_TIME + cur_traject_time; // Calculate absolute simulation time
+                     calculate_input_trajectory(input_traject_vars, TRAJ_POS_AMP, cur_traject_time); // Calculate desired input trajectory
+                     //ECEA
+                     generate_input_traj_activity(neural_sim, sim_time, input_traject_vars, min_traj_amplitude, max_traj_amplitude); // Translates desired trajectory (position and velocity) into spikes
+                     generate_robot_state_activity(neural_sim, sim_time, input_traject_vars, min_traj_amplitude, max_traj_amplitude); // Translates desired trajectory into spikes again to improve the input codification (using the robot's state input neurons)
+				     //ICEA
+//                   generate_robot_state_activity(neural_sim, sim_time, robot_state_vars, min_traj_amplitude, max_traj_amplitude); // Translates robot's current state (position and velocity) into spikes
+
+                     compute_robot_inv_dynamics(robot_inv_dyn_object,input_traject_vars,ROBOT_EXTERNAL_FORCE,ROBOT_GRAVITY,robot_inv_dyn_torque); // Calculate crude inverse dynamics of the base robot. They constitude the base robot's input torque
+                     for(n_joint=0;n_joint<NUM_JOINTS;n_joint++) // Calculate total torque from forward controller (cerebellum) torque plus base controller torque
+                        total_torque[n_joint]=robot_inv_dyn_torque[n_joint]+cerebellar_output_vars[n_joint*2]-cerebellar_output_vars[n_joint*2+1];
+                     compute_robot_dir_dynamics(robot_dir_dyn_object,robot_state_vars,total_torque,robot_state_vars,&num_integration_buffers,ROBOT_EXTERNAL_FORCE,ROBOT_GRAVITY,SIM_SLOT_LENGTH); // Simulate the robot (direct dynamics).
 
 
-                  calculate_error_signals(input_traject_vars, robot_state_vars, robot_error_vars); // Calculated robot's performed error
-                  calculate_learning_signals(robot_error_vars, cerebellar_output_vars, cerebellar_learning_vars); // Calculate learning signal from the calculated error
-                  generate_learning_activity(neural_sim, sim_time, cerebellar_learning_vars); // Translates the learning activity into spikes and injects this activity in the network
+                     calculate_error_signals(input_traject_vars, robot_state_vars, robot_error_vars); // Calculated robot's performed error
+                     calculate_learning_signals(robot_error_vars, cerebellar_output_vars, cerebellar_learning_vars); // Calculate learning signal from the calculated error
+                     generate_learning_activity(neural_sim, sim_time, cerebellar_learning_vars); // Translates the learning activity into spikes and injects this activity in the network
 
-                  errorn=run_neural_simulation_slot(neural_sim, sim_time+SIM_SLOT_LENGTH); // Simulation the neural network during a time slot
+                     errorn=run_neural_simulation_slot(neural_sim, sim_time+SIM_SLOT_LENGTH); // Simulation the neural network during a time slot
  
-                  total_output_spks+=(long)compute_output_activity(neural_sim, cerebellar_output_vars); // Translates cerebellum output activity into analog output variables (corrective torques)
-                  // control loop iteration ends
-                  QueryPerformanceCounter(&endt); // measures time
-                  slot_elapsed_time=(endt.QuadPart-startt.QuadPart)/(float)freq.QuadPart; // to be logged
-                  sim_elapsed_time+=slot_elapsed_time;
-                  log_vars(sim_time, input_traject_vars, robot_state_vars, robot_inv_dyn_torque, cerebellar_output_vars, cerebellar_learning_vars, robot_error_vars, slot_elapsed_time,get_neural_simulation_spike_counter(neural_sim)); // Store vars into RAM
-                  cur_traject_time+=SIM_SLOT_LENGTH;
-                 }
-               while(cur_traject_time<TRAJECTORY_TIME-(SIM_SLOT_LENGTH/2.0) && !errorn); // we add -(SIM_SLOT_LENGTH/2.0) because of floating-point-type codification problems
-              } 
+                     total_output_spks+=(long)compute_output_activity(neural_sim, cerebellar_output_vars); // Translates cerebellum output activity into analog output variables (corrective torques)
+                     // control loop iteration ends
+
+#if defined(REAL_TIME_WINNT)
+                     QueryPerformanceCounter(&endt); // measures time
+                     slot_elapsed_time=(endt.QuadPart-startt.QuadPart)/(float)freq.QuadPart; // to be logged
+                     sim_elapsed_time+=slot_elapsed_time;
+#endif
+                     log_vars(&var_log, sim_time, input_traject_vars, robot_state_vars, robot_inv_dyn_torque, cerebellar_output_vars, cerebellar_learning_vars, robot_error_vars, slot_elapsed_time,get_neural_simulation_spike_counter(neural_sim)); // Store vars into RAM
+                     cur_traject_time+=SIM_SLOT_LENGTH;
+                    }
+                  while(cur_traject_time<TRAJECTORY_TIME-(SIM_SLOT_LENGTH/2.0) && !errorn); // we add -(SIM_SLOT_LENGTH/2.0) because of floating-point-type codification problems
+                 } 
 //     reset_neural_simulation(neural_sim);
 //     _CrtMemDumpAllObjectsSince(&state0);
-            if(errorn)
-               printf("Error %i performing neural network simulation\n",errorn);
-            printf("Total neural-network output spikes: %li\n",total_output_spks);
-            printf("Total number of neural updates: %Ld\n",get_neural_simulation_event_counter(neural_sim));
-            printf("Mean number of neural-network spikes in heap: %f\n",get_accumulated_heap_occupancy_counter(neural_sim)/(double)get_neural_simulation_event_counter(neural_sim));
-            printf("Total elapsed time: %fs (time resolution: %fus)\n",sim_elapsed_time,1.0e6/freq.QuadPart);
-            save_neural_weights(neural_sim);
-            finish_neural_simulation(neural_sim);
+               if(errorn)
+                  printf("Error %i performing neural network simulation\n",errorn);
+               printf("Total neural-network output spikes: %li\n",total_output_spks);
+               printf("Total number of neural updates: %Ld\n",get_neural_simulation_event_counter(neural_sim));
+               printf("Mean number of neural-network spikes in heap: %f\n",get_accumulated_heap_occupancy_counter(neural_sim)/(double)get_neural_simulation_event_counter(neural_sim));
+
+#if defined(REAL_TIME_WINNT)
+               printf("Total elapsed time: %fs (time resolution: %fus)\n",sim_elapsed_time,1.0e6/freq.QuadPart);
+#endif
+
+               save_neural_weights(neural_sim);
+               finish_neural_simulation(neural_sim);
+              }
+            else
+              {
+               errorn=10000;
+               printf("Error initializing neural network simulation\n");
+              }              
             puts("Saving log file");
-            errorn=save_log(LOG_FILE); // Store logged vars in disk
+            errorn=save_and_finish_log(&var_log, LOG_FILE); // Store logged vars in disk
             if(errorn)
                printf("Error %i while saving log file\n",errorn);
            }
          else
            {
-            errorn=-3;
-            printf("Error initializing neural network simulation\n");
-           }
+            errorn*=1000;
+            printf("Error allocating memory for the log of the simulation variables\n");
+           }         
          free_integration_buffers(&num_integration_buffers);
         }
       else
         {
-         errorn=-2;
+         errorn*=100;
          printf("Error allocating memory for the numerical integration\n");
         }
       free_robot(robot_inv_dyn_object);
@@ -178,9 +213,9 @@ int main(int ac, char *av[])
      }
    else
      {
-      errorn=-1;
+      errorn*=10;
       printf("Error loading the robot object from file: %s\n",ROBOT_VAR_FILE_NAME);
-     }
+     } 
    if(!errorn)
       puts("OK");
    else

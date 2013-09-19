@@ -20,7 +20,7 @@
  *
  * \author Richard R. Carrillo
  * \author Niceto R. Luque
- * \date 22 of July 2013
+ * \date 18 of September 2013
  *
  * This file declares the interface functions to access EDLUT's functionality
  * for robot control.
@@ -49,14 +49,6 @@ typedef struct Simulation_tag Simulation;
 /// \brief Approximate maximum acceptable time which can be consunsed by EDLUT in each slot
 /// Used in real time only
 #define MAX_SIM_SLOT_CONSUMED_TIME SIM_SLOT_LENGTH*0.5
-
-/// \brief Time in seconds required to execute the desired trajectory once
-/// (simulated time)
-#define TRAJECTORY_TIME 1
-
-/// \brief Number of trajectories repetitions executed by the robot
-/// (integer value)
-#define TOTAL_TRAJ_EXECUTIONS 1000
 
 /// \brief Length of a EDLUT simulation step for time-driven neural models
 /// (should be smaller than SIM_SLOT_LENGTH)
@@ -214,7 +206,7 @@ EXTERN_C void calculate_input_trajectory(double *inp, double amplitude, double t
 /// \param amplitude Amplitide of the trajectory
 /// \param min_traj_amplitude Pointer to an array in which the minimum values for the position, velocity and acceleration will be stored.
 /// \param max_traj_amplitude Pointer to an array in which the maximum values for the position, velocity and acceleration will be stored.
-EXTERN_C void calculate_input_trajectory_max_amplitude(double amplitude, double *min_traj_amplitude, double *max_traj_amplitude);
+EXTERN_C void calculate_input_trajectory_max_amplitude(double trajectory_time, double amplitude, double *min_traj_amplitude, double *max_traj_amplitude);
 
 /// \brief Calculates the RBF (Gaussian bell) width for a given overlap
 /// This value is used to automatically configure RBFs shape
@@ -337,36 +329,51 @@ EXTERN_C void generate_learning_activity(Simulation *neural_sim, double cur_slot
 EXTERN_C int compute_output_activity(Simulation *neural_sim, double *output_vars);
 
 ///////////////////////////// VARIABLES LOG //////////////////////////
+
 /// \brief Comment string used in the text files
 ///  It is used to add comments in the log file
 #define COMMENT_CHARS "%"
-/// \brief Total number of registers that will be stored in the computer memory during the simulation
-///  It is used to specify the size of log structure
-#define N_LOG_REGS TOTAL_TRAJ_EXECUTIONS*(int)((TRAJECTORY_TIME-(SIM_SLOT_LENGTH/2.0))/(float)SIM_SLOT_LENGTH + 1)
-/// \brief An structure where the variables are logged during the simulation
-///  It's size depends on N_LOG_REGS TOTAL_TRAJ_EXECUTIONS
+
+/// \brief The structure of one log register
+///  This is an internal strucutre used by struct log
+struct log_reg
+  {
+   float cereb_input_vars[NUM_JOINTS*3];
+   float robot_state_vars[NUM_JOINTS*3];
+   float robot_torque_vars[NUM_JOINTS];
+   float cereb_output_vars[NUM_OUTPUT_VARS];
+   float cereb_learning_vars[NUM_OUTPUT_VARS];
+   float robot_error_vars[NUM_JOINTS];
+   float time;
+   float consumed_time;
+   unsigned long spk_counter;
+  };
+
+/// \brief Structure where the variables are logged during the simulation
+///  It's size will depend on SIM_SLOT_LENGTH, the trajectory time and the maximum number of trajectory repetitions
+///  The user has to declare one instance of this strcuture for each log process
 struct log
   {
    int nregs;
-  
-   float cereb_input_vars[N_LOG_REGS][NUM_JOINTS*3];
-   float robot_state_vars[N_LOG_REGS][NUM_JOINTS*3];
-   float robot_torque_vars[N_LOG_REGS][NUM_JOINTS];
-   float cereb_output_vars[N_LOG_REGS][NUM_OUTPUT_VARS];
-   float cereb_learning_vars[N_LOG_REGS][NUM_OUTPUT_VARS];
-   float robot_error_vars[N_LOG_REGS][NUM_JOINTS];
-   float times[N_LOG_REGS];
-   float consumed_time[N_LOG_REGS];
-   unsigned long spk_counter[N_LOG_REGS];
+   struct log_reg *regs;
   };
 
-/// \brief Initializes the log register.
+/// \brief Creates and initializes a log register.
 /// This function must be called once at the beginnig of the logging process.
-EXTERN_C void init_log(void);
+/// \param log Pointer to an allocated log structure. This structure will be initialized
+///        and will contain the log registers.
+/// \param total_traj_executions Number of repetitions of the trajectory that the robot
+///        will perform.
+/// \param trajectory_time Time that the robot takes to perform a single trajectory
+///        execution in seconds of simulated time.
+/// \return Error occurred during the function execution (log memory allocation)
+///         (0 if it is successfully executed)
+EXTERN_C int create_log(struct log *log, int total_traj_executions, int trajectory_time);
 
 /// \brief Stores all the interesting variables during the simulation process. 
 ///   These variables are logged during the simulation process.
 /// This function must be called at each simulation step.
+/// \param log Pointer to an initialized log structure where the variables will be stored.
 /// \param time Simulation time of the simulation process.
 /// \param input_vars Desired Position Velocity and Acceleration Values.
 /// \param state_vars Actual Position Velocity and Acceleration Values.
@@ -376,13 +383,15 @@ EXTERN_C void init_log(void);
 /// \param error_vars Actual Position Velocity and Acceleration Values-Desired Position Velocity and Acceleration Values.
 /// \param elapsed_time Computation time consumed by a control loop iteration.
 /// \param spk_counter Processed events during a control loop iteration.
-EXTERN_C void log_vars(double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter);
+/// \pre The log must be previously initialized (calling init_log())
+EXTERN_C void log_vars(struct log *log, double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter);
 
 /// \brief Saves the previously stored log registers in a text file.
 /// This function must be called at the end of the logging process.
+/// \param log Pointer to an initialized log structure where the variables have been stored.
 /// \param file_name Pointer to an array containing the name of the output log file.
 /// \pre The log must be previously initialized (calling init_log())
 /// \return Error occurred during the function execution (0 if it is successfully executed)
-EXTERN_C int save_log(char *file_name);
+EXTERN_C int save_and_finish_log(struct log *log, char *file_name);
 
 #endif /*_EDLUT_INTERFACE_H_*/

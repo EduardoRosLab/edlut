@@ -625,6 +625,9 @@ ac_subst_vars='LTLIBOBJS
 architecture
 optimize_code
 profile_code
+robottarget
+robot_generation
+USEROBOT
 cudaminor
 cudamajor
 cudaversion
@@ -653,6 +656,7 @@ LIBOBJS
 EGREP
 GREP
 CXXCPP
+ccompiler
 compiler
 AWK
 ac_ct_CC
@@ -710,6 +714,7 @@ enable_openmp
 with_matlab
 with_simulink
 with_cuda
+enable_robot
 enable_profiling
 enable_debugging
 '
@@ -1335,6 +1340,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-openmp        do not use OpenMP
+  --enable-robot          check for robot [[no]]
 --enable-profiling  Enable profiling information. This is a debugging feature which should not be usually enabled
 --enable-debugging  Enable debugging information. This is a debugging feature which should not be usually enabled
 
@@ -2394,6 +2400,13 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # AX_SIMULINK_CONDITIONAL
 # -----------------------
 # Define Simulink conditional for GNU Automake.
+
+
+
+
+# AX_ROBOT
+# -----------
+# Check for Robot.
 
 
 
@@ -3509,6 +3522,8 @@ done
 
 
 compiler=$CXX
+
+ccompiler=$CC
 
 
 # Define default language
@@ -5018,6 +5033,56 @@ else
  cudamajor=$CUDA_MAJOR
 
  cudaminor=$CUDA_MINOR
+
+fi
+
+
+################################################################################
+
+# Checks for robot simulator installation and if so, defines `enable_robot' to true.
+# For the moment, --with-matlab option is required in order to compile the robot simulator.
+
+
+
+
+# Check whether --enable-robot was given.
+if test "${enable_robot+set}" = set; then :
+  enableval=$enable_robot; ax_enable_robot=yes
+else
+  ax_enable_robot=no
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable robot compiling" >&5
+$as_echo_n "checking whether to enable robot compiling... " >&6; }
+if test x$ax_enable_robot == xno ; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_enable_robot" >&5
+$as_echo "$ax_enable_robot" >&6; }
+else
+	if test x$ax_enable_matlab = xno ; then
+		ax_enable_robot=no
+		# Fail if robot was explicitly enabled.
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: failure" >&5
+$as_echo "failure" >&6; }
+		as_fn_error $? "check your Matlab setup" "$LINENO" 5
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_enable_robot" >&5
+$as_echo "$ax_enable_robot" >&6; }
+fi
+USEROBOT=$ax_enable_robot
+
+
+
+robot_generation=$USEROBOT
+
+if test "x$USEROBOT" == "xno"; then :
+  robot_generation=false
+
+
+else
+  robot_generation=true
+
+ robottarget=\$\(robottarget\)
 
 fi
 
