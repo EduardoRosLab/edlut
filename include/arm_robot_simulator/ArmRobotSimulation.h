@@ -15,9 +15,9 @@
  /*!
  * \file ArmRobotSimulation.h
  *
- * \author Richard R. Carrido
+ * \author Richard R. Carrillo
  * \author Niceto R. Luque
- * \date 11 of July 2013
+ * \date 19 of September 2013
  *
  * This file declares the functions to simulate the robot's dynamics.
  */
@@ -34,6 +34,15 @@
  *
  * This file declares all needed functions to calculate the inverse robot dynamics.
  */
+
+#ifndef EXTERN_C
+#  ifdef __cplusplus
+#    define EXTERN_C extern "C"
+#  else
+#    define EXTERN_C extern
+#  endif
+#endif
+
 #include "mex.h"
 #include "RobotRecursiveInverseDynamics.h"
 
@@ -166,7 +175,7 @@ void integrationprocedure(double *accbuffer, double *velbuffer,int *occupation,d
 *\return The occurred error (0 if the function succeeded).
 *
 */
-int allocate_integration_buffers(struct integrator_buffers *integr_buffers, int njoints);
+EXTERN_C int allocate_integration_buffers(struct integrator_buffers *integr_buffers, int njoints);
 
 /*!
 *
@@ -175,7 +184,7 @@ int allocate_integration_buffers(struct integrator_buffers *integr_buffers, int 
 *\param integr_buffers Pointer to a integrator_buffers structure.
 *
 */
-void free_integration_buffers(struct integrator_buffers *integr_buffers);
+EXTERN_C void free_integration_buffers(struct integrator_buffers *integr_buffers);
 
 /*!
 *
@@ -186,7 +195,7 @@ void free_integration_buffers(struct integrator_buffers *integr_buffers);
 *\param njoints Number of robot joints.
 *
 */
-void initialize_integration_buffers(double *entry, struct integrator_buffers *integr_buffers, int njoints);
+EXTERN_C void initialize_integration_buffers(double *entry, struct integrator_buffers *integr_buffers, int njoints);
 
 /*!
 *\brief PURPOSE: approximate the value of a definite integral using boole's rule
@@ -300,7 +309,7 @@ void frnecFunction(int	nlhs, mxArray **plhs, int nrhs, const mxArray **prhs);
 *\param     	 TorqueOutput		Obtained torque per link
 *
 */
-void compute_robot_inv_dynamics(mxArray *robot,double *tray,const double *ExternalForce,const double *Gravity,double *TorqueOutput);
+EXTERN_C void compute_robot_inv_dynamics(mxArray *robot,double *tray,const double *ExternalForce,const double *Gravity,double *TorqueOutput);
 
 /*!
 *\brief PURPOSE:calculate robot's direct dynamics
@@ -331,7 +340,7 @@ void compute_robot_inv_dynamics(mxArray *robot,double *tray,const double *Extern
 *\param			  Stepsize					integration step size
 *
 */
-void compute_robot_dir_dynamics(mxArray *robot, double *robot_initial_state, double *external_torque, double *robot_resultant_state, struct integrator_buffers *integr_buffers, const double *external_force, const double *gravity, double stepsize);
+EXTERN_C void compute_robot_dir_dynamics(mxArray *robot, double *robot_initial_state, double *external_torque, double *robot_resultant_state, struct integrator_buffers *integr_buffers, const double *external_force, const double *gravity, double stepsize);
 
 
 /***************************************************************************
@@ -357,7 +366,7 @@ void compute_robot_dir_dynamics(mxArray *robot, double *robot_initial_state, dou
 *\param 		qdd		acceleration per link at t=tsimul
 *
 */
-void trajectory(double *q, double *qd, double *qdd, double tsimul,int n_joints);
+EXTERN_C void trajectory(double *q, double *qd, double *qdd, double tsimul,int n_joints);
 
 /*!
 *\brief Loads the robot object from Matlab file
@@ -370,7 +379,7 @@ void trajectory(double *q, double *qd, double *qdd, double tsimul,int n_joints);
 *\return      occurred error (=0 if no error)
 *
 */
-int load_robot(const char *robotfile, const char *robotname, int *size, mxArray **robot);
+EXTERN_C int load_robot(const char *robotfile, const char *robotname, int *size, mxArray **robot);
 
 /*!
 *\brief Frees the robot memory array
@@ -378,7 +387,7 @@ int load_robot(const char *robotfile, const char *robotname, int *size, mxArray 
 *\param   robot        Robot variable pointer in which the robot variable is allocated
 *
 */
-void free_robot(mxArray *robot);
+EXTERN_C void free_robot(mxArray *robot);
 
 
 /***************************************************************************
@@ -392,8 +401,7 @@ void free_robot(mxArray *robot);
 *\brief  PURPOSE: This function is for debugging purposes. It simulates the robot during NUMSTEPS*STEPSIZE and creates tra.txt log file
 *		  This log file can be plotted with the tra.m Matlab script
 *
-*    	
 */
-void test_simulated_robot_dynamics(void);
+EXTERN_C void test_simulated_robot_dynamics(void);
 
 #endif /*_ACCEL_H_*/
