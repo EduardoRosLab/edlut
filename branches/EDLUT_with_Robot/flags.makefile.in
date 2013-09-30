@@ -76,7 +76,7 @@ ifeq ($(generate_robot),true)
   else
   	ifeq ($(OS_SYSTEM),LINUX)
   	  # LINUX 64 bits architecture 
-  	  LDFLAGS	+= -L$(matlabrootdir)/bin/glnxa64
+  	  LDFLAGS	+= -L$(matlabrootdir)/bin/glnxa64 -lrt
   	else
   	  # WINNT 32 and 64 bits architecture
   	  LDFLAGS += -L$(matlabrootdir)/bin/win$(ARCH)
