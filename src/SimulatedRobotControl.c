@@ -26,11 +26,26 @@
 #   include <crtdbg.h> // To check for memory leaks
 #endif
 
-#if (defined(_WIN32) || defined(_WIN64))
+#if defined(__APPLE_CC__)
+  // MAC OS X includes
+#	define REAL_TIME_OSX
+#elif defined (__linux__)
+  // Linux includes
+#	define REAL_TIME_LINUX
+#elif (defined(_WIN32) || defined(_WIN64))
 #	define REAL_TIME_WINNT
+#else
+#	error "Unsupported platform"
 #endif
 
-#if defined(REAL_TIME_WINNT)
+#if defined(REAL_TIME_OSX)
+#	include <mach/mach.h>
+#	include <mach/mach_time.h>
+#	include <CoreServices/CoreServices.h>
+#	include <unistd.h>
+#elif defined(REAL_TIME_LINUX)
+#	include <time.h>
+#elif defined(REAL_TIME_WINNT)
 #	include <windows.h>
 #endif
 
@@ -84,10 +99,6 @@ int main(int ac, char *av[])
    float slot_elapsed_time,sim_elapsed_time;
    int n_traj_exec;
 
-#if defined(REAL_TIME_WINNT)
-   // Variables for consumed-CPU-time measurement
-   LARGE_INTEGER startt,endt,freq;
-#endif
    // Variable for logging the simulation state variables
    struct log var_log;
 
@@ -98,8 +109,32 @@ int main(int ac, char *av[])
 #endif
 
 #if defined(REAL_TIME_WINNT)
+	// Variables for consumed-CPU-time measurement
+	LARGE_INTEGER startt,endt,freq;
+
+#elif defined(REAL_TIME_OSX)
+	uint64_t startt, endt, elapsed;
+	static mach_timebase_info_data_t freq;
+#elif defined(REAL_TIME_LINUX)
+	// Calculate time taken by a request - Link with real-time library -lrt
+	struct timespec startt, endt, freq;
+#endif
+
+
+#if defined(REAL_TIME_WINNT)
    if(!QueryPerformanceFrequency(&freq))
       puts("QueryPerformanceFrequency failed");
+#elif defined (REAL_TIME_LINUX)
+   if(clock_getres(CLOCK_REALTIME, &freq))
+	   puts("clock_getres failed");
+#elif defined (REAL_TIME_OSX)
+   // If this is the first time we've run, get the timebase.
+   // We can use denom == 0 to indicate that sTimebaseInfo is
+   // uninitialised because it makes no sense to have a zero
+   // denominator is a fraction.
+   if (freq.denom == 0 ) {
+	   (void) mach_timebase_info(&freq);
+   }
 #endif
 
    // Load Matlab robot objects from Matlab files
@@ -134,7 +169,11 @@ int main(int ac, char *av[])
                      int n_joint;
 
 #if defined(REAL_TIME_WINNT)
-                     QueryPerformanceCounter(&startt);
+        	QueryPerformanceCounter(&startt);
+#elif defined(REAL_TIME_LINUX)
+        	clock_gettime(CLOCK_REALTIME, &startt);
+#elif defined(REAL_TIME_OSX)
+        	startt = mach_absolute_time();
 #endif
 
                      // control loop iteration starts
@@ -164,8 +203,18 @@ int main(int ac, char *av[])
 #if defined(REAL_TIME_WINNT)
                      QueryPerformanceCounter(&endt); // measures time
                      slot_elapsed_time=(endt.QuadPart-startt.QuadPart)/(float)freq.QuadPart; // to be logged
-                     sim_elapsed_time+=slot_elapsed_time;
+#elif defined(REAL_TIME_LINUX)
+                     clock_gettime(CLOCK_REALTIME, &endt);
+                     // Calculate time it took
+                     slot_elapsed_time = (endt.tv_sec-startt.tv_sec ) + (endt.tv_nsec-endt.tv_nsec )/float(1e9);
+#elif defined(REAL_TIME_OSX)
+                     // Stop the clock.
+                     endt = mach_absolute_time();
+                     // Calculate the duration.
+                     elapsed = endt - startt;
+                     slot_elapsed_time = 1e-9 * elapsed * freq.numer / freq.denom;
 #endif
+                     sim_elapsed_time+=slot_elapsed_time;
                      log_vars(&var_log, sim_time, input_traject_vars, robot_state_vars, robot_inv_dyn_torque, cerebellar_output_vars, cerebellar_learning_vars, robot_error_vars, slot_elapsed_time,get_neural_simulation_spike_counter(neural_sim)); // Store vars into RAM
                      cur_traject_time+=SIM_SLOT_LENGTH;
                     }
@@ -181,6 +230,10 @@ int main(int ac, char *av[])
 
 #if defined(REAL_TIME_WINNT)
                printf("Total elapsed time: %fs (time resolution: %fus)\n",sim_elapsed_time,1.0e6/freq.QuadPart);
+#elif defined(REAL_TIME_LINUX)
+               printf("Total elapsed time: %fs (time resolution: %fus)\n",sim_elapsed_time,freq.tv_sec*1.0e6+freq.tv_nsec/float(1e3));
+#elif defined(REAL_TIME_OSX)
+               printf("Total elapsed time: %fs (time resolution: %fus)\n",sim_elapsed_time,1e-3*freq.numer/freq.denom);
 #endif
 
                save_neural_weights(neural_sim);
