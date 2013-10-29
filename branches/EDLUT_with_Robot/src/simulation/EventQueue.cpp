@@ -87,6 +87,7 @@ unsigned int EventQueue::Size() const{
    		
 Event * EventQueue::RemoveEvent(void){
 	unsigned int c,p;
+double time_c0, time_c1, time_p;
    	
    	Event * first = 0;
 	if(this->NumberOfElements>2){
@@ -110,7 +111,7 @@ Event * EventQueue::RemoveEvent(void){
          	else
             	break;
         }
-      
+
 		if(c==this->Size() && (this->Events+p)->Time > (this->Events+c)->Time)
         	SwapEvents(p, c);
 	} else if (this->NumberOfElements==2){

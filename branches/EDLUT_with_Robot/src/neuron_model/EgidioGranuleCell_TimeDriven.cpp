@@ -120,6 +120,8 @@ void EgidioGranuleCell_TimeDriven::SynapsisEffect(int index, VectorNeuronState *
 		}case 1:{
 			State->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState+1,1e-9f*InputConnection->GetWeight());
 			break;
+		}default :{
+			printf("ERROR: EgidioGranuleCell_TimeDriven only support two kind of input synapses \n");
 		}
 	}
 }

@@ -43,14 +43,9 @@ class Interconnection;
  */
 class STDPLSWeightChange: public STDPWeightChange {
 	public:
-		/*!
-		 * \brief It gets the initial state associated to the learning rule.
-		 *
-		 * It gets the initial state associated to the learning rule.
-		 *
-		 * \return The initial state that the learning rule needs.
-		 */
-		virtual ConnectionState * GetInitialState();
+
+
+		void InitializeConnectionState(unsigned int NumberOfSynapses);
 
 		/*!
 		 * \brief It prints the learning rule info.

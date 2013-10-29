@@ -54,13 +54,13 @@ class BDFn : public FixedStep {
 		/*!
 		 * \brief These vectors are used as auxiliar vectors.
 		*/
-		float * AuxNeuronState;
-		float * AuxNeuronState_p;
-		float * AuxNeuronState_p1;
-		float * AuxNeuronState_c;
-		float * jacnum;
-		float * J;
-		float * inv_J;
+		float ** AuxNeuronState;
+		float ** AuxNeuronState_p;
+		float ** AuxNeuronState_p1;
+		float ** AuxNeuronState_c;
+		float ** jacnum;
+		float ** J;
+		float ** inv_J;
 
 		/*!
 		 * \brief This vector stores previous neuron state variable for all neuron. This one is used as a memory.

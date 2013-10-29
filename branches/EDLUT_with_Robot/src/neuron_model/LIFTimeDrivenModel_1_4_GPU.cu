@@ -145,6 +145,8 @@ void LIFTimeDrivenModel_1_4_GPU::SynapsisEffect(int index, VectorNeuronState_GPU
 			//ggj
 			state->AuxStateCPU[3*state->GetSizeState() + index]+=InputConnection->GetWeight();
 			break;
+		}default :{
+			printf("ERROR: LIFTimeDrivenModel_1_4 only support four kind of input synapses \n");
 		}
 	}
 }

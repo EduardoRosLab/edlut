@@ -120,6 +120,8 @@ void LIFTimeDrivenModel_1_2_GPU::SynapsisEffect(int index, VectorNeuronState_GPU
 			//gnmda
 			state->AuxStateCPU[1*state->GetSizeState() + index]+=1e-9f*InputConnection->GetWeight();
 			break;
+		}default :{
+			printf("ERROR: LIFTimeDrivenModel_1_2 only support two kind of input synapses \n");
 		}
 	}
 }

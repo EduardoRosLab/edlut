@@ -94,11 +94,11 @@ class Euler_GPU2 : public IntegrationMethod_GPU2 {
 		 * \param NeuronState Vector of neuron state variables for all neurons.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, double elapsed_time){
+		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, float elapsed_time){
 
 			Model->EvaluateDifferentialEcuation(index, SizeStates, NeuronState, AuxNeuronState);
 
-			int offset1=gridDim.x * blockDim.x;
+			int offset1=gridDim.x*blockDim.x;
 			int offset2=blockDim.x*blockIdx.x + threadIdx.x;
 			for (int j=0; j<N_DifferentialNeuronState; j++){
 				NeuronState[j*SizeStates + index]+=elapsed_time*AuxNeuronState[j*offset1 + offset2];

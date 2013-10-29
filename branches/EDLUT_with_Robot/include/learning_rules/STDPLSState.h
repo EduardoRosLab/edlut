@@ -53,7 +53,7 @@ class STDPLSState : public STDPState{
 		 * \param LTPtau Time constant of the LTP component.
 		 * \param LTDtau Time constant of the LTD component.
 		 */
-		STDPLSState(double LTPtau, double LTDtau);
+		STDPLSState(unsigned int NumSynapses, double LTPtau, double LTDtau);
 
 		/*!
 		 * \brief Class destructor.
@@ -63,12 +63,21 @@ class STDPLSState : public STDPState{
 		virtual ~STDPLSState();
 
 		/*!
+		 * \brief set new time to spikes.
+		 *
+		 * It set new time to spikes.
+		 *
+		 * \param NewTime new time.
+		 */
+		virtual void SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post);
+
+		/*!
 		 * \brief It implements the behaviour when it transmits a spike.
 		 *
 		 * It implements the behaviour when it transmits a spike. It must be implemented
 		 * by any inherited class.
 		 */
-		virtual void ApplyPresynapticSpike();
+		virtual void ApplyPresynapticSpike(unsigned int index);
 
 		/*!
 		 * \brief It implements the behaviour when the target cell fires a spike.
@@ -76,7 +85,7 @@ class STDPLSState : public STDPState{
 		 * It implements the behaviour when it the target cell fires a spike. It must be implemented
 		 * by any inherited class.
 		 */
-		virtual void ApplyPostsynapticSpike();
+		virtual void ApplyPostsynapticSpike(unsigned int index);
 
 };
 

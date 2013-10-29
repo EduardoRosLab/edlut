@@ -138,6 +138,8 @@ void LIFTimeDrivenModel_1_4::SynapsisEffect(int index, VectorNeuronState * State
 		}case 3:{
 			State->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState+3,InputConnection->GetWeight());
 			break;
+		}default :{
+			printf("ERROR: LIFTimeDrivenModel_1_4 only support four kind of input synapses \n");
 		}
 	}
 

@@ -46,14 +46,25 @@ class ConnectionState;
 class LearningRule : public PrintableObject {
 
 	public:
+
+
+		ConnectionState * State;
+
 		/*!
-		 * \brief It gets the initial state associated to the learning rule.
+		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * It gets the initial state associated to the learning rule.
+		 * It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * \return The initial state that the learning rule needs.
+		 * \return The state that the learning rule needs for all the synapses.
 		 */
-		virtual ConnectionState * GetInitialState() = 0;
+		virtual void InitializeConnectionState(unsigned int NumberOfSynapses) = 0;
+
+		ConnectionState * GetConnectionState();
+
+		LearningRule();
+
+		virtual ~LearningRule();
+
 
 		/*!
 		 * \brief It loads the learning rule properties.
@@ -97,6 +108,16 @@ class LearningRule : public PrintableObject {
 		 * \return The stream after the printer.
 		 */
 		virtual ostream & PrintInfo(ostream & out) = 0;
+
+   		/*!
+		 * \brief It returns if this learning rule implements postsynaptic learning.
+		 *
+		 * It returns if this learning rule implements postsynaptic learning.
+		 *
+		 * \returns if this learning rule implements postsynaptic learning
+		 */
+		virtual bool ImplementPostSynaptic() = 0;
+
 };
 
 #endif /* LEARNINGRULE_H_ */

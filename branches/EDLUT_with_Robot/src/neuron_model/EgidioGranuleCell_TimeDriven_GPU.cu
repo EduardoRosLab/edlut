@@ -121,6 +121,8 @@ void EgidioGranuleCell_TimeDriven_GPU::SynapsisEffect(int index, VectorNeuronSta
 		}case 1:{
 			state->AuxStateCPU[1*state->GetSizeState() + index]+=1e-9f*InputConnection->GetWeight();
 			break;
+		}default :{
+			printf("ERROR: EgidioGranuleCell_TimeDriven only support two kind of input synapses \n");
 		}
 	}
 }

@@ -57,47 +57,50 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		/*!
 		 * \brief Excitatory reversal potential
 		 */
-		float eexc;
+		const float eexc;
 
 		/*!
 		 * \brief Inhibitory reversal potential
 		 */
-		float einh;
+		const float einh;
 
 		/*!
 		 * \brief Resting potential
 		 */
-		float erest;
+		const float erest;
 
 		/*!
 		 * \brief Firing threshold
 		 */
-		float vthr;
+		const float vthr;
 
 		/*!
 		 * \brief Membrane capacitance
 		 */
-		float cm;
+		const float cm;
+		const float inv_cm;
 
 		/*!
 		 * \brief AMPA receptor time constant
 		 */
-		float texc;
+		const float texc;
+		const float inv_texc;
 
 		/*!
 		 * \brief GABA receptor time constant
 		 */
-		float tinh;
+		const float tinh;
+		const float inv_tinh;
 
 		/*!
 		 * \brief Refractory period
 		 */
-		float tref;
+		const float tref;
 
 		/*!
 		 * \brief Resting conductance
 		 */
-		float grest;
+		const float grest;
 
 		/*!
 		 * \brief Number of state variables for each cell.
@@ -114,6 +117,7 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		*/
 		static const int N_TimeDependentNeuronState=2;
 
+		
 		/*!
 		 * \brief constructor with parameters.
 		 *
@@ -136,7 +140,8 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 */
 		__device__ LIFTimeDrivenModel_1_2_GPU2(float Eexc, float Einh, float Erest, float Vthr, float Cm, float Texc, float Tinh,
 				float Tref, float Grest, char const* integrationName, int N_neurons, int Total_N_thread, void ** Buffer_GPU):TimeDrivenNeuronModel_GPU2(),
-				eexc(Eexc), einh(Einh), erest(Erest), vthr(Vthr), cm(Cm), texc(Texc), tinh(Tinh),tref(Tref), grest(Grest){
+				eexc(Eexc), einh(Einh), erest(Erest), vthr(Vthr), cm(Cm), texc(Texc), tinh(Tinh),tref(Tref), grest(Grest),
+				inv_cm(1.0f/cm), inv_texc(1.0f/texc),inv_tinh(1.0f/tinh){
 			integrationMethod_GPU2=LoadIntegrationMethod_GPU2::loadIntegrationMethod_GPU2(integrationName, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Total_N_thread, Buffer_GPU);
 		}
 
@@ -173,18 +178,18 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 			LastSpikeTimeGPU[index]+=elapsed_time;
 			double last_spike=LastSpikeTimeGPU[index];
 
-			StateGPU[1*SizeStates + index]+=AuxStateGPU[0*SizeStates + index];
-			StateGPU[2*SizeStates + index]+=AuxStateGPU[1*SizeStates + index];
+			StateGPU[1*SizeStates + index]+=AuxStateGPU[index];
+			StateGPU[2*SizeStates + index]+=AuxStateGPU[SizeStates + index];
 
 			bool spike = false;
 
 
 			if (last_spike > this->tref) {
 				integrationMethod_GPU2->NextDifferentialEcuationValue(index, SizeStates, this, StateGPU, elapsed_time_f);
-				if (StateGPU[0*SizeStates + index] > this->vthr){
+				if (StateGPU[index] > this->vthr){
 					LastSpikeTimeGPU[index]=0.0;
 					spike = true;
-					StateGPU[0*SizeStates + index] = this->erest;
+					StateGPU[index] = this->erest;
 					this->integrationMethod_GPU2->resetState(index);
 				}
 			}
@@ -209,7 +214,7 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 * \param AuxNeuronState results of the differential equations evaluation.
 		 */
 		__device__ void EvaluateDifferentialEcuation(int index, int SizeStates, float * NeuronState, float * AuxNeuronState){
-			AuxNeuronState[0*gridDim.x * blockDim.x + blockDim.x*blockIdx.x + threadIdx.x]=(NeuronState[1*SizeStates + index] * (this->eexc - NeuronState[0*SizeStates + index]) + NeuronState[2*SizeStates + index] * (this->einh - NeuronState[0*SizeStates + index]) + grest * (this->erest - NeuronState[0*SizeStates + index]))/this->cm;
+			AuxNeuronState[blockDim.x*blockIdx.x + threadIdx.x]=(NeuronState[SizeStates + index] * (this->eexc - NeuronState[index]) + NeuronState[2*SizeStates + index] * (this->einh - NeuronState[index]) + grest * (this->erest - NeuronState[index]))*this->inv_cm;
 		}
 
 
@@ -224,8 +229,8 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 * \param elapsed_time integration time step.
 		 */
 		__device__ void EvaluateTimeDependentEcuation(int index, int SizeStates, float * NeuronState, float elapsed_time){
-			NeuronState[1*SizeStates + index]*= exp(-(elapsed_time/this->texc));
-			NeuronState[2*SizeStates + index]*= exp(-(elapsed_time/this->tinh));
+			NeuronState[1*SizeStates + index]*= __expf(-(elapsed_time*this->inv_texc));
+			NeuronState[2*SizeStates + index]*= __expf(-(elapsed_time*this->inv_tinh));
 		}
 
 

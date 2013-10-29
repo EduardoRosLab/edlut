@@ -53,7 +53,7 @@ class Euler : public FixedStep {
 		/*!
 		 * \brief This vector is used as an auxiliar vector.
 		*/
-		float * AuxNeuronState;
+		float ** AuxNeuronState;
 
 		/*!
 		 * \brief Constructor of the class with 4 parameter.

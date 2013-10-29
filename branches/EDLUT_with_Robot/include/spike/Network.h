@@ -141,6 +141,8 @@ class Network : public PrintableObject{
    		 * \post The connections will be sorted by source neuron and delay.
    		 */
    		void FindOutConnections();
+
+		void FindOutConnections(int N_LearningRule, int * typeLearningRule);
    		
    		/*!
    		 * \brief It adds the input connection to the target neuron.
@@ -148,6 +150,8 @@ class Network : public PrintableObject{
    		 * It adds the connections to the input connections of the target neuron.
    		 */   		
    		void FindInConnections();
+
+		void FindInConnections(int N_LearningRule, int * typeLearningRule);
    		
    		/*!
    		 * \brief It sorts the connections by the connection index.

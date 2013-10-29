@@ -20,34 +20,47 @@
 //#include "../../include/parallel_function.h"
 
 
-IntegrationMethod::IntegrationMethod(string integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState,int N_timeDependentNeuronState, int N_CPU_thread, bool jacobian, bool inverse):IntegrationMethodType(integrationMethodType), N_NeuronStateVariables(N_neuronStateVariables), N_DifferentialNeuronState(N_differentialNeuronState), N_TimeDependentNeuronState(N_timeDependentNeuronState){
+IntegrationMethod::IntegrationMethod(string integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState,int N_timeDependentNeuronState, int N_CPU_thread, bool jacobian, bool inverse):IntegrationMethodType(integrationMethodType), N_NeuronStateVariables(N_neuronStateVariables), N_DifferentialNeuronState(N_differentialNeuronState), N_TimeDependentNeuronState(N_timeDependentNeuronState), N_CPU_Thread(N_CPU_thread){
 	if(jacobian){
-		AuxNeuronState = new float [N_NeuronStateVariables*N_CPU_thread]();
-		AuxNeuronState_pos = new float [N_NeuronStateVariables*N_CPU_thread]();
-		AuxNeuronState_neg = new float [N_NeuronStateVariables*N_CPU_thread]();
-	}
-	if(inverse){
-		aux=new float[2*N_differentialNeuronState*N_CPU_thread];
-		auxDouble=new double[2*N_differentialNeuronState*N_CPU_thread];
+		JacAuxNeuronState = (float **)new float *[N_CPU_thread];
+		JacAuxNeuronState_pos = (float **)new float *[N_CPU_thread];
+		JacAuxNeuronState_neg = (float **)new float *[N_CPU_thread];
+		for(int i=0; i<N_CPU_thread; i++){
+			JacAuxNeuronState[i] = new float [N_NeuronStateVariables]();
+			JacAuxNeuronState_pos[i] = new float [N_NeuronStateVariables]();
+			JacAuxNeuronState_neg[i] = new float [N_NeuronStateVariables]();
+		}
 	}else{
-		aux=0;
-		auxDouble=0;
+		JacAuxNeuronState=0;
+		JacAuxNeuronState_pos=0;
+		JacAuxNeuronState_neg=0;
 	}
+
 }
 
 IntegrationMethod::~IntegrationMethod(){
-	delete [] AuxNeuronState;
-	delete [] AuxNeuronState_pos;
-	delete [] AuxNeuronState_neg;
-
-	if(aux!=0){
-		delete [] aux;
-	}
-	if(auxDouble!=0){
-		delete [] auxDouble;
+	if(JacAuxNeuronState!=0){
+		for(int i=0; i<N_CPU_Thread; i++){
+			delete JacAuxNeuronState[i];
+		}
+		delete [] JacAuxNeuronState;
 	}
 
-	delete [] PredictedElapsedTime;
+	if(JacAuxNeuronState_pos!=0){
+		for(int i=0; i<N_CPU_Thread; i++){
+			delete JacAuxNeuronState_pos[i];
+		}
+		delete [] JacAuxNeuronState_pos;
+	}
+
+	if(JacAuxNeuronState_neg!=0){
+		for(int i=0; i<N_CPU_Thread; i++){
+			delete JacAuxNeuronState_neg[i];
+		}
+		delete [] JacAuxNeuronState_neg;
+	}
+
+	//delete [] PredictedElapsedTime;
 }
 
 string IntegrationMethod::GetType(){
@@ -56,38 +69,39 @@ string IntegrationMethod::GetType(){
 		
 void IntegrationMethod::Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index){
 	float epsi=9.5367431640625e-7;
-	float * offset_AuxNeuronState = AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_AuxNeuronState_pos = AuxNeuronState_pos+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_AuxNeuronState_neg = AuxNeuronState_neg+(N_NeuronStateVariables*CPU_thread_index);
-	for (int j=0; j<N_DifferentialNeuronState; j++){
-		memcpy(offset_AuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
-		offset_AuxNeuronState[j]+=epsi;
-		Model->EvaluateDifferentialEcuation(offset_AuxNeuronState, offset_AuxNeuronState_pos);
+	float * offset_JacAuxNeuronState = JacAuxNeuronState[CPU_thread_index];
+	float * offset_JacAuxNeuronState_pos = JacAuxNeuronState_pos[CPU_thread_index];
+	float * offset_JacAuxNeuronState_neg = JacAuxNeuronState_neg[CPU_thread_index];
 
-		offset_AuxNeuronState[j]-=2*epsi;
-		Model->EvaluateDifferentialEcuation(offset_AuxNeuronState, offset_AuxNeuronState_neg);
+	for (int j=0; j<N_DifferentialNeuronState; j++){
+		memcpy(offset_JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
+		offset_JacAuxNeuronState[j]+=epsi;
+		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_pos);
+
+		offset_JacAuxNeuronState[j]-=2*epsi;
+		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_neg);
 
 		for(int z=0; z<N_DifferentialNeuronState; z++){
-			jacnum[z*N_DifferentialNeuronState+j]=(offset_AuxNeuronState_pos[z]-offset_AuxNeuronState_neg[z])/(2*epsi);
+			jacnum[z*N_DifferentialNeuronState+j]=(offset_JacAuxNeuronState_pos[z]-offset_JacAuxNeuronState_neg[z])/(2*epsi);
 		}
 	} 
 }
 
 //void IntegrationMethod::Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index, float elapsed_time){
 //	float epsi=elapsed_time * 0.1f;
-//	float * offset_AuxNeuronState = AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
-//	float * offset_AuxNeuronState_pos = AuxNeuronState_pos+(N_NeuronStateVariables*CPU_thread_index);
-//	float * offset_AuxNeuronState_neg = AuxNeuronState_neg+(N_NeuronStateVariables*CPU_thread_index);
+	//float * offset_JacAuxNeuronState = JacAuxNeuronState[CPU_thread_index];
+	//float * offset_JacAuxNeuronState_pos = JacAuxNeuronState_pos[CPU_thread_index];
+	//float * offset_JacAuxNeuronState_neg = JacAuxNeuronState_neg[CPU_thread_index];
 //	for (int j=0; j<N_DifferentialNeuronState; j++){
-//		memcpy(offset_AuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
+//		memcpy(offset_JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
 //		offset_AuxNeuronState[j]+=epsi;
-//		Model->EvaluateDifferentialEcuation(offset_AuxNeuronState, offset_AuxNeuronState_pos);
+//		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_pos);
 //
-//		offset_AuxNeuronState[j]-=2*epsi;
-//		Model->EvaluateDifferentialEcuation(offset_AuxNeuronState, offset_AuxNeuronState_neg);
+//		offset_JacAuxNeuronState[j]-=2*epsi;
+//		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_neg);
 //
 //		for(int z=0; z<N_DifferentialNeuronState; z++){
-//			jacnum[z*N_DifferentialNeuronState+j]=(offset_AuxNeuronState_pos[z]-offset_AuxNeuronState_neg[z])/(2*epsi);
+//			jacnum[z*N_DifferentialNeuronState+j]=(offset_JacAuxNeuronState_pos[z]-offset_JacAuxNeuronState_neg[z])/(2*epsi);
 //		}
 //	} 
 //}
@@ -95,21 +109,21 @@ void IntegrationMethod::Jacobian(TimeDrivenNeuronModel * Model, float * NeuronSt
 void IntegrationMethod::Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index, float elapsed_time){
 	float epsi=elapsed_time * 0.1f;
 	float inv_epsi=1.0f/epsi;
-	float * offset_AuxNeuronState = AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_AuxNeuronState_pos = AuxNeuronState_pos+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_AuxNeuronState_neg = AuxNeuronState_neg+(N_NeuronStateVariables*CPU_thread_index);
+	float * offset_JacAuxNeuronState = JacAuxNeuronState[CPU_thread_index];
+	float * offset_JacAuxNeuronState_pos = JacAuxNeuronState_pos[CPU_thread_index];
+	float * offset_JacAuxNeuronState_neg = JacAuxNeuronState_neg[CPU_thread_index];
 
-	memcpy(offset_AuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
-	Model->EvaluateDifferentialEcuation(offset_AuxNeuronState, offset_AuxNeuronState_pos);
+	memcpy(offset_JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
+	Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_pos);
 
 	for (int j=0; j<N_DifferentialNeuronState; j++){
-		memcpy(offset_AuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
+		memcpy(offset_JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
 
-		offset_AuxNeuronState[j]-=epsi;
-		Model->EvaluateDifferentialEcuation(offset_AuxNeuronState, offset_AuxNeuronState_neg);
+		offset_JacAuxNeuronState[j]-=epsi;
+		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_neg);
 
 		for(int z=0; z<N_DifferentialNeuronState; z++){
-			jacnum[z*N_DifferentialNeuronState+j]=(offset_AuxNeuronState_pos[z]-offset_AuxNeuronState_neg[z])*inv_epsi;
+			jacnum[z*N_DifferentialNeuronState+j]=(offset_JacAuxNeuronState_pos[z]-offset_JacAuxNeuronState_neg[z])*inv_epsi;
 		}
 	} 
 }

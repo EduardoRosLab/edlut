@@ -38,12 +38,16 @@ Neuron::Neuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput){
 
 Neuron::~Neuron(){
 	//state is deleted en Neuron Model.
-	if (this->InputLearningConnections!=0){
-		delete [] this->InputLearningConnections;
-	}
-
 	if (this->OutputConnections!=0){
 		delete [] this->OutputConnections;
+	}
+
+	if (this->InputLearningConnectionsWithPostSynapticLearning!=0){
+		delete [] this->InputLearningConnectionsWithPostSynapticLearning;
+	}
+
+	if (this->InputLearningConnectionsWithoutPostSynapticLearning!=0){
+		delete [] this->InputLearningConnectionsWithoutPostSynapticLearning;
 	}
 }
 
@@ -57,9 +61,13 @@ void Neuron::InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel *
 
 	this->OutputConNumber = 0;
 
-	this->InputLearningConnections = 0;
+	this->InputLearningConnectionsWithPostSynapticLearning = 0;
 
-	this->InputConLearningNumber = 0;
+	this->InputLearningConnectionsWithoutPostSynapticLearning = 0;
+
+	this->InputConLearningNumberWithPostSynaptic = 0;
+
+	this->InputConLearningNumberWithoutPostSynaptic = 0;
 
 	this->index = NewIndex;
 
@@ -80,31 +88,49 @@ long int Neuron::GetIndex() const{
 //	return this->state;
 //}
    		
-unsigned int Neuron::GetInputNumberWithLearning() const{
-	return this->InputConLearningNumber;
+unsigned int Neuron::GetInputNumberWithPostSynapticLearning() const{
+	return this->InputConLearningNumberWithPostSynaptic;
 }
+
+unsigned int Neuron::GetInputNumberWithoutPostSynapticLearning() const{
+	return this->InputConLearningNumberWithoutPostSynaptic;
+}
+
    		
 //unsigned int Neuron::GetOutputNumber() const{
 //	return this->OutputConNumber;
 //}
 
-Interconnection * Neuron::GetInputConnectionWithLearningAt(unsigned int index) const{
-	return *(this->InputLearningConnections+index);
+Interconnection * Neuron::GetInputConnectionWithPostSynapticLearningAt(unsigned int index) const{
+	return *(this->InputLearningConnectionsWithPostSynapticLearning+index);
+}
+
+Interconnection * Neuron::GetInputConnectionWithoutPostSynapticLearningAt(unsigned int index) const{
+	return *(this->InputLearningConnectionsWithoutPostSynapticLearning+index);
 }
    		
-void Neuron::SetInputConnectionsWithLearning(Interconnection ** Connections, unsigned int NumberOfConnections){
-	if (this->InputLearningConnections!=0){
-		delete [] this->InputLearningConnections;
+void Neuron::SetInputConnectionsWithPostSynapticLearning(Interconnection ** Connections, unsigned int NumberOfConnections){
+	if (this->InputLearningConnectionsWithPostSynapticLearning!=0){
+		delete [] this->InputLearningConnectionsWithPostSynapticLearning;
 	}
 	
-	this->InputLearningConnections = Connections;
+	this->InputLearningConnectionsWithPostSynapticLearning = Connections;
 
-	this->InputConLearningNumber = NumberOfConnections;
+	this->InputConLearningNumberWithPostSynaptic = NumberOfConnections;
 }
 
-bool Neuron::IsInputConnected() const{
-	return this->InputConLearningNumber!=0;
+void Neuron::SetInputConnectionsWithoutPostSynapticLearning(Interconnection ** Connections, unsigned int NumberOfConnections){
+	if (this->InputLearningConnectionsWithoutPostSynapticLearning!=0){
+		delete [] this->InputLearningConnectionsWithoutPostSynapticLearning;
+	}
+	
+	this->InputLearningConnectionsWithoutPostSynapticLearning = Connections;
+
+	this->InputConLearningNumberWithoutPostSynaptic = NumberOfConnections;
 }
+
+
+
    		
 //Interconnection * Neuron::GetOutputConnectionAt(unsigned int index) const{
 //	return *(this->OutputConnections+index);
@@ -141,7 +167,7 @@ ostream & Neuron::PrintInfo(ostream & out) {
 
 	out << "\tType: " << this->type->GetModelID() << endl;
 
-	out << "\tInput Connections With Learning: " << this->InputConLearningNumber << endl;
+	out << "\tInput Connections With Learning: " << this->InputConLearningNumberWithPostSynaptic + this->InputConLearningNumberWithoutPostSynaptic << endl;
 
 	out << "\tOutput Connections: " << this->OutputConNumber << endl;
 

@@ -19,15 +19,21 @@
 
 
 Euler::Euler(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread):FixedStep("Euler",N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread, false, false){
-	AuxNeuronState = new float [N_NeuronStateVariables*N_CPU_thread];
+	AuxNeuronState = (float **)new float *[N_CPU_thread];
+	for(int i=0; i<N_CPU_thread; i++){
+		AuxNeuronState[i] = new float [N_NeuronStateVariables]();
+	}
 }
 
 Euler::~Euler(){
+	for(int i=0; i<N_CPU_Thread; i++){
+		delete AuxNeuronState[i];
+	}
 	delete [] AuxNeuronState;
 }
 		
 void Euler::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
-	float * offset_AuxNeuronState=AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
+	float * offset_AuxNeuronState = AuxNeuronState[CPU_thread_index];
 	
 	Model->EvaluateDifferentialEcuation(NeuronState, offset_AuxNeuronState);
 

@@ -17,15 +17,13 @@
 #include "../../include/learning_rules/ExpState.h"
 
 #include <cmath>
+#include <stdio.h>
 
-ExpState::ExpState(float NewTau): ConnectionState(2), tau(NewTau){
-	for (int i=0; i<2; ++i){
-		ConnectionState::SetStateVariableAt(i,0); // Initialize presynaptic activity
-	}
-
+ExpState::ExpState(unsigned int NumSynapses, float NewTau): ConnectionState(NumSynapses, 2), tau(NewTau){
 	if (this->tau==0){
 		this->tau = 1e-6;
 	}
+	inv_tau=1.0f/tau;
 }
 
 ExpState::~ExpState() {
@@ -37,49 +35,47 @@ unsigned int ExpState::GetNumberOfPrintableValues(){
 
 double ExpState::GetPrintableValuesAt(unsigned int position){
 	if (position<ConnectionState::GetNumberOfPrintableValues()){
-		return ConnectionState::GetStateVariableAt(position);
+		return ConnectionState::GetStateVariableAt(0, position);
 	} else if (position==ConnectionState::GetNumberOfPrintableValues()) {
 		return this->tau;
 	} else return -1;
 }
 
-float ExpState::GetPresynapticActivity(){
-	return this->GetStateVariableAt(0);
+float ExpState::GetPresynapticActivity(unsigned int index){
+	return this->GetStateVariableAt(index, 0);
 }
 
-float ExpState::GetPostsynapticActivity(){
-	return 0;
+float ExpState::GetPostsynapticActivity(unsigned int index){
+	return 0.0f;
 }
 
 
-void ExpState::SetNewUpdateTime(double NewTime){
-	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime());
-
-	float factor = ElapsedTime/this->tau;
+void ExpState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
+	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
+	float factor = ElapsedTime*this->inv_tau;
 	float expon = exp(-factor);
-
+	
 	// Update the activity value
-	float OldExpon = this->GetStateVariableAt(0);
-	float OldExpon1 = this->GetStateVariableAt(1);
+	float OldExpon = this->GetStateVariableAt(index, 0);
+	float OldExpon1 = this->GetStateVariableAt(index, 1);
 
 	float NewExpon = (OldExpon+factor*OldExpon1)*expon;
 	float NewExpon1 = OldExpon1*expon;
 
-	this->SetStateVariableAt(0,NewExpon);
-	this->SetStateVariableAt(1,NewExpon1);
+	this->SetStateVariableAt(index, 0, NewExpon);
+	this->SetStateVariableAt(index, 1, NewExpon1);
 
-
-	this->SetLastUpdateTime(NewTime);
+	this->SetLastUpdateTime(index, NewTime);
 }
 
-void ExpState::ApplyPresynapticSpike(){
-	//float OldExpon = this->GetStateVariableAt(1);
-	//this->SetStateVariableAt(1,OldExpon+1);
+void ExpState::ApplyPresynapticSpike(unsigned int index){
+	//float OldExpon = this->GetStateVariableAt(index, 1);
+	//this->SetStateVariableAt(index, 1,OldExpon+1);
 
-	this->incrementStateVaraibleAt(1,1.0f);
+	this->incrementStateVaraibleAt(index, 1, 1.0f);
 }
 
-void ExpState::ApplyPostsynapticSpike(){
+void ExpState::ApplyPostsynapticSpike(unsigned int index){
 	return;
 }
 
