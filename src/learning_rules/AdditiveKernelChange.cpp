@@ -75,10 +75,6 @@ void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,do
 	}
 }
 
-void AdditiveKernelChange::ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime){
-	return;
-}
-
 
 
 ostream & AdditiveKernelChange::PrintInfo(ostream & out){
@@ -89,6 +85,4 @@ ostream & AdditiveKernelChange::PrintInfo(ostream & out){
 	return out;
 }
 
-bool AdditiveKernelChange::ImplementPostSynaptic(){
-	return false;
-}
+

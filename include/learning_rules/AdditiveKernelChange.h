@@ -27,7 +27,7 @@
  * This file declares a class which abstracts an additive learning rule.
  */
 
-#include "./LearningRule.h"
+#include "./WithoutPostSynaptic.h"
 
 /*!
  * \class AdditiveKernelChange
@@ -40,7 +40,7 @@
  * \author Richard Carrillo
  * \date March 2010
  */
-class AdditiveKernelChange : public LearningRule {
+class AdditiveKernelChange : public WithoutPostSynaptic {
 	protected:
 		/*!
 		 * Maximum time of the learning rule.
@@ -101,16 +101,6 @@ class AdditiveKernelChange : public LearningRule {
    		virtual void ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime);
 
    		/*!
-		 * \brief It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * \param Connection The connection where the learning rule happens.
-		 * \param SpikeTime The spike time of the postsynaptic spike.
-		 */
-		virtual void ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime);
-
-   		/*!
 		 * \brief It prints the learning rule info.
 		 *
 		 * It prints the current learning rule characteristics.
@@ -129,15 +119,6 @@ class AdditiveKernelChange : public LearningRule {
 		 * \return The number of state variables that this learning rule needs.
 		 */
 		virtual int GetNumberOfVar() const;
-
-   		/*!
-		 * \brief It returns if this learning rule implements postsynaptic learning.
-		 *
-		 * It returns if this learning rule implements postsynaptic learning.
-		 *
-		 * \returns if this learning rule implements postsynaptic learning
-		 */
-		virtual bool ImplementPostSynaptic();
 };
 
 

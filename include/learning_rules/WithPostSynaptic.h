@@ -1,8 +1,8 @@
 /***************************************************************************
- *                           LearningRule.h                                *
+ *                           WithPostSynaptic.h                            *
  *                           -------------------                           *
- * copyright            : (C) 2010 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2013 by Francisco Naveros                    *
+ * email                : fnaveros@atc.ugr.es                              *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,43 +14,33 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef LEARNINGRULE_H_
-#define LEARNINGRULE_H_
+#ifndef WITHPOSTSYNAPTIC_H_
+#define WITHPOSTSYNAPTIC_H_
 
-#include "../simulation/PrintableObject.h"
-
-#include "../spike/EDLUTFileException.h"
+#include "./LearningRule.h"
 
 /*!
- * \file LearningRule.h
+ * \file WithPostSynaptic.h
  *
- * \author Jesus Garrido
- * \date August 2010
+ * \author Francisco Naveros
+ * \date November 2013
  *
- * This file declares a class which abstracts a learning rule.
+ * This file declares a class which abstracts a learning rule that implement postsynaptic learning.
  */
 
-class Interconnection;
-class ConnectionState;
-
 /*!
- * \class LearningRule
+ * \class WithLearningRule
  *
  * \brief Learning rule.
  *
- * This class abstract the behaviour of a learning rule.
+ * This class abstract the behaviour of a learning rule that implement postsynaptic learning.
  *
- * \author Jesus Garrido
- * \date March 2010
+ * \author Francisco Naveros
+ * \date November 2013
  */
-class LearningRule : public PrintableObject {
+class WithPostSynaptic : public LearningRule {
 
 	public:
-
-		/*!
-		 * \brief The conection state of the learning rule.
-		 */
-		ConnectionState * State;
 
 		/*!
 		 * \brief It initialize the state associated to the learning rule for all the synapses.
@@ -61,28 +51,20 @@ class LearningRule : public PrintableObject {
 		 */
 		virtual void InitializeConnectionState(unsigned int NumberOfSynapses) = 0;
 
-		/*!
-		 * \brief It return the state associated to the learning rule for all the synapses.
-		 *
-		 * It return the state associated to the learning rule for all the synapses.
-		 *
-		 * \return the learning rule state for all the synapses.
-		 */
-		ConnectionState * GetConnectionState();
 
 		/*!
 		 * \brief Default constructor.
 		 * 
-		 * It creates a new LearningRule object.
+		 * It creates a new WithPostSynaptic object.
 		 */ 
-		LearningRule();
+		WithPostSynaptic();
 
 		/*!
 		 * \brief Object destructor.
 		 *
-		 * It remove a LearningRule object an releases the memory of the ConnectionState.
+		 * It remove a WithPostSynaptic object.
 		 */
-		virtual ~LearningRule();
+		virtual ~WithPostSynaptic();
 
 		/*!
 		 * \brief It loads the learning rule properties.
@@ -114,7 +96,7 @@ class LearningRule : public PrintableObject {
 		 * \param Connection The connection where the learning rule happens.
 		 * \param SpikeTime The spike time of the postsynaptic spike.
 		 */
-		virtual void ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime) = 0;
+		virtual void ApplyPostSynapticSpike(Interconnection * Connection, double SpikeTime) = 0;
 
    		/*!
 		 * \brief It prints the learning rule info.
@@ -134,8 +116,8 @@ class LearningRule : public PrintableObject {
 		 *
 		 * \returns if this learning rule implements postsynaptic learning
 		 */
-		virtual bool ImplementPostSynaptic() = 0;
+		bool ImplementPostSynaptic();
 
 };
 
-#endif /* LEARNINGRULE_H_ */
+#endif /* WITHPOSTSYNAPTIC_H_ */

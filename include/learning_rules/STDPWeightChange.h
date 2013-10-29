@@ -18,7 +18,7 @@
 #ifndef STDPWEIGHTCHANGE_H_
 #define STDPWEIGHTCHANGE_H_
 
-#include "./LearningRule.h"
+#include "./WithPostSynaptic.h"
 
 /*!
  * \file STDPWeightChange.h
@@ -41,7 +41,7 @@ class Interconnection;
  * \author Jesus Garrido
  * \date March 2010
  */
-class STDPWeightChange: public LearningRule {
+class STDPWeightChange: public WithPostSynaptic {
 	protected:
 		/*!
 		 * \brief Decay parameter LTD
@@ -148,14 +148,6 @@ class STDPWeightChange: public LearningRule {
 		virtual ostream & PrintInfo(ostream & out);
 
 
-		/*!
-		 * \brief It returns if this learning rule implements postsynaptic learning.
-		 *
-		 * It returns if this learning rule implements postsynaptic learning.
-		 *
-		 * \returns if this learning rule implements postsynaptic learning
-		 */
-		virtual bool ImplementPostSynaptic();
 };
 
 #endif /* STDPWEIGHTCHANGE_H_ */

@@ -93,6 +93,3 @@ void STDPWeightChange::SetMaxWeightChangeLTD(float NewMaxChange){
 }
 
 
-bool STDPWeightChange::ImplementPostSynaptic(){
-	return true;
-}
