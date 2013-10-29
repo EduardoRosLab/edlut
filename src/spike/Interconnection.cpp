@@ -24,19 +24,16 @@
 #include "../../include/learning_rules/LearningRule.h"
 #include "../../include/learning_rules/ConnectionState.h"
 
-Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), state(0){
+Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), LearningRuleIndex(0){
 	
 }
 
-Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, ConnectionState* NewConnectionState):
-	source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), weight(NewWeight), maxweight(NewMaxWeight), wchange(NewWeightChange),state(NewConnectionState) {
+Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, unsigned int NewLearningRuleIndex):
+	source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), weight(NewWeight), maxweight(NewMaxWeight), wchange(NewWeightChange),LearningRuleIndex(NewLearningRuleIndex) {
 }
 
 Interconnection::~Interconnection(){
-	if (this->state!=0){
-		delete this->state;
-		this->state = 0;
-	}
+
 }
 
 long int Interconnection::GetIndex() const{
@@ -83,13 +80,13 @@ void Interconnection::SetType(int NewType){
 //	return this->weight;
 //}
 		
-void Interconnection::SetWeight(float NewWeight){
-	this->weight = NewWeight;
-}
+//void Interconnection::SetWeight(float NewWeight){
+//	this->weight = NewWeight;
+//}
 		
-float Interconnection::GetMaxWeight() const{
-	return this->maxweight;
-}
+//float Interconnection::GetMaxWeight() const{
+//	return this->maxweight;
+//}
 		
 void Interconnection::SetMaxWeight(float NewMaxWeight){
 	this->maxweight = NewMaxWeight;
@@ -103,13 +100,14 @@ void Interconnection::SetWeightChange(LearningRule * NewWeightChange){
 	this->wchange=NewWeightChange;
 }
 
-ConnectionState * Interconnection::GetConnectionState() const{
-	return this->state;
+
+void Interconnection::SetLearningRuleIndex(int NewIndex){
+	this->LearningRuleIndex=NewIndex;
 }
-		
-void Interconnection::SetConnectionState(ConnectionState * NewConnectionState){
-	this->state = NewConnectionState;
-}
+
+//int Interconnection::GetLearningRuleIndex() const{
+//	return this->LearningRuleIndex;
+//}
 
 ostream & Interconnection::PrintInfo(ostream & out) {
 	out << "- Interconnection: " << this->index << endl;

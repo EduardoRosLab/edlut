@@ -24,8 +24,8 @@
 SinWeightChange::SinWeightChange():exponent(0){
 }
 
-ConnectionState * SinWeightChange::GetInitialState(){
-	return (ConnectionState *) new SinState(this->exponent,this->maxpos);
+void SinWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
+	this->State=(ConnectionState *) new SinState(NumberOfSynapses, this->exponent,this->maxpos);
 }
 
 int SinWeightChange::GetNumberOfVar() const{

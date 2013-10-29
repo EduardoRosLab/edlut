@@ -16,11 +16,15 @@
 
 #include "../../include/learning_rules/STDPState.h"
 
-#include <cmath>
+#include "../../include/parallel_function.h"
 
-STDPState::STDPState(double NewLTPValue, double NewLTDValue): ConnectionState(2), LTPTau(NewLTPValue), LTDTau(NewLTDValue){
-	ConnectionState::SetStateVariableAt(0,0); // Initialize presynaptic activity
-	ConnectionState::SetStateVariableAt(1,0); // Initialize postsynaptic activity
+#include <cmath>
+#include <stdio.h>
+#include <float.h>
+
+STDPState::STDPState(int NumSynapses, float NewLTPValue, float NewLTDValue): ConnectionState(NumSynapses, 2), LTPTau(NewLTPValue), LTDTau(NewLTDValue){
+	inv_LTPTau=1.0f/NewLTPValue;
+	inv_LTDTau=1.0f/NewLTDValue;
 }
 
 STDPState::~STDPState() {
@@ -32,7 +36,7 @@ unsigned int STDPState::GetNumberOfPrintableValues(){
 
 double STDPState::GetPrintableValuesAt(unsigned int position){
 	if (position<ConnectionState::GetNumberOfPrintableValues()){
-		return ConnectionState::GetStateVariableAt(position);
+		return ConnectionState::GetStateVariableAt(0, position);
 	} else if (position==ConnectionState::GetNumberOfPrintableValues()) {
 		return this->LTPTau;
 	} else if (position==ConnectionState::GetNumberOfPrintableValues()+1) {
@@ -40,56 +44,42 @@ double STDPState::GetPrintableValuesAt(unsigned int position){
 	} else return -1;
 }
 
-//float STDPState::GetPresynapticActivity(){
-//	return this->GetStateVariableAt(0);
+//float STDPState::GetPresynapticActivity(unsigned int index){
+//	return this->GetStateVariableAt(index, 0);
 //}
 
-//float STDPState::GetPostsynapticActivity(){
-//	return this->GetStateVariableAt(1);
+//float STDPState::GetPostsynapticActivity(unsigned int index){
+//	return this->GetStateVariableAt(index, 1);
 //}
 
-void STDPState::SetNewUpdateTime(double NewTime){
-	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime());
 
-	float PreActivity = this->GetPresynapticActivity();
-	float PostActivity = this->GetPostsynapticActivity();
+void STDPState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
+	float PreActivity = this->GetPresynapticActivity(index);
+	float PostActivity = this->GetPostsynapticActivity(index);
 
-	// Accumulate activity since the last update time
-	PreActivity = PreActivity * exp(-ElapsedTime/this->LTPTau);
-	PostActivity = PostActivity * exp(-ElapsedTime/this->LTDTau);
+	float ElapsedTime=(float)(NewTime - this->GetLastUpdateTime(index));
+
+	//// Accumulate activity since the last update time
+	PreActivity *= exp(-ElapsedTime*this->inv_LTPTau);
+	PostActivity *= exp(-ElapsedTime*this->inv_LTDTau);
 
 	// Store the activity in state variables
-	this->SetStateVariableAt(0,PreActivity);
-	this->SetStateVariableAt(1,PostActivity);
+	//this->SetStateVariableAt(index, 0, PreActivity);
+	//this->SetStateVariableAt(index, 1, PostActivity);
+	this->SetStateVariableAt(index, 0, PreActivity, PostActivity);
 
-	this->SetLastUpdateTime(NewTime);
+	this->SetLastUpdateTime(index, NewTime);
 }
 
-void STDPState::ApplyPresynapticSpike(){
-	//float PreActivity = this->GetPresynapticActivity();
-
-	//// Accumulate new incoming activity
-	//PreActivity += 1;
-
-	//// Store the activity in the state variable
-	//this->SetStateVariableAt(0,PreActivity);
-
-
+void STDPState::ApplyPresynapticSpike(unsigned int index){
 	// Increment the activity in the state variable
-	this->SetStateVariableAt(0,this->GetPresynapticActivity()+1.0f);
+	//this->SetStateVariableAt(index, 0, this->GetPresynapticActivity(index)+1.0f);
+	this->incrementStateVaraibleAt(index, 0, 1.0f);
 }
 
-void STDPState::ApplyPostsynapticSpike(){
-	//float PostActivity = this->GetPostsynapticActivity();
-
-	//// Accumulate new incoming activity
-	//PostActivity += 1;
-
-	//// Store the activity in the state variable
-	//this->SetStateVariableAt(1,PostActivity);
-
-
+void STDPState::ApplyPostsynapticSpike(unsigned int index){
 	// Increment the activity in the state variable
-	this->SetStateVariableAt(1,this->GetPostsynapticActivity()+1.0f);
+	//this->SetStateVariableAt(index, 1, this->GetPostsynapticActivity(index)+1.0f);
+	this->incrementStateVaraibleAt(index, 1, 1.0f); 
 }
 

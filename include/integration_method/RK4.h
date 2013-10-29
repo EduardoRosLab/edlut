@@ -53,11 +53,11 @@ class RK4 : public FixedStep {
 		/*!
 		 * \brief These vectors are used as auxiliar vectors.
 		*/
-		float * AuxNeuronState;
-		float * AuxNeuronState1;
-		float * AuxNeuronState2;
-		float * AuxNeuronState3;
-		float * AuxNeuronState4;
+		float ** AuxNeuronState;
+		float ** AuxNeuronState1;
+		float ** AuxNeuronState2;
+		float ** AuxNeuronState3;
+		float ** AuxNeuronState4;
 
 		/*!
 		 * \brief Constructor of the class with 4 parameter.

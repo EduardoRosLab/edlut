@@ -64,6 +64,7 @@ class SinState : public ConnectionState{
 		 * Precalculated LUT Step.
 		 */
 		static float LUTStep;
+		static float inv_LUTStep;
 
 		/*!
 		 * The exponent of the sinuidal function.
@@ -79,6 +80,7 @@ class SinState : public ConnectionState{
 		 * Tau constant of the learning rule.
 		 */
 		float tau;
+		float inv_tau;
 
 		/*!
 		 * Corrective factor to adjust the maximum to 1.
@@ -92,10 +94,11 @@ class SinState : public ConnectionState{
 		 *
 		 * It generates a new state of a connection.
 		 *
+		 * \param NumSynapses Number of synapses that implement this learning rule.
 		 * \param NewExponent The exponent of the sinusoidal function.
 		 * \param MaxPosition Temporal position of the peak.
 		 */
-		SinState(int NewExponent, float NewMaxpos);
+		SinState(unsigned int NumSynapses, unsigned int NewExponent, float NewMaxpos);
 
 		/*!
 		 * \brief Class destructor.
@@ -111,7 +114,7 @@ class SinState : public ConnectionState{
 		 *
 		 * \return The accumulated presynaptic activity.
 		 */
-		virtual float GetPresynapticActivity();
+		virtual float GetPresynapticActivity(unsigned int index);
 
 		/*!
 		 * \brief It gets the value of the accumulated postsynaptic activity.
@@ -120,7 +123,7 @@ class SinState : public ConnectionState{
 		 *
 		 * \return The accumulated postsynaptic activity.
 		 */
-		virtual float GetPostsynapticActivity();
+		virtual float GetPostsynapticActivity(unsigned int index);
 
 
 		/*!
@@ -149,7 +152,7 @@ class SinState : public ConnectionState{
 		 *
 		 * \param NewTime new time.
 		 */
-		virtual void SetNewUpdateTime(double NewTime);
+		virtual void SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post);
 
 
 		/*!
@@ -158,7 +161,7 @@ class SinState : public ConnectionState{
 		 * It implements the behaviour when it transmits a spike. It must be implemented
 		 * by any inherited class.
 		 */
-		virtual void ApplyPresynapticSpike();
+		virtual void ApplyPresynapticSpike(unsigned int index);
 
 		/*!
 		 * \brief It implements the behaviour when the target cell fires a spike.
@@ -166,7 +169,7 @@ class SinState : public ConnectionState{
 		 * It implements the behaviour when it the target cell fires a spike. It must be implemented
 		 * by any inherited class.
 		 */
-		virtual void ApplyPostsynapticSpike();
+		virtual void ApplyPostsynapticSpike(unsigned int index);
 
 };
 

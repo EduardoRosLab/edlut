@@ -91,9 +91,9 @@ class Interconnection : public PrintableObject {
 		LearningRule* wchange;
 		
 		/*!
-		 * \brief The activity state of the connection
+		 * \brief Index inside the Learning Rule.
 		 */
-		ConnectionState * state;
+		int LearningRuleIndex;
 		
 	public:
 	
@@ -117,9 +117,9 @@ class Interconnection : public PrintableObject {
 		 * \param NewWeight Synaptic weight of this connection.
 		 * \param NewMaxWeight Maximum synaptic weight of this connection.
 		 * \param NewWeightChange Learning (or weight change) rule associated to this connection.
-		 * \param NewConnectionState Current State object of the connection
+		 * \param NewLearningRuleIndex Current learning rule index.
 		 */
-		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, ConnectionState* NewConnectionState);
+		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, unsigned int NewLearningRuleIndex);
 		
 		/*!
 		 * \brief Object destructor.
@@ -249,7 +249,26 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \param NewWeight The new synaptic weight of the connection.
 		 */
-		void SetWeight(float NewWeight);
+		//void SetWeight(float NewWeight);
+		inline void SetWeight(float NewWeight){
+			this->weight = NewWeight;
+		}
+
+		/*!
+		 * \brief It increment the synaptic weight and checks the final value is inside the limits.
+		 * 
+		 * It increment the synaptic weight and checks the final value is inside the limits.
+		 * 
+		 * \param Increment The synaptic weight increment of the connection.
+		 */
+		inline void IncrementWeight(float Increment){
+			this->weight += Increment;
+			if(this->weight > this->GetMaxWeight()){
+				this->weight = this->GetMaxWeight();
+			}else if(this->weight < 0.0f){
+				this->weight = 0.0f;
+			}
+		}
 		
 		/*!
 		 * \brief It gets the maximum synaptic weight.
@@ -258,7 +277,11 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The maximum synaptic weight.
 		 */
-		float GetMaxWeight() const;
+		//float GetMaxWeight() const;
+		inline float GetMaxWeight() const{
+			return this->maxweight;
+		}
+
 		
 		/*!
 		 * \brief It sets the maximum synaptic weight.
@@ -291,22 +314,26 @@ class Interconnection : public PrintableObject {
 		void SetWeightChange(LearningRule * NewWeightChange);
 		
 		/*!
-		 * \brief It gets the connection state of this connection.
-		 *
-		 * It gets the state of the connection.
-		 *
-		 * \return The connection state of the connection. 0 if the connection hasn't associated learning rule.
+		 * \brief It gets the connection learning rule index.
+		 * 
+		 * It gets the connection learning rule index in the network connections.
+		 * 
+		 * \return The connection learning rule index.
 		 */
-		ConnectionState * GetConnectionState() const;
+		//int GetLearningRuleIndex() const;
+		inline int GetLearningRuleIndex() const{
+			return this->LearningRuleIndex;
+		}
 
+		
 		/*!
-		 * \brief It sets the current state of this connection.
-		 *
-		 * It sets the state of the connection.
-		 *
-		 * \param NewConnectionState The new state of the connection. 0 if the connection hasn't learning rule.
+		 * \brief It sets the connection learning rule index.
+		 * 
+		 * It sets the connection learning rule index in the network connections.
+		 * 
+		 * \param NewIndex The new learning rule index of the connection.
 		 */
-		void SetConnectionState(ConnectionState * NewConnectionState);
+		void SetLearningRuleIndex(int NewIndex);
 
 
 		/*!

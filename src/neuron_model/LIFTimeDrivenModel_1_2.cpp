@@ -62,9 +62,11 @@ void LIFTimeDrivenModel_1_2::LoadNeuronModel(string ConfigFile) throw (EDLUTFile
 							skip_comments(fh,Currentline);
 
 							if(fscanf(fh,"%f",&this->texc)==1){
+								inv_texc=1.0f/texc;
 								skip_comments(fh,Currentline);
 
 								if(fscanf(fh,"%f",&this->tinh)==1){
+									inv_tinh=1.0f/tinh;
 									skip_comments(fh,Currentline);
 
 									if(fscanf(fh,"%f",&this->tref)==1){
@@ -116,6 +118,8 @@ void LIFTimeDrivenModel_1_2::SynapsisEffect(int index, VectorNeuronState * State
 		}case 1:{
 			State->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState+1,1e-9f*InputConnection->GetWeight());
 			break;
+		}default :{
+			printf("ERROR: LIFTimeDrivenModel_1_2 only support two kind of input synapses \n");
 		}
 	}
 }
@@ -182,7 +186,7 @@ bool LIFTimeDrivenModel_1_2::UpdateState(int index, VectorNeuronState * State, d
 	//NeuronState[2] --> ginh 
 
 	if(index==-1){
-		#pragma omp parallel for num_threads(N_CPU_thread) default(none) shared(Size, State, internalSpike, CurrentTime) private(i, last_update, last_spike, spike, NeuronState, CPU_thread_index, elapsed_time, elapsed_time_f)
+		#pragma omp parallel for num_threads(N_CPU_thread) schedule(guided, 32) if(Size>128) default(none) shared(Size, State, internalSpike, CurrentTime) private(i, last_update, last_spike, spike, NeuronState, CPU_thread_index, elapsed_time, elapsed_time_f)
 		for (int i=0; i< Size; i++){
 
 			last_update = State->GetLastUpdateTime(i);
@@ -276,23 +280,23 @@ void LIFTimeDrivenModel_1_2::InitializeStates(int N_neurons){
 
 
 void LIFTimeDrivenModel_1_2::EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState){
-//	AuxNeuronState[0]=(NeuronState[1] * (this->eexc - NeuronState[0]) + NeuronState[2] * (this->einh - NeuronState[0]) + grest * (this->erest - NeuronState[0]))/this->cm;
 	AuxNeuronState[0]=(NeuronState[1] * (this->eexc - NeuronState[0]) + NeuronState[2] * (this->einh - NeuronState[0]) + grest * (this->erest - NeuronState[0]))*this->inv_cm;
 }
 
 void LIFTimeDrivenModel_1_2::EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time){
-	//NeuronState[1]*= exp(-(elapsed_time/this->texc));
-	//NeuronState[2]*= exp(-(elapsed_time/this->tinh));
+	//NeuronState[1]*= exp(-(elapsed_time*this->inv_texc));
+	//NeuronState[2]*= exp(-(elapsed_time*this->inv_tinh));
 	
 	if(NeuronState[1]<1e-30){
 		NeuronState[1]=0.0f;
 	}else{
-		NeuronState[1]*= exp(-(elapsed_time/this->texc));
+		NeuronState[1]*= exp(-(elapsed_time*this->inv_texc));
 	}
 	if(NeuronState[2]<1e-30){
 		NeuronState[2]=0.0f;
 	}else{
-		NeuronState[2]*= exp(-(elapsed_time/this->tinh));
+		NeuronState[2]*= exp(-(elapsed_time*this->inv_tinh));
 	}	
+
 }
 

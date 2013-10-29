@@ -95,11 +95,13 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 		 * \brief AMPA receptor time constant
 		 */
 		float texc;
+		float inv_texc;
 
 		/*!
 		 * \brief GABA receptor time constant
 		 */
 		float tinh;
+		float inv_tinh;
 
 		/*!
 		 * \brief Refractory period

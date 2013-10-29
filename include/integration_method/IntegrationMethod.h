@@ -77,6 +77,11 @@ class IntegrationMethod {
 		*/
 		int N_TimeDependentNeuronState;
 
+		/*!
+		 * \brief Number of CPU thread in OpenMP version.
+		*/
+		int N_CPU_Thread;
+
 
 		/*!
 		 * \brief PredictedElapsedTime. This vector contains only one element for fixed step itegration method or one
@@ -87,12 +92,9 @@ class IntegrationMethod {
 		/*!
 		 * \brief These vectors are used as auxiliar vectors.
 		*/
-		float * AuxNeuronState;
-		float * AuxNeuronState_pos;
-		float * AuxNeuronState_neg;
-		float * aux;
-		double * auxDouble;
-
+		float ** JacAuxNeuronState;
+		float ** JacAuxNeuronState_pos;
+		float ** JacAuxNeuronState_neg;
 
 
 		/*!

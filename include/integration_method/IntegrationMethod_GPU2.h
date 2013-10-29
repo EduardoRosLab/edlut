@@ -105,7 +105,7 @@ class IntegrationMethod_GPU2 {
 		 * \param NeuronState Vector of neuron state variables for all neurons.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ virtual void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, double elapsed_time) {
+		__device__ virtual void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, float elapsed_time) {
 		}
 
 

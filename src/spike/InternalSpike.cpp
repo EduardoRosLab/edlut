@@ -72,10 +72,14 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRe
 					CurrentSimulation->GetQueue()->InsertEvent(spike);
 				}
 
-				for (int i=0; i<neuron->GetInputNumberWithLearning(); ++i){
-					Interconnection * inter = neuron->GetInputConnectionWithLearningAt(i);
-					LearningRule * Plasticity = inter->GetWeightChange();
-					Plasticity->ApplyPostSynapticSpike(inter,this->time);
+				if(neuron->GetInputNumberWithPostSynapticLearning()>0){
+					int i;
+					Interconnection * inter;
+					#pragma omp parallel for if(neuron->GetInputNumberWithPostSynapticLearning()>64) schedule(guided, 16) num_threads(8) shared (neuron) private (i, inter)
+					for (int i=0; i<neuron->GetInputNumberWithPostSynapticLearning(); ++i){
+						inter = neuron->GetInputConnectionWithPostSynapticLearningAt(i);
+						inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
+					}
 				}
 			}
 		} else { // Time-driven model (no check nor update needed
@@ -93,10 +97,14 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRe
 				CurrentSimulation->GetQueue()->InsertEvent(spike);
 			}
 
-			for (int i=0; i<neuron->GetInputNumberWithLearning(); ++i){
-				Interconnection * inter = neuron->GetInputConnectionWithLearningAt(i);
-				LearningRule * Plasticity = inter->GetWeightChange();
-				Plasticity->ApplyPostSynapticSpike(inter,this->time);
+			if(neuron->GetInputNumberWithPostSynapticLearning()>0){
+				int i;
+				Interconnection * inter;
+				#pragma omp parallel for if(neuron->GetInputNumberWithPostSynapticLearning()>64) schedule(guided, 16) num_threads(8) shared (neuron) private (i, inter)
+				for (int i=0; i<neuron->GetInputNumberWithPostSynapticLearning(); ++i){
+					inter = neuron->GetInputConnectionWithPostSynapticLearningAt(i);
+					inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
+				}
 			}
 			
 		}

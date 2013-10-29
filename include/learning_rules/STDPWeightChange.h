@@ -64,14 +64,8 @@ class STDPWeightChange: public LearningRule {
 		float MaxChangeLTP;
 
 	public:
-		/*!
-		 * \brief It gets the initial state associated to the learning rule.
-		 *
-		 * It gets the initial state associated to the learning rule.
-		 *
-		 * \return The initial state that the learning rule needs.
-		 */
-		virtual ConnectionState * GetInitialState();
+
+		virtual void InitializeConnectionState(unsigned int NumberOfSynapses);
 
 		/*!
 		 * \brief It gets the maximum value of the weight change for LTD.
@@ -152,6 +146,16 @@ class STDPWeightChange: public LearningRule {
 		 * \return The stream after the printer.
 		 */
 		virtual ostream & PrintInfo(ostream & out);
+
+
+		/*!
+		 * \brief It returns if this learning rule implements postsynaptic learning.
+		 *
+		 * It returns if this learning rule implements postsynaptic learning.
+		 *
+		 * \returns if this learning rule implements postsynaptic learning
+		 */
+		virtual bool ImplementPostSynaptic();
 };
 
 #endif /* STDPWEIGHTCHANGE_H_ */

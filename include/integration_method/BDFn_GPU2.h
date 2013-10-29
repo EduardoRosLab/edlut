@@ -155,7 +155,7 @@ class BDFn_GPU2 : public IntegrationMethod_GPU2 {
 		 * \param NeuronState Vector of neuron state variables for all neurons.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, double elapsed_time){
+		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, float elapsed_time){
 			int offset1=gridDim.x * blockDim.x;
 			int offset2=blockDim.x*blockIdx.x + threadIdx.x;
 

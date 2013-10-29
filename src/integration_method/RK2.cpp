@@ -19,21 +19,31 @@
 
 
 RK2::RK2(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread):FixedStep("RK2",N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread, false, false){
-	AuxNeuronState = new float [N_NeuronStateVariables*N_CPU_thread];
-	AuxNeuronState1 = new float [N_NeuronStateVariables*N_CPU_thread];
-	AuxNeuronState2 = new float [N_NeuronStateVariables*N_CPU_thread];
+	AuxNeuronState = (float **)new float *[N_CPU_thread];
+	AuxNeuronState1 = (float **)new float *[N_CPU_thread];
+	AuxNeuronState2 = (float **)new float *[N_CPU_thread];
+	for(int i=0; i<N_CPU_thread; i++){
+		AuxNeuronState[i] = new float [N_NeuronStateVariables]();
+		AuxNeuronState1[i] = new float [N_NeuronStateVariables]();
+		AuxNeuronState2[i] = new float [N_NeuronStateVariables]();
+	}
 }
 
 RK2::~RK2(){
+	for(int i=0; i<N_CPU_Thread; i++){
+		delete AuxNeuronState[i];
+		delete AuxNeuronState1[i];
+		delete AuxNeuronState2[i];
+	}
 	delete [] AuxNeuronState;
 	delete [] AuxNeuronState1;
 	delete [] AuxNeuronState2;
 }
 		
 void RK2::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
-	float * offset_AuxNeuronState=AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_AuxNeuronState1=AuxNeuronState1+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_AuxNeuronState2=AuxNeuronState2+(N_NeuronStateVariables*CPU_thread_index);
+	float * offset_AuxNeuronState = AuxNeuronState[CPU_thread_index];
+	float * offset_AuxNeuronState1 = AuxNeuronState1[CPU_thread_index];
+	float * offset_AuxNeuronState2 = AuxNeuronState2[CPU_thread_index];
 
 	//1st term
 	Model->EvaluateDifferentialEcuation(NeuronState, offset_AuxNeuronState1);
@@ -54,6 +64,7 @@ void RK2::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model
 	}
 
 	Model->EvaluateTimeDependentEcuation(NeuronState, elapsed_time);
+
 }
 
 ostream & RK2::PrintInfo(ostream & out){

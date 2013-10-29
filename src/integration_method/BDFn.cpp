@@ -29,13 +29,23 @@ const float BDFn::Coeficient [7][7]={{1.0f,1.0f,0.0f,0.0f,0.0f,0.0f,0.0f},
 
 
 BDFn::BDFn(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread, int BDForder):FixedStep("BDFn", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread, true, true),BDForder(BDForder){
-	AuxNeuronState = new float [N_NeuronStateVariables*N_CPU_thread];
-	AuxNeuronState_p = new float [N_NeuronStateVariables*N_CPU_thread];
-	AuxNeuronState_p1 = new float [N_NeuronStateVariables*N_CPU_thread];
-	AuxNeuronState_c = new float [N_NeuronStateVariables*N_CPU_thread];
-	jacnum = new float [N_DifferentialNeuronState*N_DifferentialNeuronState*N_CPU_thread];
-	J = new float [N_DifferentialNeuronState*N_DifferentialNeuronState*N_CPU_thread];
-	inv_J = new float [N_DifferentialNeuronState*N_DifferentialNeuronState*N_CPU_thread];
+	AuxNeuronState = (float **)new float *[N_CPU_thread];
+	AuxNeuronState_p = (float **)new float *[N_CPU_thread];
+	AuxNeuronState_p1 = (float **)new float *[N_CPU_thread];
+	AuxNeuronState_c = (float **)new float *[N_CPU_thread];
+	jacnum = (float **)new float *[N_CPU_thread];
+	J = (float **)new float *[N_CPU_thread];
+	inv_J = (float **)new float *[N_CPU_thread];
+
+	for(int i=0; i<N_CPU_thread; i++){
+		AuxNeuronState[i] = new float [N_NeuronStateVariables];
+		AuxNeuronState_p[i] = new float [N_NeuronStateVariables];
+		AuxNeuronState_p1[i] = new float [N_NeuronStateVariables];
+		AuxNeuronState_c[i] = new float [N_NeuronStateVariables];
+		jacnum[i] = new float [N_DifferentialNeuronState*N_DifferentialNeuronState];
+		J[i] = new float [N_DifferentialNeuronState*N_DifferentialNeuronState];
+		inv_J[i] = new float [N_DifferentialNeuronState*N_DifferentialNeuronState];
+	}
 }
 
 BDFn::~BDFn(){
@@ -52,6 +62,15 @@ BDFn::~BDFn(){
 	delete [] D;
 	delete [] state;
 
+	for(int i=0; i<N_CPU_Thread; i++){
+		delete [] AuxNeuronState[i];
+		delete [] AuxNeuronState_p[i];
+		delete [] AuxNeuronState_p1[i];
+		delete [] AuxNeuronState_c[i];
+		delete [] jacnum[i];
+		delete [] J[i];
+		delete [] inv_J[i];
+	}
 	delete [] AuxNeuronState;
 	delete [] AuxNeuronState_p;
 	delete [] AuxNeuronState_p1;
@@ -64,13 +83,13 @@ BDFn::~BDFn(){
 		
 void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
 
-	float * offset_AuxNeuronState = AuxNeuronState+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_AuxNeuronState_p = AuxNeuronState_p+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_AuxNeuronState_p1 = AuxNeuronState_p1+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_AuxNeuronState_c = AuxNeuronState_c+(N_NeuronStateVariables*CPU_thread_index);
-	float * offset_jacnum = jacnum+(N_DifferentialNeuronState*N_DifferentialNeuronState*CPU_thread_index);
-	float * offset_J = J+(N_DifferentialNeuronState*N_DifferentialNeuronState*CPU_thread_index);
-	float * offset_inv_J = inv_J+(N_DifferentialNeuronState*N_DifferentialNeuronState*CPU_thread_index);
+	float * offset_AuxNeuronState = AuxNeuronState[CPU_thread_index];
+	float * offset_AuxNeuronState_p = AuxNeuronState_p[CPU_thread_index];
+	float * offset_AuxNeuronState_p1 = AuxNeuronState_p1[CPU_thread_index];
+	float * offset_AuxNeuronState_c = AuxNeuronState_c[CPU_thread_index];
+	float * offset_jacnum = jacnum[CPU_thread_index];
+	float * offset_J = J[CPU_thread_index];
+	float * offset_inv_J = inv_J[CPU_thread_index];
 
 	//If the state of the cell is 0, we use a Euler method to calculate an aproximation of the solution.
 	if(state[index]==0){

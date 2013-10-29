@@ -92,14 +92,24 @@ class Neuron : public PrintableObject {
 		unsigned int OutputConNumber;
    		
    		/*!
-   		 * Input connections with asssociated learning.
+   		 * Input connections with asssociated postsynaptic learning.
    		 */
-   		Interconnection** InputLearningConnections;
+   		Interconnection** InputLearningConnectionsWithPostSynapticLearning;
+
+		/*!
+   		 * Input connections without asssociated postsynaptic learning.
+   		 */
+   		Interconnection** InputLearningConnectionsWithoutPostSynapticLearning;
    		
 		/*!
-		 * Input Connection number.
+		 * Input Connection number with presynpatic learning.
 		 */
-		unsigned int InputConLearningNumber;
+		unsigned int InputConLearningNumberWithPostSynaptic;
+
+		/*!
+		 * Input Connection number without presynpatic learning.
+		 */
+		unsigned int InputConLearningNumberWithoutPostSynaptic;
 
    		/*!
    		 * It tells if neuron activity will be registered.
@@ -187,7 +197,16 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The number of input connections to the current neuron with plasticity.
    		 */
-   		unsigned int GetInputNumberWithLearning() const;
+   		unsigned int GetInputNumberWithPostSynapticLearning() const;
+
+		/*!
+   		 * \brief It gets the number of inputs to the current neuron which have associated learning.
+   		 * 
+   		 * It returns the number of input connections to the current neuron which have associated learning.
+   		 * 
+   		 * \return The number of input connections to the current neuron with plasticity.
+   		 */
+   		unsigned int GetInputNumberWithoutPostSynapticLearning() const;
    		
    		/*!
    		 * \brief It gets the number of output from the current neuron.
@@ -209,7 +228,17 @@ class Neuron : public PrintableObject {
    		 * \param index The index of the input connection what we want to get.
    		 * \return The input connection of index index.
    		 */
-   		Interconnection * GetInputConnectionWithLearningAt(unsigned int index) const;
+   		Interconnection * GetInputConnectionWithPostSynapticLearningAt(unsigned int index) const;
+
+		/*!
+   		 * \brief It gets the input connection at an specified index.
+   		 * 
+   		 * It returns the input connection at index index.
+   		 * 
+   		 * \param index The index of the input connection what we want to get.
+   		 * \return The input connection of index index.
+   		 */
+   		Interconnection * GetInputConnectionWithoutPostSynapticLearningAt(unsigned int index) const;
    		
    		/*!
    		 * \brief It sets the input connections which have associated learning.
@@ -219,16 +248,18 @@ class Neuron : public PrintableObject {
    		 * \param Connection The input connections to set. The memory will be released within the class destructor.
 		 * \param NumberOfConnections The number of input connections in the first parameter.
    		 */
-   		void SetInputConnectionsWithLearning(Interconnection ** Connections, unsigned int NumberOfConnections);
-   		
-   		/*!
-   		 * \brief It checks if the neuron has some input connection.
+   		void SetInputConnectionsWithPostSynapticLearning(Interconnection ** Connections, unsigned int NumberOfConnections);
+
+		/*!
+   		 * \brief It sets the input connections which have associated learning.
    		 * 
-   		 * It checks if the number of input connections is greater than 0.
+   		 * It sets the input connections which have associated learning.
    		 * 
-   		 * \return True if the neuron has some input connection. False in other case.
+   		 * \param Connection The input connections to set. The memory will be released within the class destructor.
+		 * \param NumberOfConnections The number of input connections in the first parameter.
    		 */
-   		bool IsInputConnected() const;
+   		void SetInputConnectionsWithoutPostSynapticLearning(Interconnection ** Connections, unsigned int NumberOfConnections);
+   		
    		
    		/*!
    		 * \brief It gets the output connection at an specified index.

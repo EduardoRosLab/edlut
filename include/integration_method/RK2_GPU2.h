@@ -98,7 +98,7 @@ class RK2_GPU2 : public IntegrationMethod_GPU2 {
 		 * \param NeuronState Vector of neuron state variables for all neurons.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, double elapsed_time){
+		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, float elapsed_time){
 
 			int offset1=gridDim.x * blockDim.x;
 			int offset2=blockDim.x*blockIdx.x + threadIdx.x;
@@ -124,7 +124,10 @@ class RK2_GPU2 : public IntegrationMethod_GPU2 {
 			}
 
 			//Finaly, we evaluate the neural state variables with time dependence.
-			Model->EvaluateTimeDependentEcuation(index, SizeStates, NeuronState, elapsed_time);
+			//Model->EvaluateTimeDependentEcuation(index, SizeStates, NeuronState, elapsed_time);
+			for (int j=N_DifferentialNeuronState; j<N_NeuronStateVariables; j++){
+				NeuronState[j*SizeStates + index]=AuxNeuronState[j*offset1 + offset2];
+			}
 		}
 
 

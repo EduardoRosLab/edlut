@@ -1,7 +1,7 @@
 /***************************************************************************
- *                           STDPLSWeightChange.cpp                        *
+ *                           LearningRule.cpp                              *
  *                           -------------------                           *
- * copyright            : (C) 2013 by Jesus Garrido                        *
+ * copyright            : (C) 2011 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
  ***************************************************************************/
 
@@ -14,25 +14,24 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/learning_rules/STDPLSWeightChange.h"
-
-#include "../../include/learning_rules/STDPLSState.h"
-
-#include "../../include/spike/Interconnection.h"
-
-#include "../../include/simulation/Utils.h"
-
-#include "../../include/neuron_model/NeuronState.h"
+#include "../../include/learning_rules/LearningRule.h"
 
 
+LearningRule::LearningRule(): State(0){
 
-void STDPLSWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
-	this->State=(ConnectionState *) new STDPLSState(NumberOfSynapses, this->tauLTP, this->tauLTD);
 }
 
-ostream & STDPLSWeightChange::PrintInfo(ostream & out){
-
-	out << "- STDP Last Spike Learning Rule: LTD " << this->MaxChangeLTD << "\t" << this->tauLTD << "\tLTP " << this->MaxChangeLTP << "\t" << this->tauLTP << endl;
-
-	return out;
+LearningRule::~LearningRule(){
+	if(State!=0){
+		delete State;
+	}
 }
+
+
+
+ConnectionState * LearningRule::GetConnectionState(){
+	return this->State;
+}
+
+
+
