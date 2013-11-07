@@ -17,7 +17,7 @@
  *
  * \author Niceto R. Luque
  * \author Richard R. Carrillo
- * \date 6 of November 2013
+ * \date 7 of November 2013
  * In this file the main robot-control loop is implemented.
  */
 
@@ -100,9 +100,9 @@ int main(int ac, char *av[])
    double sim_time,cur_traject_time;
    float slot_elapsed_time,sim_elapsed_time;
    int n_traj_exec;
-   // Delays
+   // Delay line
    struct delay error_delay;
-   
+
    // Variable for logging the simulation state variables
    struct log var_log;
 
@@ -166,7 +166,7 @@ int main(int ac, char *av[])
                   calculate_input_trajectory(robot_state_vars, TRAJ_POS_AMP, 0.0); // Initialize simulated robot's actual state from the desired state (input trajectory) (position, velocity and acceleration)
                   initialize_integration_buffers(robot_state_vars,&num_integration_buffers,n_robot_joints); // For the robot's direct 
                   reset_neural_simulation(neural_sim); // after each trajectory execution the network simulation state must be reset (pending activity events are discarded)
-                  init_delay(&error_delay, ERROR_DELAY_TIME);
+                  init_delay(&error_delay, ERROR_DELAY_TIME); // Clear the delay line
                   cur_traject_time=0.0;
                   do
                     {

@@ -20,7 +20,7 @@
  *
  * \author Richard R. Carrillo
  * \author Niceto R. Luque
- * \date 18 of September 2013
+ * \date 7 of November 2013
  *
  * This file declares the interface functions to access EDLUT's functionality
  * for robot control.
@@ -54,8 +54,8 @@ typedef struct Simulation_tag Simulation;
 /// (should be smaller than SIM_SLOT_LENGTH)
 #define TIME_DRIVEN_STEP_TIME 0.001
 
-/// \brief Maximum delay time in seconds
-/// ()
+/// \brief Maximum delay time that a delay line can have in seconds
+/// (The particular delay of each line is specified when calling init_delay())
 #define MAX_DELAY_TIME 0.1
 
 /// \brief Number of used robot's joints
@@ -182,19 +182,36 @@ EXTERN_C long long get_neural_simulation_event_counter(Simulation *neural_sim);
 /// \return Total number of processed events
 EXTERN_C long long get_accumulated_heap_occupancy_counter(Simulation *neural_sim);
 
-///////////////////////////// DELAYS //////////////////////////
+///////////////////////////// DELAY LINES FOR THE CONTROL LOOP //////////////////////////
+
 /// \brief The structure of a delay line
-///  This is used by struct the delay functions
+///  A pointer to a structure of this type is passed as parameter to all the delay functions
 struct delay
   {
    double buffer[(int)(MAX_DELAY_TIME/SIM_SLOT_LENGTH+1.5)][NUM_JOINTS]; // Circular buffer
-   int length; // the useful length is length-1
-   // This index points to the place where the new element will be stored
+   int length; // the useful length od the line is length-1
+   // This index points to the place where the new element will be stored.
    // index+1 is the oldest element in the buffer
    int index;
   };
 
+/// \brief Initializes and clear a delay line.
+/// A specificed delay line is initialized to a particular length and cleared
+/// (values set to 0).
+/// \param d Pointer to the delay structure to be init.
+/// \param del_time Delay introduced by the line in seconds.
+/// \pre The \a d strucure must be previously allocated.
 EXTERN_C void init_delay(struct delay *d, double del_time);
+
+/// \brief Inserts a new element in the delay line and get the oldest element.
+/// The delay line is shifted one position
+/// \param d Pointer to the delay structure to be shifed.
+/// \param elem Pointer to the new elem to be inserted in the line.
+///  Each delay line element is a group of NUM_JOINT doubles, therefore \a elem must
+///  point to at least NUM_JOINT doubles.
+/// \return Pointer to the oldest element group if the line.
+/// \post The returned value points to NUM_JOINT doubles which are allocated in the
+///  delay-line buffer. These values can be used until this function is called again.
 EXTERN_C double *delay_line(struct delay *d, double *elem);
 
 ///////////////////////////// INPUT TRAJECTORY //////////////////////////

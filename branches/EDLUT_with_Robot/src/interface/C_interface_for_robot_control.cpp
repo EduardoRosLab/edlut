@@ -19,7 +19,7 @@
  *
  * \author Richard R. Carrillo
  * \author Niceto R. Luque
- * \date 18 of September 2013
+ * \date 7 of November 2013
  *
  * This file defines the interface functions to access EDLUT's functionality.
  */
@@ -176,14 +176,14 @@ extern "C" long long get_accumulated_heap_occupancy_counter(Simulation *neural_s
    return(neural_sim->GetHeapAcumSize());
   }
 
-///////////////////////////// DELAYS //////////////////////////
+///////////////////////////// DELAY LINES FOR THE CONTROL LOOP //////////////////////////
 
 void init_delay(struct delay *d, double del_time)
   {
    int nelem, npos;
    if(del_time>MAX_DELAY_TIME)
       del_time=MAX_DELAY_TIME;
-   d->length=(int)(del_time/SIM_SLOT_LENGTH+1.5);
+   d->length=(int)(del_time/SIM_SLOT_LENGTH+1.5); // +1 because one position of the line is wasted to return the oldest element. +0.5 to round the size
    d->index=0;
    for(npos=0;npos<d->length;npos++)
       for(nelem=0;nelem<NUM_JOINTS;nelem++)
@@ -194,16 +194,13 @@ double *delay_line(struct delay *d, double *elem)
   {
    int nelem,next_index;
    double *elems;
-   next_index=(d->index+1)%d->length;
+   next_index=(d->index+1)%d->length; // oldest used element position
    elems=d->buffer[next_index];
    for(nelem=0;nelem<NUM_JOINTS;nelem++)
-     {
       d->buffer[d->index][nelem]=elem[nelem];
-     }
-   d->index=next_index;
+   d->index=next_index; // make index point to the returned element
    return(elems);
   }
-
 
 ///////////////////////////// INPUT TRAJECTORY //////////////////////////
 
