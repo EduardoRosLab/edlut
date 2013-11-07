@@ -176,6 +176,35 @@ extern "C" long long get_accumulated_heap_occupancy_counter(Simulation *neural_s
    return(neural_sim->GetHeapAcumSize());
   }
 
+///////////////////////////// DELAYS //////////////////////////
+
+void init_delay(struct delay *d, double del_time)
+  {
+   int nelem, npos;
+   if(del_time>MAX_DELAY_TIME)
+      del_time=MAX_DELAY_TIME;
+   d->length=(int)(del_time/SIM_SLOT_LENGTH+1.5);
+   d->index=0;
+   for(npos=0;npos<d->length;npos++)
+      for(nelem=0;nelem<NUM_JOINTS;nelem++)
+         d->buffer[npos][nelem]=0;
+  }
+
+double *delay_line(struct delay *d, double *elem)
+  {
+   int nelem,next_index;
+   double *elems;
+   next_index=(d->index+1)%d->length;
+   elems=d->buffer[next_index];
+   for(nelem=0;nelem<NUM_JOINTS;nelem++)
+     {
+      d->buffer[d->index][nelem]=elem[nelem];
+     }
+   d->index=next_index;
+   return(elems);
+  }
+
+
 ///////////////////////////// INPUT TRAJECTORY //////////////////////////
 
 double gaussian_function(double a, double b, double c, double x)
