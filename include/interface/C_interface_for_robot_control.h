@@ -54,6 +54,10 @@ typedef struct Simulation_tag Simulation;
 /// (should be smaller than SIM_SLOT_LENGTH)
 #define TIME_DRIVEN_STEP_TIME 0.001
 
+/// \brief Maximum delay time in seconds
+/// ()
+#define MAX_DELAY_TIME 0.1
+
 /// \brief Number of used robot's joints
 /// (depends on the number of joints moved during the performed trajectory)
 #define NUM_JOINTS 3
@@ -177,6 +181,21 @@ EXTERN_C long long get_neural_simulation_event_counter(Simulation *neural_sim);
 /// \param neural_sim Pointer to a Simulation created by create_neural_simulation()
 /// \return Total number of processed events
 EXTERN_C long long get_accumulated_heap_occupancy_counter(Simulation *neural_sim);
+
+///////////////////////////// DELAYS //////////////////////////
+/// \brief The structure of a delay line
+///  This is used by struct the delay functions
+struct delay
+  {
+   double buffer[(int)(MAX_DELAY_TIME/SIM_SLOT_LENGTH+1.5)][NUM_JOINTS]; // Circular buffer
+   int length; // the useful length is length-1
+   // This index points to the place where the new element will be stored
+   // index+1 is the oldest element in the buffer
+   int index;
+  };
+
+EXTERN_C void init_delay(struct delay *d, double del_time);
+EXTERN_C double *delay_line(struct delay *d, double *elem);
 
 ///////////////////////////// INPUT TRAJECTORY //////////////////////////
 

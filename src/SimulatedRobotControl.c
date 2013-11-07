@@ -17,7 +17,7 @@
  *
  * \author Niceto R. Luque
  * \author Richard R. Carrillo
- * \date 18 of September 2013
+ * \date 6 of November 2013
  * In this file the main robot-control loop is implemented.
  */
 
@@ -72,6 +72,7 @@
 #define TRAJ_POS_AMP 0.1 // Amplitude of the desired robot's trajectory
 #define TRAJECTORY_TIME 1 // Simulation time in seconds required to execute the desired trajectory once
 #define MAX_TRAJ_EXECUTIONS 2 // Maximum number of trajectories repetitions that will be executed by the robot
+#define ERROR_DELAY_TIME 0.1 // Delay after calculating the error vars
 
 const double ROBOT_GRAVITY[3]={0, 0, 9.81}; // Earth's standard acceleration due to gravity [Gx Gy Gz]
 const double ROBOT_EXTERNAL_FORCE[6]={0, 0, 0, 0, 0, 0}; // External force on manipulator tip [Fx Fy Fz MOMENTUMx MOMENTUMy MOMENTUMz]
@@ -87,6 +88,7 @@ int main(int ac, char *av[])
    double cerebellar_output_vars[NUM_OUTPUT_VARS]={0.0}; // Corrective cerebellar output torque
    double robot_inv_dyn_torque[NUM_JOINTS]; // Robot's inverse dynamics torque
    double total_torque[NUM_JOINTS]; // Total torque applied to the robot
+   double *delayed_error_vars;
    double robot_error_vars[NUM_JOINTS]; // Joint error (PD correction)
    double cerebellar_learning_vars[NUM_OUTPUT_VARS]; // Error-related learning signals
    // Robot's dynamics variables
@@ -98,15 +100,11 @@ int main(int ac, char *av[])
    double sim_time,cur_traject_time;
    float slot_elapsed_time,sim_elapsed_time;
    int n_traj_exec;
-
+   // Delays
+   struct delay error_delay;
+   
    // Variable for logging the simulation state variables
    struct log var_log;
-
-#if defined(_DEBUG) && (defined(_WIN32) || defined(_WIN64))
-//   _CrtMemState state0;
-   _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
-   _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
-#endif
 
 #if defined(REAL_TIME_WINNT)
 	// Variables for consumed-CPU-time measurement
@@ -120,6 +118,11 @@ int main(int ac, char *av[])
 	struct timespec startt, endt, freq;
 #endif
 
+#if defined(_DEBUG) && (defined(_WIN32) || defined(_WIN64))
+//   _CrtMemState state0;
+   _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
+   _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+#endif
 
 #if defined(REAL_TIME_WINNT)
    if(!QueryPerformanceFrequency(&freq))
@@ -163,6 +166,7 @@ int main(int ac, char *av[])
                   calculate_input_trajectory(robot_state_vars, TRAJ_POS_AMP, 0.0); // Initialize simulated robot's actual state from the desired state (input trajectory) (position, velocity and acceleration)
                   initialize_integration_buffers(robot_state_vars,&num_integration_buffers,n_robot_joints); // For the robot's direct 
                   reset_neural_simulation(neural_sim); // after each trajectory execution the network simulation state must be reset (pending activity events are discarded)
+                  init_delay(&error_delay, ERROR_DELAY_TIME);
                   cur_traject_time=0.0;
                   do
                     {
@@ -192,7 +196,9 @@ int main(int ac, char *av[])
 
 
                      calculate_error_signals(input_traject_vars, robot_state_vars, robot_error_vars); // Calculated robot's performed error
-                     calculate_learning_signals(robot_error_vars, cerebellar_output_vars, cerebellar_learning_vars); // Calculate learning signal from the calculated error
+                     //delayed_error_vars=delay_line(&error_delay,robot_error_vars); // Delay in the error bars
+                     delayed_error_vars=robot_error_vars; // No delay in the error bars
+                     calculate_learning_signals(delayed_error_vars, cerebellar_output_vars, cerebellar_learning_vars); // Calculate learning signal from the calculated error
                      generate_learning_activity(neural_sim, sim_time, cerebellar_learning_vars); // Translates the learning activity into spikes and injects this activity in the network
 
                      errorn=run_neural_simulation_slot(neural_sim, sim_time+SIM_SLOT_LENGTH); // Simulation the neural network during a time slot
@@ -215,7 +221,7 @@ int main(int ac, char *av[])
                      slot_elapsed_time = 1e-9 * elapsed * freq.numer / freq.denom;
 #endif
                      sim_elapsed_time+=slot_elapsed_time;
-                     log_vars(&var_log, sim_time, input_traject_vars, robot_state_vars, robot_inv_dyn_torque, cerebellar_output_vars, cerebellar_learning_vars, robot_error_vars, slot_elapsed_time,get_neural_simulation_spike_counter(neural_sim)); // Store vars into RAM
+                     log_vars(&var_log, sim_time, input_traject_vars, robot_state_vars, robot_inv_dyn_torque, cerebellar_output_vars, cerebellar_learning_vars, delayed_error_vars, slot_elapsed_time,get_neural_simulation_spike_counter(neural_sim)); // Store vars into RAM
                      cur_traject_time+=SIM_SLOT_LENGTH;
                     }
                   while(cur_traject_time<TRAJECTORY_TIME-(SIM_SLOT_LENGTH/2.0) && !errorn); // we add -(SIM_SLOT_LENGTH/2.0) because of floating-point-type codification problems

@@ -183,7 +183,9 @@ learning_rules-sources	:= 	$(srcdir)/learning_rules/ActivityRegister.cpp \
 			$(srcdir)/learning_rules/STDPLSState.cpp \
 			$(srcdir)/learning_rules/STDPLSWeightChange.cpp \
 			$(srcdir)/learning_rules/STDPState.cpp \
-			$(srcdir)/learning_rules/STDPWeightChange.cpp
+			$(srcdir)/learning_rules/STDPWeightChange.cpp \
+			$(srcdir)/learning_rules/WithoutPostSynaptic.cpp \
+			$(srcdir)/learning_rules/WithPostSynaptic.cpp
  
 
 neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
