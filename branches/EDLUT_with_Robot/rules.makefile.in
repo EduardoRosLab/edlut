@@ -106,7 +106,7 @@ distclean  :
 	@echo
 	@echo ------------------ cleaning everything
 	@echo
-	@rm -f $(pkgconfigfile) $(libtarget) $(packagename) $(objects) ${exetarget}.exe ${exe-objects} $(dependencies) ${exe-dependencies} ${robottarget} ${robot-objects} ${robot-dependencies} ${mextarget} ${mex-objects} ${mex-dependencies} ${sfunctiontarget} ${sfunction-objects} ${sfunction-dependencies} TAGS gmon.out
+	@rm -f $(pkgconfigfile) $(libtarget) $(packagename) $(objects) ${exetarget}.exe ${exe-objects} ${steptarget}.exe ${step-objects} ${precisiontarget}.exe ${precision-objects} $(dependencies) ${exe-dependencies} ${robottarget} ${robot-objects} ${robot-dependencies} ${mextarget} ${mex-objects} ${mex-dependencies} ${sfunctiontarget} ${sfunction-objects} ${sfunction-dependencies} TAGS gmon.out
 
 .PHONY : clean
 clean  :
