@@ -16,10 +16,14 @@
 
 #include "../../include/learning_rules/ConnectionState.h"
 
+#include "../../include/simulation/ExponentialTable.h"
+
 ConnectionState::ConnectionState(unsigned int NumSynapses, int NumVariables): NumberOfSynapses(NumSynapses), NumberOfVariables(NumVariables){
 	// TODO Auto-generated constructor stub
 	this->LastUpdate = (double *) new double [NumSynapses]();
 	this->StateVars = (float *) new float [NumSynapses*NumVariables]();
+
+	exponential = new ExponentialTable(-20, 0, 4*1024*1024);
 }
 
 ConnectionState::~ConnectionState() {
@@ -30,6 +34,10 @@ ConnectionState::~ConnectionState() {
 
 	if (this->StateVars!=0){
 		delete [] this->StateVars;
+	}
+
+	if(exponential!=0){
+		delete exponential;
 	}
 }
 

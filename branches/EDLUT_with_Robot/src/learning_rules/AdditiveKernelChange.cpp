@@ -43,6 +43,38 @@ void AdditiveKernelChange::LoadLearningRule(FILE * fh, long & Currentline) throw
 	}
 }
 
+//void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
+//	int LearningRuleIndex = Connection->GetLearningRuleIndex();
+//
+//	// Second case: the weight change is linked to this connection
+//	Connection->IncrementWeight(this->a1pre);
+//
+//	// Update the presynaptic activity
+//	State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
+//
+//	// Add the presynaptic spike influence
+//	State->ApplyPresynapticSpike(LearningRuleIndex);
+//
+//	// Check if this is the teaching signal
+//	if(this->trigger == 1){
+//		for(int i=0; i<Connection->GetTarget()->GetInputNumberWithoutPostSynapticLearning(); ++i){
+//			Interconnection * interi=Connection->GetTarget()->GetInputConnectionWithoutPostSynapticLearningAt(i);
+//		    AdditiveKernelChange * wchani=(AdditiveKernelChange *)interi->GetWeightChange();
+//
+//		    // Apply sinaptic plasticity driven by teaching signal
+//		    // Get connection state
+//			ConnectionState * ConnectionStatePre = wchani->GetConnectionState();
+//			int LearningRuleIndex = interi->GetLearningRuleIndex();
+//
+//			// Update the presynaptic activity
+//			ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
+//
+//			// Update synaptic weight
+//			interi->IncrementWeight(wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity(LearningRuleIndex));
+//		}
+//	}
+//}
+
 void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
 	int LearningRuleIndex = Connection->GetLearningRuleIndex();
 

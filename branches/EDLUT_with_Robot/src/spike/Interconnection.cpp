@@ -109,6 +109,16 @@ void Interconnection::SetLearningRuleIndex(int NewIndex){
 //	return this->LearningRuleIndex;
 //}
 
+//void Interconnection::IncrementWeight(float Increment){
+//	this->weight += Increment;
+//	if(this->weight > this->GetMaxWeight()){
+//		this->weight = this->GetMaxWeight();
+//	}else if(this->weight < 0.0f){
+//		this->weight = 0.0f;
+//	}
+//}
+
+
 ostream & Interconnection::PrintInfo(ostream & out) {
 	out << "- Interconnection: " << this->index << endl;
 

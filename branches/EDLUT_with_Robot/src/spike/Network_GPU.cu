@@ -337,6 +337,22 @@ if(N_LearningRule>0){
 }
 
 NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int & ni) throw (EDLUTException){
+	//We check if there is a GPU with CUDA capability and CUDA architectura higher or equal to 2.
+	int nDevices=0;
+	int mayor_architecture=0;
+	cudaGetDeviceCount(&nDevices);
+	if(nDevices==0){
+		printf("WARNING: No CUDA capable GPU available\n");
+	}else{
+		cudaDeviceProp prop;
+		cudaGetDeviceProperties(&prop, 0);
+		mayor_architecture=prop.major;
+		if(mayor_architecture<2){
+			printf("WARNING: GPU CUDA architecutre inferior to 2\n");
+		}
+	}
+		
+
 	NeuronModel * type;
    	
    	for(ni=0;ni<nneutypes && neutypes[ni]!=0 && ( neutypes[ni]->GetModelID()==neutype && neutypes[ni]->GetTypeID()!=ident_type || neutypes[ni]->GetModelID()!=neutype);++ni);
@@ -357,11 +373,26 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int & ni)
 		}else if (ident_type=="Vanderpol"){
 			neutypes[ni] = (Vanderpol *) new Vanderpol(ident_type, neutype);
 		}else if (ident_type=="LIFTimeDrivenModel_1_2_GPU"){
-			neutypes[ni] = (LIFTimeDrivenModel_1_2_GPU *) new LIFTimeDrivenModel_1_2_GPU(ident_type, neutype);
+			if(mayor_architecture>=2){
+				neutypes[ni] = (LIFTimeDrivenModel_1_2_GPU *) new LIFTimeDrivenModel_1_2_GPU(ident_type, neutype);
+			}else{
+				printf("WARNING: GPU CUDA architecutre inferior to 2. Implementing CPU model intead of GPU model\n");
+				neutypes[ni] = (LIFTimeDrivenModel_1_2 *) new LIFTimeDrivenModel_1_2(ident_type, neutype);
+			}
 		}else if (ident_type=="LIFTimeDrivenModel_1_4_GPU"){
-			neutypes[ni] = (LIFTimeDrivenModel_1_4_GPU *) new LIFTimeDrivenModel_1_4_GPU(ident_type, neutype);
+			if(mayor_architecture>=2){
+				neutypes[ni] = (LIFTimeDrivenModel_1_4_GPU *) new LIFTimeDrivenModel_1_4_GPU(ident_type, neutype);
+			}else{
+				printf("WARNING: GPU CUDA architecutre inferior to 2. Implementing CPU model intead of GPU model\n");
+				neutypes[ni] = (LIFTimeDrivenModel_1_4 *) new LIFTimeDrivenModel_1_4(ident_type, neutype);
+			}
 		}else if (ident_type=="EgidioGranuleCell_TimeDriven_GPU"){
-			neutypes[ni] = (EgidioGranuleCell_TimeDriven_GPU *) new EgidioGranuleCell_TimeDriven_GPU(ident_type, neutype);
+			if(mayor_architecture>=2){
+				neutypes[ni] = (EgidioGranuleCell_TimeDriven_GPU *) new EgidioGranuleCell_TimeDriven_GPU(ident_type, neutype);
+			}else{
+				printf("WARNING: GPU CUDA architecutre inferior to 2. Implementing CPU model intead of GPU model\n");
+				neutypes[ni] = (EgidioGranuleCell_TimeDriven *) new EgidioGranuleCell_TimeDriven(ident_type, neutype);
+			}
 		}else {
 			throw EDLUTException(13,58,30,0);
 		}

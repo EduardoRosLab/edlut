@@ -16,6 +16,8 @@
 
 #include "../../include/learning_rules/SinState.h"
 
+#include "../../include/simulation/ExponentialTable.h"
+
 #include <cmath>
 #include <string.h>
 
@@ -94,7 +96,7 @@ double SinState::GetPrintableValuesAt(unsigned int position){
 }
 
 
-//void SinState::SetNewUpdateTime(unsigned int index, double NewTime){
+//void SinState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_post){
 //	// Update the activity value
 //	float OldExpon = this->GetStateVariableAt(index, 1);
 //
@@ -112,18 +114,16 @@ double SinState::GetPrintableValuesAt(unsigned int position){
 //
 //	this->SetStateVariableAt(index, 1, NewExpon);
 //
-//	float inv_LUTStep=1.0f/this->LUTStep;
 //	unsigned int aux=(int)(ElapsedRelative*inv_LUTStep + 0.5f);
 //
 //	for (unsigned int grade=2; grade<=this->exponent; grade+=2){
 //
-//		
-//		float OldVarCos = this->GetStateVariableAt(index, grade);
-//		float OldVarSin = this->GetStateVariableAt(index, grade + 1);
-//
 //		unsigned int LUTindex = (grade*aux)%(TERMSLUT*2);
 //		float SinVar = SinLUT[LUTindex];
 //		float CosVar = SinLUT[LUTindex+1];
+//
+//		float OldVarCos = this->GetStateVariableAt(index, grade);
+//		float OldVarSin = this->GetStateVariableAt(index, grade + 1);
 //
 //		float NewVarCos = (OldVarCos*CosVar-OldVarSin*SinVar)*expon;
 //		float NewVarSin = (OldVarSin*CosVar+OldVarCos*SinVar)*expon;
@@ -153,7 +153,7 @@ void SinState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_po
 
 	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
 	float ElapsedRelative = ElapsedTime*this->inv_tau;
-	float expon = exp(-ElapsedRelative);
+	float expon = exponential->GetResult(-ElapsedRelative);
 
 	unsigned int ExponenLine = this->exponent>>1;
 
@@ -162,8 +162,6 @@ void SinState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_po
 	float NewActivity =OldExpon*(*(TermPointer++))*expon;
 
 	float NewExpon = OldExpon * expon;
-
-	this->SetStateVariableAt(index, 1, NewExpon);
 
 	unsigned int aux=(int)(ElapsedRelative*inv_LUTStep + 0.5f);
 
@@ -192,7 +190,7 @@ void SinState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_po
 
 	}
 	NewActivity*=this->factor;
-	this->SetStateVariableAt(index, 0, NewActivity);
+	this->SetStateVariableAt(index, 0, NewActivity, NewExpon);
 
 	this->SetLastUpdateTime(index, NewTime);
 }

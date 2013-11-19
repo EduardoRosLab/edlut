@@ -261,6 +261,7 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \param Increment The synaptic weight increment of the connection.
 		 */
+		//void IncrementWeight(float Increment);
 		inline void IncrementWeight(float Increment){
 			this->weight += Increment;
 			if(this->weight > this->GetMaxWeight()){

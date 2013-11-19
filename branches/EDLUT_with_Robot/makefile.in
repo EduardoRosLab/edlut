@@ -218,6 +218,7 @@ simulation-sources	:= $(srcdir)/simulation/CommunicationEvent.cpp \
 			$(srcdir)/simulation/EndSimulationEvent.cpp \
 			$(srcdir)/simulation/Event.cpp \
 			$(srcdir)/simulation/EventQueue.cpp \
+			$(srcdir)/simulation/ExponentialTable.cpp \
 			$(srcdir)/simulation/ParameterException.cpp \
 			$(srcdir)/simulation/ParamReader.cpp \
 			$(srcdir)/simulation/SaveWeightsEvent.cpp \

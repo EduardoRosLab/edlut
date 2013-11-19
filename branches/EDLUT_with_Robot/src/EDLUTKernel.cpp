@@ -58,8 +58,6 @@ using namespace std;
  * 			-sf File_Name	It saves the final weights in file File_Name.
  * 			-wt Save_Weight_Step	It sets the step time between weights saving.
  * 			-st Step_Time(in_seconds) It sets the step time in simulation.
- *			-ts Time driven step time (in_seconds).
- *			-tsGPU Time driven step time for GPU (in_seconds).
  * 			-log File_Name It saves the activity register in file File_Name.
  *          -logp File_Name It saves all events register in file File_Name.
  * 			-if Input_File	It adds the Input_File file in the input sources of the simulation.
@@ -70,7 +68,6 @@ using namespace std;
  * 
   */ 
 int main(int ac, char *av[]) {
-
 	clock_t starttotalt,endtotalt;
 	starttotalt=clock();
 

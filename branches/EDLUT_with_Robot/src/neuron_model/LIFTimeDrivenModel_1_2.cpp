@@ -286,17 +286,21 @@ void LIFTimeDrivenModel_1_2::EvaluateDifferentialEcuation(float * NeuronState, f
 void LIFTimeDrivenModel_1_2::EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time){
 	//NeuronState[1]*= exp(-(elapsed_time*this->inv_texc));
 	//NeuronState[2]*= exp(-(elapsed_time*this->inv_tinh));
+	float limit=1e-30;
 	
-	if(NeuronState[1]<1e-30){
+	if(NeuronState[1]<limit){
 		NeuronState[1]=0.0f;
 	}else{
 		NeuronState[1]*= exp(-(elapsed_time*this->inv_texc));
 	}
-	if(NeuronState[2]<1e-30){
+	if(NeuronState[2]<limit){
 		NeuronState[2]=0.0f;
 	}else{
 		NeuronState[2]*= exp(-(elapsed_time*this->inv_tinh));
 	}	
 
 }
+
+
+
 
