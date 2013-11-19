@@ -17,6 +17,8 @@
 #ifndef CONNECTIONSTATE_H_
 #define CONNECTIONSTATE_H_
 
+class ExponentialTable;
+
 /*!
  * \file ConnectionState.h
  *
@@ -40,7 +42,7 @@
 
 class ConnectionState {
 
-	private:
+	protected:
 
 		/*!
 		 * \brief Number of synapses that implement this learning rule.
@@ -63,6 +65,12 @@ class ConnectionState {
 	   	 * \brief Neuron state variables.
 	   	 */
 	   	float * StateVars;
+
+		/*!
+		 * \brief exponential look-up table.
+		 */
+		ExponentialTable * exponential;
+
 
 	   	/*!
 		 * \brief It sets the time when the last update happened.

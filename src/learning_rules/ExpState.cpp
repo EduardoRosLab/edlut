@@ -16,6 +16,8 @@
 
 #include "../../include/learning_rules/ExpState.h"
 
+#include "../../include/simulation/ExponentialTable.h"
+
 #include <cmath>
 #include <stdio.h>
 
@@ -50,10 +52,28 @@ float ExpState::GetPostsynapticActivity(unsigned int index){
 }
 
 
+//void ExpState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
+//	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
+//	float factor = ElapsedTime*this->inv_tau;
+//	float expon = exp(-factor);
+//	
+//	// Update the activity value
+//	float OldExpon = this->GetStateVariableAt(index, 0);
+//	float OldExpon1 = this->GetStateVariableAt(index, 1);
+//
+//	float NewExpon = (OldExpon+factor*OldExpon1)*expon;
+//	float NewExpon1 = OldExpon1*expon;
+//
+//	this->SetStateVariableAt(index, 0, NewExpon);
+//	this->SetStateVariableAt(index, 1, NewExpon1);
+//
+//	this->SetLastUpdateTime(index, NewTime);
+//}
+
 void ExpState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
 	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
 	float factor = ElapsedTime*this->inv_tau;
-	float expon = exp(-factor);
+	float expon = exponential->GetResult(-factor);
 	
 	// Update the activity value
 	float OldExpon = this->GetStateVariableAt(index, 0);
@@ -67,6 +87,8 @@ void ExpState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_pos
 
 	this->SetLastUpdateTime(index, NewTime);
 }
+
+
 
 void ExpState::ApplyPresynapticSpike(unsigned int index){
 	//float OldExpon = this->GetStateVariableAt(index, 1);
