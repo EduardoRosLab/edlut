@@ -24,12 +24,12 @@
 #include "../../include/learning_rules/LearningRule.h"
 #include "../../include/learning_rules/ConnectionState.h"
 
-Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange(0), LearningRuleIndex(0){
+Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange_withPost(0), LearningRuleIndex_withPost(0), wchange_withoutPost(0), LearningRuleIndex_withoutPost(0){
 	
 }
 
-Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, unsigned int NewLearningRuleIndex):
-	source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), weight(NewWeight), maxweight(NewMaxWeight), wchange(NewWeightChange),LearningRuleIndex(NewLearningRuleIndex) {
+Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange_withPost, unsigned int NewLearningRuleIndex_withPost, LearningRule* NewWeightChange_withoutPost, unsigned int NewLearningRuleIndex_withoutPost):
+	source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), weight(NewWeight), maxweight(NewMaxWeight), wchange_withPost(NewWeightChange_withPost),LearningRuleIndex_withPost(NewLearningRuleIndex_withPost), wchange_withoutPost(NewWeightChange_withoutPost),LearningRuleIndex_withoutPost(NewLearningRuleIndex_withoutPost) {
 }
 
 Interconnection::~Interconnection(){
@@ -92,21 +92,37 @@ void Interconnection::SetMaxWeight(float NewMaxWeight){
 	this->maxweight = NewMaxWeight;
 }
 		
-//LearningRule * Interconnection::GetWeightChange() const{
-//	return this->wchange;
+//LearningRule * Interconnection::GetWeightChange_withPost() const{
+//	return this->wchange_withPost;
 //}
 		
-void Interconnection::SetWeightChange(LearningRule * NewWeightChange){
-	this->wchange=NewWeightChange;
+void Interconnection::SetWeightChange_withPost(LearningRule * NewWeightChange_withPost){
+	this->wchange_withPost=NewWeightChange_withPost;
+}
+
+//LearningRule * Interconnection::GetWeightChange_withoutPost() const{
+//	return this->wchange_withoutPost;
+//}
+		
+void Interconnection::SetWeightChange_withoutPost(LearningRule * NewWeightChange_withoutPost){
+	this->wchange_withoutPost=NewWeightChange_withoutPost;
 }
 
 
-void Interconnection::SetLearningRuleIndex(int NewIndex){
-	this->LearningRuleIndex=NewIndex;
+void Interconnection::SetLearningRuleIndex_withPost(int NewIndex){
+	this->LearningRuleIndex_withPost=NewIndex;
 }
 
-//int Interconnection::GetLearningRuleIndex() const{
-//	return this->LearningRuleIndex;
+//int Interconnection::GetLearningRuleIndex_withPost() const{
+//	return this->LearningRuleIndex_withPost;
+//}
+
+void Interconnection::SetLearningRuleIndex_withoutPost(int NewIndex){
+	this->LearningRuleIndex_withoutPost=NewIndex;
+}
+
+//int Interconnection::GetLearningRuleIndex_withoutPost() const{
+//	return this->LearningRuleIndex_withoutPost;
 //}
 
 //void Interconnection::IncrementWeight(float Increment){
@@ -136,8 +152,11 @@ ostream & Interconnection::PrintInfo(ostream & out) {
 
    	out << "\tWeight Change: ";
 
-   	if (this->GetWeightChange()!=0) this->GetWeightChange()->PrintInfo(out);
-   	else out << "None" << endl;
+   	if (this->GetWeightChange_withPost()!=0) this->GetWeightChange_withPost()->PrintInfo(out);
+   	else out << "None learning rule with postsynaptic learning" << endl;
+
+	if (this->GetWeightChange_withoutPost()!=0) this->GetWeightChange_withoutPost()->PrintInfo(out);
+   	else out << "None learning rule without postsynaptic learning" << endl;
 
    	return out;
 }

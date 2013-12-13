@@ -88,12 +88,22 @@ class Interconnection : public PrintableObject {
 		/*!
 		 * \brief The learning (or weight change) rule of the connection.
 		 */
-		LearningRule* wchange;
+		LearningRule* wchange_withPost;
 		
 		/*!
 		 * \brief Index inside the Learning Rule.
 		 */
-		int LearningRuleIndex;
+		int LearningRuleIndex_withPost;
+
+		/*!
+		 * \brief The learning (or weight change) rule of the connection.
+		 */
+		LearningRule* wchange_withoutPost;
+		
+		/*!
+		 * \brief Index inside the Learning Rule.
+		 */
+		int LearningRuleIndex_withoutPost;
 		
 	public:
 	
@@ -119,7 +129,7 @@ class Interconnection : public PrintableObject {
 		 * \param NewWeightChange Learning (or weight change) rule associated to this connection.
 		 * \param NewLearningRuleIndex Current learning rule index.
 		 */
-		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, unsigned int NewLearningRuleIndex);
+		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange_withPost, unsigned int NewLearningRuleIndex_withPost, LearningRule* NewWeightChange_withoutPost, unsigned int NewLearningRuleIndex_withoutPost);
 		
 		/*!
 		 * \brief Object destructor.
@@ -301,8 +311,8 @@ class Interconnection : public PrintableObject {
 		 * \return The learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
 		//LearningRule * GetWeightChange() const;
-		inline LearningRule * GetWeightChange() const{
-			return this->wchange;
+		inline LearningRule * GetWeightChange_withPost() const{
+			return this->wchange_withPost;
 		}
 		
 		/*!
@@ -312,7 +322,28 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \param NewWeightChange The new learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
-		void SetWeightChange(LearningRule * NewWeightChange);
+		void SetWeightChange_withPost(LearningRule * NewWeightChange_withPost);
+
+				/*!
+		 * \brief It gets the learning rule of this connection.
+		 * 
+		 * It gets the learning rule of the connection.
+		 * 
+		 * \return The learning rule of the connection. 0 if the connection hasn't learning rule.
+		 */
+		//LearningRule * GetWeightChange() const;
+		inline LearningRule * GetWeightChange_withoutPost() const{
+			return this->wchange_withoutPost;
+		}
+		
+		/*!
+		 * \brief It sets the learning rule of this connection.
+		 * 
+		 * It sets the learning rule of the connection.
+		 * 
+		 * \param NewWeightChange The new learning rule of the connection. 0 if the connection hasn't learning rule.
+		 */
+		void SetWeightChange_withoutPost(LearningRule * NewWeightChange_withoutPost);
 		
 		/*!
 		 * \brief It gets the connection learning rule index.
@@ -322,9 +353,23 @@ class Interconnection : public PrintableObject {
 		 * \return The connection learning rule index.
 		 */
 		//int GetLearningRuleIndex() const;
-		inline int GetLearningRuleIndex() const{
-			return this->LearningRuleIndex;
+		inline int GetLearningRuleIndex_withPost() const{
+			return this->LearningRuleIndex_withPost;
 		}
+
+		/*!
+		 * \brief It gets the connection learning rule index.
+		 * 
+		 * It gets the connection learning rule index in the network connections.
+		 * 
+		 * \return The connection learning rule index.
+		 */
+		//int GetLearningRuleIndex() const;
+		inline int GetLearningRuleIndex_withoutPost() const{
+			return this->LearningRuleIndex_withoutPost;
+		}
+
+
 
 		
 		/*!
@@ -334,7 +379,16 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \param NewIndex The new learning rule index of the connection.
 		 */
-		void SetLearningRuleIndex(int NewIndex);
+		void SetLearningRuleIndex_withPost(int NewIndex);
+
+		/*!
+		 * \brief It sets the connection learning rule index.
+		 * 
+		 * It sets the connection learning rule index in the network connections.
+		 * 
+		 * \param NewIndex The new learning rule index of the connection.
+		 */
+		void SetLearningRuleIndex_withoutPost(int NewIndex);
 
 
 		/*!

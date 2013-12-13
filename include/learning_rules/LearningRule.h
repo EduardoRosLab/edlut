@@ -53,6 +53,11 @@ class LearningRule : public PrintableObject {
 		ConnectionState * State;
 
 		/*!
+		 * \brief An auxiliar variable to manage the asignation of index.
+		 */
+		int counter;
+
+		/*!
 		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *
 		 * It initialize the state associated to the learning rule for all the synapses.
