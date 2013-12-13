@@ -52,5 +52,8 @@ int skip_spaces(FILE *fh, long & Currentline);
  * \param Currentline The currentline where we are readding.
  */  
 void skip_comments(FILE *fh, long & Currentline);
+
+
+bool is_end_line(FILE *fh, long & Currentline);
   
 #endif /*UTILS_H_*/

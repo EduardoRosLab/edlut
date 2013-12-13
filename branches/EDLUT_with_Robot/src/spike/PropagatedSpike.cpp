@@ -77,12 +77,19 @@ void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTime
 			if (target->IsMonitored()){
 				CurrentSimulation->WriteState(CurrentTime, target);
 			}
-			ConnectionRule = inter->GetWeightChange();
 
+			ConnectionRule = inter->GetWeightChange_withoutPost();
 			// If learning, change weights
 			if(ConnectionRule != 0){
 				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
 			}
+			ConnectionRule = inter->GetWeightChange_withPost();
+			// If learning, change weights
+			if(ConnectionRule != 0){
+				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
+			}
+
+
 			// If there are more output connection
 			if(source->GetOutputNumber() > TargetNum+1){
 				inter = source->GetOutputConnectionAt(TargetNum+1);

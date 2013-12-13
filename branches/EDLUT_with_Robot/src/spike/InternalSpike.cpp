@@ -78,7 +78,7 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRe
 					#pragma omp parallel for if(neuron->GetInputNumberWithPostSynapticLearning()>64) schedule(guided, 16) num_threads(8) shared (neuron) private (i, inter)
 					for (int i=0; i<neuron->GetInputNumberWithPostSynapticLearning(); ++i){
 						inter = neuron->GetInputConnectionWithPostSynapticLearningAt(i);
-						inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
+						inter->GetWeightChange_withPost()->ApplyPostSynapticSpike(inter,this->time);
 					}
 				}
 			}
@@ -103,7 +103,7 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRe
 				#pragma omp parallel for if(neuron->GetInputNumberWithPostSynapticLearning()>64) schedule(guided, 16) num_threads(8) shared (neuron) private (i, inter)
 				for (int i=0; i<neuron->GetInputNumberWithPostSynapticLearning(); ++i){
 					inter = neuron->GetInputConnectionWithPostSynapticLearningAt(i);
-					inter->GetWeightChange()->ApplyPostSynapticSpike(inter,this->time);
+					inter->GetWeightChange_withPost()->ApplyPostSynapticSpike(inter,this->time);
 				}
 			}
 			

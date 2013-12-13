@@ -76,7 +76,7 @@ void AdditiveKernelChange::LoadLearningRule(FILE * fh, long & Currentline) throw
 //}
 
 void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
-	int LearningRuleIndex = Connection->GetLearningRuleIndex();
+	int LearningRuleIndex = Connection->GetLearningRuleIndex_withoutPost();
 
 	// Second case: the weight change is linked to this connection
 	Connection->IncrementWeight(this->a1pre);
@@ -97,12 +97,12 @@ void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,do
 #pragma omp parallel for num_threads(8) schedule(guided, 32) if(Connection->GetTarget()->GetInputNumberWithoutPostSynapticLearning()>128) default(none) shared(Connection, SpikeTime) private(i, interi, wchani, ConnectionStatePre, LearningRuleIndex)
 		for(i=0; i<Connection->GetTarget()->GetInputNumberWithoutPostSynapticLearning(); ++i){
 			interi=Connection->GetTarget()->GetInputConnectionWithoutPostSynapticLearningAt(i);
-		    wchani=(AdditiveKernelChange *)interi->GetWeightChange();
+		    wchani=(AdditiveKernelChange *)interi->GetWeightChange_withoutPost();
 
 		    // Apply sinaptic plasticity driven by teaching signal
 		    // Get connection state
 			ConnectionStatePre = wchani->GetConnectionState();
-			LearningRuleIndex = interi->GetLearningRuleIndex();
+			LearningRuleIndex = interi->GetLearningRuleIndex_withoutPost();
 
 			// Update the presynaptic activity
 			ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);

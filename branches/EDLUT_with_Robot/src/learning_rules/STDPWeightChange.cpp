@@ -30,7 +30,7 @@ void STDPWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
 }
 
 void STDPWeightChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
-	unsigned int LearningRuleIndex = Connection->GetLearningRuleIndex();
+	unsigned int LearningRuleIndex = Connection->GetLearningRuleIndex_withPost();
 
 	// Apply synaptic activity decaying rule
 	State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
@@ -45,7 +45,7 @@ void STDPWeightChange::ApplyPreSynapticSpike(Interconnection * Connection,double
 }
 
 void STDPWeightChange::ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime){
-	int LearningRuleIndex = Connection->GetLearningRuleIndex();
+	int LearningRuleIndex = Connection->GetLearningRuleIndex_withPost();
 	
 	// Apply synaptic activity decaying rule
 	State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, true);

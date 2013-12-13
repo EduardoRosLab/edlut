@@ -142,7 +142,7 @@ class Network : public PrintableObject{
    		 */
    		void FindOutConnections();
 
-		void FindOutConnections(int N_LearningRule, int * typeLearningRule);
+		//void FindOutConnections(int N_LearningRule, int * typeLearningRule);
    		
    		/*!
    		 * \brief It adds the input connection to the target neuron.
@@ -151,7 +151,7 @@ class Network : public PrintableObject{
    		 */   		
    		void FindInConnections();
 
-		void FindInConnections(int N_LearningRule, int * typeLearningRule);
+		//void FindInConnections(int N_LearningRule, int * typeLearningRule);
    		
    		/*!
    		 * \brief It sorts the connections by the connection index.

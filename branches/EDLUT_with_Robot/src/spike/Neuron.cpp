@@ -34,6 +34,7 @@ Neuron::Neuron(){
 
 Neuron::Neuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput){
 	InitNeuron(NewIndex,-1,Type,Monitored,IsOutput);
+
 }
 
 Neuron::~Neuron(){
