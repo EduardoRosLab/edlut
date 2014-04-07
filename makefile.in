@@ -178,6 +178,7 @@ learning_rules-sources	:= 	$(srcdir)/learning_rules/ActivityRegister.cpp \
 			$(srcdir)/learning_rules/ConnectionState.cpp \
 			$(srcdir)/learning_rules/ExpState.cpp \
 			$(srcdir)/learning_rules/ExpWeightChange.cpp \
+			$(srcdir)/learning_rules/LearningRule.cpp \
 			$(srcdir)/learning_rules/SinState.cpp \
 			$(srcdir)/learning_rules/SinWeightChange.cpp \
 			$(srcdir)/learning_rules/STDPLSState.cpp \

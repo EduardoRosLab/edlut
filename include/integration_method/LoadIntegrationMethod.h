@@ -26,7 +26,7 @@
  * This file declares a class which load all integration methods in a CPU.
  */
 
-#include <string>
+#include <cstring>
 #include <cstdlib>
 using namespace std;
 

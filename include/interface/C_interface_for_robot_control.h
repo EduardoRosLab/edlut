@@ -428,6 +428,6 @@ EXTERN_C void log_vars(struct log *log, double time, double *input_vars, double 
 /// \param file_name Pointer to an array containing the name of the output log file.
 /// \pre The log must be previously initialized (calling init_log())
 /// \return Error occurred during the function execution (0 if it is successfully executed)
-EXTERN_C int save_and_finish_log(struct log *log, char *file_name);
+EXTERN_C int save_and_finish_log(struct log *log, const char *file_name);
 
 #endif /*_EDLUT_INTERFACE_H_*/
