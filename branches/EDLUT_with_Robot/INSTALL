@@ -23,6 +23,7 @@ Basic Installation
   - '--with-cuda=/cudapath': It forces to use /cudapath as the root cuda dir. It can be
   needed if cuda folder is not included in the system path.
   - '--without-cuda': It avoids the generation of cuda version of EDLUT.
+  - '--enable-robot': It enables the robot interface and the cerebellum-based robot control example. 
   
   1. Type `make' to compile the package. By default it compiles EDLUTKernel executable, 
   Stepbystep and PrecisionTest examples, EDLUT library for C/C++ developers, matlab mex 
