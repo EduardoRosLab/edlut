@@ -52,7 +52,7 @@
 
 ///////////////////////////// SIMULATION MANAGEMENT //////////////////////////
 
-extern "C" Simulation *create_neural_simulation(const char *net_file, const char *input_weight_file, const char *input_spike_file, const char *output_weight_file, const char *output_spike_file, double weight_save_period, int real_time_simulation)
+EXTERN_C Simulation *create_neural_simulation(const char *net_file, const char *input_weight_file, const char *input_spike_file, const char *output_weight_file, const char *output_spike_file, double weight_save_period, int real_time_simulation)
   {
    Simulation *neural_sim; // Neural-simulator object (EDLUT)
    try
@@ -86,7 +86,7 @@ extern "C" Simulation *create_neural_simulation(const char *net_file, const char
    return(neural_sim);
   }
 
-extern "C" void finish_neural_simulation(Simulation *neural_sim)
+EXTERN_C void finish_neural_simulation(Simulation *neural_sim)
   {
    // EDLUT interface drivers
    FileInputSpikeDriver *neural_activity_input_file;
@@ -124,7 +124,7 @@ extern "C" void finish_neural_simulation(Simulation *neural_sim)
    delete neural_sim;
   }
 
-extern "C" int run_neural_simulation_slot(Simulation *neural_sim, double slot_end_time)
+EXTERN_C int run_neural_simulation_slot(Simulation *neural_sim, double slot_end_time)
   {
    int ret;
    neural_sim->SetTotalSpikeCounter(0);
@@ -151,27 +151,27 @@ extern "C" int run_neural_simulation_slot(Simulation *neural_sim, double slot_en
    return(ret);
   }
 
-extern "C" void reset_neural_simulation(Simulation *neural_sim)
+EXTERN_C void reset_neural_simulation(Simulation *neural_sim)
   {
    neural_sim->GetQueue()->RemoveSpikes();
   }
 
-extern "C" void save_neural_weights(Simulation *neural_sim)
+EXTERN_C void save_neural_weights(Simulation *neural_sim)
   {
    neural_sim->SaveWeights();
   }
 
-extern "C" long get_neural_simulation_spike_counter(Simulation *neural_sim)
+EXTERN_C long get_neural_simulation_spike_counter(Simulation *neural_sim)
   {
    return(neural_sim->GetTotalSpikeCounter());
   }
 
-extern "C" long long get_neural_simulation_event_counter(Simulation *neural_sim)
+EXTERN_C long long get_neural_simulation_event_counter(Simulation *neural_sim)
   {
    return(neural_sim->GetSimulationUpdates());
   }
 
-extern "C" long long get_accumulated_heap_occupancy_counter(Simulation *neural_sim)
+EXTERN_C long long get_accumulated_heap_occupancy_counter(Simulation *neural_sim)
   {
    return(neural_sim->GetHeapAcumSize());
   }
@@ -209,7 +209,7 @@ double gaussian_function(double a, double b, double c, double x)
    return(a*exp(-(x-b)*(x-b)/(2*c*c)));
   }
 
-extern "C" void calculate_input_trajectory(double *inp, double amplitude, double tsimul)
+EXTERN_C void calculate_input_trajectory(double *inp, double amplitude, double tsimul)
   {
    int njoint;
    for(njoint=0;njoint<NUM_JOINTS;njoint++)
@@ -289,7 +289,7 @@ extern "C" void calculate_input_trajectory(double *inp, double amplitude, double
   }
 */
 
-extern "C" void calculate_input_trajectory_max_amplitude(double trajectory_time, double amplitude, double *min_traj_amplitude, double *max_traj_amplitude)
+EXTERN_C void calculate_input_trajectory_max_amplitude(double trajectory_time, double amplitude, double *min_traj_amplitude, double *max_traj_amplitude)
   {
    double inp[NUM_JOINTS*3],traj_val;
    double tsimul;
@@ -320,7 +320,7 @@ double calculate_RBF_width(double rbf_distance, double overlap)
    return(sqrt(half_rbf_pos_inc*half_rbf_pos_inc/(-2*log(overlap))));
   }
  
-extern "C" void printRBFs(struct rbf_set *rbfs)
+EXTERN_C void printRBFs(struct rbf_set *rbfs)
   {
    int nneu;
    double rbf_cur_pos,rbf_pos_inc,rbf_width;
@@ -360,7 +360,7 @@ void generate_activityRBF(Simulation *sim, double cur_slot_time, struct rbf_set 
      }
   }
 
-extern "C" void generate_input_traj_activity(Simulation *neural_sim, double cur_slot_time, double *input_vars, double *min_traj_amplitude, double *max_traj_amplitude)
+EXTERN_C void generate_input_traj_activity(Simulation *neural_sim, double cur_slot_time, double *input_vars, double *min_traj_amplitude, double *max_traj_amplitude)
   {
    static double last_spk_times[NUM_TRAJECTORY_INPUT_NEURONS]={0.0};
    double max_spk_freq=100.0;
@@ -410,7 +410,7 @@ extern "C" void generate_input_traj_activity(Simulation *neural_sim, double cur_
 */
   }
 
-extern "C" void generate_robot_state_activity(Simulation *neural_sim, double cur_slot_time, double *robot_state_vars, double *min_traj_amplitude, double *max_traj_amplitude)
+EXTERN_C void generate_robot_state_activity(Simulation *neural_sim, double cur_slot_time, double *robot_state_vars, double *min_traj_amplitude, double *max_traj_amplitude)
   {
    static double last_spk_times[NUM_ROBOT_STATE_INPUT_NEURONS]={0.0};
    double max_spk_freq=100.0;
@@ -473,7 +473,7 @@ double compute_PD_error(double desired_position, double desired_velocity, double
 
 double error_sigmoid(double error_torque, double max_error_torque)
   {
-   return(0.15 + 0.8/(1+exp(-10*error_torque/max_error_torque+4)));
+   return(1./(1+exp(-16*error_torque/max_error_torque+8)));
   }
 
 void generate_stochastic_activity(Simulation *sim, double cur_slot_init, double input_current, long first_learning_neuron, long num_learning_neurons, double *last_spk_times, double max_spk_freq)
@@ -506,7 +506,7 @@ void generate_stochastic_activity(Simulation *sim, double cur_slot_init, double 
      }
   }
 
-extern "C" void calculate_error_signals(double *input_vars, double *state_vars, double *error_vars)
+EXTERN_C void calculate_error_signals(double *input_vars, double *state_vars, double *error_vars)
   {
    int num_joint;
    for(num_joint=0;num_joint<NUM_JOINTS;num_joint++)
@@ -520,7 +520,7 @@ extern "C" void calculate_error_signals(double *input_vars, double *state_vars, 
      }
   }
 
-extern "C" void calculate_learning_signals(double *error_vars, double *output_vars, double *learning_vars)
+EXTERN_C void calculate_learning_signals(double *error_vars, double *output_vars, double *learning_vars)
   {
    int num_joint;
    double torque_error;
@@ -557,7 +557,7 @@ extern "C" void calculate_learning_signals(double *error_vars, double *output_va
      }
   }
 
-extern "C" void generate_learning_activity(Simulation *neural_sim, double cur_slot_init, double *learning_vars)
+EXTERN_C void generate_learning_activity(Simulation *neural_sim, double cur_slot_init, double *learning_vars)
   {
    static double last_spk_times[NUM_LEARNING_NEURONS]={0.0};
    int num_joint;
@@ -577,7 +577,7 @@ extern "C" void generate_learning_activity(Simulation *neural_sim, double cur_sl
 
 //////////////////////////// GENERATE OUTPUT /////////////////////////
 
-extern "C" int compute_output_activity(Simulation *neural_sim, double *output_vars)
+EXTERN_C int compute_output_activity(Simulation *neural_sim, double *output_vars)
   {
    long nspks, spkneu;
    double spktime;
@@ -610,7 +610,7 @@ extern "C" int compute_output_activity(Simulation *neural_sim, double *output_va
 
 ///////////////////////////// VARIABLES LOG //////////////////////////
 
-extern "C" int create_log(struct log *log, int total_traj_executions, int trajectory_time)
+EXTERN_C int create_log(struct log *log, int total_traj_executions, int trajectory_time)
   {
   //Total number of registers that will be stored in the computer memory during the simulation
    int n_log_regs=total_traj_executions*(int)((trajectory_time-((SIM_SLOT_LENGTH)/2.0))/(float)(SIM_SLOT_LENGTH) + 1);
@@ -624,7 +624,7 @@ extern "C" int create_log(struct log *log, int total_traj_executions, int trajec
    return(errorn);
   }
 
-extern "C" void log_vars(struct log *log, double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter)
+EXTERN_C void log_vars(struct log *log, double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter)
   {
    int nvar;
    log->regs[log->nregs].time=(float)time;
@@ -645,7 +645,7 @@ extern "C" void log_vars(struct log *log, double time, double *input_vars, doubl
    log->nregs++;
   }
 
-extern "C" int save_and_finish_log(struct log *log, char *file_name)
+EXTERN_C int save_and_finish_log(struct log *log, const char *file_name)
   {
    int ret;
    int cur_reg,cur_var;
