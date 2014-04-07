@@ -2,8 +2,8 @@
 ########################### - MAKEFILE FLAGS - #################################
 ################################################################################
 
-CCFLAGS = -I$(includedir)
-CXXFLAGS = -I$(includedir)
+CCFLAGS = -I$(includedir)  
+CXXFLAGS = -I$(includedir) 
 LDFLAGS = -lm
 
 ifeq ($(optimize),true)

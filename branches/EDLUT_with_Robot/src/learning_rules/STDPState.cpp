@@ -18,7 +18,7 @@
 
 #include "../../include/simulation/ExponentialTable.h"
 
-#include "../../include/parallel_function.h"
+//#include "../../include/parallel_function.h"
 
 #include <cmath>
 #include <stdio.h>
