@@ -17,10 +17,13 @@
 #include "../../include/neuron_model/VectorNeuronState.h"
 #include <string.h>
 
-VectorNeuronState::VectorNeuronState(unsigned int NumVariables, bool isTimeDriven): NumberOfVariables(NumVariables), TimeDriven(isTimeDriven),Is_Monitored(false){
+VectorNeuronState::VectorNeuronState(unsigned int NumVariables, bool isTimeDriven): NumberOfVariables(NumVariables), TimeDriven(isTimeDriven),Is_Monitored(false),Is_GPU(false){
 }
 
-VectorNeuronState::VectorNeuronState(const VectorNeuronState & OldState): NumberOfVariables(OldState.NumberOfVariables), SizeStates(OldState.SizeStates), TimeDriven(OldState.TimeDriven),Is_Monitored(OldState.Is_Monitored) {
+VectorNeuronState::VectorNeuronState(unsigned int NumVariables, bool isTimeDriven, bool isGPU): NumberOfVariables(NumVariables), TimeDriven(isTimeDriven),Is_Monitored(false),Is_GPU(isGPU){
+}
+
+VectorNeuronState::VectorNeuronState(const VectorNeuronState & OldState): NumberOfVariables(OldState.NumberOfVariables), SizeStates(OldState.SizeStates), TimeDriven(OldState.TimeDriven),Is_Monitored(OldState.Is_Monitored), Is_GPU(OldState.Is_GPU) {
 
 	VectorNeuronStates = new float[GetNumberOfVariables()*GetSizeState()];
 	memcpy(VectorNeuronStates, OldState.VectorNeuronStates, GetNumberOfVariables()*GetSizeState()*sizeof(float));
@@ -41,7 +44,7 @@ VectorNeuronState::VectorNeuronState(const VectorNeuronState & OldState): Number
 }
 
 
-VectorNeuronState::VectorNeuronState(const VectorNeuronState & OldState, int index): NumberOfVariables(OldState.NumberOfVariables), SizeStates(1), TimeDriven(OldState.TimeDriven),Is_Monitored(OldState.Is_Monitored) {
+VectorNeuronState::VectorNeuronState(const VectorNeuronState & OldState, int index): NumberOfVariables(OldState.NumberOfVariables), SizeStates(1), TimeDriven(OldState.TimeDriven),Is_Monitored(OldState.Is_Monitored), Is_GPU(OldState.Is_GPU) {
 
 	VectorNeuronStates = new float[GetNumberOfVariables()];
 	for(int i=0; i<GetNumberOfVariables(); i++){
@@ -70,12 +73,34 @@ VectorNeuronState::~VectorNeuronState() {
 	if (!TimeDriven){
 		delete [] this->PredictedSpike;
 		delete [] this->PredictionEnd;
+	}else{
+		delete [] this->InternalSpike;
 	}
 }
 
-void VectorNeuronState::SetStateVariableAt(int index, int position,float NewValue){
-	this->VectorNeuronStates[index*NumberOfVariables + position] = NewValue;
+void VectorNeuronState::SetStateVariableAt(int index, int position, float NewValue){
+	if(Is_GPU==false){
+		this->VectorNeuronStates[index*NumberOfVariables + position] = NewValue;
+	}else{
+		this->VectorNeuronStates[this->SizeStates*position + index] = NewValue;
+	}
 }
+
+void VectorNeuronState::IncrementStateVariableAt(int index, int position, float Increment){
+	if(Is_GPU==false){
+		this->VectorNeuronStates[index*NumberOfVariables + position]+= Increment;
+	}else{
+		this->VectorNeuronStates[this->SizeStates*position + index]+= Increment;
+	}
+}
+
+//void VectorNeuronState::IncrementStateVariableAtCPU(int index, int position, float Increment){
+//	this->VectorNeuronStates[index*NumberOfVariables + position]+= Increment;
+//}
+
+//void VectorNeuronState::IncrementStateVariableAtGPU(int index, int position, float Increment){
+//	this->VectorNeuronStates[this->SizeStates*position + index]+= Increment;
+//}
 
 void VectorNeuronState::SetLastUpdateTime(int index, double NewTime){
 	this->LastUpdate[index] = NewTime;
@@ -94,20 +119,28 @@ unsigned int VectorNeuronState::GetNumberOfVariables(){
 }
 
 float VectorNeuronState::GetStateVariableAt(int index, int position){
-	return VectorNeuronStates[index*NumberOfVariables + position];
+	if(Is_GPU==false){
+		return VectorNeuronStates[index*NumberOfVariables + position];
+	}else{
+		return VectorNeuronStates[this->SizeStates*position + index];
+	}
 }
 
-double VectorNeuronState::GetLastUpdateTime(int index){
-	return this->LastUpdate[index];
+float * VectorNeuronState::GetStateVariableAt(int index){
+	return VectorNeuronStates+(index*NumberOfVariables);
 }
+
+//double VectorNeuronState::GetLastUpdateTime(int index){
+//	return this->LastUpdate[index];
+//}
 
 double VectorNeuronState::GetNextPredictedSpikeTime(int index){
 	return this->PredictedSpike[index];
 }
 
-double VectorNeuronState::GetEndRefractoryPeriod(int index){
-	return this->PredictionEnd[index];
-}
+//double VectorNeuronState::GetEndRefractoryPeriod(int index){
+//	return this->PredictionEnd[index];
+//}
 
 unsigned int VectorNeuronState::GetNumberOfPrintableValues(){
 	return this->GetNumberOfVariables()+3;
@@ -127,9 +160,9 @@ double VectorNeuronState::GetPrintableValuesAt(int index, int position){
 	} else return -1;
 }
 
-double VectorNeuronState::GetLastSpikeTime(int index){
-	return this->LastSpikeTime[index];
-}
+//double VectorNeuronState::GetLastSpikeTime(int index){
+//	return this->LastSpikeTime[index];
+//}
 
 void VectorNeuronState::NewFiredSpike(int index){
 	this->LastSpikeTime[index] = 0;
@@ -173,6 +206,8 @@ void VectorNeuronState::InitializeStates(int size, float * initialization){
 	}
 	
 
+	//For the CPU, we store all the variables of a neuron in adjacent memory positions to
+	//improve the spatial location of the data.
 	for(int z=0; z<GetSizeState()*GetNumberOfVariables(); z+=GetNumberOfVariables()){
 		for (int j=0; j<GetNumberOfVariables(); j++){ 
 			VectorNeuronStates[z+j]=initialization[j];

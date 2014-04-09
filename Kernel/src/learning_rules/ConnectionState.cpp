@@ -16,37 +16,50 @@
 
 #include "../../include/learning_rules/ConnectionState.h"
 
-ConnectionState::ConnectionState(unsigned int NumVariables): NumberOfVariables(NumVariables), LastUpdate(0){
+#include "../../include/simulation/ExponentialTable.h"
+
+ConnectionState::ConnectionState(unsigned int NumSynapses, int NumVariables): NumberOfSynapses(NumSynapses), NumberOfVariables(NumVariables){
 	// TODO Auto-generated constructor stub
-	this->StateVars = (float *) new float [NumVariables];
+	this->LastUpdate = (double *) new double [NumSynapses]();
+	this->StateVars = (float *) new float [NumSynapses*NumVariables]();
+
+	exponential = new ExponentialTable(-20, 0, 4*1024*1024);
 }
 
 ConnectionState::~ConnectionState() {
 	// TODO Auto-generated destructor stub
+	if (this->LastUpdate!=0){
+		delete [] this->LastUpdate;
+	}
+
 	if (this->StateVars!=0){
 		delete [] this->StateVars;
 	}
+
+	if(exponential!=0){
+		delete exponential;
+	}
 }
 
-void ConnectionState::SetStateVariableAt(unsigned int position,float NewValue){
-	*(this->StateVars+position) = NewValue;
-}
+//void ConnectionState::void SetStateVariableAt(unsigned int index, unsigned int position,float NewValue){
+//	*(this->StateVars + index*NumberOfVariables + position) = NewValue;
+//}
 
 unsigned int ConnectionState::GetNumberOfVariables(){
 	return this->NumberOfVariables;
 }
 
-float ConnectionState::GetStateVariableAt(unsigned int position){
-	return *(this->StateVars+position);
-}
+//float ConnectionState::GetStateVariableAt(unsigned int index, unsigned int position){
+//	return *(this->StateVars + index*NumberOfVariables + position);
+//}
 
-double ConnectionState::GetLastUpdateTime(){
-	return this->LastUpdate;
-}
+//double ConnectionState::GetLastUpdateTime(unsigned int index){
+//	return *(this->LastUpdate + index);
+//}
 
-void ConnectionState::SetLastUpdateTime(double NewUpdateTime){
-	this->LastUpdate = NewUpdateTime;
-}
+//void ConnectionState::SetLastUpdateTime(unsigned int index, double NewUpdateTime){
+//	*(this->LastUpdate+index) = NewUpdateTime;
+//}
 
 unsigned int ConnectionState::GetNumberOfPrintableValues(){
 	return this->GetNumberOfVariables()+1;
@@ -54,9 +67,9 @@ unsigned int ConnectionState::GetNumberOfPrintableValues(){
 
 double ConnectionState::GetPrintableValuesAt(unsigned int position){
 	if (position<this->GetNumberOfVariables()){
-		return this->GetStateVariableAt(position);
+		return this->GetStateVariableAt(0, position);
 	} else if (position==this->GetNumberOfVariables()) {
-		return this->GetLastUpdateTime();
+		return this->GetLastUpdateTime(0);
 	} else return -1;
 }
 

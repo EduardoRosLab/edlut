@@ -87,6 +87,7 @@ unsigned int EventQueue::Size() const{
    		
 Event * EventQueue::RemoveEvent(void){
 	unsigned int c,p;
+double time_c0, time_c1, time_p;
    	
    	Event * first = 0;
 	if(this->NumberOfElements>2){
@@ -110,7 +111,7 @@ Event * EventQueue::RemoveEvent(void){
          	else
             	break;
         }
-      
+
 		if(c==this->Size() && (this->Events+p)->Time > (this->Events+c)->Time)
         	SwapEvents(p, c);
 	} else if (this->NumberOfElements==2){
@@ -131,4 +132,20 @@ double EventQueue::FirstEventTime() const{
     	ti=-1.0;
    
    	return(ti);		
+}
+
+void EventQueue::RemoveSpikes(){
+	unsigned int OldNumberOfElements=this->NumberOfElements;
+	Event * TmpEvent;
+
+	this->NumberOfElements=1; // Initially resize occupied size of the heap so that all the events are out
+	// Reinsert in the heap only the events which are spikes 
+	for (unsigned int i = 1; i<OldNumberOfElements; ++i){
+		TmpEvent=(this->Events+i)->EventPtr;
+		if(!TmpEvent->IsSpike()){
+			InsertEvent(TmpEvent);
+		}else{
+			delete TmpEvent;
+		}		
+	}
 }

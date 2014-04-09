@@ -1,5 +1,5 @@
 /***************************************************************************
- *                           TimeDrivenNeuronModel.cpp                    *
+ *                           TimeDrivenNeuronModel.cpp                     *
  *                           -------------------                           *
  * copyright            : (C) 2011 by Jesus Garrido                        *
  * email                : jgarrido@atc.ugr.es                              *
@@ -18,14 +18,27 @@
 #include "../../include/neuron_model/NeuronModel.h"
 
 #include <string>
+#ifdef _OPENMP
+	#include <omp.h>
+#endif
 
-TimeDrivenNeuronModel::TimeDrivenNeuronModel(string NeuronTypeID, string NeuronModelID): NeuronModel(NeuronTypeID, NeuronModelID) {
+TimeDrivenNeuronModel::TimeDrivenNeuronModel(string NeuronTypeID, string NeuronModelID): NeuronModel(NeuronTypeID, NeuronModelID){
 	// TODO Auto-generated constructor stub
-
+	
+	#ifdef _OPENMP
+		N_CPU_thread=omp_get_max_threads();
+	#else
+		N_CPU_thread=1;
+	#endif
 }
 
 TimeDrivenNeuronModel::~TimeDrivenNeuronModel() {
-	// TODO Auto-generated destructor stub
+	delete integrationMethod;
+}
+
+
+enum NeuronModelType TimeDrivenNeuronModel::GetModelType(){
+	return TIME_DRIVEN_MODEL_CPU;
 }
 
 

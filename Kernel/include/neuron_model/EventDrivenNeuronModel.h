@@ -122,6 +122,9 @@ class EventDrivenNeuronModel : public NeuronModel {
 virtual void InitializeStates(int N_neurons)=0;
 
 
+
+
+
 };
 
 #endif /* NEURONMODEL_H_ */

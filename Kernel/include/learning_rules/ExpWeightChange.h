@@ -51,13 +51,13 @@ class ExpWeightChange: public AdditiveKernelChange{
 		ExpWeightChange();
 
 		/*!
-		 * \brief It gets the initial state associated to the learning rule.
+		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * It gets the initial state associated to the learning rule.
+		 * It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * \return The initial state that the learning rule needs.
+		 * \return The state that the learning rule needs for all the synapses.
 		 */
-		virtual ConnectionState * GetInitialState();
+		void InitializeConnectionState(unsigned int NumberOfSynapses);
 };
 
 #endif /*EXPWEIGHTCHANGE_H_*/

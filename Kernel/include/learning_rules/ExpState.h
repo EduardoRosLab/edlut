@@ -49,6 +49,7 @@ class ExpState : public ConnectionState{
 		 * Tau constant of the learning rule.
 		 */
 		float tau;
+		float inv_tau;
 
 	public:
 
@@ -59,7 +60,7 @@ class ExpState : public ConnectionState{
 		 *
 		 * \param NewTau The temporal constant of the learning rule.
 		 */
-		ExpState(float NewTau);
+		ExpState(unsigned int NumSynapses, float NewTau);
 
 		/*!
 		 * \brief Class destructor.
@@ -73,18 +74,20 @@ class ExpState : public ConnectionState{
 		 *
 		 * It gets the value of the accumulated presynaptic activity.
 		 *
+		 * \param index The synapse's index inside the learning rule.
 		 * \return The accumulated presynaptic activity.
 		 */
-		virtual float GetPresynapticActivity();
+		virtual float GetPresynapticActivity(unsigned int index);
 
 		/*!
 		 * \brief It gets the value of the accumulated postsynaptic activity.
 		 *
 		 * It gets the value of the accumulated postsynaptic activity.
 		 *
+		 * \param index The synapse's index inside the learning rule.
 		 * \return The accumulated postsynaptic activity.
 		 */
-		virtual float GetPostsynapticActivity();
+		virtual float GetPostsynapticActivity(unsigned int index);
 
 
 		/*!
@@ -107,13 +110,15 @@ class ExpState : public ConnectionState{
 
 
 		/*!
-		 * \brief Add elapsed time to spikes.
+		 * \brief set new time to spikes.
 		 *
-		 * It adds the elapsed time to spikes.
+		 * It set new time to spikes.
 		 *
-		 * \param ElapsedTime The time since the last update.
+		 * \param index The synapse's index inside the learning rule.
+		 * \param NewTime new time.
+		 * \param pre_post In some learning rules (i.e. STDPLS) this variable indicate wether the update affects the pre- or post- variables.
 		 */
-		virtual void AddElapsedTime(float ElapsedTime);
+		virtual void SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post);
 
 
 		/*!
@@ -121,16 +126,20 @@ class ExpState : public ConnectionState{
 		 *
 		 * It implements the behaviour when it transmits a spike. It must be implemented
 		 * by any inherited class.
+		 *
+		 * \param index The synapse's index inside the learning rule.
 		 */
-		virtual void ApplyPresynapticSpike();
+		virtual void ApplyPresynapticSpike(unsigned int index);
 
 		/*!
 		 * \brief It implements the behaviour when the target cell fires a spike.
 		 *
 		 * It implements the behaviour when it the target cell fires a spike. It must be implemented
 		 * by any inherited class.
+		 *
+		 * \param index The synapse's index inside the learning rule.
 		 */
-		virtual void ApplyPostsynapticSpike();
+		virtual void ApplyPostsynapticSpike(unsigned int index);
 
 };
 

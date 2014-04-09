@@ -28,7 +28,7 @@ SaveWeightsEvent::SaveWeightsEvent(double NewTime): Event(NewTime){
 SaveWeightsEvent::~SaveWeightsEvent(){
 }
 
-void SaveWeightsEvent::ProcessEvent(Simulation * CurrentSimulation){
+void SaveWeightsEvent::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
 	CurrentSimulation->SaveWeights();
 	if (CurrentSimulation->GetSaveStep()>0.0){
 		SaveWeightsEvent * NewEvent = new SaveWeightsEvent(this->GetTime()+CurrentSimulation->GetSaveStep());

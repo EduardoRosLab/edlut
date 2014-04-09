@@ -79,6 +79,17 @@ int ArrayOutputSpikeDriver::GetBufferedSpikes(double *& Times, long int *& Cells
 
 }
 
+bool ArrayOutputSpikeDriver::RemoveBufferedSpike(double & Time, long int & Cell){
+	bool noempty = !this->OutputBuffer.empty();
+	if (noempty){
+		Time = this->OutputBuffer[0].Time;
+		Cell = this->OutputBuffer[0].Neuron;
+		this->OutputBuffer.erase(this->OutputBuffer.begin());
+	}
+	return noempty;
+}
+
+
 ostream & ArrayOutputSpikeDriver::PrintInfo(ostream & out){
 
 	out << "- Array Output Spike Driver" << endl;

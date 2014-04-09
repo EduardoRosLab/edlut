@@ -64,13 +64,13 @@ class ArrayOutputSpikeDriver: public OutputSpikeDriver {
 			OutputSpike(int NewNeuron, float NewTime):Neuron(NewNeuron), Time(NewTime){};
 		};
 
-	protected:
+	public:
 		/*!
 		 * Spike buffer
 		 */
 		vector<OutputSpike> OutputBuffer;
 
-	public:
+	
 
 		/*!
 		 * \brief Class constructor.
@@ -161,6 +161,23 @@ class ArrayOutputSpikeDriver: public OutputSpikeDriver {
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
 		 int GetBufferedSpikes(double *& Times, long int *& Cells);
+
+		/*!
+		 * \brief It pops the first spike from the output buffer.
+		 *
+		 * This method returns (as parameters) the first existing 
+		 * spike in the output buffer and removes it from the buffer.
+		 *
+		 * \param Time Variable where spike time is stored.
+		 * \param Cell Variable where spike cell os stored.
+		 *
+		 * \return True if there is at least one spike in the output buffer
+		 * \return when the function is called. False when no spike can be
+		 * \return returned.
+		 *
+		 * \throw EDLUTException If something wrong happens in the output process.
+		 */
+		 bool RemoveBufferedSpike(double & Time, long int & Cell);
 
 		/*!
 		 * \brief It prints the information of the object.

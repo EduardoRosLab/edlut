@@ -27,7 +27,7 @@
  * This file declares a class which abstracts an additive learning rule.
  */
 
-#include "./LearningRule.h"
+#include "./WithoutPostSynaptic.h"
 
 /*!
  * \class AdditiveKernelChange
@@ -40,7 +40,7 @@
  * \author Richard Carrillo
  * \date March 2010
  */
-class AdditiveKernelChange : public LearningRule {
+class AdditiveKernelChange : public WithoutPostSynaptic {
 	protected:
 		/*!
 		 * Maximum time of the learning rule.
@@ -68,14 +68,15 @@ class AdditiveKernelChange : public LearningRule {
 		float a2prepre;
 
 	public:
+
 		/*!
-		 * \brief It gets the initial state associated to the learning rule.
+		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * It gets the initial state associated to the learning rule.
+		 * It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * \return The initial state that the learning rule needs.
+		 * \return The state that the learning rule needs for all the synapses.
 		 */
-		virtual ConnectionState * GetInitialState() = 0;
+		virtual void InitializeConnectionState(unsigned int NumberOfSynapses) = 0;
 
 		/*!
 		 * \brief It loads the learning rule properties.
@@ -98,16 +99,6 @@ class AdditiveKernelChange : public LearningRule {
    		 * \param SpikeTime The spike time.
    		 */
    		virtual void ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime);
-
-   		/*!
-		 * \brief It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * \param Connection The connection where the learning rule happens.
-		 * \param SpikeTime The spike time of the postsynaptic spike.
-		 */
-		virtual void ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime);
 
    		/*!
 		 * \brief It prints the learning rule info.

@@ -24,6 +24,6 @@
 ExpWeightChange::ExpWeightChange(){
 }
 
-ConnectionState * ExpWeightChange::GetInitialState(){
-	return (ConnectionState *) new ExpState(this->maxpos);
+void ExpWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
+	this->State=(ConnectionState *) new ExpState(NumberOfSynapses, this->maxpos);
 }

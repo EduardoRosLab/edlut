@@ -123,10 +123,14 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
 		// Create a new output object to get output spikes
 		ArrayOutputSpikeDriver * OutputDriver = new ArrayOutputSpikeDriver();
+
 		Simul.AddOutputSpikeDriver(OutputDriver);
 
-		Simul.AddInputSpikeDriver(new FileInputSpikeDriver(InputFile));
-		Simul.AddMonitorActivityDriver(new FileOutputSpikeDriver(LogFile,false));
+		FileInputSpikeDriver * InputDriver = new FileInputSpikeDriver(InputFile);
+		Simul.AddInputSpikeDriver(InputDriver);
+
+		FileOutputSpikeDriver * MonitorDriver = new FileOutputSpikeDriver(LogFile,false);
+		Simul.AddMonitorActivityDriver(MonitorDriver);
 
 		cout << "Simulating network..." << endl;
 
@@ -155,6 +159,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		cout << "Number of updates: " << Simul.GetSimulationUpdates() << endl;
 		cout << "Mean number of spikes in heap: " << Simul.GetHeapAcumSize()/(float)Simul.GetSimulationUpdates() << endl;
 		cout << "Updates per second: " << Simul.GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
+
+
+		delete OutputDriver;
+		delete InputDriver;
+		delete MonitorDriver;
 	} catch (EDLUTFileException Exc){
 		cerr << Exc << ": " << Exc.GetErrorNum() << endl;
 	} catch (EDLUTException Exc){

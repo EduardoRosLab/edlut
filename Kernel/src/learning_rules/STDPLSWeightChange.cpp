@@ -24,8 +24,10 @@
 
 #include "../../include/neuron_model/NeuronState.h"
 
-ConnectionState * STDPLSWeightChange::GetInitialState(){
-	return new STDPLSState(this->tauLTP, this->tauLTD);
+
+
+void STDPLSWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
+	this->State=(ConnectionState *) new STDPLSState(NumberOfSynapses, this->tauLTP, this->tauLTD);
 }
 
 ostream & STDPLSWeightChange::PrintInfo(ostream & out){
