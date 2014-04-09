@@ -27,7 +27,7 @@ StopSimulationEvent::StopSimulationEvent(double NewTime): Event(NewTime){
 StopSimulationEvent::~StopSimulationEvent(){
 }
 
-void StopSimulationEvent::ProcessEvent(Simulation * CurrentSimulation){
+void StopSimulationEvent::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
 	CurrentSimulation->StopSimulation();		
 }
    	

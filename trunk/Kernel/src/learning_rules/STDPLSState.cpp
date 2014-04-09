@@ -16,9 +16,11 @@
 
 #include "../../include/learning_rules/STDPLSState.h"
 
+#include "../../include/simulation/ExponentialTable.h"
+
 #include <cmath>
 
-STDPLSState::STDPLSState(double NewLTPValue, double NewLTDValue): STDPState(NewLTPValue, NewLTDValue){
+STDPLSState::STDPLSState(unsigned int NumSynapses, double NewLTPValue, double NewLTDValue): STDPState(NumSynapses, NewLTPValue, NewLTDValue){
 
 }
 
@@ -26,24 +28,53 @@ STDPLSState::~STDPLSState() {
 
 }
 
-void STDPLSState::ApplyPresynapticSpike(){
-	float PreActivity = this->GetPresynapticActivity();
+//void STDPLSState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
+//	if(pre_post){
+//		float PreActivity = this->GetPresynapticActivity(index);
+//
+//		float ElapsedTime=(float)(NewTime - this->GetLastUpdateTime(index));
+//
+//		// Accumulate activity since the last update time
+//		PreActivity *= exp(-ElapsedTime*this->inv_LTPTau);
+//
+//
+//		// Store the activity in state variables
+//		this->SetStateVariableAt(index, 0, PreActivity);
+//	}else{
+//		float PostActivity = this->GetPostsynapticActivity(index);
+//
+//		float ElapsedTime=(float)(NewTime - this->GetLastUpdateTime(index));
+//
+//		// Accumulate activity since the last update time
+//		PostActivity *= exp(-ElapsedTime*this->inv_LTDTau);
+//
+//		// Store the activity in state variables
+//		this->SetStateVariableAt(index, 1, PostActivity);
+//	}
+//
+//	this->SetLastUpdateTime(index, NewTime);
+//}
 
-	// Reset incoming activity
-	PreActivity = 1;
-
-	// Store the activity in the state variable
-	this->SetStateVariableAt(0,PreActivity);
+void STDPLSState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
+	float ElapsedTime=(float)(NewTime - this->GetLastUpdateTime(index));
+	if(pre_post){
+		//Accumulate activity since the last update time
+		this->multiplyStateVaraibleAt(index,0,exponential->GetResult(-ElapsedTime*this->inv_LTPTau));
+	}else{
+		//Accumulate activity since the last update time
+		this->multiplyStateVaraibleAt(index,1,exponential->GetResult(-ElapsedTime*this->inv_LTDTau));
+	}
+	this->SetLastUpdateTime(index, NewTime);
 }
 
-void STDPLSState::ApplyPostsynapticSpike(){
-	float PostActivity = this->GetPostsynapticActivity();
-
-	// Reset incoming activity
-	PostActivity = 1;
-
+void STDPLSState::ApplyPresynapticSpike(unsigned int index){
 	// Store the activity in the state variable
-	this->SetStateVariableAt(1,PostActivity);
+	this->SetStateVariableAt(index, 0, 1.0f);
+}
+
+void STDPLSState::ApplyPostsynapticSpike(unsigned int index){
+	// Store the activity in the state variable
+	this->SetStateVariableAt(index, 1, 1.0f);
 }
 
 

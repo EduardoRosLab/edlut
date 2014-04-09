@@ -196,6 +196,22 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 */
 		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
 
+
+		/*!
+		 * \brief It processes a propagated spike (input spike in the cell).
+		 *
+		 * It processes a propagated spike (input spike in the cell).
+		 *
+		 * \note This function doesn't generate the next propagated spike. It must be externally done.
+		 *
+		 * \param inter the interconection which propagate the spike
+		 * \param target the neuron which receives the spike
+		 * \param time the time of the spike.
+		 *
+		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
+		 */
+		virtual InternalSpike * ProcessInputSpike(Interconnection * inter, Neuron * target, double time);
+
 		/*!
 		 * \brief Update the neuron state variables.
 		 *
@@ -220,14 +236,6 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 */
 		virtual ostream & PrintInfo(ostream & out);
 
-		/*!
-		 * \brief It gets the neuron model type (event-driven or time-driven).
-		 *
-		 * It gets the neuron model type (event-driven or time-driven).
-		 *
-		 * \return The type of the neuron model.
-		 */
-		enum NeuronModelType GetModelType();
 
 		/*!
 		 * \brief It initialice VectorNeuronState.
@@ -237,6 +245,30 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
 		void InitializeStates(int N_neurons);
+
+		/*!
+		 * \brief It evaluates the differential equation in NeuronState and it stores the results in AuxNeuronState.
+		 *
+		 * It evaluates the differential equation in NeuronState and it stores the results in AuxNeuronState.
+		 *
+		 * \param NeuronState value of the neuron state variables where differential equations are evaluated.
+		 * \param AuxNeuronState results of the differential equations evaluation.
+		 *
+		 * \Note: this function it is not necesary for this neuron model because this one does not use integration method. 
+		 */
+		void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState){};
+
+		/*!
+		 * \brief It evaluates the time depedendent ecuation in NeuronState for elapsed_time and it stores the results in NeuronState.
+		 *
+		 * It evaluates the time depedendent ecuation in NeuronState for elapsed_time and it stores the results in NeuronState.
+		 *
+		 * \param NeuronState value of the neuron state variables where time dependent equations are evaluated.
+		 * \param elapsed_time integration time step.
+		 *
+		 * \Note: this function it is not necesary for this neuron model because this one does not use integration method.
+		 */
+		void EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time){};
 
 };
 

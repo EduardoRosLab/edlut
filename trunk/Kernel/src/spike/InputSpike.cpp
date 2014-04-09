@@ -36,17 +36,20 @@ InputSpike::InputSpike(double NewTime, Neuron * NewSource): Spike(NewTime,NewSou
 InputSpike::~InputSpike(){
 }
 
-void InputSpike::ProcessEvent(Simulation * CurrentSimulation){
-	
-	Neuron * neuron=this->source;  // source of the spike
-    
-    CurrentSimulation->WriteSpike(this);
-	
-	// CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(), this->GetSource());
+void InputSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
+
+	if(!RealTimeRestriction){
 		
-    if (neuron->IsOutputConnected()){
-		PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
-		CurrentSimulation->GetQueue()->InsertEvent(spike);
+		Neuron * neuron=this->source;  // source of the spike
+	    
+		CurrentSimulation->WriteSpike(this);
+		
+		// CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(), this->GetSource());
+			
+		if (neuron->IsOutputConnected()){
+			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
+			CurrentSimulation->GetQueue()->InsertEvent(spike);
+		}
 	}
 }
 

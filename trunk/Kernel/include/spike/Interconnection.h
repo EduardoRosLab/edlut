@@ -88,12 +88,22 @@ class Interconnection : public PrintableObject {
 		/*!
 		 * \brief The learning (or weight change) rule of the connection.
 		 */
-		LearningRule* wchange;
+		LearningRule* wchange_withPost;
 		
 		/*!
-		 * \brief The activity state of the connection
+		 * \brief Index inside the Learning Rule.
 		 */
-		ConnectionState * state;
+		int LearningRuleIndex_withPost;
+
+		/*!
+		 * \brief The learning (or weight change) rule of the connection.
+		 */
+		LearningRule* wchange_withoutPost;
+		
+		/*!
+		 * \brief Index inside the Learning Rule.
+		 */
+		int LearningRuleIndex_withoutPost;
 		
 	public:
 	
@@ -117,9 +127,9 @@ class Interconnection : public PrintableObject {
 		 * \param NewWeight Synaptic weight of this connection.
 		 * \param NewMaxWeight Maximum synaptic weight of this connection.
 		 * \param NewWeightChange Learning (or weight change) rule associated to this connection.
-		 * \param NewConnectionState Current State object of the connection
+		 * \param NewLearningRuleIndex Current learning rule index.
 		 */
-		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange, ConnectionState* NewConnectionState);
+		Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange_withPost, unsigned int NewLearningRuleIndex_withPost, LearningRule* NewWeightChange_withoutPost, unsigned int NewLearningRuleIndex_withoutPost);
 		
 		/*!
 		 * \brief Object destructor.
@@ -153,7 +163,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The source neuron of the connection.
 		 */	
-		Neuron * GetSource() const;
+		//Neuron * GetSource() const;
+		inline Neuron * GetSource() const{
+			return this->source;	
+		}
 		
 		/*!
 		 * \brief It sets the source neuron.
@@ -171,7 +184,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The target neuron of the connection.
 		 */
-		Neuron * GetTarget() const;
+		//Neuron * GetTarget() const;
+		inline Neuron * GetTarget() const{
+			return this->target;
+		}
 		
 		/*!
 		 * \brief It sets the target neuron.
@@ -189,7 +205,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The connection delay.
 		 */
-		double GetDelay() const;
+		//inline double GetDelay() const;
+		inline double GetDelay() const{
+			return delay;
+		}
 		
 		/*!
 		 * \brief It sets the connection delay.
@@ -207,7 +226,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The connection type.
 		 */
-		int GetType() const;
+		//int GetType() const;
+		inline int GetType() const{
+			return type;
+		}
 		
 		/*!
 		 * \brief It sets the connection type.
@@ -225,7 +247,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The synaptic weight.
 		 */
-		float GetWeight() const;
+		//float GetWeight() const;
+		inline float GetWeight() const{
+			return weight;
+		}
 		
 		/*!
 		 * \brief It sets the synaptic weight.
@@ -234,7 +259,27 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \param NewWeight The new synaptic weight of the connection.
 		 */
-		void SetWeight(float NewWeight);
+		//void SetWeight(float NewWeight);
+		inline void SetWeight(float NewWeight){
+			this->weight = NewWeight;
+		}
+
+		/*!
+		 * \brief It increment the synaptic weight and checks the final value is inside the limits.
+		 * 
+		 * It increment the synaptic weight and checks the final value is inside the limits.
+		 * 
+		 * \param Increment The synaptic weight increment of the connection.
+		 */
+		//void IncrementWeight(float Increment);
+		inline void IncrementWeight(float Increment){
+			this->weight += Increment;
+			if(this->weight > this->GetMaxWeight()){
+				this->weight = this->GetMaxWeight();
+			}else if(this->weight < 0.0f){
+				this->weight = 0.0f;
+			}
+		}
 		
 		/*!
 		 * \brief It gets the maximum synaptic weight.
@@ -243,7 +288,11 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The maximum synaptic weight.
 		 */
-		float GetMaxWeight() const;
+		//float GetMaxWeight() const;
+		inline float GetMaxWeight() const{
+			return this->maxweight;
+		}
+
 		
 		/*!
 		 * \brief It sets the maximum synaptic weight.
@@ -261,7 +310,10 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \return The learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
-		LearningRule * GetWeightChange() const;
+		//LearningRule * GetWeightChange() const;
+		inline LearningRule * GetWeightChange_withPost() const{
+			return this->wchange_withPost;
+		}
 		
 		/*!
 		 * \brief It sets the learning rule of this connection.
@@ -270,25 +322,73 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \param NewWeightChange The new learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
-		void SetWeightChange(LearningRule * NewWeightChange);
+		void SetWeightChange_withPost(LearningRule * NewWeightChange_withPost);
+
+				/*!
+		 * \brief It gets the learning rule of this connection.
+		 * 
+		 * It gets the learning rule of the connection.
+		 * 
+		 * \return The learning rule of the connection. 0 if the connection hasn't learning rule.
+		 */
+		//LearningRule * GetWeightChange() const;
+		inline LearningRule * GetWeightChange_withoutPost() const{
+			return this->wchange_withoutPost;
+		}
 		
 		/*!
-		 * \brief It gets the connection state of this connection.
-		 *
-		 * It gets the state of the connection.
-		 *
-		 * \return The connection state of the connection. 0 if the connection hasn't associated learning rule.
+		 * \brief It sets the learning rule of this connection.
+		 * 
+		 * It sets the learning rule of the connection.
+		 * 
+		 * \param NewWeightChange The new learning rule of the connection. 0 if the connection hasn't learning rule.
 		 */
-		ConnectionState * GetConnectionState() const;
+		void SetWeightChange_withoutPost(LearningRule * NewWeightChange_withoutPost);
+		
+		/*!
+		 * \brief It gets the connection learning rule index.
+		 * 
+		 * It gets the connection learning rule index in the network connections.
+		 * 
+		 * \return The connection learning rule index.
+		 */
+		//int GetLearningRuleIndex() const;
+		inline int GetLearningRuleIndex_withPost() const{
+			return this->LearningRuleIndex_withPost;
+		}
 
 		/*!
-		 * \brief It sets the current state of this connection.
-		 *
-		 * It sets the state of the connection.
-		 *
-		 * \param NewConnectionState The new state of the connection. 0 if the connection hasn't learning rule.
+		 * \brief It gets the connection learning rule index.
+		 * 
+		 * It gets the connection learning rule index in the network connections.
+		 * 
+		 * \return The connection learning rule index.
 		 */
-		void SetConnectionState(ConnectionState * NewConnectionState);
+		//int GetLearningRuleIndex() const;
+		inline int GetLearningRuleIndex_withoutPost() const{
+			return this->LearningRuleIndex_withoutPost;
+		}
+
+
+
+		
+		/*!
+		 * \brief It sets the connection learning rule index.
+		 * 
+		 * It sets the connection learning rule index in the network connections.
+		 * 
+		 * \param NewIndex The new learning rule index of the connection.
+		 */
+		void SetLearningRuleIndex_withPost(int NewIndex);
+
+		/*!
+		 * \brief It sets the connection learning rule index.
+		 * 
+		 * It sets the connection learning rule index in the network connections.
+		 * 
+		 * \param NewIndex The new learning rule index of the connection.
+		 */
+		void SetLearningRuleIndex_withoutPost(int NewIndex);
 
 
 		/*!

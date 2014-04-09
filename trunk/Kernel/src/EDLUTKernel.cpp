@@ -36,9 +36,8 @@
 #include "../include/spike/EDLUTException.h"
 #include "../include/spike/Network.h"
 
-//-----------
-#include "../include/neuron_model/NeuronModel.h"
-#include "../include/neuron_model/LIFTimeDrivenModel_GPU.h"
+
+
 
 //#include "google/profiler.h"
 //#include "vld.h"
@@ -59,8 +58,6 @@ using namespace std;
  * 			-sf File_Name	It saves the final weights in file File_Name.
  * 			-wt Save_Weight_Step	It sets the step time between weights saving.
  * 			-st Step_Time(in_seconds) It sets the step time in simulation.
- *			-ts Time driven step time (in_seconds).
- *			-tsGPU Time driven step time for GPU (in_seconds).
  * 			-log File_Name It saves the activity register in file File_Name.
  *          -logp File_Name It saves all events register in file File_Name.
  * 			-if Input_File	It adds the Input_File file in the input sources of the simulation.
@@ -71,6 +68,8 @@ using namespace std;
  * 
   */ 
 int main(int ac, char *av[]) {
+	clock_t starttotalt,endtotalt;
+	starttotalt=clock();
 
 	clock_t startt,endt;
 	cout << "Loading tables..." << endl;
@@ -148,24 +147,9 @@ int main(int ac, char *av[]) {
 		cout << "Number of InternalSpike: " << Simul.GetTotalSpikeCounter() << endl;
 		cout << "Mean number of spikes in heap: " << Simul.GetHeapAcumSize()/(float)Simul.GetSimulationUpdates() << endl;
 		cout << "Updates per second: " << Simul.GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
-
-
-
-		float GPU_time=0;
-		float time=0;
-		for(int i=0; i<Simul.GetNetwork()->GetNneutypes();i++){
-			if(Simul.GetNetwork()->GetNeuronModelAt(i)->GetModelType()==2){
-				time=((LIFTimeDrivenModel_GPU *)Simul.GetNetwork()->GetNeuronModelAt(i))->time;
-				time/=(((LIFTimeDrivenModel_GPU *)Simul.GetNetwork()->GetNeuronModelAt(i))->counter)/(((LIFTimeDrivenModel_GPU *)Simul.GetNetwork()->GetNeuronModelAt(i))->size);
-				time*=(((LIFTimeDrivenModel_GPU *)Simul.GetNetwork()->GetNeuronModelAt(i))->counter);
-			}
-			GPU_time+=time;
-			time=0;
-		}
-		GPU_time/=1000.0;
-
-		cout << "Elapsed time in GPU: " << GPU_time << " sec" << endl;
-		cout << "Time GPU/Time CPU: "<< GPU_time/((endt-startt)/(float)CLOCKS_PER_SEC)<<endl;
+		
+		endtotalt=clock();
+		cout << "Total elapsed time: " << (endtotalt-starttotalt)/(float)CLOCKS_PER_SEC << " sec" << endl;
 
 
 
@@ -185,6 +169,7 @@ int main(int ac, char *av[]) {
 		cerr << Exc << endl;
 		return Exc.GetErrorNum();
 	}
+
 
 	return 0;
 }

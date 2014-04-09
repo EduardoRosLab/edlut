@@ -24,56 +24,37 @@
 
 #include "../../include/neuron_model/NeuronState.h"
 
-ConnectionState * STDPWeightChange::GetInitialState(){
-	return new STDPState(this->tauLTP, this->tauLTD);
+
+void STDPWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
+	this->State=(ConnectionState *) new STDPState(NumberOfSynapses, this->tauLTP, this->tauLTD);
 }
 
 void STDPWeightChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
-	STDPState * State = (STDPState *) Connection->GetConnectionState();
+	unsigned int LearningRuleIndex = Connection->GetLearningRuleIndex_withPost();
 
 	// Apply synaptic activity decaying rule
-	State->AddElapsedTime(SpikeTime-State->GetLastUpdateTime());
+	State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
 
 	// Apply presynaptic spike
-	State->ApplyPresynapticSpike();
+	State->ApplyPresynapticSpike(LearningRuleIndex);
 
-	// Get weight change
-	float newWeight = Connection->GetWeight();
-
-	newWeight += -this->MaxChangeLTD*State->GetPostsynapticActivity();
-
-	if (newWeight > Connection->GetMaxWeight()) {
-		newWeight = Connection->GetMaxWeight();
-	} else if (newWeight < 0.0){
-		newWeight = 0;
-	}
-
-	Connection->SetWeight(newWeight);
+	// Apply weight change
+	Connection->IncrementWeight(-this->MaxChangeLTD*State->GetPostsynapticActivity(LearningRuleIndex));
 
 	return;
 }
 
 void STDPWeightChange::ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime){
-	STDPState * State = (STDPState *) Connection->GetConnectionState();
-
+	int LearningRuleIndex = Connection->GetLearningRuleIndex_withPost();
+	
 	// Apply synaptic activity decaying rule
-	State->AddElapsedTime(SpikeTime-State->GetLastUpdateTime());
+	State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, true);
 
 	// Apply postsynaptic spike
-	State->ApplyPostsynapticSpike();
+	State->ApplyPostsynapticSpike(LearningRuleIndex);
 
-	// Get weight change
-	float newWeight = Connection->GetWeight();
-
-	newWeight += this->MaxChangeLTP*State->GetPresynapticActivity();
-
-	if (newWeight > Connection->GetMaxWeight()) {
-		newWeight = Connection->GetMaxWeight();
-	} else if (newWeight < 0.0){
-		newWeight = 0;
-	}
-
-	Connection->SetWeight(newWeight);
+	// Apply weight change
+	Connection->IncrementWeight(this->MaxChangeLTP*State->GetPresynapticActivity(LearningRuleIndex));
 
 	return;
 }
@@ -110,4 +91,5 @@ float STDPWeightChange::GetMaxWeightChangeLTD() const{
 void STDPWeightChange::SetMaxWeightChangeLTD(float NewMaxChange){
 	this->MaxChangeLTD = NewMaxChange;
 }
+
 

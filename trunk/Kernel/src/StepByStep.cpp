@@ -73,11 +73,13 @@ int main(int ac, char *av[]) {
 	Simul->AddOutputSpikeDriver(OutputDriver);
 
 	// Create a new monitor driver object to record the network activity
-	Simul->AddMonitorActivityDriver(new FileOutputSpikeDriver (LogFile,false));
+	FileOutputSpikeDriver * MonitorDriver = new FileOutputSpikeDriver (LogFile,false);
+	Simul->AddMonitorActivityDriver(MonitorDriver);
 	
 		
 	// Create a new weight driver object to record the weights
-	Simul->AddOutputWeightDriver(new FileOutputWeightDriver(FinalWeightFile));
+	FileOutputWeightDriver * WeightDriver = new FileOutputWeightDriver(FinalWeightFile);
+	Simul->AddOutputWeightDriver(WeightDriver);
 	if (SavingWeightPeriod>0){
 		Simul->SetSaveStep(SavingWeightPeriod);
 	}
@@ -137,9 +139,12 @@ int main(int ac, char *av[]) {
 	cout << "Updates per second: " << Simul->GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
 	cout << "Total spikes handled: " << Simul->GetTotalSpikeCounter() << endl;
 
+	// Closing simulation connections
 	delete Simul;
 	delete InputDriver;
 	delete OutputDriver;
+	delete MonitorDriver;
+	delete WeightDriver;
 
 	return result;
 }

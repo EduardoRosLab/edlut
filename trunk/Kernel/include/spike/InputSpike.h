@@ -76,14 +76,17 @@ class InputSpike: public Spike{
    		 */
    		~InputSpike();
    		
-   		/*!
+
+		/*!
    		 * \brief It process an event in the simulation.
    		 * 
    		 * It process the event in the simulation.
    		 * 
    		 * \param CurrentSimulation The simulation object where the event is working.
+		 * \param RealTimeRestriction This variable indicates whether we are making a 
+		 * real-time simulation and the watchdog is enabled.
    		 */
-   		void ProcessEvent(Simulation * CurrentSimulation);
+   		void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction);
 };
 
 #endif /*SPIKE_H_*/

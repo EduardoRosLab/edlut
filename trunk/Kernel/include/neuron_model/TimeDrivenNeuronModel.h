@@ -24,10 +24,15 @@
  * \author Francisco Naveros
  * \date January 2011
  *
- * This file declares a class which abstracts an event-driven neuron model.
+ * This file declares a class which abstracts an time-driven neuron model in a CPU.
  */
 
 #include "./NeuronModel.h"
+
+#include "../simulation/LoadTimeEvent.h"
+
+#include "../integration_method/IntegrationMethod.h"
+#include "../integration_method/LoadIntegrationMethod.h"
 
 #include <string>
 
@@ -41,7 +46,7 @@ class VectorNeuronState;
 /*!
  * \class TimeDrivenNeuronModel
  *
- * \brief Time-Driven Spiking neuron model
+ * \brief Time-Driven Spiking neuron model in a CPU
  *
  * This class abstracts the behavior of a neuron in a time-driven spiking neural network.
  * It includes internal model functions which define the behavior of the model
@@ -56,13 +61,26 @@ class TimeDrivenNeuronModel : public NeuronModel {
 	public:
 
 		/*!
+		 * \brief integration method.
+		*/
+		IntegrationMethod * integrationMethod;
+
+		/*!
+		 * \brief number of OpenMP thread in CPU to update time driven neuron methods.
+		*/
+		int N_CPU_thread;
+
+
+		/*!
 		 * \brief Default constructor with parameters.
 		 *
 		 * It generates a new neuron model object without being initialized.
 		 *
-		 * \param NeuronModelID Neuron model identificator.
+		 * \param NeuronTypeID Neuron model identificator.
+		 * \param NeuronModelID Neuron model configuration file.
 		 */
 		TimeDrivenNeuronModel(string NeuronTypeID, string NeuronModelID);
+
 
 		/*!
 		 * \brief Class destructor.
@@ -85,6 +103,7 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 */
 		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime) = 0;
 
+
 		/*!
 		 * \brief It gets the neuron model type (event-driven or time-driven).
 		 *
@@ -92,7 +111,8 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 *
 		 * \return The type of the neuron model.
 		 */
-		virtual enum NeuronModelType GetModelType()=0;
+		enum NeuronModelType GetModelType();
+
 
 		/*!
 		 * \brief It initialice VectorNeuronState.
@@ -103,6 +123,29 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 */
 		virtual void InitializeStates(int N_neurons)=0;
 
+
+		/*!
+		 * \brief It evaluates the differential equation in NeuronState and it stores the results in AuxNeuronState.
+		 *
+		 * It evaluates the differential equation in NeuronState and it stores the results in AuxNeuronState.
+		 *
+		 * \param NeuronState value of the neuron state variables where differential equations are evaluated.
+		 * \param AuxNeuronState results of the differential equations evaluation.
+		 */
+		virtual void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState)=0;
+
+
+		/*!
+		 * \brief It evaluates the time depedendent ecuation in NeuronState for elapsed_time and it stores the results in NeuronState.
+		 *
+		 * It evaluates the time depedendent ecuation in NeuronState for elapsed_time and it stores the results in NeuronState.
+		 *
+		 * \param NeuronState value of the neuron state variables where time dependent equations are evaluated.
+		 * \param elapsed_time integration time step.
+		 */
+		virtual void EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time)=0;
+
+
 };
 
-#endif /* NEURONMODEL_H_ */
+#endif /* TIMEDRIVENNEURONMODEL_H_ */

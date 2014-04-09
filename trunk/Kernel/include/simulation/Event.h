@@ -99,8 +99,18 @@ class Event{
    		 * It process the event in the simulation.
    		 * 
    		 * \param CurrentSimulation The simulation object where the event is working.
+		 * \param RealTimeRestriction This variable indicates whether we are making a 
+		 * real-time simulation and the watchdog is enabled.
    		 */
-   		virtual void ProcessEvent(Simulation * CurrentSimulation) = 0;
+   		virtual void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction) = 0;
+
+
+   		/*!
+   		 * \brief this method indicates if this event is and spike event.
+   		 * 
+   		 * This method indicates if this event is and spike event.
+		 */
+		virtual bool IsSpike();
 };
 
 #endif /*SPIKE_H_*/

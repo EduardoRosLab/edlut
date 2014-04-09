@@ -53,6 +53,8 @@ void TCPIPInputOutputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) 
 						
 			Queue->InsertEvent(NewSpike);				
 		}
+
+		delete [] InputSpikes;
 	}
 }
 

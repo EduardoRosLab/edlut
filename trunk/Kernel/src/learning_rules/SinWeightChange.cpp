@@ -24,8 +24,8 @@
 SinWeightChange::SinWeightChange():exponent(0){
 }
 
-ConnectionState * SinWeightChange::GetInitialState(){
-	return (ConnectionState *) new SinState(this->exponent,this->maxpos);
+void SinWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
+	this->State=(ConnectionState *) new SinState(NumberOfSynapses, this->exponent,this->maxpos);
 }
 
 int SinWeightChange::GetNumberOfVar() const{
@@ -42,5 +42,15 @@ void SinWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDL
 	if(!(fscanf(fh,"%i",&this->exponent)==1)){
 		throw EDLUTFileException(4,28,23,1,Currentline);
 	}
+	
+	//exponent must be multiple of 2.
+	if(exponent%2 == 1){
+		exponent=(exponent/2)*2;
+		cerr << "Warning: exponent in SinAdditiveKernel must be multiple of 2. It has been rounded to "<< exponent << endl;
+
+
+	}
+
+
 }
 

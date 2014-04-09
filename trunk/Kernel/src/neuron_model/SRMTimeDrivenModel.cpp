@@ -29,6 +29,14 @@
 
 #include "../../include/simulation/Utils.h"
 
+#ifdef _OPENMP
+	#include <omp.h>
+#else
+	#define omp_get_thread_num() 0
+	#define omp_get_num_thread() 1
+#endif
+
+
 using namespace std;
 
 void SRMTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
@@ -103,18 +111,10 @@ void SRMTimeDrivenModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 	// Initialize the neuron state
 	this->InitialState = (VectorSRMState *) new VectorSRMState(5,this->NumberOfChannels, true);
 
-	//// Initialize the amplitude of each buffer
-	//for (unsigned int i=0; i<this->NumberOfChannels; ++i){
-	//	((VectorSRMState *) this->InitialState)->SetBufferAmplitude(i,8*this->tau[i]);
-	//}
+	//TIME DRIVEN STEP
+	this->integrationMethod = LoadIntegrationMethod::loadIntegrationMethod(fh, &Currentline, 0, 0, 0, 0);
 
-	//// Initialize the state variables
-	//for (unsigned int i=0; i<5; ++i){
-	//	this->InitialState->SetStateVariableAt(i,0.0);
-	//}
 
-	//this->InitialState->SetLastUpdateTime(0);
-	//this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 }
 
 void SRMTimeDrivenModel::SynapsisEffect(int index, VectorSRMState * State, Interconnection * InputConnection){
@@ -166,7 +166,6 @@ void SRMTimeDrivenModel::LoadNeuronModel() throw (EDLUTFileException) {
 }
 
 VectorNeuronState * SRMTimeDrivenModel::InitializeState(){
-	//return (VectorSRMState *) new VectorSRMState(*((VectorSRMState *) this->InitialState));
 	return ((VectorSRMState *) InitialState);
 }
 
@@ -190,10 +189,30 @@ InternalSpike * SRMTimeDrivenModel::ProcessInputSpike(PropagatedSpike *  InputSp
 	return ProducedSpike;
 }
 
+InternalSpike * SRMTimeDrivenModel::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
+
+
+	VectorNeuronState * CurrentState = target->GetVectorNeuronState();
+
+	InternalSpike * ProducedSpike = 0;
+
+	// Update Cell State
+	if (this->UpdateState(target->GetIndex_VectorNeuronState(),target->GetVectorNeuronState(),time)){
+		ProducedSpike = new InternalSpike(time,target);
+	}
+
+	// Add the effect of the input spike
+	this->SynapsisEffect(target->GetIndex_VectorNeuronState(),(VectorSRMState *)CurrentState,inter);
+
+	return ProducedSpike;
+}
+
 
 bool SRMTimeDrivenModel::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
 
 	if(index!=-1){
+		bool * internalSpike=State->getInternalSpike();
+
 		double ElapsedTime = CurrentTime-State->GetLastUpdateTime(index);
 
 		State->AddElapsedTime(index, ElapsedTime);
@@ -230,9 +249,13 @@ bool SRMTimeDrivenModel::UpdateState(int index, VectorNeuronState * State, doubl
 
 		if (this->CheckSpikeAt(index,(VectorSRMState *) State, CurrentTime)){
 			State->NewFiredSpike(index);
-			return true;
+			internalSpike[index]=true;
+		}else{
+			internalSpike[index]=false;
 		}
 
+		float * NeuronState=State->GetStateVariableAt(index);
+		this->integrationMethod->NextDifferentialEcuationValue(index,this,NeuronState,NULL,NULL);
 		return false;
 	
 	
@@ -314,6 +337,9 @@ bool SRMTimeDrivenModel::UpdateState(int index, VectorNeuronState * State, doubl
 			}else{
 				internalSpike[i]=false;
 			}
+
+			float * NeuronState=State->GetStateVariableAt(i);
+			this->integrationMethod->NextDifferentialEcuationValue(i,this,NeuronState,NULL,NULL);
 		}
 		delete [] sqrt_tau;
 	}
@@ -348,18 +374,14 @@ ostream & SRMTimeDrivenModel::PrintInfo(ostream & out) {
 	return out;
 }
 
-enum NeuronModelType SRMTimeDrivenModel::GetModelType(){
-	return TIME_DRIVEN_MODEL_CPU;
-}
-
 
 void SRMTimeDrivenModel::InitializeStates(int N_neurons){
 
 	VectorSRMState * state = (VectorSRMState *) this->InitialState;
 
-	float inicialization[] = {0.0,0.0,0.0,0.0,0.0};
+	float initialization[] = {0.0,0.0,0.0,0.0,0.0};
 	//Initialize the state variables
-	state->InitializeSRMStates(N_neurons, inicialization);
+	state->InitializeSRMStates(N_neurons, initialization);
 
 	for (int j=0; j<N_neurons; j++){
 		// Initialize the amplitude of each buffer
@@ -367,5 +389,7 @@ void SRMTimeDrivenModel::InitializeStates(int N_neurons){
 			state->SetBufferAmplitude(j,i,8*this->tau[i]);
 		}
 	}
+
+	this->integrationMethod->InitializeStates(N_neurons, initialization);
 
 }

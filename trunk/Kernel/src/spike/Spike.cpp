@@ -34,3 +34,7 @@ Neuron * Spike::GetSource () const{
 void Spike::SetSource (Neuron * NewSource){
 	source = NewSource;
 }
+
+bool Spike::IsSpike(){
+	return true;
+}

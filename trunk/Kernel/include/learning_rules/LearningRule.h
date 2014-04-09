@@ -46,14 +46,48 @@ class ConnectionState;
 class LearningRule : public PrintableObject {
 
 	public:
+
 		/*!
-		 * \brief It gets the initial state associated to the learning rule.
-		 *
-		 * It gets the initial state associated to the learning rule.
-		 *
-		 * \return The initial state that the learning rule needs.
+		 * \brief The conection state of the learning rule.
 		 */
-		virtual ConnectionState * GetInitialState() = 0;
+		ConnectionState * State;
+
+		/*!
+		 * \brief An auxiliar variable to manage the asignation of index.
+		 */
+		int counter;
+
+		/*!
+		 * \brief It initialize the state associated to the learning rule for all the synapses.
+		 *
+		 * It initialize the state associated to the learning rule for all the synapses.
+		 *
+		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
+		 */
+		virtual void InitializeConnectionState(unsigned int NumberOfSynapses) = 0;
+
+		/*!
+		 * \brief It return the state associated to the learning rule for all the synapses.
+		 *
+		 * It return the state associated to the learning rule for all the synapses.
+		 *
+		 * \return the learning rule state for all the synapses.
+		 */
+		ConnectionState * GetConnectionState();
+
+		/*!
+		 * \brief Default constructor.
+		 * 
+		 * It creates a new LearningRule object.
+		 */ 
+		LearningRule();
+
+		/*!
+		 * \brief Object destructor.
+		 *
+		 * It remove a LearningRule object an releases the memory of the ConnectionState.
+		 */
+		virtual ~LearningRule();
 
 		/*!
 		 * \brief It loads the learning rule properties.
@@ -97,6 +131,16 @@ class LearningRule : public PrintableObject {
 		 * \return The stream after the printer.
 		 */
 		virtual ostream & PrintInfo(ostream & out) = 0;
+
+   		/*!
+		 * \brief It returns if this learning rule implements postsynaptic learning.
+		 *
+		 * It returns if this learning rule implements postsynaptic learning.
+		 *
+		 * \returns if this learning rule implements postsynaptic learning
+		 */
+		virtual bool ImplementPostSynaptic() = 0;
+
 };
 
 #endif /* LEARNINGRULE_H_ */

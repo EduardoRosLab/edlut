@@ -43,18 +43,18 @@
 
 class STDPState : public ConnectionState{
 
-	private:
+	public:
 		/*!
 		 * LTP time constant.
 		 */
-		double LTPTau;
+		float LTPTau;
+		float inv_LTPTau;
 
 		/*!
 		 * LTD time constant.
 		 */
-		double LTDTau;
-
-	public:
+		float LTDTau;
+		float inv_LTDTau;
 
 		/*!
 		 * \brief Default constructor with parameters.
@@ -64,7 +64,7 @@ class STDPState : public ConnectionState{
 		 * \param LTPtau Time constant of the LTP component.
 		 * \param LTDtau Time constant of the LTD component.
 		 */
-		STDPState(double LTPtau, double LTDtau);
+		STDPState(int NumSynapses, float LTPtau, float LTDtau);
 
 		/*!
 		 * \brief Class destructor.
@@ -80,7 +80,10 @@ class STDPState : public ConnectionState{
 		 *
 		 * \return The accumulated presynaptic activity.
 		 */
-		virtual float GetPresynapticActivity();
+		//float GetPresynapticActivity(unsigned int index);
+		inline float GetPresynapticActivity(unsigned int index){
+			return this->GetStateVariableAt(index, 0);
+		}
 
 		/*!
 		 * \brief It gets the value of the accumulated postsynaptic activity.
@@ -89,7 +92,10 @@ class STDPState : public ConnectionState{
 		 *
 		 * \return The accumulated postsynaptic activity.
 		 */
-		float GetPostsynapticActivity();
+		//float GetPostsynapticActivity(unsigned int index);
+		inline float GetPostsynapticActivity(unsigned int index){
+			return this->GetStateVariableAt(index, 1);
+		}
 
 
 		/*!
@@ -112,13 +118,13 @@ class STDPState : public ConnectionState{
 
 
 		/*!
-		 * \brief Add elapsed time to spikes.
+		 * \brief set new time to spikes.
 		 *
-		 * It adds the elapsed time to spikes.
+		 * It set new time to spikes.
 		 *
-		 * \param ElapsedTime The time since the last update.
+		 * \param NewTime new time.
 		 */
-		virtual void AddElapsedTime(float ElapsedTime);
+		virtual void SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post);
 
 
 		/*!
@@ -127,7 +133,7 @@ class STDPState : public ConnectionState{
 		 * It implements the behaviour when it transmits a spike. It must be implemented
 		 * by any inherited class.
 		 */
-		virtual void ApplyPresynapticSpike();
+		virtual void ApplyPresynapticSpike(unsigned int index);
 
 		/*!
 		 * \brief It implements the behaviour when the target cell fires a spike.
@@ -135,7 +141,7 @@ class STDPState : public ConnectionState{
 		 * It implements the behaviour when it the target cell fires a spike. It must be implemented
 		 * by any inherited class.
 		 */
-		virtual void ApplyPostsynapticSpike();
+		virtual void ApplyPostsynapticSpike(unsigned int index);
 
 };
 

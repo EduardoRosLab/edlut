@@ -105,6 +105,11 @@ class VectorNeuronState {
 		 */
 		bool Is_Monitored;
 
+
+		/*!
+		 * brief It is used to store the state of a GPU neuron model. 
+		 */
+		bool Is_GPU;
 	
 
 		/*!
@@ -116,6 +121,17 @@ class VectorNeuronState {
 		 * \param isTimeDriven It is for a time-driven or a event-driven method.
 		 */
 		VectorNeuronState(unsigned int NumVariables, bool isTimeDriven);
+
+		/*!
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new state of a cell vector.
+		 *
+		 * \param NumVariables Number of the state variables this model needs.
+		 * \param isTimeDriven It is for a time-driven or a event-driven method.
+		 * \param Is_GPU
+		 */
+		VectorNeuronState(unsigned int NumVariables, bool isTimeDriven, bool Is_GPU);
 
 		/*!
 		 * \brief Copies constructor.
@@ -145,7 +161,46 @@ class VectorNeuronState {
 		 * \param position The position of the state variable.
 		 * \param NewValue The new value of that state variable.
 		 */
-		void SetStateVariableAt(int index, int position,float NewValue);
+		void SetStateVariableAt(int index, int position, float NewValue);
+
+		/*!
+		 * \brief It increments the state variable for a cell in a specified position.
+		 *
+		 * It increments the state variable for a cell in a specified position.
+		 *
+		 * \param index The cell index inside the vector.
+		 * \param position The position of the state variable.
+		 * \param Increments The increments of that state variable.
+		 */
+		void IncrementStateVariableAt(int index, int position, float Increment);
+
+		/*!
+		 * \brief It increments the state variable for a cell in a specified position.
+		 *
+		 * It increments the state variable for a cell in a specified position.
+		 *
+		 * \param index The cell index inside the vector.
+		 * \param position The position of the state variable.
+		 * \param Increments The increments of that state variable.
+		 */
+		//void IncrementStateVariableAtCPU(int index, int position, float Increment);
+		inline void IncrementStateVariableAtCPU(int index, int position, float Increment){
+			VectorNeuronStates[index*NumberOfVariables + position]+= Increment;
+		}
+
+				/*!
+		 * \brief It increments the state variable for a cell in a specified position.
+		 *
+		 * It increments the state variable for a cell in a specified position.
+		 *
+		 * \param index The cell index inside the vector.
+		 * \param position The position of the state variable.
+		 * \param Increments The increments of that state variable.
+		 */
+		//void IncrementStateVariableAtGPU(int index, int position, float Increment);
+		inline void IncrementStateVariableAtGPU(int index, int position, float Increment){
+			this->VectorNeuronStates[this->SizeStates*position + index]+= Increment;
+		}
 
 		/*!
 		 * \brief It sets the time when the last update happened for a cell.
@@ -205,6 +260,17 @@ class VectorNeuronState {
 		virtual float GetStateVariableAt(int index, int position);
 
 		/*!
+		 * \brief It gets the pointer to the state variables for a cell.
+		 *
+		 * It gets the pointer to the state variables for a cell.
+		 *
+		 * \param index The cell index inside the vector.
+		 * \return The pointer of the position-th state variable.
+		 */
+		virtual float * GetStateVariableAt(int index);
+
+
+		/*!
 		 * \brief It gets the time when the last update happened for a cell.
 		 *
 		 * It gets the time when the last update happened for a cell.
@@ -213,7 +279,10 @@ class VectorNeuronState {
 		 *
 		 * \return The time when the last update happened for a cell.
 		 */
-		double GetLastUpdateTime(int index);
+		//double GetLastUpdateTime(int index);
+		inline double GetLastUpdateTime(int index){
+			return this->LastUpdate[index];
+		}
 
 		/*!
 		 * \brief It gets the time when the next predicted spike will happen for a cell.
@@ -235,7 +304,10 @@ class VectorNeuronState {
 		 *
 		 * \return The refractory period for a cell.
 		 */
-		double GetEndRefractoryPeriod(int index);
+		//double GetEndRefractoryPeriod(int index);
+		inline double GetEndRefractoryPeriod(int index){
+			return this->PredictionEnd[index];
+		}
 
 		/*!
 		 * \brief It gets the time since the last spike was fired for a cell.
@@ -246,7 +318,10 @@ class VectorNeuronState {
 		 *
 		 * \return The time since the last spike fired for a cell.
 		 */
-		double GetLastSpikeTime(int index);
+		//double GetLastSpikeTime(int index);
+		inline double GetLastSpikeTime(int index){
+			return this->LastSpikeTime[index];
+		}
 
 		/*!
 		 * \brief It gets the number of variables that you can print in this state.

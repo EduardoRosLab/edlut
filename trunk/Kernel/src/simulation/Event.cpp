@@ -35,4 +35,7 @@ void Event::SetTime (double NewTime){
 	time = NewTime;
 }
 
+bool Event::IsSpike(){
+	return false;
+}
 

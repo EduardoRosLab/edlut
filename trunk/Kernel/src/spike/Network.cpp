@@ -27,13 +27,15 @@
 
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/SRMTimeDrivenModel.h"
-#include "../../include/neuron_model/LIFTimeDrivenModelRK.h"
-#include "../../include/neuron_model/LIFTimeDrivenModel.h"
+#include "../../include/neuron_model/LIFTimeDrivenModel_1_4.h"
+#include "../../include/neuron_model/LIFTimeDrivenModel_1_2.h"
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 #include "../../include/neuron_model/EventDrivenNeuronModel.h"
 #include "../../include/neuron_model/TableBasedModel.h"
 #include "../../include/neuron_model/SRMTableBasedModel.h"
 #include "../../include/neuron_model/VectorNeuronState.h"
+#include "../../include/neuron_model/EgidioGranuleCell_TimeDriven.h"
+#include "../../include/neuron_model/Vanderpol.h"
 
 #include "../../include/simulation/EventQueue.h"
 #include "../../include/simulation/Utils.h"
@@ -93,6 +95,13 @@ void Network::FindOutConnections(){
 
 		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
 			this->neurons[neu].SetOutputConnections(OutputConnections[neu],NumberOfOutputs[neu]);
+
+			for (unsigned long aux = 0; aux < NumberOfOutputs[neu]; aux++){
+				if(OutputConnections[neu][aux]->GetWeightChange_withoutPost()!=0){
+					OutputConnections[neu][aux]->SetLearningRuleIndex_withoutPost(OutputConnections[neu][aux]->GetWeightChange_withoutPost()->counter);
+					OutputConnections[neu][aux]->GetWeightChange_withoutPost()->counter++;
+				}
+			}
 		}
 
 		delete [] OutputConnections;
@@ -112,50 +121,76 @@ void Network::SetWeightOrdination(){
 
 void Network::FindInConnections(){
 	if(this->ninters>0){
-		// Calculate the number of input connections with learning for each cell
-		unsigned long * NumberOfInputsWithLearning = (unsigned long *) new unsigned long [this->nneurons];
-		unsigned long * InputsLeft = (unsigned long *) new unsigned long [this->nneurons];
 
-		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
-			NumberOfInputsWithLearning[neu] = 0;
-		}
+		// Calculate the number of input connections with learning for each cell
+		unsigned long * NumberOfInputsWithPostSynapticLearning = (unsigned long *) new unsigned long [this->nneurons]();
+		unsigned long * InputsLeftWithPostSynapticLearning = (unsigned long *) new unsigned long [this->nneurons];
+
+		unsigned long * NumberOfInputsWithoutPostSynapticLearning = (unsigned long *) new unsigned long [this->nneurons]();
+		unsigned long * InputsLeftWithoutPostSynapticLearning = (unsigned long *) new unsigned long [this->nneurons];
 
 		for (unsigned long con= 0; con<this->ninters; ++con){
-			if (this->inters[con].GetWeightChange()!=0){
-				NumberOfInputsWithLearning[this->inters[con].GetTarget()->GetIndex()]++;
+			if(this->inters[con].GetWeightChange_withPost()!=0){
+				NumberOfInputsWithPostSynapticLearning[this->inters[con].GetTarget()->GetIndex()]++;
+			}
+			if(this->inters[con].GetWeightChange_withoutPost()!=0){
+				NumberOfInputsWithoutPostSynapticLearning[this->inters[con].GetTarget()->GetIndex()]++;
 			}
 		}
 
 		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
-			InputsLeft[neu] = NumberOfInputsWithLearning[neu];
+			InputsLeftWithPostSynapticLearning[neu] = NumberOfInputsWithPostSynapticLearning[neu];
+			InputsLeftWithoutPostSynapticLearning[neu] = NumberOfInputsWithoutPostSynapticLearning[neu];
 		}
 
-		Interconnection *** InputConnectionsWithLearning = (Interconnection ***) new Interconnection ** [this->nneurons];
+		Interconnection *** InputConnectionsWithPostSynapticLearning = (Interconnection ***) new Interconnection ** [this->nneurons];
+		Interconnection *** InputConnectionsWithoutPostSynapticLearning = (Interconnection ***) new Interconnection ** [this->nneurons];
 
 		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
-			if (NumberOfInputsWithLearning[neu]>0){
-				InputConnectionsWithLearning[neu] = (Interconnection **) new Interconnection * [NumberOfInputsWithLearning[neu]];
-			} else {
-				InputConnectionsWithLearning[neu] = 0;
-			}
+			InputConnectionsWithPostSynapticLearning[neu] = 0;
+			InputConnectionsWithoutPostSynapticLearning[neu] = 0;
+
+			if (NumberOfInputsWithPostSynapticLearning[neu]>0){
+				InputConnectionsWithPostSynapticLearning[neu] = (Interconnection **) new Interconnection * [NumberOfInputsWithPostSynapticLearning[neu]];
+			} 
+			if (NumberOfInputsWithoutPostSynapticLearning[neu]>0){
+				InputConnectionsWithoutPostSynapticLearning[neu] = (Interconnection **) new Interconnection * [NumberOfInputsWithoutPostSynapticLearning[neu]];
+			} 
 		}
 
 		for (unsigned long con= this->ninters-1; con<this->ninters; --con){
-			if (this->inters[con].GetWeightChange()!=0){
+			if (this->inters[con].GetWeightChange_withPost()!=0){
 				unsigned long TargetCell = this->inters[con].GetTarget()->GetIndex();
-				InputConnectionsWithLearning[TargetCell][--InputsLeft[TargetCell]] = this->inters+con;
+				InputConnectionsWithPostSynapticLearning[TargetCell][--InputsLeftWithPostSynapticLearning[TargetCell]] = this->inters+con;
+			}
+			if (this->inters[con].GetWeightChange_withoutPost()!=0){
+				unsigned long TargetCell = this->inters[con].GetTarget()->GetIndex();
+				InputConnectionsWithoutPostSynapticLearning[TargetCell][--InputsLeftWithoutPostSynapticLearning[TargetCell]] = this->inters+con;
 			}
 		}
 
 		for (unsigned long neu = 0; neu<this->nneurons; ++neu){
-			this->neurons[neu].SetInputConnectionsWithLearning(InputConnectionsWithLearning[neu],NumberOfInputsWithLearning[neu]);
+			this->neurons[neu].SetInputConnectionsWithPostSynapticLearning(InputConnectionsWithPostSynapticLearning[neu],NumberOfInputsWithPostSynapticLearning[neu]);
+			this->neurons[neu].SetInputConnectionsWithoutPostSynapticLearning(InputConnectionsWithoutPostSynapticLearning[neu],NumberOfInputsWithoutPostSynapticLearning[neu]);
+		
+			for (unsigned long aux = 0; aux < NumberOfInputsWithPostSynapticLearning[neu]; aux++){
+				InputConnectionsWithPostSynapticLearning[neu][aux]->SetLearningRuleIndex_withPost(InputConnectionsWithPostSynapticLearning[neu][aux]->GetWeightChange_withPost()->counter);
+				InputConnectionsWithPostSynapticLearning[neu][aux]->GetWeightChange_withPost()->counter++;
+			}
+
 		}
 
-		delete [] InputConnectionsWithLearning;
-		delete [] NumberOfInputsWithLearning;
-		delete [] InputsLeft;
+		delete [] InputConnectionsWithPostSynapticLearning;
+		delete [] NumberOfInputsWithPostSynapticLearning;
+		delete [] InputsLeftWithPostSynapticLearning;
+
+		delete [] InputConnectionsWithoutPostSynapticLearning;
+		delete [] NumberOfInputsWithoutPostSynapticLearning;
+		delete [] InputsLeftWithoutPostSynapticLearning;
 	}
 }
+
+
 
 NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int & ni) throw (EDLUTException){
 	NeuronModel * type;
@@ -163,17 +198,21 @@ NeuronModel * Network::LoadNetTypes(string ident_type, string neutype, int & ni)
    	for(ni=0;ni<nneutypes && neutypes[ni]!=0 && ( neutypes[ni]->GetModelID()==neutype && neutypes[ni]->GetTypeID()!=ident_type || neutypes[ni]->GetModelID()!=neutype);++ni);
 
    	if (ni<nneutypes && neutypes[ni]==0){
-		if (ident_type=="LIFTimeDrivenModelRK"){
-			neutypes[ni] = (LIFTimeDrivenModelRK *) new LIFTimeDrivenModelRK(ident_type, neutype);
-		} else if (ident_type=="LIFTimeDrivenModel"){
-			neutypes[ni] = (LIFTimeDrivenModel *) new LIFTimeDrivenModel(ident_type, neutype);
+		if (ident_type=="LIFTimeDrivenModel_1_4"){
+			neutypes[ni] = (LIFTimeDrivenModel_1_4 *) new LIFTimeDrivenModel_1_4(ident_type, neutype);
+		}else if (ident_type=="LIFTimeDrivenModel_1_2"){
+			neutypes[ni] = (LIFTimeDrivenModel_1_2 *) new LIFTimeDrivenModel_1_2(ident_type, neutype);
 		}else if (ident_type=="SRMTimeDrivenModel"){
 			neutypes[ni] = (SRMTimeDrivenModel *) new SRMTimeDrivenModel(ident_type, neutype);
 		} else if (ident_type=="TableBasedModel"){
    			neutypes[ni] = (TableBasedModel *) new TableBasedModel(ident_type, neutype);
 		} else if (ident_type=="SRMTableBasedModel"){
 			neutypes[ni] = (SRMTableBasedModel *) new SRMTableBasedModel(ident_type, neutype);
-		} else {
+		} else if (ident_type=="EgidioGranuleCell_TimeDriven"){
+			neutypes[ni] = (EgidioGranuleCell_TimeDriven *) new EgidioGranuleCell_TimeDriven(ident_type, neutype);
+		}else if (ident_type=="Vanderpol"){
+			neutypes[ni] = (Vanderpol *) new Vanderpol(ident_type, neutype);
+		}else {
 			throw EDLUTException(13,58,30,0);
 		}
    		type = neutypes[ni];
@@ -236,6 +275,12 @@ Network::~Network(){
 	if (timedrivenneurons!=0) {
 		delete [] timedrivenneurons;
 	}
+
+	if(ntimedrivenneurons!=0){
+		delete [] ntimedrivenneurons;
+	}
+
+
 
 	if (wchanges!=0) {
 		for (int i=0; i<this->nwchanges; ++i){
@@ -311,7 +356,6 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
             		this->neurons=(Neuron *) new Neuron [this->nneurons];
 
 					ntimedrivenneurons= new int [this->nneutypes]();
-					//int ** time_driven_index = (int **) new int *[this->nneurons];
 					int ** time_driven_index = (int **) new int *[this->nneutypes];
 					
 					for (int z=0; z<this->nneutypes; z++){
@@ -326,9 +370,8 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
                      		if(fscanf(fh,"%i",&nn)==1 && fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident_type)==1 && fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident)==1 && fscanf(fh,"%i",&outn)==1 && fscanf(fh,"%i",&monit)==1){
                      			if(tind+nn>this->nneurons){
                      				throw EDLUTFileException(4,7,6,1,Currentline);
-                     				break;
                      			}
-								int ni;                   
+								int ni;                    
                         		savedcurrentline=Currentline;
                         		type=LoadNetTypes(ident_type, ident, ni);
                         		Currentline=savedcurrentline;
@@ -349,7 +392,6 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
                         		}
                         	}else{
                         		throw EDLUTFileException(4,8,7,1,Currentline);
-                        		break;
                         	}
                      	}
 
@@ -405,7 +447,7 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         							this->wchanges[wcind] = new SinWeightChange();
         						} else if (string(ident_type)==string("STDP")){
         							this->wchanges[wcind] = new STDPWeightChange();
-        						} else if (string(ident_type)==string("STDPLS")){
+								} else if (string(ident_type)==string("STDPLS")){
         							this->wchanges[wcind] = new STDPLSWeightChange();
         						} else {
                            			throw EDLUTFileException(4,28,23,1,Currentline);
@@ -415,7 +457,6 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
 
                        		}else{
                        			throw EDLUTFileException(4,28,23,1,Currentline);
-                       			break;
                        		}
         				}
         			}else{
@@ -424,11 +465,13 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         		}else{
         			throw EDLUTFileException(4,26,21,1,Currentline);
         		}
-            	
-            	
+int * N_ConectionWithLearning;
+if(this->nwchanges>0){          	
+N_ConectionWithLearning=new int [this->nwchanges](); 
+}
         		skip_comments(fh,Currentline);
         		if(fscanf(fh,"%li",&(this->ninters))==1){
-        			int source,nsources,target,ntargets,nreps,wchange;
+        			int source,nsources,target,ntargets,nreps,wchange,wchange2;
         			float delay,delayinc,maxweight;
         			int type;
         			int iind,sind,tind,rind,posc;
@@ -438,17 +481,26 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         				for(iind=0;iind<this->ninters;iind+=nsources*ntargets*nreps){
         					skip_comments(fh,Currentline);
         					if(fscanf(fh,"%i",&source)==1 && fscanf(fh,"%i",&nsources)==1 && fscanf(fh,"%i",&target)==1 && fscanf(fh,"%i",&ntargets)==1 && fscanf(fh,"%i",&nreps)==1 && fscanf(fh,"%f",&delay)==1 && fscanf(fh,"%f",&delayinc)==1 && fscanf(fh,"%i",&type)==1 && fscanf(fh,"%f",&maxweight)==1 && fscanf(fh,"%i",&wchange)==1){
-        						if(iind+nsources*ntargets*nreps>this->ninters){
+								wchange2=-1;
+								if(wchange>=0){
+									if(is_end_line(fh,Currentline)==false){
+										if(fscanf(fh,"%i",&wchange2)==1){
+											if(wchange2>= this->nwchanges){
+  												throw EDLUTFileException(4,29,24,1,Currentline);
+											}
+										}else{
+											throw EDLUTFileException(4,12,11,1,Currentline);
+										}
+									}
+								}
+								if(iind+nsources*ntargets*nreps>this->ninters){
         							throw EDLUTFileException(4,10,9,1,Currentline);
-        							break;
         						}else{
         							if(source+nreps*nsources>this->nneurons || target+nreps*ntargets>this->nneurons){
   										throw EDLUTFileException(4,11,10,1,Currentline);
-  										break;
   									}else{
   										if(wchange >= this->nwchanges){
   											throw EDLUTFileException(4,29,24,1,Currentline);
-  											break;
   										}
         							}
         						}
@@ -466,22 +518,45 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         									//this->inters[posc].nextincon=&(this->inters[posc]);       // temporaly used as weight index
         									this->inters[posc].SetWeight(maxweight);   //TODO: Use max interconnection conductance
         									this->inters[posc].SetMaxWeight(maxweight);
-        									if(wchange >= 0){
-        										this->inters[posc].SetWeightChange(this->wchanges[wchange]);
-        										this->inters[posc].SetConnectionState(this->wchanges[wchange]->GetInitialState());
-        									} else {
-        										this->inters[posc].SetConnectionState(0);
-        									}
+
+											this->inters[posc].SetWeightChange_withPost(0);
+											this->inters[posc].SetWeightChange_withoutPost(0);
+											if(wchange >= 0){
+												//Set the new learning rule
+												if(wchanges[wchange]->ImplementPostSynaptic()==true){
+													this->inters[posc].SetWeightChange_withPost(this->wchanges[wchange]);
+												}else{
+													this->inters[posc].SetWeightChange_withoutPost(this->wchanges[wchange]);
+												}
+												N_ConectionWithLearning[wchange]++;
+											}
+
+											if(wchange2>= 0){
+												//Set the new learning rule
+												if(wchanges[wchange2]->ImplementPostSynaptic()==true){
+													this->inters[posc].SetWeightChange_withPost(this->wchanges[wchange2]);
+												}else{
+													this->inters[posc].SetWeightChange_withoutPost(this->wchanges[wchange2]);
+												}
+												N_ConectionWithLearning[wchange2]++;
+											}
                                 		}
         							}
         						}
         					}else{
         						throw EDLUTFileException(4,12,11,1,Currentline);
-        						break;
         					}
         				}
+for(int t=0; t<this->nwchanges; t++){
+	if(N_ConectionWithLearning[t]>0){
+		this->wchanges[t]->InitializeConnectionState(N_ConectionWithLearning[t]);
+	}
+}
+if(this->nwchanges>0){
+delete [] N_ConectionWithLearning;
+}
         				
-        				FindOutConnections();
+						FindOutConnections();
                     	SetWeightOrdination(); // must be before find_in_c() and after find_out_c()
                     	FindInConnections();
                     }else{
@@ -520,7 +595,6 @@ void Network::LoadWeights(const char *wfile) throw (EDLUTFileException){
 			if(fscanf(fh,"%i",&nweights)==1 && fscanf(fh,"%f",&weight)==1){
 				if(nweights < 0 || nweights + connind > this->ninters){
 					throw EDLUTFileException(11,32,26,1,Currentline);
-					break;
 				}
 				
 				if(nweights == 0){
@@ -533,7 +607,6 @@ void Network::LoadWeights(const char *wfile) throw (EDLUTFileException){
 				}
 			}else{
 				throw EDLUTFileException(11,31,25,1,Currentline);
-				break;
 			}
 		}
 		fclose(fh);
@@ -568,7 +641,6 @@ void Network::SaveWeights(const char *wfile) throw (EDLUTException){
 				if(nantw > 0){
 					if(fprintf(fh,"%i %g\n",nantw,antweight) <= 0){
 						throw EDLUTException(12,33,4,0);
-						break;
 					}
 				}
 				

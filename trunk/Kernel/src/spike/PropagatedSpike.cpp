@@ -26,6 +26,7 @@
 
 #include "../../include/learning_rules/LearningRule.h"
 
+
 PropagatedSpike::PropagatedSpike():Spike() {
 }
    	
@@ -44,57 +45,69 @@ void PropagatedSpike::SetTarget (int NewTarget){
 }
 
    	
+
 //Optimized function. This function propagates all neuron output spikes that have the same delay.
-void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
-	double CurrentTime = this->GetTime();
+void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
 
-	Neuron * source = this->source;
-	Neuron * target;
-	InternalSpike * Generated;
-	LearningRule * ConnectionRule;
+	if(!RealTimeRestriction){
+		double CurrentTime = this->GetTime();
 
-	int TargetNum = this->GetTarget();
-	Interconnection * inter = this->source->GetOutputConnectionAt(TargetNum);
+		Neuron * source = this->source;
+		Neuron * target;
+		InternalSpike * Generated;
+		LearningRule * ConnectionRule;
 
-	//Reference delay
-	double delay=inter->GetDelay();
+		int TargetNum = this->GetTarget();
+		Interconnection * inter = this->source->GetOutputConnectionAt(TargetNum);
 
-	while(1){	
-	
-		target = inter->GetTarget();  // target of the spike
 
-		Generated = target->GetNeuronModel()->ProcessInputSpike(this);
+		//Reference delay
+		double delay=inter->GetDelay();
 
-		if (Generated!=0){
-			CurrentSimulation->GetQueue()->InsertEvent(Generated);
-		}
+		while(1){	
+			target = inter->GetTarget();  // target of the spike
 
-		if (target->IsMonitored()){
-			CurrentSimulation->WriteState(CurrentTime, target);
-		}
-	
-		ConnectionRule = inter->GetWeightChange();
+			Generated = target->GetNeuronModel()->ProcessInputSpike(inter, target, CurrentTime);
 
-		// If learning, change weights
-		if(ConnectionRule != 0){
-			ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
-		}
 
-		// If there are more output connection
-		if(source->GetOutputNumber() > TargetNum+1){
-			inter = source->GetOutputConnectionAt(TargetNum+1);
-			// If delays are different
-			if(inter->GetDelay()!=delay){
-				double NextSpikeTime = CurrentTime - delay + inter->GetDelay();
-				PropagatedSpike * nextspike = new PropagatedSpike(NextSpikeTime,source,TargetNum+1);
-				CurrentSimulation->GetQueue()->InsertEvent(nextspike);
+			if (Generated!=0){
+				CurrentSimulation->GetQueue()->InsertEvent(Generated);
+			}
+
+			if (target->IsMonitored()){
+				CurrentSimulation->WriteState(CurrentTime, target);
+			}
+
+			ConnectionRule = inter->GetWeightChange_withoutPost();
+			// If learning, change weights
+			if(ConnectionRule != 0){
+				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
+			}
+			ConnectionRule = inter->GetWeightChange_withPost();
+			// If learning, change weights
+			if(ConnectionRule != 0){
+				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
+			}
+
+
+			// If there are more output connection
+			if(source->GetOutputNumber() > TargetNum+1){
+				inter = source->GetOutputConnectionAt(TargetNum+1);
+				// If delays are different
+				if(inter->GetDelay()!=delay){
+					double NextSpikeTime = CurrentTime - delay + inter->GetDelay();
+					PropagatedSpike * nextspike = new PropagatedSpike(NextSpikeTime,source,TargetNum+1);
+					CurrentSimulation->GetQueue()->InsertEvent(nextspike);
+					break;
+				}
+			}else{
 				break;
 			}
-		}else{
-			break;
+			// Selecting next output connection
+			SetTarget(TargetNum+1);
+			TargetNum++;
 		}
-		// Selecting next output connection
-		SetTarget(TargetNum+1);
-		TargetNum++;
 	}
 }
+
+

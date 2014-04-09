@@ -18,7 +18,7 @@
 #ifndef STDPWEIGHTCHANGE_H_
 #define STDPWEIGHTCHANGE_H_
 
-#include "./LearningRule.h"
+#include "./WithPostSynaptic.h"
 
 /*!
  * \file STDPWeightChange.h
@@ -41,7 +41,7 @@ class Interconnection;
  * \author Jesus Garrido
  * \date March 2010
  */
-class STDPWeightChange: public LearningRule {
+class STDPWeightChange: public WithPostSynaptic {
 	protected:
 		/*!
 		 * \brief Decay parameter LTD
@@ -64,14 +64,8 @@ class STDPWeightChange: public LearningRule {
 		float MaxChangeLTP;
 
 	public:
-		/*!
-		 * \brief It gets the initial state associated to the learning rule.
-		 *
-		 * It gets the initial state associated to the learning rule.
-		 *
-		 * \return The initial state that the learning rule needs.
-		 */
-		virtual ConnectionState * GetInitialState();
+
+		virtual void InitializeConnectionState(unsigned int NumberOfSynapses);
 
 		/*!
 		 * \brief It gets the maximum value of the weight change for LTD.
@@ -152,6 +146,8 @@ class STDPWeightChange: public LearningRule {
 		 * \return The stream after the printer.
 		 */
 		virtual ostream & PrintInfo(ostream & out);
+
+
 };
 
 #endif /* STDPWEIGHTCHANGE_H_ */

@@ -18,43 +18,76 @@
 #include "../../include/cudaError.h"
 
 #include <iostream>
+//Library for CUDA
+#include <helper_cuda.h>
+
 using namespace std;
 
-		//Library for CUDA
-		#include <cutil_inline.h>
-
-
-	VectorNeuronState_GPU::VectorNeuronState_GPU(unsigned int NumVariables):VectorNeuronState(NumVariables, true){
+	VectorNeuronState_GPU::VectorNeuronState_GPU(unsigned int NumVariables):VectorNeuronState(NumVariables, true, true){
 	};
 
 	VectorNeuronState_GPU::~VectorNeuronState_GPU(){
-		//HANDLE_ERROR(cudaFree(AuxStateGPU));
 		HANDLE_ERROR(cudaFree(VectorNeuronStates_GPU));
 		HANDLE_ERROR(cudaFree(LastUpdateGPU));
 		HANDLE_ERROR(cudaFree(LastSpikeTimeGPU));
-		//HANDLE_ERROR(cudaFree(InternalSpikeGPU));
+
 		HANDLE_ERROR(cudaFreeHost(AuxStateCPU));
 		HANDLE_ERROR(cudaFreeHost(InternalSpikeCPU));
+
+		//Memory for GPU
+		cudaDeviceProp prop;
+		HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));	
+		
+		//GPU can use MapHostMemory
+		if(!prop.canMapHostMemory){
+			HANDLE_ERROR(cudaFree(AuxStateGPU));
+			HANDLE_ERROR(cudaFree(InternalSpikeGPU));
+		}
 	}
 
 
-void VectorNeuronState_GPU::InitializeStatesGPU(int size, float * initialization){
+void VectorNeuronState_GPU::InitializeStatesGPU(int N_Neurons, float * initialization, int N_AuxNeuronStates){
 
 	//Initilize State in CPU
-	InitializeStates(size, initialization);
+	SetSizeState(N_Neurons);
+	
+	VectorNeuronStates = new float[GetNumberOfVariables()*GetSizeState()]();
+	LastUpdate=new double[GetSizeState()]();
+	LastSpikeTime=new double[GetSizeState()]();
+	
+	if(!TimeDriven){
+		PredictedSpike=new double[GetSizeState()]();
+		PredictionEnd=new double[GetSizeState()]();
+	}else{
+		InternalSpike=new bool[GetSizeState()]();
+	}
+	
+	//For the GPU, we store all the variables of the same type in adjacent memory positions
+	//to perform coalescent access to data.
+	for(int z=0; z<GetNumberOfVariables(); z++){
+		for (int j=0; j<GetSizeState(); j++){ 
+			VectorNeuronStates[z*GetSizeState() + j]=initialization[z];
+		}
+	}
+
+	for(int z=0; z<GetSizeState(); z++){
+		LastSpikeTime[z]=100.0;
+	}
 	
 
 	
 	//Memory in CPU uses as buffer.
 	//cudaHostAlloc allocate CPU memory with specific properties.
-	HANDLE_ERROR(cudaHostAlloc((void**)&AuxStateCPU, 2*GetSizeState()*sizeof(float),cudaHostAllocMapped));
+	HANDLE_ERROR(cudaHostAlloc((void**)&AuxStateCPU, N_AuxNeuronStates*GetSizeState()*sizeof(float),cudaHostAllocMapped));
+	memset(AuxStateCPU,0,N_AuxNeuronStates*GetSizeState()*sizeof(float));
 	HANDLE_ERROR(cudaHostAlloc((void**)&InternalSpikeCPU, GetSizeState()*sizeof(bool),cudaHostAllocMapped));
-	
+
+
+	//Memory for GPU
 	cudaDeviceProp prop;
 	HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));	
 	
-	//Memory for GPU
-
+	
 	//GPU can use MapHostMemory
 	if(prop.canMapHostMemory){
 		HANDLE_ERROR ( cudaHostGetDevicePointer( (void**)&AuxStateGPU,AuxStateCPU, 0 ) );
@@ -62,7 +95,7 @@ void VectorNeuronState_GPU::InitializeStatesGPU(int size, float * initialization
 	}
 	//GPU can not use MapHostMemory.
 	else{
-		HANDLE_ERROR(cudaMalloc((void**)&AuxStateGPU, 2*GetSizeState()*sizeof(float)));
+		HANDLE_ERROR(cudaMalloc((void**)&AuxStateGPU, N_AuxNeuronStates*GetSizeState()*sizeof(float)));
 		HANDLE_ERROR(cudaMalloc((void**)&InternalSpikeGPU, GetSizeState()*sizeof(bool)));
 	}
 	HANDLE_ERROR(cudaMalloc((void**)&VectorNeuronStates_GPU, GetNumberOfVariables()*GetSizeState()*sizeof(float)));

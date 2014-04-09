@@ -92,14 +92,24 @@ class Neuron : public PrintableObject {
 		unsigned int OutputConNumber;
    		
    		/*!
-   		 * Input connections with asssociated learning.
+   		 * Input connections with asssociated postsynaptic learning.
    		 */
-   		Interconnection** InputLearningConnections;
+   		Interconnection** InputLearningConnectionsWithPostSynapticLearning;
+
+		/*!
+   		 * Input connections without asssociated postsynaptic learning.
+   		 */
+   		Interconnection** InputLearningConnectionsWithoutPostSynapticLearning;
    		
 		/*!
-		 * Input Connection number.
+		 * Input Connection number with presynpatic learning.
 		 */
-		unsigned int InputConLearningNumber;
+		unsigned int InputConLearningNumberWithPostSynaptic;
+
+		/*!
+		 * Input Connection number without presynpatic learning.
+		 */
+		unsigned int InputConLearningNumberWithoutPostSynaptic;
 
    		/*!
    		 * It tells if neuron activity will be registered.
@@ -175,7 +185,10 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The current neuron state.
    		 */
-   		VectorNeuronState * GetVectorNeuronState() const;
+   		//VectorNeuronState * GetVectorNeuronState() const;
+		inline VectorNeuronState * GetVectorNeuronState() const{
+			return state;
+		}
    		
    		/*!
    		 * \brief It gets the number of inputs to the current neuron which have associated learning.
@@ -184,7 +197,16 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The number of input connections to the current neuron with plasticity.
    		 */
-   		unsigned int GetInputNumberWithLearning() const;
+   		unsigned int GetInputNumberWithPostSynapticLearning() const;
+
+		/*!
+   		 * \brief It gets the number of inputs to the current neuron which have associated learning.
+   		 * 
+   		 * It returns the number of input connections to the current neuron which have associated learning.
+   		 * 
+   		 * \return The number of input connections to the current neuron with plasticity.
+   		 */
+   		unsigned int GetInputNumberWithoutPostSynapticLearning() const;
    		
    		/*!
    		 * \brief It gets the number of output from the current neuron.
@@ -193,7 +215,10 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The number of output connections from the current neuron.
    		 */
-   		unsigned int GetOutputNumber() const;
+   		//unsigned int GetOutputNumber() const;
+		inline unsigned int GetOutputNumber() const{
+			return this->OutputConNumber;
+		}
    		
    		/*!
    		 * \brief It gets the input connection at an specified index.
@@ -203,7 +228,17 @@ class Neuron : public PrintableObject {
    		 * \param index The index of the input connection what we want to get.
    		 * \return The input connection of index index.
    		 */
-   		Interconnection * GetInputConnectionWithLearningAt(unsigned int index) const;
+   		Interconnection * GetInputConnectionWithPostSynapticLearningAt(unsigned int index) const;
+
+		/*!
+   		 * \brief It gets the input connection at an specified index.
+   		 * 
+   		 * It returns the input connection at index index.
+   		 * 
+   		 * \param index The index of the input connection what we want to get.
+   		 * \return The input connection of index index.
+   		 */
+   		Interconnection * GetInputConnectionWithoutPostSynapticLearningAt(unsigned int index) const;
    		
    		/*!
    		 * \brief It sets the input connections which have associated learning.
@@ -213,16 +248,18 @@ class Neuron : public PrintableObject {
    		 * \param Connection The input connections to set. The memory will be released within the class destructor.
 		 * \param NumberOfConnections The number of input connections in the first parameter.
    		 */
-   		void SetInputConnectionsWithLearning(Interconnection ** Connections, unsigned int NumberOfConnections);
-   		
-   		/*!
-   		 * \brief It checks if the neuron has some input connection.
+   		void SetInputConnectionsWithPostSynapticLearning(Interconnection ** Connections, unsigned int NumberOfConnections);
+
+		/*!
+   		 * \brief It sets the input connections which have associated learning.
    		 * 
-   		 * It checks if the number of input connections is greater than 0.
+   		 * It sets the input connections which have associated learning.
    		 * 
-   		 * \return True if the neuron has some input connection. False in other case.
+   		 * \param Connection The input connections to set. The memory will be released within the class destructor.
+		 * \param NumberOfConnections The number of input connections in the first parameter.
    		 */
-   		bool IsInputConnected() const;
+   		void SetInputConnectionsWithoutPostSynapticLearning(Interconnection ** Connections, unsigned int NumberOfConnections);
+   		
    		
    		/*!
    		 * \brief It gets the output connection at an specified index.
@@ -232,7 +269,10 @@ class Neuron : public PrintableObject {
    		 * \param index The index of the output connection what we want to get.
    		 * \return The output connection of index index.
    		 */
-   		Interconnection * GetOutputConnectionAt(unsigned int index) const;
+   		//Interconnection * GetOutputConnectionAt(unsigned int index) const;
+		inline Interconnection * GetOutputConnectionAt(unsigned int index) const{
+			return *(this->OutputConnections+index);
+		}
    		
    		/*!
    		 * \brief It sets the output connections from this neuron.
@@ -260,7 +300,10 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return True if the neuron is monitored. False in other case.
    		 */
-		bool IsMonitored() const;
+		//bool IsMonitored() const;
+		inline bool IsMonitored() const{
+			return this->monitored;	
+		}
 		
 		/*!
    		 * \brief It checks if the neuron is output.
@@ -278,7 +321,10 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The neuron type of the current object.
    		 */
-		NeuronModel * GetNeuronModel() const;
+		//NeuronModel * GetNeuronModel() const;
+		inline NeuronModel * GetNeuronModel() const{
+			return type;
+		}
 
 		/*!
 		 * \brief It prints the neuron info.
@@ -325,7 +371,10 @@ class Neuron : public PrintableObject {
 		 * 
 		 * \return The neuron index.
 		 */
-		long int GetIndex_VectorNeuronState();
+		//long GetIndex_VectorNeuronState();
+		inline long GetIndex_VectorNeuronState(){
+			return index_VectorNeuronState;
+		}
 
 
 };

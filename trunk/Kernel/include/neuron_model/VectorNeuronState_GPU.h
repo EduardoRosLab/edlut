@@ -112,10 +112,12 @@ class VectorNeuronState_GPU: public VectorNeuronState {
 		 * It initialice all vectors with size size and copy initialization inside VectorNeuronStates
 		 * for each cell.
 		 *
-		 * \param size cell number inside the VectorNeuronState.
+		 * \param N_Neurons number of neuron in the model.
 		 * \param initialization initial state for each cell.
+		 * \param N_AuxNeuronStates number of AuxNeuronState for each neuron (number of parameters which have 
+		 * to be transferred between CPU and GPU for each neuron).
 		 */
-		void InitializeStatesGPU(int size, float * initialization);
+		void InitializeStatesGPU(int N_Neurons, float * initialization, int N_AuxNeuronStates);
 
 		/*!
 		 * \brief It gets the InternalSpike vector.

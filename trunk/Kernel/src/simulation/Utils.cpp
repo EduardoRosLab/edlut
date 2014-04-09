@@ -37,3 +37,20 @@ void skip_comments(FILE *fh, long & Currentline){
    	if(ch != EOF)
    		ungetc(ch, fh);
 }
+
+bool is_end_line(FILE *fh, long & Currentline){
+	int ch;
+	bool is_end;
+	while((ch=fgetc(fh)) == ' '){} // take all spaces
+
+	//ch=fgetc(fh);
+	if(ch=='\n' || ch==EOF || ch==COMMENT_CHAR){
+		is_end=true;
+	}else{
+		is_end=false;
+	}
+	ungetc(ch, fh);
+	
+	return is_end;
+	
+}
