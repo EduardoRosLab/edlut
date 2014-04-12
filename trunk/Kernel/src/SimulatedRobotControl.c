@@ -212,7 +212,7 @@ int main(int ac, char *av[])
 #elif defined(REAL_TIME_LINUX)
                      clock_gettime(CLOCK_REALTIME, &endt);
                      // Calculate time it took
-                     slot_elapsed_time = (endt.tv_sec-startt.tv_sec ) + (endt.tv_nsec-endt.tv_nsec )/float(1e9);
+                     slot_elapsed_time = (endt.tv_sec-startt.tv_sec ) + (endt.tv_nsec-endt.tv_nsec )/((float)(1e9));
 #elif defined(REAL_TIME_OSX)
                      // Stop the clock.
                      endt = mach_absolute_time();
@@ -237,7 +237,7 @@ int main(int ac, char *av[])
 #if defined(REAL_TIME_WINNT)
                printf("Total elapsed time: %fs (time resolution: %fus)\n",sim_elapsed_time,1.0e6/freq.QuadPart);
 #elif defined(REAL_TIME_LINUX)
-               printf("Total elapsed time: %fs (time resolution: %fus)\n",sim_elapsed_time,freq.tv_sec*1.0e6+freq.tv_nsec/float(1e3));
+               printf("Total elapsed time: %fs (time resolution: %fus)\n",sim_elapsed_time,freq.tv_sec*1.0e6+freq.tv_nsec/((float)(1e3)));
 #elif defined(REAL_TIME_OSX)
                printf("Total elapsed time: %fs (time resolution: %fus)\n",sim_elapsed_time,1e-3*freq.numer/freq.denom);
 #endif
