@@ -72,14 +72,15 @@ endif
 ifeq ($(generate_robot),true)
   ifeq ($(OS_SYSTEM),OSX)
     # MAC OS X 64 bits architecture 
-    LDFLAGS	+= -L$(matlabrootdir)/bin/maci64
+    LDFLAGS	+= -L$(matlabrootdir)/bin/maci64 -Wl,-rpath,$(matlabrootdir)/bin/maci64
+
   else
   	ifeq ($(OS_SYSTEM),LINUX)
   	  # LINUX 64 bits architecture 
-  	  LDFLAGS	+= -L$(matlabrootdir)/bin/glnxa64 -lrt
+  	  LDFLAGS	+= -L$(matlabrootdir)/bin/glnxa64 -lrt -Wl,-rpath,$(matlabrootdir)/bin/glnxa64
   	else
   	  # WINNT 32 and 64 bits architecture
-  	  LDFLAGS += -L$(matlabrootdir)/bin/win$(ARCH)
+  	  LDFLAGS += -L$(matlabrootdir)/bin/win$(ARCH) -Wl,-rpath,$(matlabrootdir)/bin/win$(ARCH)
   	endif
   endif
   LDFLAGS	+= -lmat -lmx -lmex
