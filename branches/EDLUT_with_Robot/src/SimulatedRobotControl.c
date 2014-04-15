@@ -71,7 +71,7 @@
 
 #define TRAJ_POS_AMP 0.1 // Amplitude of the desired robot's trajectory
 #define TRAJECTORY_TIME 1 // Simulation time in seconds required to execute the desired trajectory once
-#define MAX_TRAJ_EXECUTIONS 2 // Maximum number of trajectories repetitions that will be executed by the robot
+#define MAX_TRAJ_EXECUTIONS 100 // Maximum number of trajectories repetitions that will be executed by the robot
 #define ERROR_DELAY_TIME 0.1 // Delay after calculating the error vars
 
 const double ROBOT_GRAVITY[3]={0, 0, 9.81}; // Earth's standard acceleration due to gravity [Gx Gy Gz]
@@ -212,7 +212,7 @@ int main(int ac, char *av[])
 #elif defined(REAL_TIME_LINUX)
                      clock_gettime(CLOCK_REALTIME, &endt);
                      // Calculate time it took
-                     slot_elapsed_time = (endt.tv_sec-startt.tv_sec ) + (endt.tv_nsec-endt.tv_nsec )/((float)(1e9));
+                     slot_elapsed_time = (endt.tv_sec-startt.tv_sec ) + (endt.tv_nsec-startt.tv_nsec )/1.e9;
 #elif defined(REAL_TIME_OSX)
                      // Stop the clock.
                      endt = mach_absolute_time();
