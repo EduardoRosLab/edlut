@@ -44,6 +44,10 @@ class Interconnection;
 class STDPLSWeightChange: public STDPWeightChange {
 	public:
 
+		STDPLSWeightChange();
+
+		virtual ~STDPLSWeightChange();
+
 
 		void InitializeConnectionState(unsigned int NumberOfSynapses);
 

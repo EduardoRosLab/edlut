@@ -21,8 +21,12 @@
 
 #include "../../include/spike/Interconnection.h"
 
-ExpWeightChange::ExpWeightChange(){
+ExpWeightChange::ExpWeightChange():AdditiveKernelChange(){
 }
+
+ExpWeightChange::~ExpWeightChange(){
+}
+
 
 void ExpWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
 	this->State=(ConnectionState *) new ExpState(NumberOfSynapses, this->maxpos);

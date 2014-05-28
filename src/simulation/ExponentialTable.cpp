@@ -20,36 +20,13 @@
 #include "../../include/simulation/ExponentialTable.h"
 
 
+const float ExponentialTable::Min=-20.0f;
 
+const float ExponentialTable::Max=0.0f;
 
-ExponentialTable::ExponentialTable(float minimum, float maximum, int size): Min(minimum), Max(maximum), TableSize(size){
-	LookUpTable=new float[TableSize];
-	for(int i=0; i<TableSize; i++){
-		float exponent = Min + ((Max-Min)*i)/(TableSize-1);
-		LookUpTable[i]=exp(exponent);		
-	}
-aux=1.0f/(Max-Min);
-}
-   		
-ExponentialTable::~ExponentialTable(){
-	delete LookUpTable;
-}
-   	
-float ExponentialTable::GetResult(float value){
-	if(value>=Min && value<=Max){
-		//int position=((value-Min)/(Max-Min))*(TableSize-1);
-		int position=((value-Min)*aux)*(TableSize-1);
-		return LookUpTable[position];
-	}else{
-		if(value<(-20)){
-			return 0.0f;
-		}else{
-			return exp(value);
-		}
-	}
-}
-
-
+const float ExponentialTable::aux=(ExponentialTable::TableSize-1)/( ExponentialTable::Max- ExponentialTable::Min);
    		
 
 
+
+float * ExponentialTable::LookUpTable = generate_data();

@@ -37,41 +37,33 @@ class ExponentialTable{
    		/*!
    		 * Minimun value of the exponent.
    		 */
-		float Min;
+		static const float Min;
 
 		/*!
    		 * Maximun value of the exponent.
    		 */
-		float Max;
+		static const float Max;
 
 		/*!
    		 * Number of look-up table elements.
    		 */
-		int TableSize;
+		static const int TableSize=1024*1024*4;
 
 		/*!
    		 * Look-up table.
    		 */
-		float * LookUpTable;
+		static float * LookUpTable;
 
-		float aux;
+		static const float aux;
 
-   		/*!
-   		 * \brief Default constructor.
-   		 * 
-   		 * It creates and initializes the look-up table.
-   		 */
-   		ExponentialTable(float minimun, float maximun, int size);
-   	
-		
-   		/*!
-   		 * \brief Class destructor.
-   		 * 
-   		 * It destroies an object of this class.
-   		 */
-   		~ExponentialTable();
-
-
+		static float * generate_data(){
+			float * NewLookUpTable=new float[TableSize];
+			for(int i=0; i<TableSize; i++){
+				float exponent = Min + ((Max-Min)*i)/(TableSize-1);
+				NewLookUpTable[i]=exp(exponent);		
+			}
+			return NewLookUpTable;
+		}
    	
    		/*!
    		 * \brief It gets the result for the value.
@@ -80,12 +72,24 @@ class ExponentialTable{
    		 * 
    		 * \return the result for the value.
    		 */
-   		float GetResult(float value);
-
-
-   		
+		static float GetResult(float value){
+			if(value>=Min && value<=Max){
+				int position=(value-Min)*aux;
+				return LookUpTable[position];
+			}else{
+				if(value<(Min)){
+					return 0.0f;
+				}else{
+					return exp(value);
+				}
+			}
+		} 		
 
    	
 };
+
+
+
+
 
 #endif /*EXPONENTIALTABLE_H_*/

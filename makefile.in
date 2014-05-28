@@ -176,9 +176,13 @@ interface-sources	:= $(srcdir)/interface/C_Interface.cpp \
 learning_rules-sources	:= 	$(srcdir)/learning_rules/ActivityRegister.cpp \
 			$(srcdir)/learning_rules/AdditiveKernelChange.cpp \
 			$(srcdir)/learning_rules/ConnectionState.cpp \
+			$(srcdir)/learning_rules/CosState.cpp \
+			$(srcdir)/learning_rules/CosWeightChange.cpp \
 			$(srcdir)/learning_rules/ExpState.cpp \
 			$(srcdir)/learning_rules/ExpWeightChange.cpp \
 			$(srcdir)/learning_rules/LearningRule.cpp \
+			$(srcdir)/learning_rules/SimetricCosState.cpp \
+			$(srcdir)/learning_rules/SimetricCosWeightChange.cpp \
 			$(srcdir)/learning_rules/SinState.cpp \
 			$(srcdir)/learning_rules/SinWeightChange.cpp \
 			$(srcdir)/learning_rules/STDPLSState.cpp \

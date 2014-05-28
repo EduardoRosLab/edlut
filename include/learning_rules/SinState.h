@@ -19,6 +19,10 @@
 
 #include "ConnectionState.h"
 
+#include <cmath>
+
+#define TERMSLUT 1024 // +5000 terms in the LUT produces an error
+
 /*!
  * \file SinState.h
  *
@@ -50,15 +54,11 @@ class SinState : public ConnectionState{
 		 */
 		const static float terms [11][11];
 
-		/*!
-		 * Is the LUT initialized?
-		 */
-		static bool InitializedLUT;
 
 		/*!
 		 * Precalculated sin terms.
 		 */
-		static float SinLUT[];
+		static float * SinLUT;
 
 		/*!
 		 * Precalculated LUT Step.
@@ -170,6 +170,18 @@ class SinState : public ConnectionState{
 		 * by any inherited class.
 		 */
 		virtual void ApplyPostsynapticSpike(unsigned int index);
+
+		
+		static float * GenerateSinLUT(){
+			float * NewSinLUT=new float[2*TERMSLUT];
+
+			for (unsigned int i=0; i<TERMSLUT; ++i){
+				NewSinLUT[2*i] = sinf(LUTStep*i);
+				NewSinLUT[2*i+1] = cosf(LUTStep*i);
+			}
+
+			return NewSinLUT;
+		}
 
 };
 

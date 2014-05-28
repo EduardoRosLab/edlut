@@ -25,6 +25,8 @@
 
 #include "../../include/simulation/EventQueue.h"
 
+#include "../../include/learning_rules/WithoutPostSynaptic.h"
+
 #include <string>
 
 using namespace std;
@@ -79,6 +81,8 @@ void Neuron::InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel *
 	this->spikeCounter = 0; // For LSAM
 
 	this->isOutput = IsOutput;
+
+	this->TriggerConnection=0;
 }
 
 long int Neuron::GetIndex() const{
@@ -128,6 +132,15 @@ void Neuron::SetInputConnectionsWithoutPostSynapticLearning(Interconnection ** C
 	this->InputLearningConnectionsWithoutPostSynapticLearning = Connections;
 
 	this->InputConLearningNumberWithoutPostSynaptic = NumberOfConnections;
+
+	//We search the trigger connection.
+	for(int i=0; i<NumberOfConnections; i++){
+		WithoutPostSynaptic * wchani=(WithoutPostSynaptic *)Connections[i]->GetWeightChange_withoutPost();
+		if(wchani->trigger==1){
+			TriggerConnection=Connections[i];
+			break;
+		}
+	}
 }
 
 

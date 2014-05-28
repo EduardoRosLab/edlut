@@ -42,6 +42,8 @@ class WithoutPostSynaptic : public LearningRule {
 
 	public:
 
+		int trigger;
+
 		/*!
 		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *

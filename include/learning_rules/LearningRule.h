@@ -30,8 +30,9 @@
  * This file declares a class which abstracts a learning rule.
  */
 
+#include "../../include/learning_rules/ConnectionState.h"
 class Interconnection;
-class ConnectionState;
+
 
 /*!
  * \class LearningRule

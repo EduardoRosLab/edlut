@@ -18,7 +18,7 @@
 
 #include "../../include/simulation/ExponentialTable.h"
 
-//#include "../../include/parallel_function.h"
+#include "../../include/parallel_function.h"
 
 #include <cmath>
 #include <stdio.h>
@@ -77,9 +77,9 @@ void STDPState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_po
 	float ElapsedTime=(float)(NewTime - this->GetLastUpdateTime(index));
 
     //Accumulate activity since the last update time
-	this->multiplyStateVaraibleAt(index,0,exponential->GetResult(-ElapsedTime*this->inv_LTPTau));
+	this->multiplyStateVaraibleAt(index,0,ExponentialTable::GetResult(-ElapsedTime*this->inv_LTPTau));
     //Accumulate activity since the last update time
-	this->multiplyStateVaraibleAt(index,1,exponential->GetResult(-ElapsedTime*this->inv_LTDTau));
+	this->multiplyStateVaraibleAt(index,1,ExponentialTable::GetResult(-ElapsedTime*this->inv_LTDTau));
 
 	this->SetLastUpdateTime(index, NewTime);
 }

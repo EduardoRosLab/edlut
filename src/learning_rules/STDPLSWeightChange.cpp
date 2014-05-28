@@ -25,6 +25,12 @@
 #include "../../include/neuron_model/NeuronState.h"
 
 
+STDPLSWeightChange::STDPLSWeightChange():STDPWeightChange(){
+}
+
+STDPLSWeightChange::~STDPLSWeightChange(){
+}
+
 
 void STDPLSWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
 	this->State=(ConnectionState *) new STDPLSState(NumberOfSynapses, this->tauLTP, this->tauLTD);

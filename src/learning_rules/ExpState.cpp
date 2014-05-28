@@ -73,7 +73,7 @@ float ExpState::GetPostsynapticActivity(unsigned int index){
 void ExpState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
 	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
 	float factor = ElapsedTime*this->inv_tau;
-	float expon = exponential->GetResult(-factor);
+	float expon = ExponentialTable::GetResult(-factor);
 	
 	// Update the activity value
 	float OldExpon = this->GetStateVariableAt(index, 0);
