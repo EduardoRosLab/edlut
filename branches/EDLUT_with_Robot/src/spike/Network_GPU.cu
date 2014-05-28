@@ -28,6 +28,8 @@
 
 #include "../../include/learning_rules/ExpWeightChange.h"
 #include "../../include/learning_rules/SinWeightChange.h"
+#include "../../include/learning_rules/CosWeightChange.h"
+#include "../../include/learning_rules/SimetricCosWeightChange.h"
 #include "../../include/learning_rules/STDPWeightChange.h"
 #include "../../include/learning_rules/STDPLSWeightChange.h"
 
@@ -523,6 +525,10 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         							this->wchanges[wcind] = new ExpWeightChange();
         						} else if (string(ident_type)==string("SinAdditiveKernel")){
         							this->wchanges[wcind] = new SinWeightChange();
+        						} else if (string(ident_type)==string("CosAdditiveKernel")){
+									this->wchanges[wcind] = new CosWeightChange();
+        						} else if (string(ident_type)==string("SimetricCosAdditiveKernel")){
+									this->wchanges[wcind] = new SimetricCosWeightChange();
         						} else if (string(ident_type)==string("STDP")){
         							this->wchanges[wcind] = new STDPWeightChange();
         						} else if (string(ident_type)==string("STDPLS")){

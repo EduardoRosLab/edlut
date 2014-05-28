@@ -125,6 +125,11 @@ class Neuron : public PrintableObject {
    		 * It tells if neuron is output neuron
    		 */
    		bool isOutput;
+
+   		/*!
+   		 * It tells the trigger connection for ExpAdditiveKernel, SinAdditiveKernel, CosAdditiveKernel and SimetricCosAdditiveKernel learning rules.
+   		 */
+		Interconnection * TriggerConnection;
    		
    	public:
    		/*!
@@ -376,6 +381,16 @@ class Neuron : public PrintableObject {
 			return index_VectorNeuronState;
 		}
 
+		/*!
+		 * \brief It return the trigger connection of this neuron.
+		 * 
+		 * It return the trigger connection of this neuron
+		 * 
+		 * \return The trigger connection.
+		 */
+		inline Interconnection * GetTriggerConnection() const{
+			return this->TriggerConnection;
+		}
 
 };
   

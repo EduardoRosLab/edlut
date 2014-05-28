@@ -27,7 +27,7 @@
  * This file declares a class which abstracts an additive learning rule.
  */
 
-#include "./WithoutPostSynaptic.h"
+#include "../../include/learning_rules/WithoutPostSynaptic.h"
 
 /*!
  * \class AdditiveKernelChange
@@ -53,11 +53,6 @@ class AdditiveKernelChange : public WithoutPostSynaptic {
 		int numexps;
 
 		/*!
-		 * This weight change is a trigger.
-		 */
-		int trigger;
-
-		/*!
 		 * Learning rule parameter 1.
 		 */
 		float a1pre;
@@ -68,6 +63,12 @@ class AdditiveKernelChange : public WithoutPostSynaptic {
 		float a2prepre;
 
 	public:
+
+		AdditiveKernelChange();
+
+
+		virtual ~AdditiveKernelChange();
+
 
 		/*!
 		 * \brief It initialize the state associated to the learning rule for all the synapses.

@@ -50,6 +50,8 @@ class ExpWeightChange: public AdditiveKernelChange{
 		 */
 		ExpWeightChange();
 
+		virtual ~ExpWeightChange();
+
 		/*!
 		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *

@@ -65,6 +65,11 @@ class STDPWeightChange: public WithPostSynaptic {
 
 	public:
 
+		STDPWeightChange();
+
+		virtual ~STDPWeightChange();
+
+
 		virtual void InitializeConnectionState(unsigned int NumberOfSynapses);
 
 		/*!

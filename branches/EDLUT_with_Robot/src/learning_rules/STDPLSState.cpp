@@ -59,13 +59,15 @@ void STDPLSState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_
 	float ElapsedTime=(float)(NewTime - this->GetLastUpdateTime(index));
 	if(pre_post){
 		//Accumulate activity since the last update time
-		this->multiplyStateVaraibleAt(index,0,exponential->GetResult(-ElapsedTime*this->inv_LTPTau));
+		this->multiplyStateVaraibleAt(index,0,ExponentialTable::GetResult(-ElapsedTime*this->inv_LTPTau));
 	}else{
 		//Accumulate activity since the last update time
-		this->multiplyStateVaraibleAt(index,1,exponential->GetResult(-ElapsedTime*this->inv_LTDTau));
+		this->multiplyStateVaraibleAt(index,1,ExponentialTable::GetResult(-ElapsedTime*this->inv_LTDTau));
 	}
 	this->SetLastUpdateTime(index, NewTime);
 }
+
+
 
 void STDPLSState::ApplyPresynapticSpike(unsigned int index){
 	// Store the activity in the state variable

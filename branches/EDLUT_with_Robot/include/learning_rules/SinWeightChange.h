@@ -60,6 +60,8 @@ class SinWeightChange: public AdditiveKernelChange{
 		 */
 		SinWeightChange();
 
+		virtual ~SinWeightChange();
+
 		/*!
 		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *
