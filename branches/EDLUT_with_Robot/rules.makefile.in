@@ -4,8 +4,7 @@
 
 CC			:= $(ccompiler)
 CXX			:= $(compiler)
-mex			:= $(compiler)
-#mex			:= $(matlabrootdir)/bin/mex
+mex			:= $(matlabrootdir)/bin/mex
 cudacompiler	:= $(cudarootdir)/bin/nvcc
 
 

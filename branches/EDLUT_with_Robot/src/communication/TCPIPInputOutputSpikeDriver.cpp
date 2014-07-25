@@ -51,7 +51,7 @@ void TCPIPInputOutputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) 
 		for (int c=0; c<csize; ++c){
 			InputSpike * NewSpike = new InputSpike(InputSpikes[c].Time, Net->GetNeuronAt(InputSpikes[c].Neuron));
 						
-			Queue->InsertEvent(NewSpike);				
+			Queue->InsertEvent(NewSpike->GetSource()->get_OpenMP_queue_index(),NewSpike);				
 		}
 
 		delete [] InputSpikes;
@@ -61,8 +61,10 @@ void TCPIPInputOutputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) 
 	
 void TCPIPInputOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
 	OutputSpike spike(NewSpike->GetSource()->GetIndex(),NewSpike->GetTime());
-		
-	this->OutputBuffer.push_back(spike);	
+	#pragma omp critical (TCPIPInputOutputSpikeDriver)
+	{	
+	this->OutputBuffer.push_back(spike);
+	}
 }
 		
 void TCPIPInputOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){

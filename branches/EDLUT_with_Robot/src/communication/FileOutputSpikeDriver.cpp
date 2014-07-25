@@ -37,11 +37,16 @@ FileOutputSpikeDriver::~FileOutputSpikeDriver(){
 }
 
 void FileOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
+	#pragma omp critical (FileOutputSpikeDriver) 
+	{
 	if(fprintf(this->Handler,"%f\t%li\n",NewSpike->GetTime(),NewSpike->GetSource()->GetIndex())<0)
     	throw EDLUTException(3,3,2,0);
+	}
 }
 		
 void FileOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){
+	#pragma omp critical (FileOutputSpikeDriver)
+	{
 	if(fprintf(this->Handler,"%f\t%li",Time,Source->GetIndex()) < 0)
 		throw EDLUTException(3,3,2,0);
 
@@ -52,6 +57,7 @@ void FileOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUT
 
 	if(fprintf(this->Handler,"\n") < 0)
 		throw EDLUTException(3,3,2,0);
+	}
 }
 
 bool FileOutputSpikeDriver::IsBuffered() const{

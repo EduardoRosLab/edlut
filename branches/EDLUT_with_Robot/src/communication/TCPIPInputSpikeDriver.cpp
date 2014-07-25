@@ -26,6 +26,8 @@
 #include "../../include/spike/InputSpike.h"
 #include "../../include/spike/Network.h"
 
+#include "../../include/spike/Neuron.h"
+
 
 
 TCPIPInputSpikeDriver::TCPIPInputSpikeDriver(enum TCPIPConnectionType Type, string server_address,unsigned short tcp_port){
@@ -55,7 +57,7 @@ void TCPIPInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw 
 		for (int c=0; c<csize; ++c){
 			InputSpike * NewSpike = new InputSpike(InputSpikes[c].Time, Net->GetNeuronAt(InputSpikes[c].Neuron));
 			
-			Queue->InsertEvent(NewSpike);				
+			Queue->InsertEvent(NewSpike->GetSource()->get_OpenMP_queue_index(),NewSpike);				
 		}
 
 		delete [] InputSpikes;

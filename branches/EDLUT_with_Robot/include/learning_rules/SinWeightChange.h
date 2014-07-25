@@ -35,7 +35,7 @@
  *
  * \brief Sinuidal learning rule.
  *
- * This class abstract the behaviour of a exponential-sinuidal additive learning rule.
+ * This class abstract the behaviour of a exponential-sinusoidal additive learning rule.
  *
  * \author Jesus Garrido
  * \author Niceto Luque
@@ -46,20 +46,23 @@ class SinWeightChange: public AdditiveKernelChange{
 	private:
 	
 		/*!
-		 * The exponent of the sinuidal function.
+		 * The exponent of the sinusoidal function.
 		 */
 		int exponent;
 		
 	public:
 		/*!
-		 * \brief Default constructor. It creates a new sinusoidal additive learning-rule
-		 * with the parameter exponent.
+		 * \brief Default constructor.
 		 * 
-		 * Default constructor. It creates a new sinusoidal additive learning-rule
-		 * with the parameter exponent.
-		 */
+		 * It creates a new object.
+		 */ 
 		SinWeightChange();
 
+		/*!
+		 * \brief Object destructor.
+		 *
+		 * It remove the object.
+		 */
 		virtual ~SinWeightChange();
 
 		/*!
@@ -67,7 +70,7 @@ class SinWeightChange: public AdditiveKernelChange{
 		 *
 		 * It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * \return The state that the learning rule needs for all the synapses.
+		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
 		 */
 		void InitializeConnectionState(unsigned int NumberOfSynapses);
 

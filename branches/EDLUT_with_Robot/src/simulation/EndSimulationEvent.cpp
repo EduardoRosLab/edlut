@@ -17,6 +17,7 @@
 #include "../../include/simulation/EndSimulationEvent.h"
 
 #include "../../include/simulation/Simulation.h"
+#include "../../include/openmp/openmp.h"
 
 EndSimulationEvent::EndSimulationEvent():Event(0){
 }
@@ -27,9 +28,20 @@ EndSimulationEvent::EndSimulationEvent(double NewTime): Event(NewTime){
 EndSimulationEvent::~EndSimulationEvent(){
 }
 
-void EndSimulationEvent::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
-	CurrentSimulation->EndSimulation();		
+void EndSimulationEvent::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+	CurrentSimulation->EndSimulation(omp_get_thread_num()); /*asdfgf*/		
+}
+
+void EndSimulationEvent::ProcessEvent(Simulation * CurrentSimulation){
+	CurrentSimulation->EndSimulation(omp_get_thread_num()); /*asdfgf*/		
 }
    	
+void EndSimulationEvent::PrintType(){
+	cout<<"EndSimulationEvent"<<endl;
+}
 
+
+int EndSimulationEvent::ProcessingPriority(){
+	return 0;
+}
 

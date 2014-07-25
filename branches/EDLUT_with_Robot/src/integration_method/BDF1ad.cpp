@@ -18,10 +18,10 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 
 
-BDF1ad::BDF1ad(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread):VariableStep("BDF1ad", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread, false, false),
+BDF1ad::BDF1ad(TimeDrivenNeuronModel * NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState):VariableStep(NewModel, "BDF1ad", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, false, false),
 e_min(0), e_max(0), h_min(0), h_max(0)
 {	
-	BDF=new BDF1vs(N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread);
+	BDF=new BDF1vs(NewModel, N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState);
 }
 
 BDF1ad::~BDF1ad(){
@@ -31,7 +31,7 @@ BDF1ad::~BDF1ad(){
 	delete [] NextStepPredictedElapsedTime;
 }
 		
-void BDF1ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
+void BDF1ad::NextDifferentialEcuationValue(int index, float * NeuronState, float elapsed_time){
 	float tolerance=e_max;
 	
 	float * offset_PredictedNeuronState = PredictedNeuronState+(N_NeuronStateVariables*index);
@@ -39,13 +39,11 @@ void BDF1ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mo
 	if(ValidPrediction[index]){
 		memcpy(NeuronState, offset_PredictedNeuronState,sizeof(float)*N_NeuronStateVariables);
 	}else{
-		this->BDF->NextDifferentialEcuationValue(index, Model, NeuronState, elapsed_time, CPU_thread_index);
+		this->BDF->NextDifferentialEcuationValue(index, NeuronState, elapsed_time);
 		memcpy(offset_PredictedNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
 		ValidPrediction[index]=true;
 		NextStepPredictedElapsedTime[index]=h_min;
 	}
-
-
 
 
 	bool stop=false;
@@ -54,7 +52,7 @@ void BDF1ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mo
 	while(!stop){
 		PredictedElapsedTime[index]=NextStepPredictedElapsedTime[index];
 		stop=true;
-		this->BDF->NextDifferentialEcuationValue(index, Model, offset_PredictedNeuronState, PredictedElapsedTime[index], CPU_thread_index);
+		this->BDF->NextDifferentialEcuationValue(index, offset_PredictedNeuronState, PredictedElapsedTime[index]);
 		
 		second_derivative=0.0f;
 		float second_derivative2=0.0f;

@@ -18,10 +18,10 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 
 
-RK45ad::RK45ad(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread):VariableStep("RK45ad", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread, false, false),
+RK45ad::RK45ad(TimeDrivenNeuronModel * NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState):VariableStep(NewModel, "RK45ad", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, false, false),
 e_min(0), e_max(0), h_min(0), h_max(0)
 {	
-	RK=new RK45(N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread);
+	RK=new RK45(NewModel, N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState);
 }
 
 RK45ad::~RK45ad(){
@@ -30,7 +30,7 @@ RK45ad::~RK45ad(){
 	delete [] ValidPrediction;
 }
 		
-void RK45ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
+void RK45ad::NextDifferentialEcuationValue(int index, float * NeuronState, float elapsed_time){
 	float * offset_PredictedNeuronState = PredictedNeuronState+(N_NeuronStateVariables*index);
 	
 
@@ -38,10 +38,9 @@ void RK45ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mo
 	if(ValidPrediction[index]){
 		memcpy(NeuronState, offset_PredictedNeuronState,sizeof(float)*N_NeuronStateVariables);
 	}else{
-		this->RK->NextDifferentialEcuationValue(index, Model, NeuronState, elapsed_time, CPU_thread_index);
+		this->RK->NextDifferentialEcuationValue(index, NeuronState, elapsed_time);
 		memcpy(offset_PredictedNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
 	}
-
 
 	bool stop=false;
 	bool increment=false;
@@ -54,14 +53,14 @@ void RK45ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mo
 		//}
 
 
-		this->RK->NextDifferentialEcuationValue(index, Model, offset_PredictedNeuronState, PredictedElapsedTime[index], CPU_thread_index);
+		this->RK->NextDifferentialEcuationValue(index, offset_PredictedNeuronState, PredictedElapsedTime[index]);
 
-		if (RK->epsilon[CPU_thread_index] < e_min && !decrement){
+		if (RK->epsilon[index] < e_min && !decrement){
 			//stop=false;
 			PredictedElapsedTime[index] *= 2;
 			memcpy(offset_PredictedNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
 			increment=true;
-		}else if ( (RK->epsilon[CPU_thread_index] > e_max  && !increment)|| RK->epsilon[CPU_thread_index]!=RK->epsilon[CPU_thread_index]){
+		}else if ( (RK->epsilon[index] > e_max  && !increment)|| RK->epsilon[index]!=RK->epsilon[index]){
 			stop=false;
 			PredictedElapsedTime[index] *= 0.5;
 			memcpy(offset_PredictedNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
@@ -71,7 +70,6 @@ void RK45ad::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mo
 		if(PredictedElapsedTime[index]>h_max){
 			PredictedElapsedTime[index]=h_max;
 		}
-printf("PredictedElapsedTime: %1.9f, epsilon: %1.32f\n\n",PredictedElapsedTime[index], RK->epsilon[CPU_thread_index]);
 	}
 
 }

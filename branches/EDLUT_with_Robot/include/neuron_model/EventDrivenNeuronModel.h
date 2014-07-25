@@ -59,7 +59,8 @@ class EventDrivenNeuronModel : public NeuronModel {
 		 *
 		 * It generates a new neuron model object without being initialized.
 		 *
-		 * \param NeuronModelID Neuron model identificator.
+		 * \param NeuronTypeID Neuron model type.
+		 * \param NeuronModelID Neuron model description file.
 		 */
 		EventDrivenNeuronModel(string NeuronTypeID, string NeuronModelID);
 
@@ -118,8 +119,14 @@ class EventDrivenNeuronModel : public NeuronModel {
 		 */
 		enum NeuronModelType GetModelType();
 
-
-virtual void InitializeStates(int N_neurons)=0;
+		/*!
+		 * \brief It initialice VectorNeuronState.
+		 *
+		 * It initialice VectorNeuronState.
+		 *
+		 * \param N_neurons cell number inside the VectorNeuronState.
+		 */
+		virtual void InitializeStates(int N_neurons)=0;
 
 
 

@@ -16,12 +16,12 @@
 
 #include "../../include/learning_rules/AdditiveKernelChange.h"
 
-//#include "../../include/learning_rules/ExpState.h"
-
 #include "../../include/spike/Interconnection.h"
 #include "../../include/spike/Neuron.h"
 
 #include "../../include/simulation/Utils.h"
+
+#include "../../include/openmp/openmp.h"
 
 #include <cmath>
 
@@ -67,23 +67,44 @@ void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,do
 
 	// Check if this is the teaching signal
 	if(this->trigger == 1){
-
 		Neuron * TargetNeuron=Connection->GetTarget();
 
-		for(int i=0; i<TargetNeuron->GetInputNumberWithoutPostSynapticLearning(); ++i){
-			Interconnection * interi=TargetNeuron->GetInputConnectionWithoutPostSynapticLearningAt(i);
-			AdditiveKernelChange * wchani=(AdditiveKernelChange *)interi->GetWeightChange_withoutPost();
+		int aux=(TargetNeuron->GetInputNumberWithoutPostSynapticLearning()+NumberOfOpenMPThreads-1)/NumberOfOpenMPThreads;
+		int start, end;
+		for(int j=0; j<NumberOfOpenMPThreads; j++){
+			start=j*aux;
+			end=start+aux;
+			if(end>TargetNeuron->GetInputNumberWithoutPostSynapticLearning()){
+				end=TargetNeuron->GetInputNumberWithoutPostSynapticLearning();
+			}
 
-			// Apply sinaptic plasticity driven by teaching signal
-			// Get connection state
-			ConnectionState * ConnectionStatePre = wchani->GetConnectionState();
-			int LearningRuleIndex = interi->GetLearningRuleIndex_withoutPost();
+			#ifdef _OPENMP 
+				#if	_OPENMP >= OPENMPVERSION30
+					#pragma omp task if(j<(NumberOfOpenMPThreads-1)) firstprivate(start,end) shared(TargetNeuron, Connection)
+				#endif
+			#endif
+			{
+				for(int i=start; i<end; ++i){
+					Interconnection * interi=TargetNeuron->GetInputConnectionWithoutPostSynapticLearningAt(i);
+					AdditiveKernelChange * wchani=(AdditiveKernelChange *)interi->GetWeightChange_withoutPost();
 
-			// Update the presynaptic activity
-			ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-			// Update synaptic weight
-			interi->IncrementWeight(wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity(LearningRuleIndex));
+					// Apply sinaptic plasticity driven by teaching signal
+					// Get connection state
+					ConnectionState * ConnectionStatePre = wchani->GetConnectionState();
+					int LearningRuleIndex = interi->GetLearningRuleIndex_withoutPost();
+
+					// Update the presynaptic activity
+					ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
+					// Update synaptic weight
+					interi->IncrementWeight(wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity(LearningRuleIndex));
+				}
+			}
 		}
+		#ifdef _OPENMP 
+			#if	_OPENMP >= OPENMPVERSION30
+				#pragma omp taskwait
+			#endif
+		#endif
 	}
 }
 

@@ -118,7 +118,8 @@ class ConnectionState {
 		 *
 		 * \param index The synapse's index inside the learning rule.
 		 * \param position The position of the state variable.
-		 * \param NewValue The new value of that state variable.
+		 * \param NewValue1 The new value of that state variable.
+		 * \param NewValue2 The new value of that state variable.
 		 */
 		inline void SetStateVariableAt(unsigned int index, unsigned int position,float NewValue1, float NewValue2){
 			*(this->StateVars + index*NumberOfVariables + position) = NewValue1;
@@ -126,6 +127,17 @@ class ConnectionState {
 		}
 
 
+		/*!
+		 * \brief It sets the state variable in two consecutives position.
+		 *
+		 * It sets the state variable in a specified position.
+		 *
+		 * \param index The synapse's index inside the learning rule.
+		 * \param position The position of the state variable.
+		 * \param NewValue1 The new value of that state variable.
+		 * \param NewValue2 The new value of that state variable.
+		 * \param NewValue3 The new value of that state variable.
+		 */
 		inline void SetStateVariableAt(unsigned int index, unsigned int position,float NewValue1, float NewValue2, float NewValue3){
 			*(this->StateVars + index*NumberOfVariables + position) = NewValue1;
 			*(this->StateVars + index*NumberOfVariables + position + 1) = NewValue2;

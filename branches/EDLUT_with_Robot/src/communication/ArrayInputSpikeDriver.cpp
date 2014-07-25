@@ -20,6 +20,7 @@
 
 #include "../../include/spike/InputSpike.h"
 #include "../../include/spike/Network.h"
+#include "../../include/spike/Neuron.h"
 
 ArrayInputSpikeDriver::ArrayInputSpikeDriver() {
 	// TODO Auto-generated constructor stub
@@ -39,7 +40,7 @@ void ArrayInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net, int Nu
 		for (int i=0; i<NumSpikes; ++i){
 			InputSpike * NewSpike = new InputSpike(Times[i], Net->GetNeuronAt(Cells[i]));
 
-			Queue->InsertEvent(NewSpike);
+			Queue->InsertEvent(NewSpike->GetSource()->get_OpenMP_queue_index(),NewSpike);
 		}
 
 	}

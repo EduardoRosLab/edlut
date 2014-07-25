@@ -21,6 +21,8 @@
 #include "../../include/spike/InputSpike.h"
 #include "../../include/spike/Network.h"
 
+#include "../../include/spike/Neuron.h"
+
 InputBooleanArrayDriver::InputBooleanArrayDriver(unsigned int InputLines, int * Associated):AssociatedCells(0),NumInputLines(InputLines){
 	AssociatedCells = new int [NumInputLines];
 
@@ -40,7 +42,7 @@ void InputBooleanArrayDriver::LoadInputs(EventQueue * Queue, Network * Net, bool
 		if (InputLines[i]){
 			InputSpike * NewSpike = new InputSpike(CurrentTime, Net->GetNeuronAt(this->AssociatedCells[i]));
 
-			Queue->InsertEvent(NewSpike);
+			Queue->InsertEvent(NewSpike->GetSource()->get_OpenMP_queue_index(),NewSpike);
 		}
 	}
 }

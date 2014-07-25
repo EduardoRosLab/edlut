@@ -17,6 +17,8 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel_GPU.h"
 #include "../../include/neuron_model/TimeDrivenNeuronModel_GPU2.h"
 #include "../../include/neuron_model/NeuronModel.h"
+#include "../../include/neuron_model/VectorNeuronState.h"
+#include "../../include/neuron_model/VectorNeuronState_GPU.h"
 
 
 //Library for CUDA
@@ -27,14 +29,14 @@
 
 TimeDrivenNeuronModel_GPU::TimeDrivenNeuronModel_GPU(string NeuronTypeID, string NeuronModelID): NeuronModel(NeuronTypeID, NeuronModelID), TimeDrivenStep_GPU(0.001) {
 	// TODO Auto-generated constructor stub
-		HANDLE_ERROR(cudaEventCreate(&stop));
+	HANDLE_ERROR(cudaEventCreate(&stop));
+	HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));
 
 }
 
 TimeDrivenNeuronModel_GPU::~TimeDrivenNeuronModel_GPU() {
 	delete integrationMethod_GPU;
 	HANDLE_ERROR(cudaEventDestroy(stop));
-
 }
 
 double TimeDrivenNeuronModel_GPU::GetTimeDrivenStep_GPU(){
@@ -45,9 +47,4 @@ double TimeDrivenNeuronModel_GPU::GetTimeDrivenStep_GPU(){
 enum NeuronModelType TimeDrivenNeuronModel_GPU::GetModelType(){
 	return TIME_DRIVEN_MODEL_GPU;
 }
-
-
-
-
-
 

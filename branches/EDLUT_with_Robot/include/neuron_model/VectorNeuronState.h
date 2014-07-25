@@ -257,7 +257,16 @@ class VectorNeuronState {
 		 * \param position The position of the state variable.
 		 * \return The value of the position-th state variable.
 		 */
-		virtual float GetStateVariableAt(int index, int position);
+		//virtual float GetStateVariableAt(int index, int position);
+		float GetStateVariableAt(int index, int position){
+			if (Is_GPU == false){
+				return VectorNeuronStates[index*NumberOfVariables + position];
+			}
+			else{
+				return VectorNeuronStates[this->SizeStates*position + index];
+			}
+		}
+
 
 		/*!
 		 * \brief It gets the pointer to the state variables for a cell.
@@ -267,7 +276,10 @@ class VectorNeuronState {
 		 * \param index The cell index inside the vector.
 		 * \return The pointer of the position-th state variable.
 		 */
-		virtual float * GetStateVariableAt(int index);
+		//virtual float * GetStateVariableAt(int index);
+		float * GetStateVariableAt(int index){
+			return VectorNeuronStates + (index*NumberOfVariables);
+		}
 
 
 		/*!

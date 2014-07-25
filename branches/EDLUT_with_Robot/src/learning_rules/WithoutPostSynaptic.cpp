@@ -24,10 +24,6 @@ WithoutPostSynaptic::~WithoutPostSynaptic(){
 
 }
 
-void WithoutPostSynaptic::ApplyPostSynapticSpike(Interconnection * Connection, double SpikeTime){
-	return;
-}
-
 bool WithoutPostSynaptic::ImplementPostSynaptic(){
 	return false;
 }

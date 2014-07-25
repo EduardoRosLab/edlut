@@ -72,7 +72,7 @@ class RK2_GPU2 : public IntegrationMethod_GPU2 {
 		 * \param Buffer_GPU This vector contains all the necesary GPU memory witch have been reserved in the CPU (this memory
 		 * could be reserved directly in the GPU, but this suppose some restriction in the amount of memory witch can be reserved).
 		 */
-		__device__ RK2_GPU2(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int Total_N_thread, void ** Buffer_GPU):IntegrationMethod_GPU2(N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, Total_N_thread){
+		__device__ RK2_GPU2(TimeDrivenNeuronModel_GPU2* NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, void ** Buffer_GPU):IntegrationMethod_GPU2(NewModel, N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState){
 			AuxNeuronState=((float*)Buffer_GPU[0]);
 			AuxNeuronState1=((float*)Buffer_GPU[1]);
 			AuxNeuronState2=((float*)Buffer_GPU[2]);
@@ -98,14 +98,14 @@ class RK2_GPU2 : public IntegrationMethod_GPU2 {
 		 * \param NeuronState Vector of neuron state variables for all neurons.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, float elapsed_time){
+		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, float * NeuronState, float elapsed_time){
 
 			int offset1=gridDim.x * blockDim.x;
 			int offset2=blockDim.x*blockIdx.x + threadIdx.x;
 
 
 			//1st term
-			Model->EvaluateDifferentialEcuation(index, SizeStates, NeuronState, AuxNeuronState1);
+			model->EvaluateDifferentialEcuation(index, SizeStates, NeuronState, AuxNeuronState1);
 
 
 			//2nd term
@@ -116,8 +116,8 @@ class RK2_GPU2 : public IntegrationMethod_GPU2 {
 				AuxNeuronState[j*offset1 + offset2]=NeuronState[j*SizeStates + index];
 			}
 
-			Model->EvaluateTimeDependentEcuation(offset2, offset1, AuxNeuronState, elapsed_time);
-			Model->EvaluateDifferentialEcuation(offset2, offset1, AuxNeuronState, AuxNeuronState2);
+			model->EvaluateTimeDependentEcuation(offset2, offset1, AuxNeuronState, elapsed_time);
+			model->EvaluateDifferentialEcuation(offset2, offset1, AuxNeuronState, AuxNeuronState2);
 
 			for (int j=0; j<N_DifferentialNeuronState; j++){
 				NeuronState[j*SizeStates + index]+=(AuxNeuronState1[j*offset1 + offset2]+AuxNeuronState2[j*offset1 + offset2])*elapsed_time*0.5f;

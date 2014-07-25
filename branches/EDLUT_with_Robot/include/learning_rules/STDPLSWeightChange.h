@@ -44,11 +44,28 @@ class Interconnection;
 class STDPLSWeightChange: public STDPWeightChange {
 	public:
 
+		/*!
+		 * \brief Default constructor.
+		 * 
+		 * It creates a new object.
+		 */ 
 		STDPLSWeightChange();
 
+		/*!
+		 * \brief Object destructor.
+		 *
+		 * It remove the object.
+		 */
 		virtual ~STDPLSWeightChange();
 
 
+		/*!
+		 * \brief It initialize the state associated to the learning rule for all the synapses.
+		 *
+		 * It initialize the state associated to the learning rule for all the synapses.
+		 *
+		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
+		 */
 		void InitializeConnectionState(unsigned int NumberOfSynapses);
 
 		/*!

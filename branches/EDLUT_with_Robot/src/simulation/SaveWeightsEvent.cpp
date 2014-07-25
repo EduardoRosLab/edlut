@@ -19,21 +19,44 @@
 #include "../../include/simulation/Simulation.h"
 #include "../../include/simulation/EventQueue.h"
 
-SaveWeightsEvent::SaveWeightsEvent():Event(0){
-}
+#include "../../include/simulation/SynchronizeSimulationEvent.h"
+
+#include "../../include/openmp/openmp.h"
+
    	
-SaveWeightsEvent::SaveWeightsEvent(double NewTime): Event(NewTime){
+SaveWeightsEvent::SaveWeightsEvent(double NewTime, Simulation * CurrentSimulation): Event(NewTime){
+	for(int i=0; i<CurrentSimulation->GetNumberOfQueues(); i++){
+		SynchronizeSimulationEvent * NewEvent = new SynchronizeSimulationEvent(NewTime);
+		CurrentSimulation->GetQueue()->InsertEvent(i,NewEvent);
+	}
 }
    		
 SaveWeightsEvent::~SaveWeightsEvent(){
 }
 
-void SaveWeightsEvent::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
+void SaveWeightsEvent::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
 	CurrentSimulation->SaveWeights();
+
 	if (CurrentSimulation->GetSaveStep()>0.0){
-		SaveWeightsEvent * NewEvent = new SaveWeightsEvent(this->GetTime()+CurrentSimulation->GetSaveStep());
-		CurrentSimulation->GetQueue()->InsertEvent(NewEvent);
-	}		
+		SaveWeightsEvent * NewEvent = new SaveWeightsEvent(this->GetTime()+CurrentSimulation->GetSaveStep(), CurrentSimulation);
+		CurrentSimulation->GetQueue()->InsertEventWithSynchronization(NewEvent);
+	}
 }
-   	
+   
+void SaveWeightsEvent::ProcessEvent(Simulation * CurrentSimulation){
+	CurrentSimulation->SaveWeights();
+
+	if (CurrentSimulation->GetSaveStep()>0.0){
+		SaveWeightsEvent * NewEvent = new SaveWeightsEvent(this->GetTime()+CurrentSimulation->GetSaveStep(), CurrentSimulation);
+		CurrentSimulation->GetQueue()->InsertEventWithSynchronization(NewEvent);
+	}
+}
+
+void SaveWeightsEvent::PrintType(){
+	cout<<"SaveWeightsEvent"<<endl;
+}
+
+int SaveWeightsEvent::ProcessingPriority(){
+	return 5;
+}
 

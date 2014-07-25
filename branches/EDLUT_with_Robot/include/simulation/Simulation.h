@@ -48,7 +48,7 @@ class OutputSpikeDriver;
 class OutputWeightDriver;
 class Spike;
 class Neuron;
-
+class RealTimeRestriction;
 
 /*!
  * \class Simulation
@@ -72,7 +72,7 @@ class Simulation : public PrintableObject{
 		Network * Net;
 		
 		/*!
-		 * Event queue used in the events.
+		 * Vector of event queue used in the events for each OpenMP thread.
 		 */
 		EventQueue * Queue;
 		
@@ -106,15 +106,6 @@ class Simulation : public PrintableObject{
 		 */
 		double SimulationStep;
 
-		/*!
-		 * Simulation Time Driven step
-		 */
-		double TimeDrivenStep;
-
-		/*!
-		 * Simulation Time Driven step for GPU
-		 */
-		double TimeDrivenStepGPU;
 		
 		/*!
 		 * Save weight step
@@ -122,39 +113,68 @@ class Simulation : public PrintableObject{
 		double SaveWeightStep;
 		
 		/*!
-		 * Current simulation Time
+		 * Vector or current simulation Time for each OpenMP thread
 		 */
-		double CurrentSimulationTime;
+		double * CurrentSimulationTime;
+		
 		
 		/*!
-		 * Maximum CPU time which a simulation slot is allowed to consume (in counter steps)
+		 * Vector of end of simulation for each OpenMP thread
 		 */
-		unsigned long MaxSlotConsumedTime;
+		bool * EndOfSimulation;
 		
 		/*!
-		 * End of simulation
+		 * Vector of stop of simulation for each OpenMP thread
 		 */
-		bool EndOfSimulation;
-		
-		/*!
-		 * Stop of simulation
-		 */
-		bool StopOfSimulation;
+		bool * StopOfSimulation;
 
 		/*!
-		 * Number of realized updates.
+		 * Vector of syncronize events of simulation for each OpenMP thread
 		 */
-		long long Updates;
-		
-		/*!
-		 * Sumatory of heap size.
-		 */
-		long long Heapoc;
+		bool * SynchronizeThread;
 
 		/*!
-		 * Total spike count.
+		 * Vector of number of realized updates for each OpenMP thread
 		 */
-		long TotalSpikeCounter;
+		long long * Updates;
+		
+		/*!
+		 * Vector of sumatory of heap size for each OpenMP thread
+		 */
+		long long * Heapoc;
+
+		/*!
+		 * Vector of total spike count for each OpenMP thread
+		 */
+		long * TotalSpikeCounter;
+
+		/*!
+		 * Vector of total propated spike count for each OpenMP thread
+		 */
+		long * TotalPropagateCounter;
+
+		/*!
+ 		 * Number of OpenMP thread. 
+ 		 */
+		int NumberOfThreads;
+
+		/*!
+ 		 * Number of OpenMP queues. 
+ 		 */
+		int NumberOfQueues;
+
+		/*!
+ 		 * Min interpropagation time between neuron of differents OpenMP queues. This value is used
+		 * to create the SynchronizeActivityEvent that insert the buffer of events inside each queue.
+ 		 */
+		double MinInterpropagationTime;
+
+	public:
+
+		/*!
+ 		 * Real time restriction object used to control a real robot. 
+ 		 */
+		RealTimeRestriction * RealTimeRestrictionObject;
 
 	protected:
 		
@@ -187,7 +207,7 @@ class Simulation : public PrintableObject{
 		 * 
 		 * throw EDLUTException If something wrong happens.
 		 */
-		Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep=0.00) throw (EDLUTException);
+		Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep=0.00, int NewNumberOfQueues=1, int NewNumberOfThreads=1) throw (EDLUTException);
 		
 		/*!
 		 * \brief Copy constructor of the class.
@@ -242,75 +262,34 @@ class Simulation : public PrintableObject{
 		double GetSimulationStep();
 
 		/*!
-		 * \brief It sets the time-driven model step.
+		 * \brief It ends the simulation before the next event for one OpenMP thread.
 		 * 
-		 * It sets the time-driven model step.
+		 * It ends the simulation before the next event for one OpenMP thread.
 		 * 
-		 * \param NewTimeDrivenStep The time-driven model step time (in seconds). 0 values represents variable step (not implemented yet).
+		 * \param indexThread index of the OpenMP thread.
 		 */
-		void SetTimeDrivenStep(double NewTimeDrivenStep);
-		
-		/*!
-		 * \brief It gets the simulation step time.
-		 * 
-		 * It gets the simulation step time.
-		 * 
-		 * \return The simulation step time (in seconds). 0 values don't simulate by step.
-		 */
-		double GetTimeDrivenStep();
+		void EndSimulation(int indexThread);
 
 		/*!
-		 * \brief It sets the time-driven model step for GPU.
-		 * 
-		 * It sets the time-driven model step for GPU.
-		 * 
-		 * \param NewTimeDrivenStepGPU The time-driven model step time for GPU(in seconds). 0 values represents variable step (not implemented yet).
-		 */
-		void SetTimeDrivenStepGPU(double NewTimeDrivenStepGPU);
-		
-		/*!
-		 * \brief It gets the simulation step time for GPU.
-		 * 
-		 * It gets the simulation step time for GPU.
-		 * 
-		 * \return The simulation step time for GPU(in seconds). 0 values don't simulate by step.
-		 */
-		double GetTimeDrivenStepGPU();
-		
-		/*!
-		 * \brief It sets the maximum time that a simulation slot can consume.
-		 * 
-		 * It sets the maximum time that the method RunSimulationSlot() can take.
-		 * 
-		 * \param NewMaxSlotConsumedTime The maximum time that a simulation slot can consume (in seconds).
-		 * \param 0 value means infinite time, that is, the time consumed by is not RunSimulationSlot() limited.
-		 */
-		void SetMaxSlotConsumedTime(double NewMaxSlotConsumedTime);
-		
-		/*!
-		 * \brief It gets the maximum time that a simulation slot can consume.
-		 * 
-		 * It gets the maximum time that the method RunSimulationSlot() can take.
-		 * 
-		 * \return The maximum time that a simulation slot can consume (in seconds). 0 value means infinite time.
-		 */
-		double GetMaxSlotConsumedTime();
-
-		/*!
-		 * \brief It ends the simulation before the next event.
-		 * 
-		 * It ends the simulation before the next event.
-		 */
-		void EndSimulation();
-
-		/*!
-		 * \brief It stops the simulation before the next event.
+		 * \brief It stops the simulation before the next event for one OpenMP thread.
 		 *
-		 * It stops the simulation before the next event.
+		 * It stops the simulation before the next event for one OpenMP thread.
+		 		 * 
+		 * \param indexThread index of the OpenMP thread.
 		 */
-		void StopSimulation();
+		void StopSimulation(int indexThread);
+
+		void SetSynchronizeSimulationEvent(int indexThread);
+
+		void ResetSynchronizeSimulationEvent(int indexThread);
+
+		bool GetSynchronizeSimulationEvent(int indexThread);
+
 				 
-				
+		void SynchronizeThreads();
+
+		void SynchronizeThreadsForSlot();
+
 		/*!
 		 * \brief It adds a new input driver to the input driver list.
 		 * 
@@ -496,7 +475,7 @@ class Simulation : public PrintableObject{
 		 * Sets the total spike counter.
 		 * \param value is value to set the counter to.
 		 */
-		void SetTotalSpikeCounter(long int value);
+		void SetTotalSpikeCounter(int indexThread, long int value);
 
 		/*!
 		 * \brief Set total spike count.
@@ -504,7 +483,7 @@ class Simulation : public PrintableObject{
 		 * Sets the total spike counter.
 		 * \param value is value to set the counter to.
 		 */
-		void IncrementTotalSpikeCounter();
+		void IncrementTotalSpikeCounter(int indexThread);
 
 		/*!
 		 * \brief Get total spike count.
@@ -512,7 +491,15 @@ class Simulation : public PrintableObject{
 		 * Gets the total spike counter.
 		 * \returns the counter value.
 		 */
+		long GetTotalSpikeCounter(int indexThread);
+
 		long GetTotalSpikeCounter();
+
+		long GetTotalPropagateCounter(int indexThread);
+
+		void SetTotalPropagateCounter(int indexThread, long int value); 
+
+		void IncrementTotalPropagateCounter(int indexThread); 
 
 		/*!
 		 * \brief It gets the input activity.
@@ -555,6 +542,8 @@ class Simulation : public PrintableObject{
 		 * 
 		 * \return The number of simulation updates.
 		 */
+		long long GetSimulationUpdates(int indexThread) const;
+
 		long long GetSimulationUpdates() const;
 		
 		/*!
@@ -564,7 +553,9 @@ class Simulation : public PrintableObject{
 		 * 
 		 * \return The number of acumulated event queue sizes.
 		 */
-		long long GetHeapAcumSize() const;		
+		long long GetHeapAcumSize(int indexThread) const;
+
+		long long GetHeapAcumSize() const;
 
 		/*!
 		 * \brief It prints the information of the object.
@@ -575,6 +566,19 @@ class Simulation : public PrintableObject{
 		 * \return The output stream.
 		 */
 		virtual ostream & PrintInfo(ostream & out);
+
+		/*!
+		 * \brief It gets the number of OpenMP thread.
+		 * 
+		 * It gets the number of OpenMP thread.
+		 * 
+		 * \return The number of OpenMP thread.
+		 */
+		int GetNumberOfThreads();
+
+		int GetNumberOfQueues();
+
+		double GetMinInterpropagationTime();
 	
 };
 

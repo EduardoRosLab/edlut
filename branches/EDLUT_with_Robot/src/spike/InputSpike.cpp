@@ -27,6 +27,9 @@
 
 #include "../../include/communication/OutputSpikeDriver.h"
 
+#include "../../include/openmp/openmp.h"
+
+
 InputSpike::InputSpike():Spike() {
 }
    	
@@ -36,21 +39,54 @@ InputSpike::InputSpike(double NewTime, Neuron * NewSource): Spike(NewTime,NewSou
 InputSpike::~InputSpike(){
 }
 
-void InputSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
+void InputSpike::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
 
-	if(!RealTimeRestriction){
+	if(*RealTimeRestriction<2){
 		
 		Neuron * neuron=this->source;  // source of the spike
 	    
 		CurrentSimulation->WriteSpike(this);
 		
 		// CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(), this->GetSource());
-			
-		if (neuron->IsOutputConnected()){
-			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
-			CurrentSimulation->GetQueue()->InsertEvent(spike);
+		
+		for(int i=0; i<NumberOfOpenMPQueues; i++){
+			if (neuron->IsOutputConnected(i)){
+				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(i,0)->GetDelay(), neuron, 0,i);
+				if(i==omp_get_thread_num()){
+					CurrentSimulation->GetQueue()->InsertEvent(i,spike);
+				}else{
+					CurrentSimulation->GetQueue()->InsertEventInBuffer(omp_get_thread_num(),i,spike);
+				}
+
+			}
 		}
 	}
+}
+
+void InputSpike::ProcessEvent(Simulation * CurrentSimulation){
+
+		
+	Neuron * neuron=this->source;  // source of the spike
+    
+	CurrentSimulation->WriteSpike(this);
+	
+	// CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(), this->GetSource());
+	
+	for(int i=0; i<NumberOfOpenMPQueues; i++){
+		if (neuron->IsOutputConnected(i)){
+			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(i,0)->GetDelay(), neuron, 0,i);
+			if(i==omp_get_thread_num()){
+				CurrentSimulation->GetQueue()->InsertEvent(i,spike);
+			}else{
+				CurrentSimulation->GetQueue()->InsertEventInBuffer(omp_get_thread_num(),i,spike);
+			}
+
+		}
+	}
+}
+
+void InputSpike::PrintType(){
+	cout<<"InputSpike"<<endl;
 }
 
    	

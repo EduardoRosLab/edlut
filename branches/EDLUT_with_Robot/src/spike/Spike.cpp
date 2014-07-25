@@ -30,11 +30,19 @@ Spike::~Spike(){
 Neuron * Spike::GetSource () const{
 	return source;
 }
+
+ void Spike::SetSource (Neuron * NewSource){
+	source=NewSource;
+}
    		
-void Spike::SetSource (Neuron * NewSource){
-	source = NewSource;
+bool Spike::IsSpike() const{
+	return true;
 }
 
-bool Spike::IsSpike(){
-	return true;
+void Spike::PrintType(){
+	cout<<"Spike"<<endl;
+}
+
+int Spike::ProcessingPriority(){
+	return 9;
 }

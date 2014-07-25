@@ -50,17 +50,20 @@
 
 #include "../../include/interface/C_interface_for_robot_control.h"
 
-///////////////////////////// SIMULATION MANAGEMENT //////////////////////////
+#include "../../include/simulation/RealTimeRestriction.h"
 
-EXTERN_C Simulation *create_neural_simulation(const char *net_file, const char *input_weight_file, const char *input_spike_file, const char *output_weight_file, const char *output_spike_file, double weight_save_period, int real_time_simulation)
+#include "../../include/openmp/openmp.h"
+
+///////////////////////////// SIMULATION MANAGEMENT //////////////////////////
+long N_one_slot_internal_spikes2;
+
+
+extern "C" Simulation *create_neural_simulation(const char *net_file, const char *input_weight_file, const char *input_spike_file, const char *output_weight_file, const char *output_spike_file, double weight_save_period, int number_of_openmp_queues, int number_of_openmp_threads)
   {
    Simulation *neural_sim; // Neural-simulator object (EDLUT)
    try
      {
-      neural_sim=new Simulation(net_file, input_weight_file, -1.0); // End-simulation time not specified
-      if(real_time_simulation)
-         neural_sim->SetMaxSlotConsumedTime(MAX_SIM_SLOT_CONSUMED_TIME); // Must be executed for real-time control only
-      neural_sim->SetTimeDrivenStep(TIME_DRIVEN_STEP_TIME); // In case there are time-driven neuron models
+      neural_sim=new Simulation(net_file, input_weight_file, -1.0, 0.0, number_of_openmp_queues, number_of_openmp_threads); // End-simulation time not specified
 
       if(input_spike_file)
          neural_sim->AddInputSpikeDriver(new FileInputSpikeDriver(input_spike_file));
@@ -86,7 +89,7 @@ EXTERN_C Simulation *create_neural_simulation(const char *net_file, const char *
    return(neural_sim);
   }
 
-EXTERN_C void finish_neural_simulation(Simulation *neural_sim)
+extern "C" void finish_neural_simulation(Simulation *neural_sim)
   {
    // EDLUT interface drivers
    FileInputSpikeDriver *neural_activity_input_file;
@@ -124,54 +127,60 @@ EXTERN_C void finish_neural_simulation(Simulation *neural_sim)
    delete neural_sim;
   }
 
-EXTERN_C int run_neural_simulation_slot(Simulation *neural_sim, double slot_end_time)
+extern "C" int run_neural_simulation_slot(Simulation *neural_sim, double next_step_sim_time)
   {
-   int ret;
-   neural_sim->SetTotalSpikeCounter(0);
-   try
-     {
-      neural_sim->RunSimulationSlot(slot_end_time);
-      ret=0;
-     }
-   catch(ConnectionException exc)
-     {
-      cerr << exc << endl;
-      ret=1;
-     }
-   catch(EDLUTFileException exc)
-     {
-      cerr << exc << endl;
-      ret=exc.GetErrorNum();
-     }
-   catch(EDLUTException exc)
-     {
-      cerr << exc << endl;
-      ret=exc.GetErrorNum();
-     }
-   return(ret);
+	int ret=0;
+	if(omp_get_thread_num()==0){
+		N_one_slot_internal_spikes2=neural_sim->GetTotalSpikeCounter();
+	}
+#pragma omp barrier
+		try{
+			neural_sim->RunSimulationSlot(next_step_sim_time);
+#pragma omp barrier
+			if(omp_get_thread_num()==0){
+				N_one_slot_internal_spikes2=neural_sim->GetTotalSpikeCounter()-N_one_slot_internal_spikes2;
+			}
+			ret=0;
+
+		}
+		catch(ConnectionException exc){
+			cerr << exc << endl;
+			ret=1;
+		}
+		catch(EDLUTFileException exc){
+			cerr << exc << endl;
+			ret=exc.GetErrorNum();
+		}
+		catch(EDLUTException exc){
+			cerr << exc << endl;
+			ret=exc.GetErrorNum();
+		}
+	return(ret);
+}
+
+extern "C" void reset_neural_simulation(Simulation *neural_sim)
+  {
+	  for(int i=0; i<neural_sim->GetNumberOfQueues(); i++){
+		neural_sim->GetQueue()->RemoveSpikes(i);
+	  }
   }
 
-EXTERN_C void reset_neural_simulation(Simulation *neural_sim)
-  {
-   neural_sim->GetQueue()->RemoveSpikes();
-  }
-
-EXTERN_C void save_neural_weights(Simulation *neural_sim)
+extern "C" void save_neural_weights(Simulation *neural_sim)
   {
    neural_sim->SaveWeights();
   }
 
-EXTERN_C long get_neural_simulation_spike_counter(Simulation *neural_sim)
+extern "C" long get_neural_simulation_spike_counter_for_each_slot_time()
   {
-   return(neural_sim->GetTotalSpikeCounter());
+	  return N_one_slot_internal_spikes2;
   }
 
-EXTERN_C long long get_neural_simulation_event_counter(Simulation *neural_sim)
+extern "C" long long get_neural_simulation_event_counter(Simulation *neural_sim)
   {
    return(neural_sim->GetSimulationUpdates());
   }
 
-EXTERN_C long long get_accumulated_heap_occupancy_counter(Simulation *neural_sim)
+extern "C" long long get_accumulated_heap_occupancy_counter(Simulation *neural_sim)
   {
    return(neural_sim->GetHeapAcumSize());
   }
@@ -186,7 +195,7 @@ void init_delay(struct delay *d, double del_time)
    d->length=(int)(del_time/SIM_SLOT_LENGTH+1.5); // +1 because one position of the line is wasted to return the oldest element. +0.5 to round the size
    d->index=0;
    for(npos=0;npos<d->length;npos++)
-      for(nelem=0;nelem<NUM_JOINTS;nelem++)
+      for(nelem=0;nelem<NUM_OUTPUT_VARS;nelem++) //NUM_JOINTS
          d->buffer[npos][nelem]=0;
   }
 
@@ -196,9 +205,32 @@ double *delay_line(struct delay *d, double *elem)
    double *elems;
    next_index=(d->index+1)%d->length; // oldest used element position
    elems=d->buffer[next_index];
-   for(nelem=0;nelem<NUM_JOINTS;nelem++)
+   for(nelem=0;nelem<NUM_OUTPUT_VARS;nelem++)// NUM_JOINTS
       d->buffer[d->index][nelem]=elem[nelem];
    d->index=next_index; // make index point to the returned element
+   return(elems);
+  }
+/////////////////////DELAY LINES FOR THE CONTROL LOOP PER JOINT NOT PER MICROZONE//////////////////////////
+void init_delay_joint(struct delay_joint *d, double del_time)
+  {
+   int nelem, npos;
+   if(del_time>MAX_DELAY_TIME)
+      del_time=MAX_DELAY_TIME;
+   d->length_joint=(int)(del_time/SIM_SLOT_LENGTH+1.5); // +1 because one position of the line is wasted to return the oldest element. +0.5 to round the size
+   d->index_joint=0;
+   for(npos=0;npos<d->length_joint;npos++)
+      for(nelem=0;nelem<NUM_JOINTS;nelem++) //NUM_JOINTS
+         d->buffer_joint[npos][nelem]=0.0;  }
+
+double *delay_line_joint(struct delay_joint *d, double *elem)
+  {
+   int nelem,next_index;
+   double *elems;
+   next_index=(d->index_joint+1)%d->length_joint; // oldest used element position
+   elems=d->buffer_joint[next_index];
+   for(nelem=0;nelem<NUM_JOINTS;nelem++)// NUM_JOINTS
+      d->buffer_joint[d->index_joint][nelem]=elem[nelem];
+   d->index_joint=next_index; // make index point to the returned element
    return(elems);
   }
 
@@ -209,7 +241,7 @@ double gaussian_function(double a, double b, double c, double x)
    return(a*exp(-(x-b)*(x-b)/(2*c*c)));
   }
 
-EXTERN_C void calculate_input_trajectory(double *inp, double amplitude, double tsimul)
+extern "C" void calculate_input_trajectory(double *inp, double amplitude, double tsimul)
   {
    int njoint;
    for(njoint=0;njoint<NUM_JOINTS;njoint++)
@@ -220,6 +252,60 @@ EXTERN_C void calculate_input_trajectory(double *inp, double amplitude, double t
       inp[njoint+2*NUM_JOINTS]=amplitude*(12*M_PI*(1-2*tsimul)*cos(4*M_PI*tsimul*tsimul*tsimul - 6*M_PI*tsimul*tsimul - M_PI*njoint/4) + 144*M_PI*M_PI*tsimul*tsimul*(tsimul-1)*(tsimul-1)*sin(4*M_PI*tsimul*tsimul*tsimul - 6*M_PI*tsimul*tsimul - M_PI*njoint/4));
      }
   }
+
+extern "C" void calculate_input_error(double *inp, double amplitude,double trajectory_time,double tsimul,double centerpos[],double centerneg[],double sigma[])
+  {
+   int njoint;
+
+   for(njoint=0;njoint<NUM_JOINTS;njoint++)
+     {  centerpos[njoint]=trajectory_time*2.0/3;
+		centerneg[njoint]=trajectory_time*1.0/3;
+		sigma[njoint]=trajectory_time*0.1;//trajectory_time*0.1;
+		 
+		 inp[njoint]=amplitude*exp(-(tsimul - centerpos[njoint])*(tsimul - centerpos[njoint])/(2*sigma[njoint]*sigma[njoint]))-amplitude*exp(-(tsimul - centerneg[njoint])*(tsimul - centerneg[njoint])/(2*sigma[njoint]*sigma[njoint]));
+		 inp[njoint+NUM_JOINTS]=amplitude*((2*centerpos[njoint]-2*tsimul)/(2*sigma[njoint]*sigma[njoint]))*exp(-(centerpos[njoint]-tsimul)*(centerpos[njoint]-tsimul)/(2*sigma[njoint]*sigma[njoint]))-amplitude*((2*centerneg[njoint]-2*tsimul)/(2*sigma[njoint]*sigma[njoint]))*exp(-(centerneg[njoint]-tsimul)*(centerneg[njoint]-tsimul)/(2*sigma[njoint]*sigma[njoint]));	
+		 inp[njoint+2*NUM_JOINTS]=amplitude*(((2*centerpos[njoint]-2*tsimul)*(2*centerpos[njoint]-2*tsimul)/(4*sigma[njoint]*sigma[njoint]*sigma[njoint]*sigma[njoint]))*exp(-(centerpos[njoint]-tsimul)*(centerpos[njoint]-tsimul)/(2*sigma[njoint]*sigma[njoint]))-(1/sigma[njoint]*sigma[njoint])*exp(-(centerpos[njoint]-tsimul)*(centerpos[njoint]-tsimul)/(2*sigma[njoint]*sigma[njoint])))-amplitude*(((2*centerneg[njoint]-2*tsimul)*(2*centerneg[njoint]-2*tsimul)/(4*sigma[njoint]*sigma[njoint]*sigma[njoint]*sigma[njoint]))*exp(-(centerneg[njoint]-tsimul)*(centerneg[njoint]-tsimul)/(2*sigma[njoint]*sigma[njoint]))-(1/sigma[njoint]*sigma[njoint])*exp(-(centerneg[njoint]-tsimul)*(centerneg[njoint]-tsimul)/(2*sigma[njoint]*sigma[njoint])));
+          }
+  }
+
+extern "C" void calculate_input_error_repetitions(double *inp, double amplitude,double trajectory_time,double tsimul,double centerpos[],double centerneg[],double sigma[],int number_of_rep)
+  {
+   int njoint;
+   int nrepetition;
+   double center_pos_init;
+   double center_neg_init;
+   double factor;
+   double inp_aux=0.0;
+   double inp_aux_vel=0.0; 
+   double inp_aux_acel=0.0; 
+   
+
+   factor=(trajectory_time/number_of_rep);
+   center_pos_init=factor*(2.0/3.0);
+   center_neg_init=factor*(1.0/3.0);
+   
+   for(njoint=0;njoint<NUM_JOINTS;njoint++)
+     {	
+	sigma[njoint]=factor*0.1;   
+		for (nrepetition=0;nrepetition<number_of_rep;nrepetition++)
+		{
+		 centerpos[(njoint*number_of_rep)+nrepetition]=center_pos_init+(trajectory_time/number_of_rep)*(nrepetition);
+		 centerneg[(njoint*number_of_rep)+nrepetition]=center_neg_init+(trajectory_time/number_of_rep)*(nrepetition);
+		 inp_aux+=amplitude*exp(-(tsimul - centerpos[(njoint*number_of_rep)+nrepetition])*(tsimul - centerpos[(njoint*number_of_rep)+nrepetition])/(2*sigma[njoint]*sigma[njoint]))-amplitude*exp(-(tsimul - centerneg[(njoint*number_of_rep)+nrepetition])*(tsimul - centerneg[(njoint*number_of_rep)+nrepetition])/(2*sigma[njoint]*sigma[njoint]));
+		 inp_aux_vel+=amplitude*((2*centerpos[(njoint*number_of_rep)+nrepetition]-2*tsimul)/(2*sigma[njoint]*sigma[njoint]))*exp(-(centerpos[(njoint*number_of_rep)+nrepetition]-tsimul)*(centerpos[(njoint*number_of_rep)+nrepetition]-tsimul)/(2*sigma[njoint]*sigma[njoint]))-amplitude*((2*centerneg[(njoint*number_of_rep)+nrepetition]-2*tsimul)/(2*sigma[njoint]*sigma[njoint]))*exp(-(centerneg[(njoint*number_of_rep)+nrepetition]-tsimul)*(centerneg[(njoint*number_of_rep)+nrepetition]-tsimul)/(2*sigma[njoint]*sigma[njoint]));	
+		 inp_aux_acel+=amplitude*(((2*centerpos[(njoint*number_of_rep)+nrepetition]-2*tsimul)*(2*centerpos[(njoint*number_of_rep)+nrepetition]-2*tsimul)/(4*sigma[njoint]*sigma[njoint]*sigma[njoint]*sigma[njoint]))*exp(-(centerpos[(njoint*number_of_rep)+nrepetition]-tsimul)*(centerpos[(njoint*number_of_rep)+nrepetition]-tsimul)/(2*sigma[njoint]*sigma[njoint]))-(1/sigma[njoint]*sigma[njoint])*exp(-(centerpos[(njoint*number_of_rep)+nrepetition]-tsimul)*(centerpos[(njoint*number_of_rep)+nrepetition]-tsimul)/(2*sigma[njoint]*sigma[njoint])))-amplitude*(((2*centerneg[(njoint*number_of_rep)+nrepetition]-2*tsimul)*(2*centerneg[(njoint*number_of_rep)+nrepetition]-2*tsimul)/(4*sigma[njoint]*sigma[njoint]*sigma[njoint]*sigma[njoint]))*exp(-(centerneg[(njoint*number_of_rep)+nrepetition]-tsimul)*(centerneg[(njoint*number_of_rep)+nrepetition]-tsimul)/(2*sigma[njoint]*sigma[njoint]))-(1/sigma[njoint]*sigma[njoint])*exp(-(centerneg[(njoint*number_of_rep)+nrepetition]-tsimul)*(centerneg[(njoint*number_of_rep)+nrepetition]-tsimul)/(2*sigma[njoint]*sigma[njoint])));
+          
+		}
+		 
+		 inp[njoint]=inp_aux;
+		 inp[njoint+NUM_JOINTS]=inp_aux_vel;
+		 inp[njoint+2*NUM_JOINTS]=inp_aux_acel;
+		 inp_aux=0.0;
+		 inp_aux_vel=0.0; 
+		 inp_aux_acel=0.0;
+		}
+  }
+
 
 //extern "C" void calculate_input_trajectory(double *inp, double amplitude, double tsimul)
 /*
@@ -289,7 +375,7 @@ EXTERN_C void calculate_input_trajectory(double *inp, double amplitude, double t
   }
 */
 
-EXTERN_C void calculate_input_trajectory_max_amplitude(double trajectory_time, double amplitude, double *min_traj_amplitude, double *max_traj_amplitude)
+extern "C" void calculate_input_trajectory_max_amplitude(double trajectory_time, double amplitude, double *min_traj_amplitude, double *max_traj_amplitude)
   {
    double inp[NUM_JOINTS*3],traj_val;
    double tsimul;
@@ -314,13 +400,15 @@ EXTERN_C void calculate_input_trajectory_max_amplitude(double trajectory_time, d
      }
   }
 
+
+
 double calculate_RBF_width(double rbf_distance, double overlap)
   {
    double half_rbf_pos_inc=rbf_distance/2;
    return(sqrt(half_rbf_pos_inc*half_rbf_pos_inc/(-2*log(overlap))));
   }
  
-EXTERN_C void printRBFs(struct rbf_set *rbfs)
+extern "C" void printRBFs(struct rbf_set *rbfs)
   {
    int nneu;
    double rbf_cur_pos,rbf_pos_inc,rbf_width;
@@ -353,14 +441,13 @@ void generate_activityRBF(Simulation *sim, double cur_slot_time, struct rbf_set 
          cur_spk_time=cur_slot_time;
       for(;cur_spk_time<cur_slot_time+SIM_SLOT_LENGTH;cur_spk_time+=spk_per)
         {
-         InputSpike *newspk=new InputSpike(cur_spk_time, cur_neuron);
-         sim->GetQueue()->InsertEvent(newspk);
+		 sim->GetQueue()->InsertInputSpikeEvent(cur_spk_time, cur_neuron);
          last_spk_times[nneu]=cur_spk_time;
         }
      }
   }
 
-EXTERN_C void generate_input_traj_activity(Simulation *neural_sim, double cur_slot_time, double *input_vars, double *min_traj_amplitude, double *max_traj_amplitude)
+extern "C" void generate_input_traj_activity(Simulation *neural_sim, double cur_slot_time, double *input_vars, double *min_traj_amplitude, double *max_traj_amplitude)
   {
    static double last_spk_times[NUM_TRAJECTORY_INPUT_NEURONS]={0.0};
    double max_spk_freq=100.0;
@@ -410,7 +497,7 @@ EXTERN_C void generate_input_traj_activity(Simulation *neural_sim, double cur_sl
 */
   }
 
-EXTERN_C void generate_robot_state_activity(Simulation *neural_sim, double cur_slot_time, double *robot_state_vars, double *min_traj_amplitude, double *max_traj_amplitude)
+extern "C" void generate_robot_state_activity(Simulation *neural_sim, double cur_slot_time, double *robot_state_vars, double *min_traj_amplitude, double *max_traj_amplitude)
   {
    static double last_spk_times[NUM_ROBOT_STATE_INPUT_NEURONS]={0.0};
    double max_spk_freq=100.0;
@@ -467,26 +554,26 @@ EXTERN_C void generate_robot_state_activity(Simulation *neural_sim, double cur_s
 double compute_PD_error(double desired_position, double desired_velocity, double actual_position, double actual_velocity, double kp, double kd)
  {
   double t_error;
-  t_error=kp*(desired_position-actual_position) + kd*(desired_velocity-actual_velocity);
+  t_error=kp*(actual_position-desired_position) + kd*(actual_velocity-desired_velocity);
   return(t_error);
  }
 
 double error_sigmoid(double error_torque, double max_error_torque)
   {
-   return(1./(1+exp(-16*error_torque/max_error_torque+8)));
+   return(0.15 + 0.8/(1+exp(-10*error_torque/max_error_torque+4)));
+   //return(0.10 + 0.8/(1+exp(-10*error_torque/max_error_torque+4)*exp(-10*error_torque/max_error_torque+4)));
   }
 
 void generate_stochastic_activity(Simulation *sim, double cur_slot_init, double input_current, long first_learning_neuron, long num_learning_neurons, double *last_spk_times, double max_spk_freq)
   {
    double cur_slot_end,min_spk_per,cur_spk_init_zone,cur_spk_end_zone;
    int nneu;
-   double current_freq_factor=1.1;
+   double current_freq_factor=1.1;// 1.1 original FIJATEEEEEEEEEEEEE AQUIIIIIIIIIIIIIIIIIIIIIIIIIIII
    Neuron *cur_neuron;
    min_spk_per=1/max_spk_freq;
    cur_slot_end=cur_slot_init+SIM_SLOT_LENGTH;
    for(nneu=0;nneu<num_learning_neurons;nneu++)
      {
-      cur_neuron=sim->GetNetwork()->GetNeuronAt(first_learning_neuron+nneu);
       cur_spk_init_zone=last_spk_times[nneu]+min_spk_per;
       if(cur_spk_init_zone<cur_slot_init)
          cur_spk_init_zone=cur_slot_init;
@@ -497,16 +584,16 @@ void generate_stochastic_activity(Simulation *sim, double cur_slot_init, double 
             cur_spk_end_zone=cur_slot_end;
          if((cur_spk_end_zone-cur_spk_init_zone)*input_current*current_freq_factor*max_spk_freq > rand()/(double)RAND_MAX)
            {
+			cur_neuron=sim->GetNetwork()->GetNeuronAt(first_learning_neuron+nneu);
             double cur_spk_time=(cur_spk_end_zone+cur_spk_init_zone)/2;
-            InputSpike *newspk=new InputSpike(cur_spk_time, cur_neuron);
-            sim->GetQueue()->InsertEvent(newspk);
+			sim->GetQueue()->InsertInputSpikeEvent(cur_spk_time, cur_neuron);
             last_spk_times[nneu]=cur_spk_time;
            }
         }
      }
   }
 
-EXTERN_C void calculate_error_signals(double *input_vars, double *state_vars, double *error_vars)
+extern "C" void calculate_error_signals(double *input_vars, double *state_vars, double *error_vars)
   {
    int num_joint;
    for(num_joint=0;num_joint<NUM_JOINTS;num_joint++)
@@ -520,11 +607,12 @@ EXTERN_C void calculate_error_signals(double *input_vars, double *state_vars, do
      }
   }
 
-EXTERN_C void calculate_learning_signals(double *error_vars, double *output_vars, double *learning_vars)
+extern "C" void calculate_learning_signals(double *error_vars, double *output_vars, double *learning_vars)
   {
    int num_joint;
    double torque_error;
-   double i_neu_posit, i_neu_negat;
+   double i_neu_posit=0.0;
+   double i_neu_negat=0.0;
    const double i_base=0.0; // 0.15;
    const double max_low_torque_factor=0.2;
    for(num_joint=0;num_joint<NUM_JOINTS;num_joint++)
@@ -535,18 +623,18 @@ EXTERN_C void calculate_learning_signals(double *error_vars, double *output_vars
       corrective_torque_posit=output_vars[num_joint*2];
       corrective_torque_negat=output_vars[num_joint*2+1];
       // use a sigmoid to adapt torque error signals
-      if(torque_error>0)
+      if(torque_error<=0.0)
         {
-         i_neu_posit = error_sigmoid(torque_error,max_torque);
+         i_neu_posit = error_sigmoid(-torque_error,max_torque);
          if(corrective_torque_negat > max_torque*max_low_torque_factor)
-            i_neu_negat=0;
+            i_neu_negat=0.0;
          else
             i_neu_negat=i_base;
         }
       else
-         if(torque_error<=0)
+         if(torque_error>0.0)
            {
-            i_neu_negat = error_sigmoid(-torque_error,max_torque);
+            i_neu_negat = error_sigmoid(torque_error,max_torque);
             if(corrective_torque_posit > max_torque*max_low_torque_factor)
                i_neu_posit=0.0;
             else 
@@ -557,11 +645,11 @@ EXTERN_C void calculate_learning_signals(double *error_vars, double *output_vars
      }
   }
 
-EXTERN_C void generate_learning_activity(Simulation *neural_sim, double cur_slot_init, double *learning_vars)
+extern "C" void generate_learning_activity(Simulation *neural_sim, double cur_slot_init, double *learning_vars)
   {
    static double last_spk_times[NUM_LEARNING_NEURONS]={0.0};
    int num_joint;
-   const double max_spk_freq=20; // maximum learning-neuron firing frequency
+   const double max_spk_freq=25; // maximum learning-neuron firing frequency
    for(num_joint=0;num_joint<NUM_JOINTS;num_joint++)
      {
       long first_learning_neuron, first_neuron_in_learning_neurons;
@@ -577,15 +665,17 @@ EXTERN_C void generate_learning_activity(Simulation *neural_sim, double cur_slot
 
 //////////////////////////// GENERATE OUTPUT /////////////////////////
 
-EXTERN_C int compute_output_activity(Simulation *neural_sim, double *output_vars)
+extern "C" int compute_output_activity(Simulation *neural_sim, double *output_vars)
   {
    long nspks, spkneu;
    double spktime;
-   static float current_time_check=0;
+   static double current_time_check=0;
+   double max_time_check=current_time_check;
    int noutputvar;
    ArrayOutputSpikeDriver *neural_activity_output_array;
    const double tau_time_constant=0.060; // 20ms
-   const double kernel_amplitude=sqrt(2/tau_time_constant); // normalization coefficient
+   //kernel_amplitude=sqrt(2/tau_time_constant); // normalization coefficient
+   const double kernel_amplitude=sqrt(0.000075/tau_time_constant); // normalization coefficient
 // Update value of output vars to the current time
    for(noutputvar=0;noutputvar<NUM_OUTPUT_VARS;noutputvar++)
       output_vars[noutputvar]*=exp(-SIM_SLOT_LENGTH/tau_time_constant);
@@ -594,23 +684,27 @@ EXTERN_C int compute_output_activity(Simulation *neural_sim, double *output_vars
    neural_activity_output_array=(ArrayOutputSpikeDriver *)neural_sim->GetOutputSpikeDriver(0); // The first output spike driver in the list is the ArrayOutputSpikeDriver
    while(neural_activity_output_array->RemoveBufferedSpike(spktime,spkneu))
      {
-      if(spktime < current_time_check)
-         printf("Unexpected spike time:%f of neuron: %li (current simulation time: %f)\n",spktime,spkneu,current_time_check);
-      current_time_check=(float)spktime;
-      if(spkneu >= FIRST_OUTPUT_NEURON && spkneu < FIRST_OUTPUT_NEURON+NUM_OUTPUT_NEURONS)
-        {
+	  if(spktime < current_time_check){
+         printf("Unexpected spike time:%lf of neuron: %li (current simulation time: %f)\n",spktime,spkneu,current_time_check);
+	  }
+	  if(spktime>max_time_check){
+		 max_time_check=spktime;
+	  }
+
+	  if(spkneu >= FIRST_OUTPUT_NEURON && spkneu < FIRST_OUTPUT_NEURON+NUM_OUTPUT_NEURONS){
          noutputvar=(spkneu-FIRST_OUTPUT_NEURON)/NUM_NEURONS_PER_OUTPUT_VAR;
          output_vars[noutputvar]+=kernel_amplitude;
-        }
+      }
       nspks++;
-     }
+   }
+   current_time_check=max_time_check;
    neural_activity_output_array->OutputBuffer.clear();
    return(nspks);
   }
 
 ///////////////////////////// VARIABLES LOG //////////////////////////
 
-EXTERN_C int create_log(struct log *log, int total_traj_executions, int trajectory_time)
+extern "C" int create_log(struct log *log, int total_traj_executions, int trajectory_time)
   {
   //Total number of registers that will be stored in the computer memory during the simulation
    int n_log_regs=total_traj_executions*(int)((trajectory_time-((SIM_SLOT_LENGTH)/2.0))/(float)(SIM_SLOT_LENGTH) + 1);
@@ -624,7 +718,7 @@ EXTERN_C int create_log(struct log *log, int total_traj_executions, int trajecto
    return(errorn);
   }
 
-EXTERN_C void log_vars(struct log *log, double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter)
+extern "C" void log_vars(struct log *log, double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter)
   {
    int nvar;
    log->regs[log->nregs].time=(float)time;
@@ -644,8 +738,34 @@ EXTERN_C void log_vars(struct log *log, double time, double *input_vars, double 
       log->regs[log->nregs].robot_error_vars[nvar]=error_vars?(float)error_vars[nvar]:0;
    log->nregs++;
   }
+extern "C" void log_vars_reduced(struct log *log, double time, double *input_vars,double *output_vars_normalized,double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter)
+  {
+   
+   int nvar;
+   log->regs[log->nregs].time=(float)time;
+   log->regs[log->nregs].spk_counter=spk_counter;
+   log->regs[log->nregs].consumed_time=elapsed_time;
+   for(nvar=0;nvar<NUM_JOINTS*3;nvar++)
+      log->regs[log->nregs].cereb_input_vars[nvar]=input_vars?(float)input_vars[nvar]:0; 
 
-EXTERN_C int save_and_finish_log(struct log *log, const char *file_name)
+   for(nvar=0;nvar<NUM_JOINTS;nvar++)
+      log->regs[log->nregs].robot_state_vars[nvar]=output_vars?(float)output_vars_normalized[2*nvar]-(float)output_vars_normalized[2*(nvar)+1]:0;
+ 
+   for(nvar=0;nvar<NUM_JOINTS;nvar++)
+      log->regs[log->nregs].robot_torque_vars[nvar]=output_vars?(float)output_vars[2*nvar]-(float)output_vars[2*(nvar)+1]:0;
+   
+   for(nvar=0;nvar<NUM_OUTPUT_VARS;nvar++)
+      log->regs[log->nregs].cereb_output_vars[nvar]=output_vars?(float)output_vars[nvar]:0;
+   
+   for(nvar=0;nvar<NUM_OUTPUT_VARS;nvar++)
+      log->regs[log->nregs].cereb_learning_vars[nvar]=learning_vars?(float)learning_vars[nvar]:0;
+
+   for(nvar=0;nvar<NUM_JOINTS;nvar++)
+      log->regs[log->nregs].robot_error_vars[nvar]=error_vars?(float)error_vars[nvar]:0;
+
+   log->nregs++;
+}
+extern "C" int save_and_finish_log(struct log *log, char *file_name)
   {
    int ret;
    int cur_reg,cur_var;
@@ -668,21 +788,21 @@ EXTERN_C int save_and_finish_log(struct log *log, const char *file_name)
       fprintf(fd,"\n%s Numer of registers: %i. Columns per register: time consumed_time spk_counter %i_input_vars %i_state_vars %i_torque_vars %i_output_vars %i_learning_vars %i_error_vars\n\n",COMMENT_CHARS,log->nregs,NUM_JOINTS*3,NUM_JOINTS*3,NUM_JOINTS,NUM_OUTPUT_VARS,NUM_OUTPUT_VARS,NUM_JOINTS);
       for(cur_reg=0;cur_reg<log->nregs;cur_reg++)
         {
-         ret|=!fprintf(fd,"%g ",log->regs[cur_reg].time);
-         ret|=!fprintf(fd,"%g ",log->regs[cur_reg].consumed_time);
+         ret|=!fprintf(fd,"%10.10g ",log->regs[cur_reg].time);
+         ret|=!fprintf(fd,"%10.10g ",log->regs[cur_reg].consumed_time);
          ret|=!fprintf(fd,"%lu ",log->regs[cur_reg].spk_counter);
          for(cur_var=0;cur_var<NUM_JOINTS*3;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].cereb_input_vars[cur_var]);
+            ret|=!fprintf(fd,"%10.10g ",log->regs[cur_reg].cereb_input_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_JOINTS*3;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].robot_state_vars[cur_var]);
+            ret|=!fprintf(fd,"%10.10g ",log->regs[cur_reg].robot_state_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_JOINTS;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].robot_torque_vars[cur_var]);
+            ret|=!fprintf(fd,"%10.10g ",log->regs[cur_reg].robot_torque_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_OUTPUT_VARS;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].cereb_output_vars[cur_var]);
+            ret|=!fprintf(fd,"%10.10g ",log->regs[cur_reg].cereb_output_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_OUTPUT_VARS;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].cereb_learning_vars[cur_var]);
+            ret|=!fprintf(fd,"%10.10g ",log->regs[cur_reg].cereb_learning_vars[cur_var]);
          for(cur_var=0;cur_var<NUM_JOINTS;cur_var++)
-            ret|=!fprintf(fd,"%g ",log->regs[cur_reg].robot_error_vars[cur_var]);
+            ret|=!fprintf(fd,"%10.10g ",log->regs[cur_reg].robot_error_vars[cur_var]);
          fprintf(fd,"\n");
         }
       fclose(fd);
@@ -692,3 +812,46 @@ EXTERN_C int save_and_finish_log(struct log *log, const char *file_name)
       ret=1;
    return(ret);
   }
+
+
+extern "C" void calculate_input_activity_for_one_trajectory(Simulation *neural_sim, double time){
+	int i=0;
+	int j=0;
+	int n=100;
+	for(double t=0; t<0.999; t+=0.002){
+		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(n));
+		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(n+1));
+		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(n+2));
+		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(n+3));
+		n+=4;
+
+		if(i<19){
+			neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(j));
+			neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(j+1));
+			neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(j+2));
+			neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(j+3));
+		}
+		i++;
+		if(i==20){
+			i=0;
+			j+=4;
+		}
+	}
+}
+
+extern "C" void init_real_time_restriction(Simulation * neural_sim, float slot_time, float first_section, float second_section, float third_section){
+	neural_sim->RealTimeRestrictionObject=new RealTimeRestriction(slot_time, first_section, second_section,third_section);	
+}
+
+
+extern "C" void start_real_time_restriction(Simulation * neural_sim){
+	neural_sim->RealTimeRestrictionObject->Watchdog();
+}
+
+extern "C" void reset_real_time_restriction(Simulation * neural_sim){
+	neural_sim->RealTimeRestrictionObject->ResetWatchDog();
+}
+
+extern "C" void stop_real_time_restriction(Simulation * neural_sim){
+	neural_sim->RealTimeRestrictionObject->StopWatchDog();
+}

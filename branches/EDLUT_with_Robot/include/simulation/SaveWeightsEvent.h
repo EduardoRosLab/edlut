@@ -48,13 +48,7 @@ class SaveWeightsEvent: public Event{
 	
 	public:
    		
-   		/*!
-   		 * \brief Default constructor.
-   		 * 
-   		 * It creates and initializes a new event object.
-   		 */
-   		SaveWeightsEvent();
-   	
+  	
    		/*!
    		 * \brief Constructor with parameters.
    		 * 
@@ -62,7 +56,7 @@ class SaveWeightsEvent: public Event{
    		 * 
    		 * \param NewTime Time of the new event.
    		 */
-   		SaveWeightsEvent(double NewTime);
+   		SaveWeightsEvent(double NewTime, Simulation * CurrentSimulation);
    		
    		/*!
    		 * \brief Class destructor.
@@ -73,15 +67,38 @@ class SaveWeightsEvent: public Event{
    	
 
    		/*!
-   		 * \brief It process an event in the simulation.
+   		 * \brief It process an event in the simulation with the option of real time available.
    		 * 
-   		 * It process the event in the simulation.
+   		 * It process an event in the simulation with the option of real time available.
    		 * 
    		 * \param CurrentSimulation The simulation object where the event is working.
-		 * \param RealTimeRestriction This variable indicates whether we are making a 
-		 * real-time simulation and the watchdog is enabled.
+		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
+		 * control the consumed time in each slot.
    		 */
-   		virtual void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction);
+   		virtual void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction);
+
+		/*!
+   		 * \brief It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * \param CurrentSimulation The simulation object where the event is working.
+   		 */
+		virtual void ProcessEvent(Simulation * CurrentSimulation);
+
+   		/*!
+   		 * \brief this method print the event type.
+   		 * 
+   		 * This method print the event type..
+		 */
+		virtual void PrintType();
+
+   		/*!
+   		 * \brief The event queue uses this preference variable to sort the events with the same time stamp.
+   		 * 
+   		 * The event queue uses this preference variable to sort the events with the same time stamp.
+		 */
+		virtual int ProcessingPriority();
 };
 
 #endif /*SAVEWEIGHTSEVENT_H_*/

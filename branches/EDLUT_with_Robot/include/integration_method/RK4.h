@@ -1,7 +1,7 @@
 /***************************************************************************
  *                           RK4.h                                         *
  *                           -------------------                           *
- * copyright            : (C) 2012 by Francisco Naveros                    *
+ * copyright            : (C) 2013 by Francisco Naveros                    *
  * email                : fnaveros@atc.ugr.es                              *
  ***************************************************************************/
 
@@ -50,26 +50,18 @@ class RK4 : public FixedStep {
 
 	public:
 
-		/*!
-		 * \brief These vectors are used as auxiliar vectors.
-		*/
-		float ** AuxNeuronState;
-		float ** AuxNeuronState1;
-		float ** AuxNeuronState2;
-		float ** AuxNeuronState3;
-		float ** AuxNeuronState4;
 
 		/*!
-		 * \brief Constructor of the class with 4 parameter.
+		 * \brief Constructor with parameters.
 		 *
 		 * It generates a new fourth order Runge-Kutta object.
 		 *
-		 * \param N_neuronStateVariables number of state variables for each cell.
-		 * \param N_differentialNeuronState number of state variables witch are calculate with a differential equation for each cell.
-		 * \param N_timeDependentNeuronState number of state variables witch are calculate with a time dependent equation for each cell.
-		 * \param N_CPU_thread number of OpenMP thread used.
+		 * \param NewModel time driven neuron model associated to this integration method.
+		 * \param N_neuronStateVariables total number of state variable for each neuron
+		 * \param N_differentialNeuronState number of state variables that are diffined by a differential ecuation.
+		 * \param N_timeDependentNeuronState number of state variables that are not diffined by a differential ecuation.
 		 */
-		RK4(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread);
+		RK4(TimeDrivenNeuronModel * NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState);
 
 		/*!
 		 * \brief Class destructor.
@@ -80,17 +72,15 @@ class RK4 : public FixedStep {
 		
 
 		/*!
-		 * \brief It calculate the next neural state varaibles of the model.
+		 * \brief It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * It calculate the next neural state varaibles of the model.
+		 * It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * \param index Index of the cell inside the neuron model for method with memory (e.g. BDF).
-		 * \param Model The NeuronModel.
+		 * \param index for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 * \param NeuronState neuron state variables of one neuron.
 		 * \param elapsed_time integration time step.
-		 * \param CPU_thread_index index of the OpenMP thread.
 		 */
-		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index);
+		virtual void NextDifferentialEcuationValue(int index, float * NeuronState, float elapsed_time);
 
 
 		/*!
@@ -106,20 +96,20 @@ class RK4 : public FixedStep {
 
 
 		/*!
-		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF).
+		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It initialize the state of the integration method for method with memory (e.g. BDF).
+		 * It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * \param N_neuron number of neuron in the neuron model.
+		 * \param N_neuron number of neurons in the neuron model.
 		 * \param inicialization vector with initial values.
 		 */
 		void InitializeStates(int N_neurons, float * initialization){};
 
 
 		/*!
-		 * \brief It reset the state of the integration method for method with memory (e.g. BDF).
+		 * \brief It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It reset the state of the integration method for method with memory (e.g. BDF).
+		 * It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
 		 * \param index indicate witch neuron must be reseted.
 		 */

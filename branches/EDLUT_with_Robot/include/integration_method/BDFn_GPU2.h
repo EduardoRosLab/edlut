@@ -114,7 +114,7 @@ class BDFn_GPU2 : public IntegrationMethod_GPU2 {
 		 * could be reserved directly in the GPU, but this suppose some restriction in the amount of memory witch can be reserved).
 		 * \param BDForder BDF order (1, 2, ..., 6).
 		 */
-		__device__ BDFn_GPU2(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int Total_N_thread, void ** Buffer_GPU, int BDFOrder):IntegrationMethod_GPU2(N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, Total_N_thread), BDForder(BDFOrder){
+		__device__ BDFn_GPU2(TimeDrivenNeuronModel_GPU2* NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, void ** Buffer_GPU, int BDFOrder):IntegrationMethod_GPU2(NewModel, N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState), BDForder(BDFOrder){
 			AuxNeuronState = ((float*)Buffer_GPU[0]);
 			AuxNeuronState_p = ((float*)Buffer_GPU[1]);
 			AuxNeuronState_p1 = ((float*)Buffer_GPU[2]);
@@ -155,13 +155,13 @@ class BDFn_GPU2 : public IntegrationMethod_GPU2 {
 		 * \param NeuronState Vector of neuron state variables for all neurons.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, float elapsed_time){
+		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, float * NeuronState, float elapsed_time){
 			int offset1=gridDim.x * blockDim.x;
 			int offset2=blockDim.x*blockIdx.x + threadIdx.x;
 
 			//If the state of the cell is 0, we use a Euler method to calculate an aproximation of the solution.
 			if(state[index]==0){
-				Model->EvaluateDifferentialEcuation(index, SizeStates, NeuronState, AuxNeuronState);
+				model->EvaluateDifferentialEcuation(index, SizeStates, NeuronState, AuxNeuronState);
 				for (int j=0; j<N_DifferentialNeuronState; j++){
 					AuxNeuronState_p[j*offset1 + offset2]= NeuronState[j*SizeStates + index] + elapsed_time*AuxNeuronState[j*offset1 + offset2];
 				}
@@ -180,7 +180,7 @@ class BDFn_GPU2 : public IntegrationMethod_GPU2 {
 				AuxNeuronState_p[i*offset1 + offset2]=NeuronState[i*SizeStates + index];
 			}
 				
-			Model->EvaluateTimeDependentEcuation(offset2, offset1, AuxNeuronState_p, elapsed_time);
+			model->EvaluateTimeDependentEcuation(offset2, offset1, AuxNeuronState_p, elapsed_time);
 
 			float epsi=1.0;
 			int k=0;
@@ -188,7 +188,7 @@ class BDFn_GPU2 : public IntegrationMethod_GPU2 {
 			//This integration method is an implicit method. We use this loop to iteratively calculate the implicit value.
 			//epsi is the difference between two consecutive aproximation of the implicit method.
 			while (epsi>1e-16 && k<5){
-				Model->EvaluateDifferentialEcuation(offset2, offset1, AuxNeuronState_p, AuxNeuronState);
+				model->EvaluateDifferentialEcuation(offset2, offset1, AuxNeuronState_p, AuxNeuronState);
 				for (int j=0; j<N_DifferentialNeuronState; j++){
 					AuxNeuronState_c[j*offset1 + offset2]=Coeficient[state[index]*7 + 0]*elapsed_time*AuxNeuronState[j*offset1 + offset2] + Coeficient[state[index]*7 + 1]*NeuronState[j*SizeStates + index];
 					for (int i=1; i<state[index]; i++){
@@ -197,7 +197,7 @@ class BDFn_GPU2 : public IntegrationMethod_GPU2 {
 				}
 
 				//jacobian.
-				Jacobian(offset2, offset1, Model, AuxNeuronState_p, jacnum);
+				Jacobian(offset2, offset1, model, AuxNeuronState_p, jacnum);
 
 				for(int z=0; z<N_DifferentialNeuronState; z++){
 					for(int t=0; t<N_DifferentialNeuronState; t++){
@@ -263,7 +263,7 @@ class BDFn_GPU2 : public IntegrationMethod_GPU2 {
 			}
 
 			//Finaly, we evaluate the neural state variables with time dependence.
-			Model->EvaluateTimeDependentEcuation(index, SizeStates, NeuronState, elapsed_time);
+			model->EvaluateTimeDependentEcuation(index, SizeStates, NeuronState, elapsed_time);
 		}
 
 

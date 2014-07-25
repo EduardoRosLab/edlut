@@ -50,12 +50,23 @@ class ExponentialTable{
 		static const int TableSize=1024*1024*4;
 
 		/*!
-   		 * Look-up table.
+   		 * Look-up table computed in "generate_data()" function.
    		 */
 		static float * LookUpTable;
 
+		/*!
+   		 * Auxiliar variable.
+   		 */
 		static const float aux;
 
+
+   		/*!
+   		 * \brief It compute the exponential look-up table between the min and max exponent values.
+   		 * 
+   		 * It compute the exponential look-up table between the min and max exponent values.
+   		 * 
+   		 * \return the exponential look-up table.
+   		 */
 		static float * generate_data(){
 			float * NewLookUpTable=new float[TableSize];
 			for(int i=0; i<TableSize; i++){
@@ -74,7 +85,7 @@ class ExponentialTable{
    		 */
 		static float GetResult(float value){
 			if(value>=Min && value<=Max){
-				int position=(value-Min)*aux;
+				int position=int((value-Min)*aux);
 				return LookUpTable[position];
 			}else{
 				if(value<(Min)){
@@ -84,12 +95,8 @@ class ExponentialTable{
 				}
 			}
 		} 		
-
-   	
+  	
 };
-
-
-
 
 
 #endif /*EXPONENTIALTABLE_H_*/

@@ -103,7 +103,6 @@ void BDFn_GPU::InitializeMemoryGPU(int N_neurons, int Total_N_thread){
 	cudaMalloc((void**)&AuxNeuronState_neg, N_NeuronStateVariables*Total_N_thread*sizeof(float));
 
 	BDFn_GPU_position<<<1,1>>>(Buffer_GPU, AuxNeuronState, AuxNeuronState_p, AuxNeuronState_p1, AuxNeuronState_c, jacnum, J, inv_J, Coeficient, PreviousNeuronState, D, state, AuxNeuronState2, AuxNeuronState_pos, AuxNeuronState_neg);
-	
 }
 
 

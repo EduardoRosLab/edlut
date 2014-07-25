@@ -156,12 +156,12 @@ class LIFTimeDrivenModel_1_4_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 * \param Buffer_GPU Gpu auxiliar memory.
 		 *
 		 */
-		__device__ LIFTimeDrivenModel_1_4_GPU2(float Eexc,float Einh,float Erest,float Vthr,float Cm,float Tampa,
-			float Tnmda,float Tinh,float Tgj,float Tref,float Grest,float Fgj, char const* integrationName, int N_neurons, int Total_N_thread, void ** Buffer_GPU):TimeDrivenNeuronModel_GPU2(),
-			eexc(Eexc),einh(Einh),erest(Erest),vthr(Vthr),cm(Cm),tampa(Tampa),tnmda(Tnmda),tinh(Tinh),tgj(Tgj),
-			tref(Tref),grest(Grest),fgj(Fgj),inv_tampa(1.0f/tampa),inv_tnmda(1.0f/tnmda),inv_tinh(1.0f/tinh),
+		__device__ LIFTimeDrivenModel_1_4_GPU2(double new_elapsed_time, float Eexc,float Einh,float Erest,float Vthr,float Cm,float Tampa,
+			float Tnmda,float Tinh,float Tgj,float Tref,float Grest,float Fgj, char const* integrationName, int N_neurons,
+			void ** Buffer_GPU):TimeDrivenNeuronModel_GPU2(new_elapsed_time), eexc(Eexc),einh(Einh),erest(Erest),vthr(Vthr),cm(Cm),tampa(Tampa),
+			tnmda(Tnmda),tinh(Tinh),tgj(Tgj), tref(Tref),grest(Grest),fgj(Fgj),inv_tampa(1.0f/tampa),inv_tnmda(1.0f/tnmda),inv_tinh(1.0f/tinh),
 			inv_tgj(1.0f/tgj),inv_cm(1.0f/cm){
-			integrationMethod_GPU2=LoadIntegrationMethod_GPU2::loadIntegrationMethod_GPU2(integrationName, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Total_N_thread, Buffer_GPU);
+			integrationMethod_GPU2=LoadIntegrationMethod_GPU2::loadIntegrationMethod_GPU2(this, integrationName, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Buffer_GPU);
 		}
 
 		/*!
@@ -169,7 +169,7 @@ class LIFTimeDrivenModel_1_4_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 *
 		 * It destroys an object of this class.
 		 */
-		__device__ ~LIFTimeDrivenModel_1_4_GPU2(){
+		__device__ virtual ~LIFTimeDrivenModel_1_4_GPU2(){
 		}
 
 
@@ -189,40 +189,42 @@ class LIFTimeDrivenModel_1_4_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		__device__ void UpdateState(int index, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime)
+		__device__ void UpdateState(double CurrentTime)
 		{
-			double elapsed_time =CurrentTime - LastUpdateGPU[index];
-			float elapsed_time_f=elapsed_time;
-			
-			LastSpikeTimeGPU[index]+=elapsed_time;
-			double last_spike=LastSpikeTimeGPU[index];
+			int index = blockIdx.x * blockDim.x + threadIdx.x;
+			while (index<vectorNeuronState_GPU2->SizeStates){
+				
+				vectorNeuronState_GPU2->LastSpikeTimeGPU[index]+=TimeDrivenStep_GPU;
+				double last_spike=vectorNeuronState_GPU2->LastSpikeTimeGPU[index];
 
 
-			StateGPU[1*SizeStates + index]+=AuxStateGPU[index];
-			StateGPU[2*SizeStates + index]+=AuxStateGPU[SizeStates + index];
-			StateGPU[3*SizeStates + index]+=AuxStateGPU[2*SizeStates + index];
-			StateGPU[4*SizeStates + index]+=AuxStateGPU[3*SizeStates + index];
+				vectorNeuronState_GPU2->VectorNeuronStates_GPU[1*vectorNeuronState_GPU2->SizeStates + index]+=vectorNeuronState_GPU2->AuxStateGPU[index];
+				vectorNeuronState_GPU2->VectorNeuronStates_GPU[2*vectorNeuronState_GPU2->SizeStates + index]+=vectorNeuronState_GPU2->AuxStateGPU[vectorNeuronState_GPU2->SizeStates + index];
+				vectorNeuronState_GPU2->VectorNeuronStates_GPU[3*vectorNeuronState_GPU2->SizeStates + index]+=vectorNeuronState_GPU2->AuxStateGPU[2*vectorNeuronState_GPU2->SizeStates + index];
+				vectorNeuronState_GPU2->VectorNeuronStates_GPU[4*vectorNeuronState_GPU2->SizeStates + index]+=vectorNeuronState_GPU2->AuxStateGPU[3*vectorNeuronState_GPU2->SizeStates + index];
 
-			bool spike = false;
+				bool spike = false;
 
-			if (last_spike > this->tref) {
-				integrationMethod_GPU2->NextDifferentialEcuationValue(index, SizeStates, this, StateGPU, elapsed_time_f);
-				float vm_cou = StateGPU[index] + this->fgj * StateGPU[4*SizeStates + index];
-				if (vm_cou > this->vthr){
-					LastSpikeTimeGPU[index]=0;
-					spike = true;
-					StateGPU[0*SizeStates + index] = this->erest;
-					this->integrationMethod_GPU2->resetState(index);
+				if (last_spike > this->tref) {
+					integrationMethod_GPU2->NextDifferentialEcuationValue(index, vectorNeuronState_GPU2->SizeStates, vectorNeuronState_GPU2->VectorNeuronStates_GPU, TimeDrivenStep_GPU_f);
+					float vm_cou = vectorNeuronState_GPU2->VectorNeuronStates_GPU[index] + this->fgj * vectorNeuronState_GPU2->VectorNeuronStates_GPU[4*vectorNeuronState_GPU2->SizeStates + index];
+					if (vm_cou > this->vthr){
+						vectorNeuronState_GPU2->LastSpikeTimeGPU[index]=0;
+						spike = true;
+						vectorNeuronState_GPU2->VectorNeuronStates_GPU[0*vectorNeuronState_GPU2->SizeStates + index] = this->erest;
+						this->integrationMethod_GPU2->resetState(index);
+					}
+				}else{
+					EvaluateTimeDependentEcuation(index, vectorNeuronState_GPU2->SizeStates, vectorNeuronState_GPU2->VectorNeuronStates_GPU, TimeDrivenStep_GPU_f);
 				}
-			}else{
-				EvaluateTimeDependentEcuation(index, SizeStates, StateGPU, elapsed_time_f);
+
+				vectorNeuronState_GPU2->InternalSpikeGPU[index]=spike;
+
+				vectorNeuronState_GPU2->LastUpdateGPU[index]=CurrentTime;
+				
+
+				index+=blockDim.x*gridDim.x;
 			}
-
-			InternalSpikeGPU[index]=spike;
-
-		
-
-			LastUpdateGPU[index]=CurrentTime;
 		} 
 
 

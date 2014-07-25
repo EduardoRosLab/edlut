@@ -51,25 +51,57 @@ class RK45ad : public VariableStep {
 	protected:
 
 	public:
+		/*!
+		 * \brief This object implements a integration method base on a 4º and 5º order Runge Kutta integration method.
+		*/
 		RK45 * RK;
 
-		float e_min, e_max, h_min, h_max;
+		/*!
+		 * \brief Min error tolerance.
+		*/
+		float e_min;
+		
+		/*!
+		 * \brief Max error tolerance.
+		*/
+		float e_max;
+		
+		/*!
+		 * \brief Min integration method step size.
+		*/	
+		float h_min;
+		
+		/*!
+		 * \brief Max integration method step size.
+		*/	
+		float h_max;
 
+
+		/*!
+		 * \brief Auxiliar neuron state vector used by the RK45 object to predict the future neuron state for each
+		 * neuron associated to this integration mehtod.
+		*/
 		float * PredictedNeuronState;
+		
+		/*!
+		 * \brief This vector control the prediction validity made in PredicteNeuronState by the RK45
+		 * object for each neuron associated to this integration method. If some spike arrives to a specific
+		 * neuron, then its prediction it is not valid and must be recalculated.
+		*/
 		bool * ValidPrediction;
 
 
 		/*!
-		 * \brief Constructor of the class with 4 parameter.
+		 * \brief Constructor with parameters.
 		 *
-		 * It generates a new Euler object indicating.
+		 * It generates a new fourth and fifth Runge-Kutta object.
 		 *
-		 * \param N_neuronStateVariables number of state variables for each cell.
-		 * \param N_differentialNeuronState number of state variables witch are calculate with a differential equation for each cell.
-		 * \param N_timeDependentNeuronState number of state variables witch are calculate with a time dependent equation for each cell.
-		 * \param N_CPU_thread number of OpenMP thread used.
+		 * \param NewModel time driven neuron model associated to this integration method.
+		 * \param N_neuronStateVariables total number of state variable for each neuron
+		 * \param N_differentialNeuronState number of state variables that are diffined by a differential ecuation.
+		 * \param N_timeDependentNeuronState number of state variables that are not diffined by a differential ecuation.
 		 */
-		RK45ad(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread);
+		RK45ad(TimeDrivenNeuronModel * NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState);
 
 		/*!
 		 * \brief Class destructor.
@@ -79,18 +111,15 @@ class RK45ad : public VariableStep {
 		~RK45ad();
 		
 		/*!
-		 * \brief It calculate the next value for neural state varaibles of the model.
+		 * \brief It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * It calculate the next value for neural state varaibles of the model.
+		 * It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * \param index for method with memory (e.g. BDF2).
-		 * \param Model The NeuronModel.
+		 * \param index for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 * \param NeuronState neuron state variables of one neuron.
-		 * \param NumberOfVariables number of varaibles.
-		 * \param NumberOfEcuation number of differential ecuation.
 		 * \param elapsed_time integration time step.
 		 */
-		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index);
+		virtual void NextDifferentialEcuationValue(int index, float * NeuronState, float elapsed_time);
 
 		/*!
 		 * \brief It prints the integration method info.
@@ -104,32 +133,36 @@ class RK45ad : public VariableStep {
 		virtual ostream & PrintInfo(ostream & out);
 
 		/*!
-		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF2).
+		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It initialize the state of the integration method for method with memory (e.g. BDF2).
+		 * It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * \param N_neuron number of neuron in the neuron model.
-		 * \param NumberOfDifferentialEcuation number of differential ecuation in the neuron model.
+		 * \param N_neuron number of neurons in the neuron model.
 		 * \param inicialization vector with initial values.
-		 *
-		 * \Note: this function it is not necesary for this integration method.
 		 */
 		void InitializeStates(int N_neurons, float * initialization);
 
 		/*!
-		 * \brief It reset the state of the integration method for method with memory (e.g. BDF2).
+		 * \brief It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It reset the state of the integration method for method with memory (e.g. BDF2).
+		 * It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
 		 * \param index indicate witch neuron must be reseted.
-		 * \param NumberOfDifferentialEcuation number of differential ecuation in the neuron model.
-		 * \param State vector witch indicate the new values.
-		 *
-		 * \Note: this function it is not necesary for this integration method.
 		 */
 		void resetState(int index){};
 
 
+		/*!
+		 * \brief It loads the integration method parameters.
+		 *
+		 * It loads the integration method parameters from the file that define the parameter of the neuron model.
+		 *
+		 * \param Pointer to a neuron description file (*.cfg). At the end of this file must be included 
+		 *  the integration method type and its parameters.
+		 * \param Currentline line inside the neuron description file where start the description of the integration method parameter. 
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
+		 */
 		void loadParameter(FILE *fh, long * Currentline) throw (EDLUTFileException);
 };
 

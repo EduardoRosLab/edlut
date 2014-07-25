@@ -50,6 +50,11 @@ class ExpWeightChange: public AdditiveKernelChange{
 		 */
 		ExpWeightChange();
 
+		/*!
+		 * \brief Object destructor.
+		 *
+		 * It remove the object.
+		 */
 		virtual ~ExpWeightChange();
 
 		/*!
@@ -57,7 +62,7 @@ class ExpWeightChange: public AdditiveKernelChange{
 		 *
 		 * It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * \return The state that the learning rule needs for all the synapses.
+		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
 		 */
 		void InitializeConnectionState(unsigned int NumberOfSynapses);
 };

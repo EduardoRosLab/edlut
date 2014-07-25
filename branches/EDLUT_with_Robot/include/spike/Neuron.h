@@ -60,6 +60,12 @@ class Spike;
  */
 class Neuron : public PrintableObject {
 	private:
+
+		/*!
+		 * \brief OpenMP associated thread.
+		 */
+		int OpenMP_queue_index;
+
 	
 		/*!
 		 * \brief Neuron associated model.
@@ -82,14 +88,14 @@ class Neuron : public PrintableObject {
    		VectorNeuronState * state;
    		
    		/*!
-   		 * Output connections.
+   		 * Output connections (divided in vector for each OpenMP thread).
    		 */
-   		Interconnection** OutputConnections;
+   		Interconnection*** OutputConnections;
 
 		/*!
-		 * Output Connection number.
+		 * Output Connection number (divided in vector for each OpenMP thread).
 		 */
-		unsigned int OutputConNumber;
+		unsigned long * OutputConNumber;
    		
    		/*!
    		 * Input connections with asssociated postsynaptic learning.
@@ -126,9 +132,7 @@ class Neuron : public PrintableObject {
    		 */
    		bool isOutput;
 
-   		/*!
-   		 * It tells the trigger connection for ExpAdditiveKernel, SinAdditiveKernel, CosAdditiveKernel and SimetricCosAdditiveKernel learning rules.
-   		 */
+		///////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAA
 		Interconnection * TriggerConnection;
    		
    	public:
@@ -140,19 +144,19 @@ class Neuron : public PrintableObject {
 		 */
    		Neuron();
 
-		/*!
-		 * \brief Neuron constructor with parameters.
-		 *
-		 * It generates a new neuron with neuron model Type and neuron index NewIndex.
-		 * Moreover, it initializes the neuron variables with the model initial values.
-		 *
-		 * \param NewIndex The neuron index into the network order.
-		 * \param Type The neuron type. It can't be null.
-		 * \param Monitored If true, the neuron activity will be registered.
-		 * \param IsOutput If true, the neuron activity will be send to output driver
-		 * \sa InitNeuron()
-		 */   	
-   		Neuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput);
+		///*!
+		// * \brief Neuron constructor with parameters.
+		// *
+		// * It generates a new neuron with neuron model Type and neuron index NewIndex.
+		// * Moreover, it initializes the neuron variables with the model initial values.
+		// *
+		// * \param NewIndex The neuron index into the network order.
+		// * \param Type The neuron type. It can't be null.
+		// * \param Monitored If true, the neuron activity will be registered.
+		// * \param IsOutput If true, the neuron activity will be send to output driver
+		// * \sa InitNeuron()
+		// */   	
+  // 		Neuron(int NewIndex, NeuronModel ** Type, bool Monitored, bool IsOutput);
 
 		/*!
 		 * \brief Default destructor.
@@ -172,7 +176,7 @@ class Neuron : public PrintableObject {
 		 * \param Monitored If true, the neuron activity will be registered.
 		 * \param IsOutput If true, the neuron activity will be send to output driver
 		 */
-   		void InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel * Type, bool Monitored, bool IsOutput);
+   		void InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel * Type, bool Monitored, bool IsOutput, int blockIndex);
    		
    		/*!
 		 * \brief It gets the neuron index into the network.
@@ -220,9 +224,9 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return The number of output connections from the current neuron.
    		 */
-   		//unsigned int GetOutputNumber() const;
-		inline unsigned int GetOutputNumber() const{
-			return this->OutputConNumber;
+   		//unsigned int GetOutputNumber(int index) const;
+		inline unsigned int GetOutputNumber(int index) const{
+			return this->OutputConNumber[index];
 		}
    		
    		/*!
@@ -274,9 +278,13 @@ class Neuron : public PrintableObject {
    		 * \param index The index of the output connection what we want to get.
    		 * \return The output connection of index index.
    		 */
-   		//Interconnection * GetOutputConnectionAt(unsigned int index) const;
-		inline Interconnection * GetOutputConnectionAt(unsigned int index) const{
-			return *(this->OutputConnections+index);
+   		//Interconnection * GetOutputConnectionAt(unsigned int index1, unsigned int index2) const;
+		inline Interconnection * GetOutputConnectionAt(unsigned int index1, unsigned int index2) const{
+			return OutputConnections[index1][index2];
+		}
+
+		inline Interconnection ** GetOutputConnectionAt(unsigned int index1) const{
+			return OutputConnections[index1];
 		}
    		
    		/*!
@@ -287,7 +295,7 @@ class Neuron : public PrintableObject {
    		 * \param Connection The output connections to set. The memory will be released within the class destructor.
    		 * \param NumberOfConnections The number of input connections in the first parameter.
 		 */
-   		void SetOutputConnections(Interconnection ** Connections, unsigned int NumberOfConnections);
+   		void SetOutputConnections(Interconnection *** Connections, unsigned long * NumberOfConnections);
    		
    		/*!
    		 * \brief It checks if the neuron has some output connection.
@@ -296,7 +304,7 @@ class Neuron : public PrintableObject {
    		 * 
    		 * \return True if the neuron has some output connection. False in other case.
    		 */
-   		bool IsOutputConnected() const;
+   		bool IsOutputConnected(int index) const;
    		
    		/*!
    		 * \brief It checks if the neuron is monitored.
@@ -381,13 +389,28 @@ class Neuron : public PrintableObject {
 			return index_VectorNeuronState;
 		}
 
+
 		/*!
-		 * \brief It return the trigger connection of this neuron.
+		 * \brief It sets the OpenMP queue index to which this neuron belong.
 		 * 
-		 * It return the trigger connection of this neuron
+		 * It sets the OpenMP queue index to which this neuron belong.
 		 * 
-		 * \return The trigger connection.
+		 * \paramt OpenMP queue index.
 		 */
+		void set_OpenMP_queue_index(int index);
+
+		/*!
+		 * \brief It gets the OpenMP queue index to which this neuron belong.
+		 * 
+		 * It gets the OpenMP queue index to which this neuron belong.
+		 * 
+		 * \return The OpenMP queue index.
+		 */
+		inline int get_OpenMP_queue_index(){
+			return OpenMP_queue_index;
+		}
+
+		//////////////////AAAAAAAAAAAAAAAAAAAAAA
 		inline Interconnection * GetTriggerConnection() const{
 			return this->TriggerConnection;
 		}

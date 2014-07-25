@@ -34,6 +34,10 @@
 
 #include "../spike/EDLUTFileException.h"
 
+#include "../../include/simulation/ExponentialTable.h"
+
+#include "../../include/integration_method/IntegrationMethod.h"
+
 using namespace std;
 
 class VectorNeuronState;
@@ -63,12 +67,12 @@ class NeuronModel {
 	private:
 
 		/*!
-		 * \brief Neuron type ID.
+		 * \brief Neuron model type ID (LIFTimeDriven_1_2, TableBasedModel, etc.).
 		*/
 		string TypeID;
 
 		/*!
-		 * \brief Neuron model ID.
+		 * \brief Neuron model description file.
 		 */
 		string ModelID;
 
@@ -85,7 +89,8 @@ class NeuronModel {
 		 *
 		 * It generates a new neuron model object without being initialized.
 		 *
-		 * \param NeuronModelID Neuron model identificator.
+		 * \param NeuronTypeID Neuron model type.
+		 * \param NeuronModelID Neuron model description file.
 		 */
 		NeuronModel(string NeuronTypeID,string NeuronModelID);
 
@@ -108,7 +113,6 @@ class NeuronModel {
 		 *
 		 * It initializes the neuron state to defined values.
 		 *
-		 * \param State Cell current state.
 		 */
 		virtual VectorNeuronState * InitializeState() = 0;
 
@@ -186,7 +190,10 @@ class NeuronModel {
 		 *
 		 * \return The VectorNeuronState.
 		 */
-		VectorNeuronState * GetVectorNeuronState();
+		//VectorNeuronState * GetVectorNeuronState();
+		inline VectorNeuronState * GetVectorNeuronState(){
+			return this->InitialState;
+		}
 
 		/*!
 		 * \brief It initialice VectorNeuronState.

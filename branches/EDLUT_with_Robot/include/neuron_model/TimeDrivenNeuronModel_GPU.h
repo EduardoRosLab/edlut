@@ -88,23 +88,22 @@ class TimeDrivenNeuronModel_GPU : public NeuronModel {
 
 
 		/*!
-		 * \brief neuron model in GPU
-		*/
-		TimeDrivenNeuronModel_GPU2 ** timeDrivenNeuronModel_GPU2;
-
-		/*!
 		 * \brief barrier to synchronize the CPU and the GPU.
 		 */
 		cudaEvent_t stop;
 
+		/*!
+		 * \brief GPU properties
+		 */
+		cudaDeviceProp prop;
 
 		/*!
 		 * \brief Default constructor with parameters.
 		 *
 		 * It generates a new neuron model object without being initialized.
 		 *
-		 * \param NeuronTypeID Neuron model identificator.
-		 * \param NeuronModelID Neuron model configuration file.
+		 * \param NeuronTypeID Neuron model type.
+		 * \param NeuronModelID Neuron model description file.
 		 */
 		TimeDrivenNeuronModel_GPU(string NeuronTypeID, string NeuronModelID);
 
@@ -167,7 +166,7 @@ class TimeDrivenNeuronModel_GPU : public NeuronModel {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		virtual void InitializeClassGPU(int N_neurons)=0;
+		virtual void InitializeClassGPU2(int N_neurons)=0;
 
 
 		/*!
@@ -175,7 +174,14 @@ class TimeDrivenNeuronModel_GPU : public NeuronModel {
 		 *
 		 * It delete a neuron model in GPU.
 		 */
-		virtual void DeleteClassGPU()=0;
+		virtual void DeleteClassGPU2()=0;
+
+		/*!
+		 * \brief It create a object of type VectorNeuronState_GPU2 in GPU.
+		 *
+		 * It create a object of type VectorNeuronState_GPU2 in GPU.
+		 */
+		virtual void InitializeVectorNeuronState_GPU2()=0;
 
 
 

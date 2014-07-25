@@ -26,7 +26,7 @@
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Neuron.h"
 
-TimeEventOneNeuron::TimeEventOneNeuron(double NewTime, int indexNeuronModel, int indexNeuron) : Event(NewTime), IndexNeuronModel(indexNeuronModel), IndexNeuron(indexNeuron) {
+TimeEventOneNeuron::TimeEventOneNeuron(double NewTime, TimeDrivenNeuronModel * newNeuronModel, Neuron ** newNeurons, int indexNeuron) : Event(NewTime), neuronModel(newNeuronModel), neurons(newNeurons), IndexNeuron(indexNeuron) {
 
 }
 
@@ -35,50 +35,79 @@ TimeEventOneNeuron::~TimeEventOneNeuron(){
 }
 
 //Optimized version which executes the internal spikes instead of insert them in the queue.
-void TimeEventOneNeuron::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
-	Network * CurrentNetwork = CurrentSimulation->GetNetwork();
+void TimeEventOneNeuron::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
 
-	double CurrentTime = this->GetTime();
-
-	int * N_TimeDrivenNeuron=CurrentNetwork->GetTimeDrivenNeuronNumber();
-	
-	InternalSpike * internalSpike;
-
-
-	TimeDrivenNeuronModel * neuronModel = (TimeDrivenNeuronModel *) CurrentNetwork->GetNeuronModelAt(this->GetIndexNeuronModel());
+	//TimeDrivenNeuronModel * neuronModel = (TimeDrivenNeuronModel *) CurrentNetwork->GetNeuronModelAt(this->GetIndexNeuronModel());
 	VectorNeuronState * State=neuronModel->GetVectorNeuronState();
-	//Updating all cell when using IndexNeuron=-1.
-	neuronModel->UpdateState(GetIndexNeuron(), State, CurrentTime);
-
-	if(!RealTimeRestriction){
+	////Updating all cell when using IndexNeuron=-1.
+	neuronModel->UpdateState(GetIndexNeuron(), State, this->GetTime());
+	//	
+	Neuron * Cell = neurons[GetIndexNeuron()];
+	if(*RealTimeRestriction<3){
 
 		//CPU write in this array if an internal spike must be generated.
 		bool * generateInternalSpike=State->getInternalSpike();
 
-		Neuron * Cell;
-
-		Cell = CurrentNetwork->GetTimeDrivenNeuronAt(GetIndexNeuronModel(),GetIndexNeuron());
 		if(generateInternalSpike[GetIndexNeuron()]==true){
-			internalSpike=new InternalSpike(CurrentTime,Cell);
-			internalSpike->ProcessEvent(CurrentSimulation, false);
+			InternalSpike * internalSpike=new InternalSpike(this->GetTime(),Cell);
+			internalSpike->ProcessEvent(CurrentSimulation, RealTimeRestriction);
 			delete internalSpike;
 		}
 		if (Cell->IsMonitored()){
-			CurrentSimulation->WriteState(CurrentTime, Cell);
+			CurrentSimulation->WriteState(this->GetTime(), Cell);
 		}
 
 		//Next TimeEvent for this cell
-		CurrentSimulation->GetQueue()->InsertEvent(new TimeEventOneNeuron(CurrentTime + neuronModel->integrationMethod->PredictedElapsedTime[IndexNeuron], GetIndexNeuronModel(), GetIndexNeuron()));
+		CurrentSimulation->GetQueue()->InsertEvent(Cell->get_OpenMP_queue_index(), new TimeEventOneNeuron(this->GetTime() + neuronModel->integrationMethod->PredictedElapsedTime[IndexNeuron], GetModel(), GetNeurons(), GetIndexNeuron()));
 	}else{
 		//Next TimeEvent for this cell
-		CurrentSimulation->GetQueue()->InsertEvent(new TimeEventOneNeuron(CurrentTime + neuronModel->integrationMethod->PredictedElapsedTime[IndexNeuron], GetIndexNeuronModel(), GetIndexNeuron()));
+		CurrentSimulation->GetQueue()->InsertEvent(Cell->get_OpenMP_queue_index(), new TimeEventOneNeuron(this->GetTime() + neuronModel->integrationMethod->PredictedElapsedTime[IndexNeuron], GetModel(), GetNeurons(), GetIndexNeuron()));
 	}
 }
 
-int TimeEventOneNeuron::GetIndexNeuronModel(){
-	return IndexNeuronModel;
+//Optimized version which executes the internal spikes instead of insert them in the queue.
+void TimeEventOneNeuron::ProcessEvent(Simulation * CurrentSimulation){
+
+	//TimeDrivenNeuronModel * neuronModel = (TimeDrivenNeuronModel *) CurrentNetwork->GetNeuronModelAt(this->GetIndexNeuronModel());
+	VectorNeuronState * State=neuronModel->GetVectorNeuronState();
+	////Updating all cell when using IndexNeuron=-1.
+	neuronModel->UpdateState(GetIndexNeuron(), State, this->GetTime());
+	//	
+	Neuron * Cell = neurons[GetIndexNeuron()];
+
+	//CPU write in this array if an internal spike must be generated.
+	bool * generateInternalSpike=State->getInternalSpike();
+
+	if(generateInternalSpike[GetIndexNeuron()]==true){
+		InternalSpike * internalSpike=new InternalSpike(this->GetTime(),Cell);
+		internalSpike->ProcessEvent(CurrentSimulation);
+		delete internalSpike;
+	}
+	if (Cell->IsMonitored()){
+		CurrentSimulation->WriteState(this->GetTime(), Cell);
+	}
+
+	//Next TimeEvent for this cell
+	CurrentSimulation->GetQueue()->InsertEvent(Cell->get_OpenMP_queue_index(), new TimeEventOneNeuron(this->GetTime() + neuronModel->integrationMethod->PredictedElapsedTime[IndexNeuron], GetModel(), GetNeurons(), GetIndexNeuron()));
+}
+
+TimeDrivenNeuronModel * TimeEventOneNeuron::GetModel(){
+	return neuronModel;
+}
+
+Neuron ** TimeEventOneNeuron::GetNeurons(){
+	return neurons;
 }
 
 int TimeEventOneNeuron::GetIndexNeuron(){
 	return IndexNeuron;
+}
+
+
+void TimeEventOneNeuron::PrintType(){
+	cout<<"TimeEventOneNeuron"<<endl;
+}
+
+int TimeEventOneNeuron::ProcessingPriority(){
+	return 7;
 }

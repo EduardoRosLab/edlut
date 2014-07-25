@@ -22,6 +22,7 @@
 #include "../../include/spike/EDLUTFileException.h"
 #include "../../include/spike/Network.h"
 #include "../../include/spike/InputSpike.h"
+#include "../../include/spike/Neuron.h"
 
 FileInputSpikeDriver::FileInputSpikeDriver(const char * NewFileName) throw (EDLUTException): FileName(NewFileName), Currentline(1L){
 	this->Finished = false;
@@ -56,8 +57,7 @@ void FileInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (
 							for(itime=0;itime<nspikes;itime++){
 								for(ineuron=0;ineuron<nreps;ineuron++){
 									InputSpike * ispike = new InputSpike(time+itime*interv, Net->GetNeuronAt(nneuron+ineuron));
-									
-									Queue->InsertEvent(ispike);
+									Queue->InsertEvent(Net->GetNeuronAt(nneuron+ineuron)->get_OpenMP_queue_index(), ispike);
 								}
 							}
 						}else{

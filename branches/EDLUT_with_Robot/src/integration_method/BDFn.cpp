@@ -28,24 +28,7 @@ const float BDFn::Coeficient [7][7]={{1.0f,1.0f,0.0f,0.0f,0.0f,0.0f,0.0f},
 {60.0f/147.0f,360.0f/147.0f,-450.0f/147.0f,400.0f/147.0f,-225.0f/147.0f,72.0f/147.0f,-10.0f/147.0f}};
 
 
-BDFn::BDFn(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread, int BDForder):FixedStep("BDFn", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread, true, true),BDForder(BDForder){
-	AuxNeuronState = (float **)new float *[N_CPU_thread];
-	AuxNeuronState_p = (float **)new float *[N_CPU_thread];
-	AuxNeuronState_p1 = (float **)new float *[N_CPU_thread];
-	AuxNeuronState_c = (float **)new float *[N_CPU_thread];
-	jacnum = (float **)new float *[N_CPU_thread];
-	J = (float **)new float *[N_CPU_thread];
-	inv_J = (float **)new float *[N_CPU_thread];
-
-	for(int i=0; i<N_CPU_thread; i++){
-		AuxNeuronState[i] = new float [N_NeuronStateVariables];
-		AuxNeuronState_p[i] = new float [N_NeuronStateVariables];
-		AuxNeuronState_p1[i] = new float [N_NeuronStateVariables];
-		AuxNeuronState_c[i] = new float [N_NeuronStateVariables];
-		jacnum[i] = new float [N_DifferentialNeuronState*N_DifferentialNeuronState];
-		J[i] = new float [N_DifferentialNeuronState*N_DifferentialNeuronState];
-		inv_J[i] = new float [N_DifferentialNeuronState*N_DifferentialNeuronState];
-	}
+BDFn::BDFn(TimeDrivenNeuronModel * NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int BDForder):FixedStep(NewModel,"BDFn", N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, true, true),BDForder(BDForder){
 }
 
 BDFn::~BDFn(){
@@ -62,58 +45,41 @@ BDFn::~BDFn(){
 	delete [] D;
 	delete [] state;
 
-	for(int i=0; i<N_CPU_Thread; i++){
-		delete [] AuxNeuronState[i];
-		delete [] AuxNeuronState_p[i];
-		delete [] AuxNeuronState_p1[i];
-		delete [] AuxNeuronState_c[i];
-		delete [] jacnum[i];
-		delete [] J[i];
-		delete [] inv_J[i];
-	}
-	delete [] AuxNeuronState;
-	delete [] AuxNeuronState_p;
-	delete [] AuxNeuronState_p1;
-	delete [] AuxNeuronState_c;
-	delete [] jacnum;
-	delete [] J;
-	delete [] inv_J;
-
 }
 		
-void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
+void BDFn::NextDifferentialEcuationValue(int index, float * NeuronState, float elapsed_time){
 
-	float * offset_AuxNeuronState = AuxNeuronState[CPU_thread_index];
-	float * offset_AuxNeuronState_p = AuxNeuronState_p[CPU_thread_index];
-	float * offset_AuxNeuronState_p1 = AuxNeuronState_p1[CPU_thread_index];
-	float * offset_AuxNeuronState_c = AuxNeuronState_c[CPU_thread_index];
-	float * offset_jacnum = jacnum[CPU_thread_index];
-	float * offset_J = J[CPU_thread_index];
-	float * offset_inv_J = inv_J[CPU_thread_index];
+	float AuxNeuronState[MAX_VARIABLES];
+	float AuxNeuronState_p[MAX_VARIABLES];
+	float AuxNeuronState_p1[MAX_VARIABLES];
+	float AuxNeuronState_c[MAX_VARIABLES];
+	float jacnum[MAX_VARIABLES*MAX_VARIABLES];
+	float J[MAX_VARIABLES*MAX_VARIABLES];
+	float inv_J[MAX_VARIABLES*MAX_VARIABLES];
 
 	//If the state of the cell is 0, we use a Euler method to calculate an aproximation of the solution.
 	if(state[index]==0){
-		Model->EvaluateDifferentialEcuation(NeuronState, offset_AuxNeuronState);
+		this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState);
 		for (int j=0; j<N_DifferentialNeuronState; j++){
-			offset_AuxNeuronState_p[j]= NeuronState[j] + elapsed_time*offset_AuxNeuronState[j];
+			AuxNeuronState_p[j]= NeuronState[j] + elapsed_time*AuxNeuronState[j];
 		}
 	}
 	//In this case we use the value of previous states to calculate an aproximation of the solution.
 	else{
 		for (int j=0; j<N_DifferentialNeuronState; j++){
-			offset_AuxNeuronState_p[j]= NeuronState[j];
+			AuxNeuronState_p[j]= NeuronState[j];
 			for (int i=0; i<state[index]; i++){
-				offset_AuxNeuronState_p[j]+=D[i][index*N_DifferentialNeuronState+j];
+				AuxNeuronState_p[j]+=D[i][index*N_DifferentialNeuronState+j];
 			}
 		}
 	}
 
 	for(int i=N_DifferentialNeuronState; i<N_NeuronStateVariables; i++){
-		offset_AuxNeuronState_p[i]=NeuronState[i];
+		AuxNeuronState_p[i]=NeuronState[i];
 	}
 
 
-	Model->EvaluateTimeDependentEcuation(offset_AuxNeuronState_p,elapsed_time);
+	this->model->EvaluateTimeDependentEcuation(AuxNeuronState_p,elapsed_time);
 
 
 
@@ -123,48 +89,48 @@ void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mode
 	//This integration method is an implicit method. We use this loop to iteratively calculate the implicit value.
 	//epsi is the difference between two consecutive aproximation of the implicit method. 
 	while (epsi>1e-16 && k<5){
-		Model->EvaluateDifferentialEcuation(offset_AuxNeuronState_p, offset_AuxNeuronState);
+		this->model->EvaluateDifferentialEcuation(AuxNeuronState_p, AuxNeuronState);
 
 		for (int j=0; j<N_DifferentialNeuronState; j++){
-			offset_AuxNeuronState_c[j]=Coeficient[state[index]][0]*elapsed_time*offset_AuxNeuronState[j] + Coeficient[state[index]][1]*NeuronState[j];
+			AuxNeuronState_c[j]=Coeficient[state[index]][0]*elapsed_time*AuxNeuronState[j] + Coeficient[state[index]][1]*NeuronState[j];
 			for (int i=1; i<state[index]; i++){
-				offset_AuxNeuronState_c[j]+=Coeficient[state[index]][i+1]*PreviousNeuronState[i-1][index*N_DifferentialNeuronState + j];
+				AuxNeuronState_c[j]+=Coeficient[state[index]][i+1]*PreviousNeuronState[i-1][index*N_DifferentialNeuronState + j];
 			}
 		}
 
 		//jacobian.
-		Jacobian(Model, offset_AuxNeuronState_p, offset_jacnum, CPU_thread_index, elapsed_time);
+		Jacobian(AuxNeuronState_p, jacnum, elapsed_time);
 	
 		for(int z=0; z<N_DifferentialNeuronState; z++){
 			for(int t=0; t<N_DifferentialNeuronState; t++){
-				offset_J[z*N_DifferentialNeuronState + t] = Coeficient[state[index]][0] * elapsed_time * offset_jacnum[z*N_DifferentialNeuronState + t];
+				J[z*N_DifferentialNeuronState + t] = Coeficient[state[index]][0] * elapsed_time * jacnum[z*N_DifferentialNeuronState + t];
 				if(z==t){
-					offset_J[z*N_DifferentialNeuronState + t]-=1;
+					J[z*N_DifferentialNeuronState + t]-=1;
 				}
 			}
 		}
 
-		this->invermat(offset_J,offset_inv_J, CPU_thread_index);
+		this->invermat(J,inv_J);
 
 		for(int z=0; z<N_DifferentialNeuronState; z++){
 			float aux=0.0;
 			for (int t=0; t<N_DifferentialNeuronState; t++){
-				aux+=offset_inv_J[z*N_DifferentialNeuronState+t]*(offset_AuxNeuronState_p[t]-offset_AuxNeuronState_c[t]);
+				aux+=inv_J[z*N_DifferentialNeuronState+t]*(AuxNeuronState_p[t]-AuxNeuronState_c[t]);
 			}
-			offset_AuxNeuronState_p1[z]=aux + offset_AuxNeuronState_p[z];
+			AuxNeuronState_p1[z]=aux + AuxNeuronState_p[z];
 		}
 
 		//We calculate the difference between both aproximations.
 		float aux=0.0f;
 		float aux2=0.0f;
 		for(int z=0; z<N_DifferentialNeuronState; z++){
-			aux=fabs(offset_AuxNeuronState_p1[z]-offset_AuxNeuronState_p[z]);
+			aux=fabs(AuxNeuronState_p1[z]-AuxNeuronState_p[z]);
 			if(aux>aux2){
 				aux2=aux;
 			}
 		}
 
-		memcpy(offset_AuxNeuronState_p , offset_AuxNeuronState_p1 ,sizeof(float)* N_DifferentialNeuronState);
+		memcpy(AuxNeuronState_p , AuxNeuronState_p1 ,sizeof(float)* N_DifferentialNeuronState);
 
 		epsi=aux2;
 		k++;
@@ -183,7 +149,7 @@ void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mode
 		for(int i=(state[index]-1); i>0; i--){ 
 			D[i][index*N_DifferentialNeuronState + j]=-D[i-1][index*N_DifferentialNeuronState + j];
 		}
-		D[0][index*N_DifferentialNeuronState + j]=offset_AuxNeuronState_p[j]-NeuronState[j];
+		D[0][index*N_DifferentialNeuronState + j]=AuxNeuronState_p[j]-NeuronState[j];
 		for(int i=1; i<state[index]; i++){ 
 			D[i][index*N_DifferentialNeuronState + j]+=D[i-1][index*N_DifferentialNeuronState + j];
 		}
@@ -196,12 +162,12 @@ void BDFn::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Mode
 		
 		memcpy(PreviousNeuronState[0] + (index*N_DifferentialNeuronState), NeuronState ,sizeof(float)* N_DifferentialNeuronState);
 	}
-	memcpy(NeuronState, offset_AuxNeuronState_p ,sizeof(float)* N_DifferentialNeuronState);
+	memcpy(NeuronState, AuxNeuronState_p ,sizeof(float)* N_DifferentialNeuronState);
 
 
 
 	//Finaly, we evaluate the neural state variables with time dependence.
-	Model->EvaluateTimeDependentEcuation(NeuronState, elapsed_time);
+	this->model->EvaluateTimeDependentEcuation(NeuronState, elapsed_time);
 
 	return;
 

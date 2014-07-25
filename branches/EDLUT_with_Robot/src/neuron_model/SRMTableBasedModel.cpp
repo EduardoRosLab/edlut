@@ -145,6 +145,14 @@ void SRMTableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 	}
 }
 
+void SRMTableBasedModel::LoadNeuronModel() throw (EDLUTFileException){
+
+	this->LoadNeuronModel(this->GetModelID()+".cfg");
+
+	this->LoadTables(this->GetModelID()+".dat");
+
+}
+
 void SRMTableBasedModel::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
 	double AuxTime = State->GetLastUpdateTime(index);
 
@@ -155,9 +163,9 @@ void SRMTableBasedModel::UpdateState(int index, VectorNeuronState * State, doubl
 	TableBasedModel::UpdateState(index, State, CurrentTime);
 }
 
-void SRMTableBasedModel::SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection){
-	float Value = State->GetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1);
-	State->SetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*exp(1.0));
+void SRMTableBasedModel::SynapsisEffect(int index, Interconnection * InputConnection){
+	float Value = this->GetVectorNeuronState()->GetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1);
+	this->GetVectorNeuronState()->SetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*exp(1.0));
 }
 
 double SRMTableBasedModel::NextFiringPrediction(int index, VectorNeuronState * State){

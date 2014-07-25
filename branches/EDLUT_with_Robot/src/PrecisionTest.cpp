@@ -129,7 +129,7 @@ int main(int ac, char *av[]) {
 			OutputDriver[i] = new FileOutputSpikeDriver(OutputFiles[i].c_str(),false);
 			Simulations[i]->AddOutputSpikeDriver(OutputDriver[i]);
 			if (StepTimes[i]!=-1){
-				Simulations[i]->SetTimeDrivenStep(StepTimes[i]);
+//				Simulations[i]->SetTimeDrivenStep(StepTimes[i]);
 			}
 
 			Simulations[i]->InitSimulation();

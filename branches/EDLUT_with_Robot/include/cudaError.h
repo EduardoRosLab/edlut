@@ -3,6 +3,8 @@
 #include <driver_types.h>
 #include <cuda_runtime.h>
 
+#include <iostream> 
+using namespace std; 
 
 static void HandleError( cudaError_t err,
                          const char *file,

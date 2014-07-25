@@ -18,30 +18,22 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 
 
-Euler::Euler(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread):FixedStep("Euler",N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread, false, false){
-	AuxNeuronState = (float **)new float *[N_CPU_thread];
-	for(int i=0; i<N_CPU_thread; i++){
-		AuxNeuronState[i] = new float [N_NeuronStateVariables]();
-	}
+Euler::Euler(TimeDrivenNeuronModel * NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState):FixedStep(NewModel,"Euler",N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, false, false){
 }
 
 Euler::~Euler(){
-	for(int i=0; i<N_CPU_Thread; i++){
-		delete AuxNeuronState[i];
-	}
-	delete [] AuxNeuronState;
 }
 		
-void Euler::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index){
-	float * offset_AuxNeuronState = AuxNeuronState[CPU_thread_index];
+void Euler::NextDifferentialEcuationValue(int index,float * NeuronState, float elapsed_time){
+	float AuxNeuronState[MAX_VARIABLES];
 	
-	Model->EvaluateDifferentialEcuation(NeuronState, offset_AuxNeuronState);
+	this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState);
 
 	for (int j=0; j<N_DifferentialNeuronState; j++){
-		NeuronState[j]+=elapsed_time*offset_AuxNeuronState[j];
+		NeuronState[j]+=elapsed_time*AuxNeuronState[j];
 	}
 
-	Model->EvaluateTimeDependentEcuation(NeuronState, elapsed_time);
+	this->model->EvaluateTimeDependentEcuation(NeuronState, elapsed_time);
 }
 
 ostream & Euler::PrintInfo(ostream & out){

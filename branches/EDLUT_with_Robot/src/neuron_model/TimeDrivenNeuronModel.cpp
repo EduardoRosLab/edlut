@@ -17,23 +17,17 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 #include "../../include/neuron_model/NeuronModel.h"
 
-#include <string>
-#ifdef _OPENMP
-	#include <omp.h>
-#endif
+#include "../../include/openmp/openmp.h"
 
 TimeDrivenNeuronModel::TimeDrivenNeuronModel(string NeuronTypeID, string NeuronModelID): NeuronModel(NeuronTypeID, NeuronModelID){
 	// TODO Auto-generated constructor stub
-	
-	#ifdef _OPENMP
-		N_CPU_thread=omp_get_max_threads();
-	#else
-		N_CPU_thread=1;
-	#endif
+
 }
 
 TimeDrivenNeuronModel::~TimeDrivenNeuronModel() {
 	delete integrationMethod;
+
+	delete [] LimitOfOpenMPTasks;
 }
 
 
@@ -41,6 +35,31 @@ enum NeuronModelType TimeDrivenNeuronModel::GetModelType(){
 	return TIME_DRIVEN_MODEL_CPU;
 }
 
+void TimeDrivenNeuronModel::CalculateTaskSizes(int N_neurons, int minimumSize){
+	//Calculate number of OpenMP task and size of each one.
+
+	if((N_neurons/NumberOfOpenMPThreads)>=minimumSize){
+		NumberOfOpenMPTasks=NumberOfOpenMPThreads;
+	}else{
+		if(N_neurons<=minimumSize){
+			NumberOfOpenMPTasks=1;
+		}else{
+			for(int i=NumberOfOpenMPThreads-1; i>1; i--){
+				if((N_neurons/i)>minimumSize){
+					NumberOfOpenMPTasks=i;
+				}
+			}
+		}
+	}
+
+	LimitOfOpenMPTasks = new int[NumberOfOpenMPTasks+1];
+	LimitOfOpenMPTasks[0]=0;
+	int aux=(N_neurons+NumberOfOpenMPTasks-1)/NumberOfOpenMPTasks;
+	for(int i=1; i<NumberOfOpenMPTasks; i++){
+		LimitOfOpenMPTasks[i]=aux*i;
+	}
+	LimitOfOpenMPTasks[NumberOfOpenMPTasks]=N_neurons;
+}
 
 
 

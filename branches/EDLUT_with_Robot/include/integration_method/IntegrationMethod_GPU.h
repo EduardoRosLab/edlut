@@ -24,7 +24,7 @@
  * \date May 2013
  *
  * This file declares a class which abstracts all integration methods in GPU (this class is stored
- * in CPU memory and controles the reservation and freeing of GPU auxiliar memory). All integration
+ * in CPU memory and controles the allocation and deleting of GPU auxiliar memory). All integration
  * methods in GPU are fixed step due to the parallel architecture of this one.
  */
 
@@ -44,7 +44,7 @@ class TimeDrivenNeuronModel_GPU;
  * \brief Integration method in CPU for GPU.
  *
  * This class abstracts the initializacion in CPU of integration methods for GPU. This CPU class
- * controles the reservation and freeing of GPU auxiliar memory.
+ * controles the allocation and deleting of GPU auxiliar memory.
  *
  * \author Francisco Naveros
  * \date May 2013
@@ -97,7 +97,7 @@ class IntegrationMethod_GPU {
 		 *
 		 * It destroys an object of this class.
 		 */
-		~IntegrationMethod_GPU();
+		virtual ~IntegrationMethod_GPU();
 		
 
 		/*!
