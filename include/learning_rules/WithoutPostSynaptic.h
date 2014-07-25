@@ -17,7 +17,7 @@
 #ifndef WITHOUTPOSTSYNAPTIC_H_
 #define WITHOUTPOSTSYNAPTIC_H_
 
-#include "./LearningRule.h"
+
 
 /*!
  * \file WithoutPostSynaptic.h
@@ -25,8 +25,14 @@
  * \author Francisco Naveros
  * \date November 2013
  *
- * This file declares a class which abstracts a learning rule that does not implement postsynaptic learning.
+ * This file declares a class which implements a learning rule without postsynaptic learning. In this case, each learning rule definition includes a parameter 
+ * named trigger that can be set to 0 (no trigger connection) or 1 (trigger connection). When a spike reaches a neuron through a synapse that implements these 
+ * learning rules, this synapse updates its weight considering this activity (LTP or LTD). Additionally, when the learning rule associated to this synapse is
+ * of trigger type, this spike throws another learning mechanism (LTD or LTP) over all the input synapses of that neuron considering their past presynaptic activity.
  */
+
+#include "./LearningRule.h"
+
 
 /*!
  * \class WithLearningRule
@@ -42,6 +48,10 @@ class WithoutPostSynaptic : public LearningRule {
 
 	public:
 
+		/*!
+		 * \brief trigger this variable can be set to 0 (no trigger connection) or 1 (trigger connection).
+		 * 
+		 */ 
 		int trigger;
 
 		/*!
@@ -64,7 +74,7 @@ class WithoutPostSynaptic : public LearningRule {
 		/*!
 		 * \brief Object destructor.
 		 *
-		 * It remove a WithoutPostSynaptic object.
+		 * It remove the object.
 		 */
 		virtual ~WithoutPostSynaptic();
 
@@ -98,7 +108,7 @@ class WithoutPostSynaptic : public LearningRule {
 		 * \param Connection The connection where the learning rule happens.
 		 * \param SpikeTime The spike time of the postsynaptic spike.
 		 */
-		void ApplyPostSynapticSpike(Interconnection * Connection, double SpikeTime);
+		void ApplyPostSynapticSpike(Interconnection * Connection, double SpikeTime){}
 
    		/*!
 		 * \brief It prints the learning rule info.

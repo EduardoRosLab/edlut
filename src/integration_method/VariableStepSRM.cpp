@@ -18,7 +18,7 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 
 
-VariableStepSRM::VariableStepSRM():IntegrationMethod("VariableStepSRM",0,0,0,0,false,false){
+VariableStepSRM::VariableStepSRM():IntegrationMethod(NULL, "VariableStepSRM",0,0,0,false,false){
 }
 
 VariableStepSRM::~VariableStepSRM(){
@@ -118,7 +118,7 @@ ostream & VariableStepSRM::PrintInfo(ostream & out){
 }	
 
 
-void VariableStepSRM::NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index) {
+void VariableStepSRM::NextDifferentialEcuationValue(int index, float * NeuronState, float elapsed_time) {
 	float p=NeuronState[4];
 
 	if(p<p_min){

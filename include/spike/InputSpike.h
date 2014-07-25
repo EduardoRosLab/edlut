@@ -77,16 +77,32 @@ class InputSpike: public Spike{
    		~InputSpike();
    		
 
-		/*!
-   		 * \brief It process an event in the simulation.
+   		/*!
+   		 * \brief It process an event in the simulation with the option of real time available.
    		 * 
-   		 * It process the event in the simulation.
+   		 * It process an event in the simulation with the option of real time available.
    		 * 
    		 * \param CurrentSimulation The simulation object where the event is working.
-		 * \param RealTimeRestriction This variable indicates whether we are making a 
-		 * real-time simulation and the watchdog is enabled.
+		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
+		 * control the consumed time in each slot.
    		 */
-   		void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction);
+   		void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction);
+
+		/*!
+   		 * \brief It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * \param CurrentSimulation The simulation object where the event is working.
+   		 */
+		void ProcessEvent(Simulation * CurrentSimulation);
+
+   		/*!
+   		 * \brief this method print the event type.
+   		 * 
+   		 * This method print the event type..
+		 */
+		virtual void PrintType();
 };
 
-#endif /*SPIKE_H_*/
+#endif /*INPUTSPIKE_H_*/

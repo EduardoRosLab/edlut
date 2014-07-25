@@ -17,49 +17,19 @@
 #include "../../include/integration_method/IntegrationMethod.h"
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 
-//#include "../../include/parallel_function.h"
 
 
-IntegrationMethod::IntegrationMethod(string integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState,int N_timeDependentNeuronState, int N_CPU_thread, bool jacobian, bool inverse):IntegrationMethodType(integrationMethodType), N_NeuronStateVariables(N_neuronStateVariables), N_DifferentialNeuronState(N_differentialNeuronState), N_TimeDependentNeuronState(N_timeDependentNeuronState), N_CPU_Thread(N_CPU_thread){
-	if(jacobian){
-		JacAuxNeuronState = (float **)new float *[N_CPU_thread];
-		JacAuxNeuronState_pos = (float **)new float *[N_CPU_thread];
-		JacAuxNeuronState_neg = (float **)new float *[N_CPU_thread];
-		for(int i=0; i<N_CPU_thread; i++){
-			JacAuxNeuronState[i] = new float [N_NeuronStateVariables]();
-			JacAuxNeuronState_pos[i] = new float [N_NeuronStateVariables]();
-			JacAuxNeuronState_neg[i] = new float [N_NeuronStateVariables]();
-		}
-	}else{
-		JacAuxNeuronState=0;
-		JacAuxNeuronState_pos=0;
-		JacAuxNeuronState_neg=0;
+
+
+
+IntegrationMethod::IntegrationMethod(TimeDrivenNeuronModel* NewModel, string integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState,int N_timeDependentNeuronState, bool jacobian, bool inverse):model(NewModel),IntegrationMethodType(integrationMethodType), N_NeuronStateVariables(N_neuronStateVariables), N_DifferentialNeuronState(N_differentialNeuronState), N_TimeDependentNeuronState(N_timeDependentNeuronState){
+	if(N_NeuronStateVariables>MAX_VARIABLES){
+		cerr<<"The number of state variables is too high. You must increase the value of MAX_VARIABLES defined in IntegrationMethod.h to "<<N_NeuronStateVariables<<"."<<endl;
+		exit(0);
 	}
-
 }
 
 IntegrationMethod::~IntegrationMethod(){
-	if(JacAuxNeuronState!=0){
-		for(int i=0; i<N_CPU_Thread; i++){
-			delete JacAuxNeuronState[i];
-		}
-		delete [] JacAuxNeuronState;
-	}
-
-	if(JacAuxNeuronState_pos!=0){
-		for(int i=0; i<N_CPU_Thread; i++){
-			delete JacAuxNeuronState_pos[i];
-		}
-		delete [] JacAuxNeuronState_pos;
-	}
-
-	if(JacAuxNeuronState_neg!=0){
-		for(int i=0; i<N_CPU_Thread; i++){
-			delete JacAuxNeuronState_neg[i];
-		}
-		delete [] JacAuxNeuronState_neg;
-	}
-
 	//delete [] PredictedElapsedTime;
 }
 
@@ -67,63 +37,26 @@ string IntegrationMethod::GetType(){
 	return this->IntegrationMethodType;
 }
 		
-void IntegrationMethod::Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index){
-	float epsi=9.5367431640625e-7;
-	float * offset_JacAuxNeuronState = JacAuxNeuronState[CPU_thread_index];
-	float * offset_JacAuxNeuronState_pos = JacAuxNeuronState_pos[CPU_thread_index];
-	float * offset_JacAuxNeuronState_neg = JacAuxNeuronState_neg[CPU_thread_index];
 
-	for (int j=0; j<N_DifferentialNeuronState; j++){
-		memcpy(offset_JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
-		offset_JacAuxNeuronState[j]+=epsi;
-		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_pos);
 
-		offset_JacAuxNeuronState[j]-=2*epsi;
-		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_neg);
-
-		for(int z=0; z<N_DifferentialNeuronState; z++){
-			jacnum[z*N_DifferentialNeuronState+j]=(offset_JacAuxNeuronState_pos[z]-offset_JacAuxNeuronState_neg[z])/(2*epsi);
-		}
-	} 
-}
-
-//void IntegrationMethod::Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index, float elapsed_time){
-//	float epsi=elapsed_time * 0.1f;
-	//float * offset_JacAuxNeuronState = JacAuxNeuronState[CPU_thread_index];
-	//float * offset_JacAuxNeuronState_pos = JacAuxNeuronState_pos[CPU_thread_index];
-	//float * offset_JacAuxNeuronState_neg = JacAuxNeuronState_neg[CPU_thread_index];
-//	for (int j=0; j<N_DifferentialNeuronState; j++){
-//		memcpy(offset_JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
-//		offset_AuxNeuronState[j]+=epsi;
-//		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_pos);
-//
-//		offset_JacAuxNeuronState[j]-=2*epsi;
-//		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_neg);
-//
-//		for(int z=0; z<N_DifferentialNeuronState; z++){
-//			jacnum[z*N_DifferentialNeuronState+j]=(offset_JacAuxNeuronState_pos[z]-offset_JacAuxNeuronState_neg[z])/(2*epsi);
-//		}
-//	} 
-//}
-
-void IntegrationMethod::Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index, float elapsed_time){
+void IntegrationMethod::Jacobian(float * NeuronState, float * jacnum, float elapsed_time){
 	float epsi=elapsed_time * 0.1f;
 	float inv_epsi=1.0f/epsi;
-	float * offset_JacAuxNeuronState = JacAuxNeuronState[CPU_thread_index];
-	float * offset_JacAuxNeuronState_pos = JacAuxNeuronState_pos[CPU_thread_index];
-	float * offset_JacAuxNeuronState_neg = JacAuxNeuronState_neg[CPU_thread_index];
+	float JacAuxNeuronState[MAX_VARIABLES];
+	float JacAuxNeuronState_pos[MAX_VARIABLES];
+	float JacAuxNeuronState_neg[MAX_VARIABLES];
 
-	memcpy(offset_JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
-	Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_pos);
+	memcpy(JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
+	this->model->EvaluateDifferentialEcuation(JacAuxNeuronState, JacAuxNeuronState_pos);
 
 	for (int j=0; j<N_DifferentialNeuronState; j++){
-		memcpy(offset_JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
+		memcpy(JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
 
-		offset_JacAuxNeuronState[j]-=epsi;
-		Model->EvaluateDifferentialEcuation(offset_JacAuxNeuronState, offset_JacAuxNeuronState_neg);
+		JacAuxNeuronState[j]-=epsi;
+		this->model->EvaluateDifferentialEcuation(JacAuxNeuronState, JacAuxNeuronState_neg);
 
 		for(int z=0; z<N_DifferentialNeuronState; z++){
-			jacnum[z*N_DifferentialNeuronState+j]=(offset_JacAuxNeuronState_pos[z]-offset_JacAuxNeuronState_neg[z])*inv_epsi;
+			jacnum[z*N_DifferentialNeuronState+j]=(JacAuxNeuronState_pos[z]-JacAuxNeuronState_neg[z])*inv_epsi;
 		}
 	} 
 }
@@ -133,15 +66,15 @@ void IntegrationMethod::Jacobian(TimeDrivenNeuronModel * Model, float * NeuronSt
 
 
 //With float (efficient 2)
-void IntegrationMethod::invermat(float *a, float *ainv, int CPU_thread_index) {
+void IntegrationMethod::invermat(float *a, float *ainv) {
 	if(N_DifferentialNeuronState==1){
 		ainv[0]=1.0f/a[0];
 	}else{
 		float coef, element, inv_element;
 		int i,j, s;
 
-		float * local_a= new float [N_DifferentialNeuronState*N_DifferentialNeuronState];
-		float * local_ainv= new float [N_DifferentialNeuronState*N_DifferentialNeuronState]();
+		float local_a[MAX_VARIABLES*MAX_VARIABLES];
+		float local_ainv[MAX_VARIABLES*MAX_VARIABLES]={};
 
 		memcpy(local_a, a, sizeof(float)*N_DifferentialNeuronState*N_DifferentialNeuronState);
 		for (i=0;i<N_DifferentialNeuronState;i++){
@@ -194,21 +127,11 @@ void IntegrationMethod::invermat(float *a, float *ainv, int CPU_thread_index) {
 			}
 		}
 		memcpy(ainv, local_ainv, sizeof(float)*N_DifferentialNeuronState*N_DifferentialNeuronState);
-		delete [] local_a;
-		delete [] local_ainv;
 	}
 }
 
 
 
-//With float (with SSE3 intruction)
-//void IntegrationMethod::invermat(float *a, float *ainv, int CPU_thread_index) {
-//	if(N_DifferentialNeuronState==1){
-//		ainv[0]=1.0f/a[0];
-//	}else{
-//		invermat_parallel(a, ainv, N_DifferentialNeuronState);
-//	}
-//}
 
 
 

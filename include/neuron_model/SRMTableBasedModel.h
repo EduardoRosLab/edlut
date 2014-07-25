@@ -73,7 +73,7 @@ class SRMTableBasedModel: public TableBasedModel {
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection);
+		virtual void SynapsisEffect(int index, Interconnection * InputConnection);
 
 		/*!
 		 * \brief It returns the end of the refractory period.
@@ -123,6 +123,15 @@ class SRMTableBasedModel: public TableBasedModel {
 		 * It destroys an object of this class.
 		 */
 		~SRMTableBasedModel();
+
+		/*!
+		 * \brief It loads the neuron model description and tables (if necessary).
+		 *
+		 * It loads the neuron model description and tables (if necessary).
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
+		 */
+		virtual void LoadNeuronModel() throw (EDLUTFileException);
 
 		/*!
 		 * \brief It creates the neuron state and initializes to defined values.

@@ -24,7 +24,7 @@
  * \date May 2013
  *
  * This file declares a class which implement six BDF (Backward Differentiation Formulas) integration methods (from 
- * first order to sixth order BDF integration method). This method implements a progressive implementation of the
+ * first to sixth order BDF integration method). This method implements a progressive implementation of the
  * higher order integration method using the lower order integration mehtod (BDF1->BDF2->...->BDF6). This class 
  * implement a fixed step integration method.
  */
@@ -51,24 +51,14 @@ class BDFn : public FixedStep {
 
 	public:
 
-		/*!
-		 * \brief These vectors are used as auxiliar vectors.
-		*/
-		float ** AuxNeuronState;
-		float ** AuxNeuronState_p;
-		float ** AuxNeuronState_p1;
-		float ** AuxNeuronState_c;
-		float ** jacnum;
-		float ** J;
-		float ** inv_J;
 
 		/*!
-		 * \brief This vector stores previous neuron state variable for all neuron. This one is used as a memory.
+		 * \brief This vector stores previous neuron state variable for all neurons. This one is used as a memory.
 		*/
 		float ** PreviousNeuronState;
 
 		/*!
-		 * \brief This vector stores the difference between previous neuron state variable for all neuron. This 
+		 * \brief This vector stores the difference between previous neuron state variable for all neurons. This 
 		 * one is used as a memory.
 		*/
 		float ** D;
@@ -79,7 +69,10 @@ class BDFn : public FixedStep {
 		const static float Coeficient [7][7];
 
 		/*!
-		 * \brief This vector contains the state of each neuron (BDF order).
+		 * \brief This vector contains the state of each neuron (BDF order). When the integration method is reseted (the values of the neuron model variables are
+		 * changed outside the integration method, for instance when a neuron spikes and the membrane potential is reseted to the resting potential), the values
+		 * store in PreviousNeuronState and D are no longer valid. In this case the order it is set to 0 and must grow in each integration step until it is reache
+		 * the target order.
 		*/
 		int * state;
 
@@ -90,17 +83,17 @@ class BDFn : public FixedStep {
 
 
 		/*!
-		 * \brief Constructor of the class with 5 parameter.
+		 * \brief Constructor of the class with parameters.
 		 *
 		 * It generates a new BDF object indicating the order of the method.
 		 *
+		 * \param NewModel time driven neuron model associated to this integration method.
 		 * \param N_neuronStateVariables number of state variables for each cell.
 		 * \param N_differentialNeuronState number of state variables witch are calculate with a differential equation for each cell.
-		 * \param N_timeDependentNeuronState number of state variables witch ara calculate with a time dependent equation for each cell.
-		 * \param N_CPU_thread number of OpenMP thread used.
+		 * \param N_timeDependentNeuronState number of state variables witch are calculate with a time dependent equation for each cell.
 		 * \param BDForder BDF order (1, 2, ..., 6).
 		 */
-		BDFn(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread, int BDForder);
+		BDFn(TimeDrivenNeuronModel * NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int BDForder);
 
 		/*!
 		 * \brief Class destructor.
@@ -111,17 +104,15 @@ class BDFn : public FixedStep {
 		
 
 		/*!
-		 * \brief It calculate the next neural state varaibles of the model.
+		 * \brief It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * It calculate the next neural state varaibles of the model.
+		 * It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * \param index Index of the cell inside the neuron model for method with memory (e.g. BDF).
-		 * \param Model The NeuronModel.
+		 * \param index for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 * \param NeuronState neuron state variables of one neuron.
 		 * \param elapsed_time integration time step.
-		 * \param CPU_thread_index index of the OpenMP thread.
 		 */
-		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index);
+		virtual void NextDifferentialEcuationValue(int index, float * NeuronState, float elapsed_time);
 
 
 		/*!
@@ -137,20 +128,20 @@ class BDFn : public FixedStep {
 
 
 		/*!
-		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF2).
+		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It initialize the state of the integration method for method with memory (e.g. BDF2).
+		 * It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * \param N_neuron number of neuron in the neuron model.
+		 * \param N_neuron number of neurons in the neuron model.
 		 * \param inicialization vector with initial values.
 		 */
 		void InitializeStates(int N_neurons, float * initialization);
 
 
 		/*!
-		 * \brief It reset the state of the integration method for method with memory (e.g. BDF).
+		 * \brief It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It reset the state of the integration method for method with memory (e.g. BDF).
+		 * It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
 		 * \param index indicate witch neuron must be reseted.
 		 */

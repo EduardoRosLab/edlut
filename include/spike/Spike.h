@@ -90,27 +90,36 @@ class Spike: public Event{
    		 * \return The spike source neuron.
    		 */
    		Neuron * GetSource () const;
-   		
-   		/*!
+
+		/*!
    		 * \brief It sets the spike source neuron.
    		 * 
    		 * It sets the spike source neuron.
    		 * 
-   		 * \param NewSource The new spike source neuron.
+   		 * \return The spike source neuron.
    		 */
    		void SetSource (Neuron * NewSource);
    		
-
+	
    		/*!
-   		 * \brief It process an event in the simulation.
+   		 * \brief It process an event in the simulation with the option of real time available.
    		 * 
-   		 * It process the event in the simulation.
+   		 * It process an event in the simulation with the option of real time available.
    		 * 
    		 * \param CurrentSimulation The simulation object where the event is working.
-		 * \param RealTimeRestriction This variable indicates whether we are making a 
-		 * real-time simulation and the watchdog is enabled.
+		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
+		 * control the consumed time in each slot.
    		 */
-   		virtual void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction) = 0;
+   		virtual void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction) = 0;
+
+		/*!
+   		 * \brief It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * \param CurrentSimulation The simulation object where the event is working.
+   		 */
+		virtual void ProcessEvent(Simulation * CurrentSimulation) = 0;
    		
    		friend ostream & operator<< (ostream & out, Spike * spike);
 
@@ -120,7 +129,21 @@ class Spike: public Event{
    		 * 
    		 * This method indicates if this event is and spike event.
 		 */
-		bool IsSpike();
+		bool IsSpike() const;
+
+   		/*!
+   		 * \brief this method print the event type.
+   		 * 
+   		 * This method print the event type..
+		 */
+		virtual void PrintType();
+
+   		/*!
+   		 * \brief The event queue uses this preference variable to sort the events with the same time stamp.
+   		 * 
+   		 * The event queue uses this preference variable to sort the events with the same time stamp.
+		 */
+		virtual int ProcessingPriority();
    	
 };
 

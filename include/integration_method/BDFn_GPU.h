@@ -48,7 +48,7 @@ class BDFn_GPU: public IntegrationMethod_GPU{
 	public:
 
 		/*!
-		 * \brief These vectors are used as auxiliar vectors.
+		 * \brief These vectors are used as auxiliar vectors in GPU memory.
 		*/
 		float * AuxNeuronState;
 		float * AuxNeuronState_p;
@@ -61,23 +61,27 @@ class BDFn_GPU: public IntegrationMethod_GPU{
 		float * AuxNeuronState2;
 		float * AuxNeuronState_pos;
 		float * AuxNeuronState_neg;
-		//Coeficient
+		//For Coeficient
 		float * Coeficient;
 
 
 		/*!
-		 * \brief This vector stores previous neuron state variable for all neuron. This one is used as a memory.
+		 * \brief This vector stores previous neuron state variable for all neurons. This one is used as a memory.
 		*/
 		float * PreviousNeuronState;
 
 
 		/*!
-		 * \brief This vector stores previous neuron state variable for all neuron. This one is used as a memory.
+		 * \brief This vector stores the difference between previous neuron state variable for all neurons. This 
+		 * one is used as a memory.
 		*/
 		float * D;
 
 		/*!
-		 * \brief This vector contains the state of each neuron (BDF order).
+		 * \brief This vector contains the state of each neuron (BDF order). When the integration method is reseted (the values of the neuron model variables are
+		 * changed outside the integration method, for instance when a neuron spikes and the membrane potential is reseted to the resting potential), the values
+		 * store in PreviousNeuronState and D are no longer valid. In this case the order it is set to 0 and must grow in each integration step until it is reache
+		 * the target order.
 		*/
 		int * state;
 
@@ -111,7 +115,7 @@ class BDFn_GPU: public IntegrationMethod_GPU{
 		 *
 		 * It destroys an object of this class.
 		 */
-		~BDFn_GPU();
+		virtual ~BDFn_GPU();
 
 
 		/*!

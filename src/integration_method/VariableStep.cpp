@@ -19,7 +19,7 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 
 
-VariableStep::VariableStep(string integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread, bool jacobian, bool inverse):IntegrationMethod(integrationMethodType,N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, N_CPU_thread, jacobian, inverse){
+VariableStep::VariableStep(TimeDrivenNeuronModel * NewModel, string integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, bool jacobian, bool inverse):IntegrationMethod(NewModel,integrationMethodType,N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, jacobian, inverse){
 }
 
 VariableStep::~VariableStep(){

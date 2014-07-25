@@ -36,6 +36,7 @@
 #include "./RK4_GPU2.h"
 #include "./BDFn_GPU2.h"
 
+class TimeDrivenNeuronModel_GPU2;
 
 
 
@@ -68,18 +69,18 @@ class LoadIntegrationMethod_GPU2 {
 		}
 
 
-		__device__ static IntegrationMethod_GPU2 * loadIntegrationMethod_GPU2(char const* integrationName, int N_NeuronStateVariables, int N_DifferentialNeuronState, int N_TimeDependentNeuronState, int Total_N_thread, void ** Buffer_GPU){
+		__device__ static IntegrationMethod_GPU2 * loadIntegrationMethod_GPU2(TimeDrivenNeuronModel_GPU2* NewModel, char const* integrationName, int N_NeuronStateVariables, int N_DifferentialNeuronState, int N_TimeDependentNeuronState, void ** Buffer_GPU){
 			
 			IntegrationMethod_GPU2 * Method;
 			//DEFINE HERE NEW INTEGRATION METHOD
 			if(cmp4(integrationName, "Euler", 5)==0){
-				Method=(Euler_GPU2 *) new Euler_GPU2(N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Total_N_thread, Buffer_GPU);
+				Method=(Euler_GPU2 *) new Euler_GPU2(NewModel, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Buffer_GPU);
 			}else if(cmp4(integrationName, "RK2", 3)==0){
-				Method=(RK2_GPU2 *) new RK2_GPU2(N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Total_N_thread,Buffer_GPU);
+				Method=(RK2_GPU2 *) new RK2_GPU2(NewModel, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState,Buffer_GPU);
 			}else if(cmp4(integrationName, "RK4", 3)==0){
-				Method=(RK4_GPU2 *) new RK4_GPU2(N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Total_N_thread,Buffer_GPU);
+				Method=(RK4_GPU2 *) new RK4_GPU2(NewModel, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState,Buffer_GPU);
 			}else if(cmp4(integrationName, "BDF", 3)==0 && atoiGPU(integrationName,3)>0 && atoiGPU(integrationName,3)<7){
-				Method=(BDFn_GPU2 *) new BDFn_GPU2(N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Total_N_thread, Buffer_GPU, atoiGPU(integrationName,3));
+				Method=(BDFn_GPU2 *) new BDFn_GPU2(NewModel, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Buffer_GPU, atoiGPU(integrationName,3));
 			}else{
 				printf("There was an error loading the integration methods of the GPU.\n");
 

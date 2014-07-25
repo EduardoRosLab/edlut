@@ -2,8 +2,8 @@
 ########################### - MAKEFILE FLAGS - #################################
 ################################################################################
 
-CCFLAGS = -I$(includedir)  
-CXXFLAGS = -I$(includedir) 
+CCFLAGS = -I$(includedir)
+CXXFLAGS = -I$(includedir)
 LDFLAGS = -lm
 
 ifeq ($(optimize),true)
@@ -21,6 +21,7 @@ OPENMP_FLAGS = @openmp_cxxflags@
 CCFLAGS += $(OPENMP_FLAGS)
 CXXFLAGS += $(OPENMP_FLAGS)
 LDFLAGS  += $(OPENMP_FLAGS)
+NVCCFLAGS += -Xcompiler $(OPENMP_FLAGS)
 
 ifeq ($(profile),true)
   LDFLAGS+= -lprofiler
@@ -55,25 +56,12 @@ CXXFLAGS += -fno-strict-aliasing
 ifeq ($(matlabsupport),true)
   CCFLAGS	+= -I$(matlabinclude) -fPIC -DMATLAB_MEX_FILE
   CXXFLAGS	+= -I$(matlabinclude) -fPIC -DMATLAB_MEX_FILE
-  LDFLAGS	+= -lmat -lmx -lmex
-#  MEXFLAGS	:= -cxx CC='$(ccompiler)' CXX='$(compiler)' LD='$(compiler)'
+  MEXFLAGS	:= -cxx CC='$(ccompiler)' CXX='$(compiler)' LD='$(compiler)'
   ifeq ($(OS_SYSTEM),OSX)
-	# MAC OS X 64 bits architecture 
-    LDFLAGS	+= -L$(matlabrootdir)/bin/maci64 -Wl,-rpath,$(matlabrootdir)/bin/maci64
   	## Adding -undefined dynamic_loop -bundle to fix the MAC OS X bug as reported in http://www.mathworks.com/matlabcentral/newsreader/view_thread/299757
-#  	MEXFLAGS	+= LDFLAGS='$(LDFLAGS) -undefined dynamic_lookup -bundle'
-	MEXFLAGS	:= $(LDFLAGS) -undefined dynamic_lookup -bundle -lstdc++
+  	MEXFLAGS	+= LDFLAGS='$(LDFLAGS) -undefined dynamic_lookup -bundle'
   else
-	ifeq ($(OS_SYSTEM),LINUX)
-  	  # LINUX 64 bits architecture 
-  	  LDFLAGS	+= -L$(matlabrootdir)/bin/glnxa64 -lrt -Wl,-rpath,$(matlabrootdir)/bin/glnxa64
-	  MEXFLAGS	:= $(LDFLAGS) -shared
-  	else
-  	  # WINNT 32 and 64 bits architecture
-  	  LDFLAGS += -L$(matlabrootdir)/bin/win$(ARCH) -Wl,-rpath,$(matlabrootdir)/bin/win$(ARCH)
-	  MEXFLAGS	:= $(LDFLAGS)
-  	endif
-#  	MEXFLAGS	+= LDFLAGS='$(LDFLAGS)'
+  	MEXFLAGS	+= LDFLAGS='$(LDFLAGS)'
   endif
   
   ifeq ($(simulinksupport),true)
@@ -82,5 +70,21 @@ ifeq ($(matlabsupport),true)
   endif
 endif
 
+ifeq ($(generate_robot),true)
+  ifeq ($(OS_SYSTEM),OSX)
+    # MAC OS X 64 bits architecture 
+    LDFLAGS	+= -L$(matlabrootdir)/bin/maci64
+  else
+  	ifeq ($(OS_SYSTEM),LINUX)
+  	  # LINUX 64 bits architecture 
+  	  LDFLAGS	+= -L$(matlabrootdir)/bin/glnxa64 -lrt
+  	else
+  	  # WINNT 32 and 64 bits architecture
+  	  LDFLAGS += -L$(matlabrootdir)/bin/win$(ARCH)
+  	endif
+  endif
+  LDFLAGS	+= -lmat -lmx -lmex
+endif
+  	
   	
   	

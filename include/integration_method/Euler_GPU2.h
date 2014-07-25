@@ -53,7 +53,7 @@ class Euler_GPU2 : public IntegrationMethod_GPU2 {
 	public:
 
 		/*!
-		 * \brief This vector is used as an auxiliar vector.
+		 * \brief This vector is used as an auxiliar vector. 
 		*/
 		float * AuxNeuronState;
 
@@ -70,7 +70,7 @@ class Euler_GPU2 : public IntegrationMethod_GPU2 {
 		 * \param Buffer_GPU This vector contains all the necesary GPU memory witch have been reserved in the CPU (this memory
 		 * could be reserved directly in the GPU, but this suppose some restriction in the amount of memory witch can be reserved).
 		 */
-		__device__ Euler_GPU2(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int Total_N_thread, void ** Buffer_GPU):IntegrationMethod_GPU2(N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, Total_N_thread){
+		__device__ Euler_GPU2(TimeDrivenNeuronModel_GPU2* NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, void ** Buffer_GPU):IntegrationMethod_GPU2(NewModel, N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState){
 			AuxNeuronState=((float*)Buffer_GPU[0]);
 		}
 
@@ -94,9 +94,9 @@ class Euler_GPU2 : public IntegrationMethod_GPU2 {
 		 * \param NeuronState Vector of neuron state variables for all neurons.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, float elapsed_time){
+		__device__ void NextDifferentialEcuationValue(int index, int SizeStates, float * NeuronState, float elapsed_time){
 
-			Model->EvaluateDifferentialEcuation(index, SizeStates, NeuronState, AuxNeuronState);
+			model->EvaluateDifferentialEcuation(index, SizeStates, NeuronState, AuxNeuronState);
 
 			int offset1=gridDim.x*blockDim.x;
 			int offset2=blockDim.x*blockIdx.x + threadIdx.x;
@@ -105,7 +105,7 @@ class Euler_GPU2 : public IntegrationMethod_GPU2 {
 			}
 
 			//Finaly, we evaluate the neural state variables with time dependence.
-			Model->EvaluateTimeDependentEcuation(index, SizeStates, NeuronState, elapsed_time);
+			model->EvaluateTimeDependentEcuation(index, SizeStates, NeuronState, elapsed_time);
 		}
 
 

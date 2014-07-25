@@ -79,7 +79,7 @@ class Network : public PrintableObject{
    		/*!
    		 * \brief Neuron types.
    		 */
-   		NeuronModel ** neutypes;
+   		NeuronModel *** neutypes;
    
    		/*!
    		 * \brief Neuron types number.
@@ -99,22 +99,22 @@ class Network : public PrintableObject{
 		/*!
 		 * \brief Time-driven cell (model) array.
 		 */
-		Neuron *** timedrivenneurons;
+		Neuron **** timedrivenneurons;
 
 		/*!
    		 * \brief Number of time-driven neurons.
    		 */
-		int * ntimedrivenneurons;
+		int ** ntimedrivenneurons;
 
 		/*!
 		 * \brief Time-driven cell (model) arrays in GPU.
 		 */
-		Neuron *** timedrivenneurons_GPU;
+		Neuron **** timedrivenneurons_GPU;
 
 		/*!
 		 * \brief Number of time-driven neurons for every model in GPU.
 		 */
-		int * ntimedrivenneurons_GPU;
+		int ** ntimedrivenneurons_GPU;
 
 
    		/*!
@@ -131,6 +131,11 @@ class Network : public PrintableObject{
    		 * \brief Initial connection ordenation.
    		 */
    		Interconnection ** wordination;
+
+		/*!
+ 		 * Number of OpenMP thread. 
+ 		 */
+		int NumberOfQueues;
    		
    		/*!
    		 * \brief It sorts the connections by the source neuron and the delay and add the output connections
@@ -191,7 +196,7 @@ class Network : public PrintableObject{
    		 * \return The loaded (or existing) neuron type.
    		 * \throw EDLUTException If the neuron model file hasn't been able to be correctly readed. 
    		 */
-   		NeuronModel * LoadNetTypes(string ident_type, string neutype, int & ni) throw (EDLUTException);
+   		NeuronModel ** LoadNetTypes(string ident_type, string neutype, int & ni) throw (EDLUTException);
 
   		/*!
   		 * \brief It Initialize all Vector Neuron State.
@@ -200,7 +205,7 @@ class Network : public PrintableObject{
   		 * 
 		 * \param N_neurons Neuron number for each neuron model.
   		 */
-		void InitializeStates(int * N_neurons);
+		void InitializeStates(int ** N_neurons);
 
    		/*!
    		 * \brief It inits the spikes predictions of every neuron in the network.
@@ -253,7 +258,7 @@ class Network : public PrintableObject{
    		 * 
    		 * \throw EDLUTException If some error has happened.
    		 */
-   		Network(const char * netfile, const char * wfile, EventQueue * Queue) throw (EDLUTException);
+   		Network(const char * netfile, const char * wfile, EventQueue * Queue, int numberOfQueues) throw (EDLUTException);
    		
    		/*!
    		 * \brief Default destructor.
@@ -292,7 +297,19 @@ class Network : public PrintableObject{
 		 *
    		 * \return The time-driven neuron whose index is the parameter index1 in array index0.
    		 */
-		Neuron * GetTimeDrivenNeuronAt(int index0, int index1) const;
+		Neuron ** GetTimeDrivenNeuronAt(int index0, int index1) const;
+
+		/*!
+   		 * \brief It gets a time-driven neuron by the index0 and index1.
+   		 * 
+   		 * It returns a time-driven neuron from array index0 and position index1.
+   		 * 
+   		 * \param index0 The array of the time-driven neuron to use.
+		 * \param index1 The index of the time-driven neuron to get.
+		 *
+   		 * \return The time-driven neuron whose index is the parameter index1 in array index0.
+   		 */
+		Neuron * GetTimeDrivenNeuronAt(int index0, int index1, int index2) const;
 
 		/*!
    		 * \brief It gets a time-driven neuron in GPU by the index0 and index1.
@@ -304,7 +321,9 @@ class Network : public PrintableObject{
 		 *
    		 * \return The time-driven neuron whose index is the parameter index1 in array index0.
    		 */
-		Neuron * GetTimeDrivenNeuronGPUAt(int index0, int index1) const;
+		Neuron ** GetTimeDrivenNeuronGPUAt(int index0, int index1) const;
+
+		Neuron * GetTimeDrivenNeuronGPUAt(int index0, int index1, int index2) const;
 
 		/*!
 		 * \brief It gets the numbers of time-driven neurons for every model in the network.
@@ -313,7 +332,7 @@ class Network : public PrintableObject{
 		 *
 		 * \return the numbers of time-driven neurons for every model in the network
 		 */
-		int * GetTimeDrivenNeuronNumber() const;
+		int ** GetTimeDrivenNeuronNumber() const;
 
 		/*!
 		 * \brief It gets the numbers of time-driven neurons in GPU for every model in the network.
@@ -322,7 +341,7 @@ class Network : public PrintableObject{
 		 *
 		 * \return the numbers of time-driven neurons in GPU for every model in the network
 		 */
-		int * GetTimeDrivenNeuronNumberGPU() const;
+		int ** GetTimeDrivenNeuronNumberGPU() const;
 
 		/*!
 		 * \brief It gets the number of neuron model in the network.
@@ -342,7 +361,20 @@ class Network : public PrintableObject{
 		 *
 		 * \return The neuron model whose index is the parameter.
 		 */
-		NeuronModel * GetNeuronModelAt(int index) const;
+		NeuronModel ** GetNeuronModelAt(int index) const;
+
+		
+		/*!
+		 * \brief It gets a neuron model by the index.
+		 *
+		 * It returns a neuron model from the index.
+		 *
+		 * \param index The index of the neuron model to get.
+		 *
+		 * \return The neuron model whose index is the parameter.
+		 */
+		NeuronModel * GetNeuronModelAt(int index1, int index2) const;
+
 
    		/*!
 		 * \brief It gets a learning rule by the index.
@@ -385,6 +417,17 @@ class Network : public PrintableObject{
    		 * \return The stream after the printer.
    		 */
    		virtual ostream & PrintInfo(ostream & out);
+
+		/*!
+		 * \brief It gets the number of OpenMP thread.
+		 * 
+		 * It gets the number of OpenMP thread.
+		 * 
+		 * \return The number of OpenMP thread.
+		 */
+		int GetNumberOfQueues();
+
+		double GetMinInterpropagationTime();
    		
 };
 

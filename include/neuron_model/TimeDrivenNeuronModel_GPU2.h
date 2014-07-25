@@ -28,6 +28,8 @@
 
 class IntegrationMethod_GPU2;
 
+#include "./VectorNeuronState_GPU2.h"
+
 
 
 //Library for CUDA
@@ -53,9 +55,25 @@ class TimeDrivenNeuronModel_GPU2{
 	public:
 
 		/*!
+		 * \brief integration time step.
+		*/
+		double TimeDrivenStep_GPU;
+
+		/*!
+		 * \brief integration time step.
+		*/
+		double TimeDrivenStep_GPU_f;
+
+		/*!
 		 * \brief integration method.
 		*/
 		IntegrationMethod_GPU2 * integrationMethod_GPU2;
+
+
+		/*!
+		 * \brief Vector neuron state in GPU.
+		*/
+		VectorNeuronState_GPU2 * vectorNeuronState_GPU2;
 
 
 		/*!
@@ -63,7 +81,7 @@ class TimeDrivenNeuronModel_GPU2{
 		 *
 		 * It generates a new neuron model object without being initialized.
 		 */
-		__device__ TimeDrivenNeuronModel_GPU2(){
+		__device__ TimeDrivenNeuronModel_GPU2(double new_TimeDrivenStep_GPU):TimeDrivenStep_GPU(new_TimeDrivenStep_GPU), TimeDrivenStep_GPU_f(new_TimeDrivenStep_GPU){
 		}
 
 
@@ -74,6 +92,7 @@ class TimeDrivenNeuronModel_GPU2{
 		 */
 		__device__ virtual ~TimeDrivenNeuronModel_GPU2(){
 			delete integrationMethod_GPU2;
+			delete vectorNeuronState_GPU2;
 		}
 
 
@@ -93,7 +112,7 @@ class TimeDrivenNeuronModel_GPU2{
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		__device__ virtual void UpdateState(int index, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime){
+		__device__ virtual void UpdateState(double CurrentTime){
 		}
 
 
@@ -121,6 +140,23 @@ class TimeDrivenNeuronModel_GPU2{
 		 * \param elapsed_time integration time step.
 		 */
 		__device__ virtual void EvaluateTimeDependentEcuation(int index, int SizeStates, float * NeuronState, float elapsed_time){
+		}
+
+
+		/*!
+		 * \brief It creates an vector neuron state object in GPU and store the vector allocated in the GPU by the CPU. 
+		 *
+		 * It creates an vector neuron state object in GPU and store the vector allocated in the GPU by the CPU.
+		 *
+		 * \param AuxStateGPU.
+		 * \param VectorNeuronStates_GPU.
+		 * \param LastUpdateGPU.
+		 * \param LastSpikeTimeGPU.
+		 * \param InternalSpikeGPU.
+		 * \param SizeStates.
+		 */
+		__device__ void InitializeVectorNeuronState_GPU2(float * AuxStateGPU, float * VectorNeuronStates_GPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates){
+			vectorNeuronState_GPU2=new VectorNeuronState_GPU2(AuxStateGPU, VectorNeuronStates_GPU, LastUpdateGPU, LastSpikeTimeGPU, InternalSpikeGPU, SizeStates);
 		}
 
 };

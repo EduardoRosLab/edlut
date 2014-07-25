@@ -182,9 +182,9 @@ class EgidioGranuleCell_TimeDriven_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 * \param Buffer_GPU Gpu auxiliar memory.
 		 *
 		 */
-		__device__ EgidioGranuleCell_TimeDriven_GPU2(float GMAXNa_f, float GMAXNa_r, float GMAXNa_p, float GMAXK_V,
+		__device__ EgidioGranuleCell_TimeDriven_GPU2(double new_elapsed_time, float GMAXNa_f, float GMAXNa_r, float GMAXNa_p, float GMAXK_V,
 			float GMAXK_A,float GMAXK_IR,float GMAXK_Ca,float GMAXCa,float GMAXK_sl, char const* integrationName, 
-			int N_neurons, int Total_N_thread, void ** Buffer_GPU):TimeDrivenNeuronModel_GPU2(), gMAXNa_f(GMAXNa_f),
+			int N_neurons, void ** Buffer_GPU):TimeDrivenNeuronModel_GPU2(new_elapsed_time), gMAXNa_f(GMAXNa_f),
 			gMAXNa_r(GMAXNa_r), gMAXNa_p(GMAXNa_p), gMAXK_V(GMAXK_V), gMAXK_A(GMAXK_A), gMAXK_IR(GMAXK_IR), 
 			gMAXK_Ca(GMAXK_Ca), gMAXCa(GMAXCa), gMAXK_sl(GMAXK_sl), gLkg1(5.68e-5f), gLkg2(2.17e-5f), VNa(87.39f),
 			VK(-84.69f), VLkg1(-58.0f), VLkg2(-65.0f), V0_xK_Ai(-46.7f), K_xK_Ai(-19.8f), V0_yK_Ai(-78.8f), K_yK_Ai(8.4f),
@@ -193,7 +193,7 @@ class EgidioGranuleCell_TimeDriven_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 			Q10_30 ( pow(3,((temper-30.0f)/10.0f))), Q10_6_3 ( pow(3,((temper-6.3f)/10.0f))), I_inj_abs(11e-12f)/*I_inj_abs(0)*/,
 			I_inj(-I_inj_abs*1000.0f/299.26058e-8f), eexc(0.0f), einh(-80.0f), texc(0.5f), tinh(10.0f), vthr(-0.25f){
 					
-			integrationMethod_GPU2=LoadIntegrationMethod_GPU2::loadIntegrationMethod_GPU2(integrationName, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Total_N_thread, Buffer_GPU);
+			integrationMethod_GPU2=LoadIntegrationMethod_GPU2::loadIntegrationMethod_GPU2(this, integrationName, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Buffer_GPU);
 		}
 
 		/*!
@@ -201,7 +201,7 @@ class EgidioGranuleCell_TimeDriven_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 *
 		 * It destroys an object of this class.
 		 */
-		__device__ ~EgidioGranuleCell_TimeDriven_GPU2(){
+		__device__ virtual ~EgidioGranuleCell_TimeDriven_GPU2(){
 		}
 
 
@@ -221,28 +221,32 @@ class EgidioGranuleCell_TimeDriven_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */	
-		__device__ void UpdateState(int index, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime)
+		__device__ void UpdateState(double CurrentTime)
 		{
-			double elapsed_time =CurrentTime - LastUpdateGPU[index];
-			float elapsed_time_f=elapsed_time;
+			int index = blockIdx.x * blockDim.x + threadIdx.x;
+			while (index<vectorNeuronState_GPU2->SizeStates){
 
-			LastSpikeTimeGPU[index]+=elapsed_time;
-			double last_spike=LastSpikeTimeGPU[index];
+				vectorNeuronState_GPU2->LastSpikeTimeGPU[index]+=TimeDrivenStep_GPU;
+//				double last_spike=vectorNeuronState_GPU2->LastSpikeTimeGPU[index];
 
-			StateGPU[15*SizeStates + index]+=AuxStateGPU[0*SizeStates +index];
-			StateGPU[16*SizeStates + index]+=AuxStateGPU[1*SizeStates + index];
+				vectorNeuronState_GPU2->VectorNeuronStates_GPU[15*vectorNeuronState_GPU2->SizeStates + index]+=vectorNeuronState_GPU2->AuxStateGPU[0*vectorNeuronState_GPU2->SizeStates +index];
+				vectorNeuronState_GPU2->VectorNeuronStates_GPU[16*vectorNeuronState_GPU2->SizeStates + index]+=vectorNeuronState_GPU2->AuxStateGPU[1*vectorNeuronState_GPU2->SizeStates + index];
 
-			bool spike = false;
+				bool spike = false;
 
-			float previous_V=StateGPU[14*SizeStates + index];
-			integrationMethod_GPU2->NextDifferentialEcuationValue(index, SizeStates, this, StateGPU, elapsed_time_f);
-			if(StateGPU[14*SizeStates + index]>vthr && previous_V<vthr){
-				LastSpikeTimeGPU[index]=0.0;
-				spike = true;
+				float previous_V=vectorNeuronState_GPU2->VectorNeuronStates_GPU[14*vectorNeuronState_GPU2->SizeStates + index];
+				integrationMethod_GPU2->NextDifferentialEcuationValue(index, vectorNeuronState_GPU2->SizeStates, vectorNeuronState_GPU2->VectorNeuronStates_GPU, TimeDrivenStep_GPU_f);
+				if(vectorNeuronState_GPU2->VectorNeuronStates_GPU[14*vectorNeuronState_GPU2->SizeStates + index]>vthr && previous_V<vthr){
+					vectorNeuronState_GPU2->LastSpikeTimeGPU[index]=0.0;
+					spike = true;
+				}
+
+				vectorNeuronState_GPU2->InternalSpikeGPU[index]=spike;
+				vectorNeuronState_GPU2->LastUpdateGPU[index]=CurrentTime;
+
+
+				index+=blockDim.x*gridDim.x;
 			}
-
-			InternalSpikeGPU[index]=spike;
-			LastUpdateGPU[index]=CurrentTime;
 		} 
 
 

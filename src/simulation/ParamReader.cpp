@@ -33,6 +33,8 @@
 #include "../../include/communication/ConnectionException.h"
 
 #include "../../include/simulation/ParameterException.h"
+
+#include "../../include/openmp/openmp.h"
  
 void ParamReader::ParseArguments(int Number, char ** Arguments) throw (ParameterException, ConnectionException) {
 	for (int i=1; i<Number; ++i){
@@ -94,27 +96,7 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 			} else {
 				throw ParameterException(Arguments[i],"Invalid simulation step time");				
 			}
-		} else if (CurrentArgument=="-ts"){
-			if (i+1<Number){
-				// Check if it is a number
-				istringstream Argument(Arguments[++i]);
-   
-   				if (!(Argument >> this->TimeDrivenStepTime))
-     				throw ParameterException(Arguments[i], "Invalid simulation time-driven step time");
-			} else {
-				throw ParameterException(Arguments[i],"Invalid simulation time-driven step time");				
-			}
-		} else if (CurrentArgument=="-tsGPU"){
-			if (i+1<Number){
-				// Check if it is a number
-				istringstream Argument(Arguments[++i]);
-   
-   				if (!(Argument >> this->TimeDrivenStepTimeGPU))
-     				throw ParameterException(Arguments[i], "Invalid simulation time-driven step time for GPU");
-			} else {
-				throw ParameterException(Arguments[i],"Invalid simulation time-driven step time for GPU");				
-			}
-		} else if (CurrentArgument=="-if"){
+		}  else if (CurrentArgument=="-if"){
 			if (i+1<Number){
 				// Check if it is a valid file and exists
 				string File=Arguments[++i];
@@ -271,11 +253,59 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 			} else {
 				throw ParameterException(Arguments[i],"Invalid input-output connection.");
 			}
-		} else {
+		} else if(CurrentArgument=="-openmpQ"){
+			#ifdef _OPENMP
+				if (i+1<Number){
+					// Check if it is a number
+					istringstream Argument(Arguments[++i]);
+	   
+   					if (!(Argument >> this->NumberOfQueues) || NumberOfQueues<1)
+     					throw ParameterException(Arguments[i], "Invalid number of OpenMP thread");	
+
+					if(NumberOfQueues>omp_get_max_threads()){
+						NumberOfQueues=omp_get_max_threads();
+					}
+				} else {
+					throw ParameterException(Arguments[i],"Invalid number of OpenMP thread");				
+				}
+			#else	
+				cout<<"WARNING: OPENMP NO AVAILABLE IN THIS SIMULATION"<<endl;
+				NumberOfThreads=1;
+				NumberOfQueues=1;
+			#endif
+
+		} 	else if(CurrentArgument=="-openmp"){
+			#ifdef _OPENMP
+				if (i+1<Number){
+					// Check if it is a number
+					istringstream Argument(Arguments[++i]);
+	   
+   					if (!(Argument >> this->NumberOfThreads) || NumberOfThreads<1)
+     					throw ParameterException(Arguments[i], "Invalid number of OpenMP thread");	
+
+					if(NumberOfThreads>omp_get_max_threads()){
+						NumberOfThreads=omp_get_max_threads();
+					}
+				} else {
+					throw ParameterException(Arguments[i],"Invalid number of OpenMP thread");				
+				}
+			#else	
+				cout<<"WARNING: OPENMP NO AVAILABLE IN THIS SIMULATION"<<endl;
+				NumberOfThreads=1;
+				NumberOfQueues=1;
+			#endif
+
+		} 
+		else {
 				throw ParameterException(Arguments[i],"Invalid parameter.");
 		}	
 	}	
 	
+	//We check the number of OpenMP threads is higher or equal to the number of queues.
+	if(NumberOfThreads<NumberOfQueues){
+		NumberOfThreads=NumberOfQueues;
+	}
+
 	if (this->SimulationTime==-1.0){
 		throw ParameterException(Arguments[0],"The simulation time isn't specified."); 	
 	} else if (this->NetworkFile==NULL){
@@ -299,7 +329,7 @@ bool ParamReader::FileExists(string Name){
 }
  		 
 ParamReader::ParamReader(int ArgNumber, char ** Arg) throw (ParameterException, ConnectionException) :SimulationTime(-1.0), NetworkFile(NULL), WeightsFile(NULL), WeightTime(0.0), NetworkInfo(false),
-	SimulationStepTime(0.0), TimeDrivenStepTime(-1.0), TimeDrivenStepTimeGPU(-1.0), InputDrivers(), OutputDrivers(), OutputWeightDrivers() {
+	SimulationStepTime(0.0), InputDrivers(), OutputDrivers(), OutputWeightDrivers(), NumberOfThreads(1), NumberOfQueues(1) {
 	ParseArguments(ArgNumber,Arg);	
 }
  		
@@ -327,12 +357,12 @@ double ParamReader::GetSimulationStepTime(){
 	return this->SimulationStepTime;	
 }
 
-double ParamReader::GetTimeDrivenStepTime(){
-	return this->TimeDrivenStepTime;	
+int ParamReader::GetNumberOfThreads(){
+	return this->NumberOfThreads;
 }
 
-double ParamReader::GetTimeDrivenStepTimeGPU(){
-	return this->TimeDrivenStepTimeGPU;	
+int ParamReader::GetNumberOfQueues(){
+	return this->NumberOfQueues;
 }
  		
 vector<InputSpikeDriver *> ParamReader::GetInputSpikeDrivers(){
@@ -351,13 +381,18 @@ vector<OutputWeightDriver *> ParamReader::GetOutputWeightDrivers(){
 	return this->OutputWeightDrivers;
 }
 
+
+//REVIEW THIS FUNCTION.
 Simulation * ParamReader::CreateAndInitializeSimulation() throw (EDLUTException, ConnectionException){
+cout<<"REVIEW ParamReader::CreateAndInitializeSimulation"<<endl;
 	Simulation * Simul = NULL;
 
 	Simul = new Simulation(this->GetNetworkFile(),
                          this->GetWeightsFile(),
                          this->GetSimulationTime(),
-                         this->GetSimulationStepTime());
+                         this->GetSimulationStepTime(),
+						 this->GetNumberOfQueues(),
+						 this->GetNumberOfThreads());
 
 	Simul->SetSaveStep(this->GetSaveWeightStepTime());
 
@@ -384,7 +419,7 @@ Simulation * ParamReader::CreateAndInitializeSimulation() throw (EDLUTException,
 	}
 
 	// Reset total spike counter
-    Simul->SetTotalSpikeCounter(0);
+    Simul->SetTotalSpikeCounter(0,0); /*asdfgf*/
 
 	// Get the external initial inputs
 	Simul->InitSimulation();

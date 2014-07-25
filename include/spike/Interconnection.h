@@ -50,15 +50,16 @@ class ConnectionState;
 class Interconnection : public PrintableObject {
 	
 	private:
-		/*!
-		 * \brief The source neuron of the connection
-		 */
-		Neuron* source;
 		
 		/*!
 		 * \brief The target neuron of the connection
 		 */
 		Neuron* target;
+
+		/*!
+		 * \brief The source neuron of the connection
+		 */
+		Neuron* source;
 		
 		/*!
 		 * \brief The index of the connection in the network connections.
@@ -70,10 +71,6 @@ class Interconnection : public PrintableObject {
 		 */
 		double delay;
 		
-		/*!
-		 * \brief The connection type (excitatory, inhibitory, electrical coupling...)
-		 */
-		int type;
 		
 		/*!
 		 * \brief The synaptic weight of the connection.
@@ -84,21 +81,28 @@ class Interconnection : public PrintableObject {
 		 * \brief The maximum weight of the connection.
 		 */
 		float maxweight;
-		
+
+	
 		/*!
 		 * \brief The learning (or weight change) rule of the connection.
 		 */
 		LearningRule* wchange_withPost;
 		
-		/*!
-		 * \brief Index inside the Learning Rule.
-		 */
-		int LearningRuleIndex_withPost;
 
 		/*!
 		 * \brief The learning (or weight change) rule of the connection.
 		 */
 		LearningRule* wchange_withoutPost;
+
+		/*!
+		* \brief The connection type (excitatory, inhibitory, electrical coupling...)
+		*/
+		int type;
+
+		/*!
+		* \brief Index inside the Learning Rule.
+		*/
+		int LearningRuleIndex_withPost;
 		
 		/*!
 		 * \brief Index inside the Learning Rule.

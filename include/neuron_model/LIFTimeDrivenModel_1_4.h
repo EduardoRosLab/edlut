@@ -127,7 +127,7 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 *
 		 * \throw EDLUTFileException If something wrong has happened in the file load.
 		 */
-		virtual void LoadNeuronModel(string ConfigFile) throw (EDLUTFileException);
+		void LoadNeuronModel(string ConfigFile) throw (EDLUTFileException);
 
 
 		/*!
@@ -139,7 +139,7 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection);
+		void SynapsisEffect(int index, Interconnection * InputConnection);
 
 	public:
 
@@ -182,6 +182,8 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 * \brief It loads the neuron model description and tables (if necessary).
 		 *
 		 * It loads the neuron model description and tables (if necessary).
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
 		 */
 		virtual void LoadNeuronModel() throw (EDLUTFileException);
 
@@ -237,6 +239,7 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 * \return True if an output spike have been fired. False in other case.
 		 */
 		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime);
+
 
 
 		/*!

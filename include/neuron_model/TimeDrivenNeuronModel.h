@@ -65,10 +65,17 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		*/
 		IntegrationMethod * integrationMethod;
 
+
 		/*!
-		 * \brief number of OpenMP thread in CPU to update time driven neuron methods.
+		 * \brief number of OpenMP task in which this neuron model will be divided. This variable is 
+		 *  calculated in CalculateTaskSizes.
 		*/
-		int N_CPU_thread;
+		int NumberOfOpenMPTasks;
+
+		/*!
+		 * \brief block limits of the OpenMP task. This variable is calculated in CalculateTaskSizes.
+		*/
+		int * LimitOfOpenMPTasks;
 
 
 		/*!
@@ -76,8 +83,8 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 *
 		 * It generates a new neuron model object without being initialized.
 		 *
-		 * \param NeuronTypeID Neuron model identificator.
-		 * \param NeuronModelID Neuron model configuration file.
+		 * \param NeuronTypeID Neuron model type.
+		 * \param NeuronModelID Neuron model description file.
 		 */
 		TimeDrivenNeuronModel(string NeuronTypeID, string NeuronModelID);
 
@@ -102,6 +109,7 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 * \return True if an output spike have been fired. False in other case.
 		 */
 		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime) = 0;
+
 
 
 		/*!
@@ -144,6 +152,18 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 * \param elapsed_time integration time step.
 		 */
 		virtual void EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time)=0;
+
+		/*!
+		 * \brief It calculate for the neuron model of each OpenMP queue the number of OpenMP 
+		 *  tasks and the size of each one.
+		 *
+		 *  It calculate for the neuron model of each OpenMP queue the number of OpenMP 
+		 *  tasks and the size of each one.		 
+		 *
+		 * \param N_neurons number of neuron in this queue for this neuron model.
+		 * \param minimumSize minimum number of neurons that must contain a task.
+		 */
+		void CalculateTaskSizes(int N_neurons, int minimumSize);
 
 
 };

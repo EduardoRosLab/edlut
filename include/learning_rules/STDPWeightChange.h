@@ -65,11 +65,28 @@ class STDPWeightChange: public WithPostSynaptic {
 
 	public:
 
+		/*!
+		 * \brief Default constructor.
+		 * 
+		 * It creates a new object.
+		 */ 
 		STDPWeightChange();
 
+		/*!
+		 * \brief Object destructor.
+		 *
+		 * It remove the object.
+		 */
 		virtual ~STDPWeightChange();
 
 
+		/*!
+		 * \brief It initialize the state associated to the learning rule for all the synapses.
+		 *
+		 * It initialize the state associated to the learning rule for all the synapses.
+		 *
+		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
+		 */
 		virtual void InitializeConnectionState(unsigned int NumberOfSynapses);
 
 		/*!

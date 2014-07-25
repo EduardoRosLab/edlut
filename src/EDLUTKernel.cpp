@@ -36,7 +36,7 @@
 #include "../include/spike/EDLUTException.h"
 #include "../include/spike/Network.h"
 
-
+#include "../include/openmp/openmp.h"
 
 
 //#include "google/profiler.h"
@@ -62,12 +62,20 @@ using namespace std;
  *          -logp File_Name It saves all events register in file File_Name.
  * 			-if Input_File	It adds the Input_File file in the input sources of the simulation.
  * 			-of Output_File	It adds the Output_File file in the output targets of the simulation.
+ *          -openmpQ number_of_OpenMP_queues It sets the number of OpenMP queues.
+ *          -openmp number_of_OpenMP_threads It sets the number of OpenMP threads.
  * 			-ic IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the input sources of the simulation.
  * 			-oc IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the output targets of the simulation.
  * 			-ioc IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the input sources and in the output targets.	 
- * 
+ *
   */ 
+
+
+#include <xmmintrin.h>
+
+
 int main(int ac, char *av[]) {
+
 	clock_t starttotalt,endtotalt;
 	starttotalt=clock();
 
@@ -78,8 +86,9 @@ int main(int ac, char *av[]) {
 
 	try {
    		ParamReader Reader(ac, av);
-			
-		Simulation Simul(Reader.GetNetworkFile(), Reader.GetWeightsFile(), Reader.GetSimulationTime(), Reader.GetSimulationStepTime());
+
+		Simulation Simul(Reader.GetNetworkFile(), Reader.GetWeightsFile(), Reader.GetSimulationTime(), Reader.GetSimulationStepTime(), Reader.GetNumberOfQueues(), Reader.GetNumberOfThreads());
+		
 		for (unsigned int i=0; i<Reader.GetInputSpikeDrivers().size(); ++i){
 			Simul.AddInputSpikeDriver(Reader.GetInputSpikeDrivers()[i]);
 		}
@@ -97,14 +106,6 @@ int main(int ac, char *av[]) {
 		}
 		Simul.SetSaveStep(Reader.GetSaveWeightStepTime());
 
-		if (Reader.GetTimeDrivenStepTime()!=-1){
-			Simul.SetTimeDrivenStep(Reader.GetTimeDrivenStepTime());
-		}
-
-		if (Reader.GetTimeDrivenStepTimeGPU()!=-1){
-			Simul.SetTimeDrivenStepGPU(Reader.GetTimeDrivenStepTimeGPU());
-		}
-					
 		if(Reader.CheckInfo()){
 			//Simul.GetNetwork()->tables_info();
 			//neutypes_info();
@@ -143,14 +144,21 @@ int main(int ac, char *av[]) {
 		cout << "Oky doky" << endl;  
 
 		cout << "Elapsed time: " << (endt-startt)/(float)CLOCKS_PER_SEC << " sec" << endl;
-		cout << "Number of updates: " << Simul.GetSimulationUpdates() << endl;
-		cout << "Number of InternalSpike: " << Simul.GetTotalSpikeCounter() << endl;
-		cout << "Mean number of spikes in heap: " << Simul.GetHeapAcumSize()/(float)Simul.GetSimulationUpdates() << endl;
-		cout << "Updates per second: " << Simul.GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
-		
+		long TotalSpikeCounter=0;
+		long TotalPropagateCounter=0;
+		for(int i=0; i<Simul.GetNumberOfQueues(); i++){
+			cout << "Thread "<<i<<"--> Number of updates: " << Simul.GetSimulationUpdates(i) << endl; /*asdfgf*/
+			cout << "Thread "<<i<<"--> Number of InternalSpike: " << Simul.GetTotalSpikeCounter(i) << endl; /*asdfgf*/
+			cout << "Thread "<<i<<"--> Number of PropagatedEvent: " << Simul.GetTotalPropagateCounter(i) << endl; /*asdfgf*/
+			cout << "Thread "<<i<<"--> Mean number of spikes in heap: " << Simul.GetHeapAcumSize(i)/(float)Simul.GetSimulationUpdates(i) << endl; /*asdfgf*/
+			cout << "Thread "<<i<<"--> Updates per second: " << Simul.GetSimulationUpdates(i)/((endt-startt)/(float)CLOCKS_PER_SEC) << endl; /*asdfgf*/
+			TotalSpikeCounter+=Simul.GetTotalSpikeCounter(i);
+			TotalPropagateCounter+=Simul.GetTotalPropagateCounter(i);
+		}
 		endtotalt=clock();
 		cout << "Total elapsed time: " << (endtotalt-starttotalt)/(float)CLOCKS_PER_SEC << " sec" << endl;
-
+		cout << "Total InternalSpike: " << TotalSpikeCounter<<endl; 
+		cout << "Total PropagatedEvent: " << TotalPropagateCounter<<endl;
 
 
 	} catch (ParameterException Exc){

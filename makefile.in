@@ -116,7 +116,7 @@ sfunctiondir	:= ./sfunction
 exe-source-file := ${srcdir}/EDLUTKernel.cpp
 step-source-file := ${srcdir}/StepByStep.cpp
 prec-source-file := ${srcdir}/PrecisionTest.cpp
-robot-source-file := ${srcdir}/SimulatedRobotControl.c
+robot-source-file := ${srcdir}/SimulatedRobotControl.cpp
 
 
 # default file to be included when the mex build is required
@@ -183,6 +183,8 @@ learning_rules-sources	:= 	$(srcdir)/learning_rules/ActivityRegister.cpp \
 			$(srcdir)/learning_rules/LearningRule.cpp \
 			$(srcdir)/learning_rules/SimetricCosState.cpp \
 			$(srcdir)/learning_rules/SimetricCosWeightChange.cpp \
+			$(srcdir)/learning_rules/SimetricSTDPState.cpp \
+			$(srcdir)/learning_rules/SimetricSTDPWeightChange.cpp \
 			$(srcdir)/learning_rules/SinState.cpp \
 			$(srcdir)/learning_rules/SinWeightChange.cpp \
 			$(srcdir)/learning_rules/STDPLSState.cpp \
@@ -205,6 +207,7 @@ neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
 			$(srcdir)/neuron_model/SRMTableBasedModel.cpp \
 			$(srcdir)/neuron_model/SRMTimeDrivenModel.cpp \
 			$(srcdir)/neuron_model/TableBasedModel.cpp \
+			$(srcdir)/neuron_model/TableBasedModelHF.cpp \
 			$(srcdir)/neuron_model/TimeDrivenNeuronModel.cpp \
 			$(srcdir)/neuron_model/Vanderpol.cpp \
 			$(srcdir)/neuron_model/VectorBufferedState.cpp \
@@ -226,14 +229,17 @@ simulation-sources	:= $(srcdir)/simulation/CommunicationEvent.cpp \
 			$(srcdir)/simulation/ExponentialTable.cpp \
 			$(srcdir)/simulation/ParameterException.cpp \
 			$(srcdir)/simulation/ParamReader.cpp \
+			$(srcdir)/simulation/RealTimeRestriction.cpp \
 			$(srcdir)/simulation/SaveWeightsEvent.cpp \
 			$(srcdir)/simulation/StopSimulationEvent.cpp \
-			$(srcdir)/simulation/TimeEventOneNeuron.cpp \
+			$(srcdir)/simulation/SynchronizeActivityEvent.cpp \
+			$(srcdir)/simulation/SynchronizeSimulationEvent.cpp \
 			$(srcdir)/simulation/TimeEventAllNeurons.cpp \
+			$(srcdir)/simulation/TimeEventOneNeuron.cpp \
 			$(srcdir)/simulation/Utils.cpp 
 ifeq ($(cuda_enabled),true)
 simulation-sources	+= $(srcdir)/simulation/Simulation_GPU.cu \
-			$(srcdir)/simulation/TimeEventAllNeurons_GPU.cu
+			$(srcdir)/simulation/TimeEventAllNeurons_GPU.cpp
 else
 simulation-sources	+= $(srcdir)/simulation/Simulation.cpp
 endif
@@ -246,24 +252,29 @@ spike-sources		:= $(srcdir)/spike/EDLUTException.cpp \
 			$(srcdir)/spike/InternalSpike.cpp \
 			$(srcdir)/spike/Neuron.cpp \
 			$(srcdir)/spike/PropagatedSpike.cpp \
-			$(srcdir)/spike/Spike.cpp 
+			$(srcdir)/spike/Spike.cpp \
+			$(srcdir)/spike/TableBasedModelHFEvent.cpp \
+			$(srcdir)/spike/TimeDrivenInternalSpike.cpp
 ifeq ($(cuda_enabled),true)
 spike-sources		+= $(srcdir)/spike/Network_GPU.cu
 else
 spike-sources		+= $(srcdir)/spike/Network.cpp
 endif
 
-robot-arm-sources		:= $(srcdir)/arm_robot_simulator/ArmRobotSimulation.c \
+robot-arm-sources	:= $(srcdir)/arm_robot_simulator/ArmRobotSimulation.c \
 			$(srcdir)/arm_robot_simulator/MatrixOperations.c \
 			$(srcdir)/arm_robot_simulator/RobotRecursiveInverseDynamics.c 
 
-sources     := $(communication-sources) \
+openmp-sources		:= $(srcdir)/openmp/openmp.cpp
+
+sources			:= $(communication-sources) \
 			$(integration-sources) \
 			$(interface-sources) \
 			$(neuron_model-sources) \
 			$(learning_rules-sources) \
 			$(simulation-sources) \
-			$(spike-sources)
+			$(spike-sources)\
+			$(openmp-sources)
 			
 ifeq ($(generate_robot),true)
 sources		+= $(robot-arm-sources)

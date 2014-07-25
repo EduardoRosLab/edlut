@@ -38,6 +38,6 @@ string NeuronModel::GetModelID(){
 	return this->ModelID;
 }
 
-VectorNeuronState * NeuronModel::GetVectorNeuronState(){
-	return this->InitialState;
-}
+//VectorNeuronState * NeuronModel::GetVectorNeuronState(){
+//	return this->InitialState;
+//}

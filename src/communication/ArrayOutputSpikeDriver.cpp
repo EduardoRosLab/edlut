@@ -30,8 +30,10 @@ ArrayOutputSpikeDriver::~ArrayOutputSpikeDriver() {
 
 void ArrayOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
 	OutputSpike spike(NewSpike->GetSource()->GetIndex(),NewSpike->GetTime());
-
-	this->OutputBuffer.push_back(spike);
+	#pragma omp critical (ArrayOutputSpikeDriver)
+	{
+		this->OutputBuffer.push_back(spike);
+	}
 }
 
 void ArrayOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){

@@ -99,15 +99,11 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 */
 		NeuronModelTable * Tables;
 
-		/*!
-		 * \brief Temporal state variables
-		 */
-		float * TempStateVars;
 
-/*!
- * \brief Vector where we temporary store initial values
- */
-float * InitValues;
+		/*!
+		 * \brief Vector where we temporary store initial values
+		 */
+		float * InitValues;
 
 		/*!
 		 * \brief It loads the neuron model description.
@@ -139,7 +135,9 @@ float * InitValues;
 		 *
 		 * It returns the end of the refractory period.
 		 *
-		 * \param State Cell current state.
+		 * \param index index inside the VectorNeuronState of the neuron model.
+		 * \param VectorNeuronState of the neuron model.
+		 *
 		 * \return The end of the refractory period. -1 if no spike is predicted.
 		 */
 		virtual double EndRefractoryPeriod(int index, VectorNeuronState * State);
@@ -149,7 +147,8 @@ float * InitValues;
 		 *
 		 * It updates the neuron state after the evolution of the time.
 		 *
-		 * \param State Cell current state.
+		 * \param index index inside the VectorNeuronState of the neuron model.
+		 * \param VectorNeuronState of the neuron model.
 		 * \param CurrentTime Current simulation time.
 		 */
 		virtual void UpdateState(int index, VectorNeuronState * State, double CurrentTime);
@@ -159,17 +158,20 @@ float * InitValues;
 		 *
 		 * It abstracts the effect of an input spike in the cell.
 		 *
-		 * \param State Cell current state.
+		 * \param index index inside the VectorNeuronState of the neuron model.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection);
+		virtual void SynapsisEffect(int index, Interconnection * InputConnection);
+
 
 		/*!
 		 * \brief It returns the next spike time.
 		 *
 		 * It returns the next spike time.
 		 *
-		 * \param State Cell current state.
+		 * \param index index inside the VectorNeuronState of the neuron model.
+		 * \param VectorNeuronState of the neuron model.
+		 *
 		 * \return The next firing spike time. -1 if no spike is predicted.
 		 */
 		virtual double NextFiringPrediction(int index, VectorNeuronState * State);
@@ -181,7 +183,8 @@ float * InitValues;
 		 * It generates a new neuron model object loading the configuration of
 		 * the model and the look-up tables.
 		 *
-		 * \param NeuronModelID Neuron model identificator.
+		 * \param NeuronTypeID Neuron model type.
+		 * \param NeuronModelID Neuron model description file.
 		 */
 		TableBasedModel(string NeuronTypeID, string NeuronModelID);
 
@@ -196,6 +199,8 @@ float * InitValues;
 		 * \brief It loads the neuron model description and tables (if necessary).
 		 *
 		 * It loads the neuron model description and tables (if necessary).
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
 		 */
 		virtual void LoadNeuronModel() throw (EDLUTFileException);
 
@@ -287,7 +292,15 @@ float * InitValues;
 		 */
 		virtual ostream & PrintInfo(ostream & out);
 
-virtual void InitializeStates(int N_neurons);
+
+		/*!
+		 * \brief It initialice VectorNeuronState.
+		 *
+		 * It initialice VectorNeuronState.
+		 *
+		 * \param N_neurons cell number inside the VectorNeuronState.
+		 */
+		virtual void InitializeStates(int N_neurons);
 
 };
 

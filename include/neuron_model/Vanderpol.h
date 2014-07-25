@@ -51,7 +51,7 @@ class Vanderpol : public TimeDrivenNeuronModel {
 		 *
 		 * \throw EDLUTFileException If something wrong has happened in the file load.
 		 */
-		virtual void LoadNeuronModel(string ConfigFile) throw (EDLUTFileException);
+		void LoadNeuronModel(string ConfigFile) throw (EDLUTFileException);
 
 		/*!
 		 * \brief It abstracts the effect of an input spike in the cell.
@@ -62,7 +62,7 @@ class Vanderpol : public TimeDrivenNeuronModel {
 		 * \param State Cell current state.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection);
+		void SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection);
 
 	public:
 
@@ -105,6 +105,8 @@ class Vanderpol : public TimeDrivenNeuronModel {
 		 * \brief It loads the neuron model description and tables (if necessary).
 		 *
 		 * It loads the neuron model description and tables (if necessary).
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
 		 */
 		virtual void LoadNeuronModel() throw (EDLUTFileException);
 

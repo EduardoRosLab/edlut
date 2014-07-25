@@ -30,6 +30,12 @@
 
 #include "../simulation/Event.h"
 
+
+class TimeDrivenNeuronModel_GPU;
+class Neuron;
+class Simulation;
+
+
 /*!
  * \class TimeEventAllNeurons_GPU
  *
@@ -46,9 +52,14 @@ class TimeEventAllNeurons_GPU : public Event{
 public:
 
 	/*!
-	 * \brief Index neuron model.
+	 * \brief Neuron model.
 	*/
-	int IndexNeuronModel;
+	TimeDrivenNeuronModel_GPU * neuronModel;
+
+	/*!
+	 * \brief Neuron model.
+	*/
+	Neuron** neurons;
 
 	/*!
 	 * \brief Constructor with parameters.
@@ -58,7 +69,7 @@ public:
 	 * \param NewTime Time of the next state variable update.
 	 * \param indexNeuronModel index neuron model inside the network
 	 */
-	TimeEventAllNeurons_GPU(double NewTime, int indexNeuronModel);
+	TimeEventAllNeurons_GPU(double NewTime, TimeDrivenNeuronModel_GPU * newNeuronModel, Neuron ** newNeurons, Simulation * CurrentSimulation);
 	
 	/*!
 	 * \brief Class destructor.
@@ -69,24 +80,57 @@ public:
 
 
 	/*!
-	 * \brief It process an event in the simulation.
+	 * \brief It process an event in the simulation with the option of real time available.
 	 * 
-	 * It process the event in the simulation.
+	 * It process an event in the simulation with the option of real time available.
 	 * 
 	 * \param CurrentSimulation The simulation object where the event is working.
-	 * \param RealTimeRestriction This variable indicates whether we are making a 
-	 * real-time simulation and the watchdog is enabled.
+	 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
+	 * control the consumed time in each slot.
 	 */
-	virtual void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction);
+	virtual void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction);
 
 	/*!
-	 * \brief It gets the index neuron model.
-	 *
-	 * It gets the index neuron model.
-	 *
-	 * \return The index neuron model.
+	 * \brief It process an event in the simulation without the option of real time available.
+	 * 
+	 * It process an event in the simulation without the option of real time available.
+	 * 
+	 * \param CurrentSimulation The simulation object where the event is working.
 	 */
-	int GetIndexNeuronModel();
+	virtual void ProcessEvent(Simulation * CurrentSimulation);
+
+		/*!
+	 * \brief It gets the neuron model.
+	 *
+	 * It gets the neuron model.
+	 *
+	 * \return The neuron model.
+	 */
+	TimeDrivenNeuronModel_GPU * GetModel();
+	
+
+	/*!
+	 * \brief It gets neuron list that use this neuron model.
+	 *
+	 * It gets neuron list that use this neuron model.
+	 *
+	 * \return The neuron list that use this neuron model.
+	 */
+	Neuron ** GetNeurons();
+
+	/*!
+	 * \brief this method print the event type.
+	 * 
+	 * This method print the event type..
+	 */
+	virtual void PrintType();
+
+	/*!
+	 * \brief The event queue uses this preference variable to sort the events with the same time stamp.
+	 * 
+	 * The event queue uses this preference variable to sort the events with the same time stamp.
+	 */
+	virtual int ProcessingPriority();
 };
 
 #endif

@@ -24,7 +24,7 @@
  * \date May 2013
  *
  * This file declares a class which abstracts all integration methods in GPU (this class is stored
- * in GPU memory and executed in GPU. All integration methods in GPU are fixed step due to the parallel
+ * in GPU memory and executed in GPU). All integration methods in GPU are fixed step due to the parallel
  * architecture of this one.
  */
 
@@ -56,6 +56,11 @@ class IntegrationMethod_GPU2 {
 	public:
 
 		/*!
+		 * \brief Time driven neuron model in GPU associated to this integration method.
+		*/
+		TimeDrivenNeuronModel_GPU2 * model;
+
+		/*!
 		 * \brief Number of state variables for each cell.
 		*/
 		int N_NeuronStateVariables;
@@ -81,7 +86,7 @@ class IntegrationMethod_GPU2 {
 		 * \param N_timeDependentNeuronState Number of state variables witch ara calculate with a time dependent equation for each cell.
 		 * \param Total_N_thread Number of thread in GPU (in this method it is not necessary)
 		 */
-		__device__ IntegrationMethod_GPU2(int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int Total_N_thread):N_NeuronStateVariables(N_neuronStateVariables), N_DifferentialNeuronState(N_differentialNeuronState), N_TimeDependentNeuronState(N_timeDependentNeuronState){
+		__device__ IntegrationMethod_GPU2(TimeDrivenNeuronModel_GPU2* NewModel, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState): model(NewModel),N_NeuronStateVariables(N_neuronStateVariables), N_DifferentialNeuronState(N_differentialNeuronState), N_TimeDependentNeuronState(N_timeDependentNeuronState){
 		}
 
 
@@ -90,7 +95,7 @@ class IntegrationMethod_GPU2 {
 		 *
 		 * It destroys an object of this class.
 		 */
-		__device__ ~IntegrationMethod_GPU2(){
+		__device__ virtual ~IntegrationMethod_GPU2(){
 		}
 
 		
@@ -101,11 +106,10 @@ class IntegrationMethod_GPU2 {
 		 *
 		 * \param index Index of the cell inside the neuron model for method with memory (e.g. BDF).
 		 * \param SizeStates Number of neurons
-		 * \param Model The NeuronModel.
 		 * \param NeuronState Vector of neuron state variables for all neurons.
 		 * \param elapsed_time integration time step.
 		 */
-		__device__ virtual void NextDifferentialEcuationValue(int index, int SizeStates, TimeDrivenNeuronModel_GPU2 * Model, float * NeuronState, float elapsed_time) {
+		__device__ virtual void NextDifferentialEcuationValue(int index, int SizeStates, float * NeuronState, float elapsed_time) {
 		}
 
 

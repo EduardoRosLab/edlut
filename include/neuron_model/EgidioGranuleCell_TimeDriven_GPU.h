@@ -39,6 +39,8 @@ class InputSpike;
 class VectorNeuronState_GPU;
 class Interconnection;
 
+class EgidioGranuleCell_TimeDriven_GPU2;
+
 /*!
  * \class EgidioGranuleCell_TimeDriven_GPU
  *
@@ -113,6 +115,8 @@ class EgidioGranuleCell_TimeDriven_GPU : public TimeDrivenNeuronModel_GPU {
 		const float tinh;
 		const float vthr;
 
+
+		EgidioGranuleCell_TimeDriven_GPU2 ** NeuronModel_GPU2;
 
 		/*!
 		 * \brief It loads the neuron model description.
@@ -202,6 +206,8 @@ class EgidioGranuleCell_TimeDriven_GPU : public TimeDrivenNeuronModel_GPU {
 		 * \brief It loads the neuron model description and tables (if necessary).
 		 *
 		 * It loads the neuron model description and tables (if necessary).
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
 		 */
 		virtual void LoadNeuronModel() throw (EDLUTFileException);
 
@@ -289,15 +295,21 @@ class EgidioGranuleCell_TimeDriven_GPU : public TimeDrivenNeuronModel_GPU {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		virtual void InitializeClassGPU(int N_neurons);
-
+		virtual void InitializeClassGPU2(int N_neurons);
 
 		/*!
 		 * \brief It delete a neuron model in GPU.
 		 *
 		 * It delete a neuron model in GPU.
 		 */
-		virtual void DeleteClassGPU();
+		virtual void DeleteClassGPU2();
+
+		/*!
+		 * \brief It create a object of type VectorNeuronState_GPU2 in GPU.
+		 *
+		 * It create a object of type VectorNeuronState_GPU2 in GPU.
+		 */
+		virtual void InitializeVectorNeuronState_GPU2();
 
 	};
 

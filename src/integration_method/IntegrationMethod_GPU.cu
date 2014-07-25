@@ -18,6 +18,7 @@
 #include "../../include/integration_method/IntegrationMethod_GPU2.h"
 #include "../../include/neuron_model/TimeDrivenNeuronModel_GPU.h"
 
+#include "../../include/cudaError.h"
 //Library for CUDA
 #include <helper_cuda.h>
 
@@ -29,7 +30,7 @@ IntegrationMethod_GPU::IntegrationMethod_GPU(char * integrationMethodType, int N
 
 IntegrationMethod_GPU::~IntegrationMethod_GPU(){
 	delete [] IntegrationMethodType;
-	cudaFree(Buffer_GPU);
+	HANDLE_ERROR(cudaFree(Buffer_GPU));
 }
 
 char * IntegrationMethod_GPU::GetType(){

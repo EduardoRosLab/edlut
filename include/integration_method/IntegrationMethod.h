@@ -32,8 +32,11 @@
 #include "../../include/simulation/Utils.h"
 #include "../../include/spike/EDLUTFileException.h"
 
+
+
 using namespace std;
 class TimeDrivenNeuronModel;
+
 
 
 //There are two differente approach:
@@ -41,6 +44,7 @@ class TimeDrivenNeuronModel;
 // Variable Step: each neuron has its own integration step and it can change along the simulation.
 enum IntegrationMethodType {VARIABLE_STEP, FIXED_STEP};
 
+#define MAX_VARIABLES 15 
 
 /*!
  * \class IntegrationMethod
@@ -60,6 +64,11 @@ enum IntegrationMethodType {VARIABLE_STEP, FIXED_STEP};
 class IntegrationMethod {
 	protected:
 
+		/*!
+		 * \brief Time driven neuron model associated to this integration method.
+		*/
+		TimeDrivenNeuronModel * model;
+
 	public:
 
 		/*!
@@ -77,24 +86,12 @@ class IntegrationMethod {
 		*/
 		int N_TimeDependentNeuronState;
 
-		/*!
-		 * \brief Number of CPU thread in OpenMP version.
-		*/
-		int N_CPU_Thread;
-
 
 		/*!
 		 * \brief PredictedElapsedTime. This vector contains only one element for fixed step itegration method or one
 		 * element for each neuron for variable step integration method.
 		*/
 		double * PredictedElapsedTime;
-
-		/*!
-		 * \brief These vectors are used as auxiliar vectors.
-		*/
-		float ** JacAuxNeuronState;
-		float ** JacAuxNeuronState_pos;
-		float ** JacAuxNeuronState_neg;
 
 
 		/*!
@@ -104,17 +101,21 @@ class IntegrationMethod {
 
 
 		/*!
-		 * \brief Constructor of the class with 5 parameter.
+		 * \brief Constructor with parameters.
 		 *
 		 * It generates a new IntegrationMethod object.
 		 *
-		 * \param integrationMethodType Integration method type.
-		 * \param N_neuronStateVariables number of state variables for each cell.
-		 * \param N_differentialNeuronState number of state variables witch are calculate with a differential equation for each cell.
-		 * \param N_timeDependentNeuronState number of state variables witch are calculate with a time dependent equation for each cell.
-		 * \param N_CPU_thread number of OpenMP thread used.
+		 * \param NewModel time driven neuron model associated to this integration method.
+		 * \param integrationMethodType integration method type.
+		 * \param N_neuronStateVariables total number of state variable for each neuron
+		 * \param N_differentialNeuronState number of state variables that are diffined by a differential ecuation.
+		 * \param N_timeDependentNeuronState number of state variables that are not diffined by a differential ecuation.
+		 * \param jacobian set to true if the integration method calculates the jacobian of the neuron model differential 
+		 *  equation and must be allocat memory for this one (only used in the BDF methods).
+		 * \param inverse set to true if the integration method calculates the inverse of a matrix and must be allocated 
+		 *  memory for this method(only used in the BDF methods).
 		 */
-		IntegrationMethod(string integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, int N_CPU_thread, bool jacobian, bool inverse);
+		IntegrationMethod(TimeDrivenNeuronModel* NewModel, string integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, bool jacobian, bool inverse);
 
 
 		/*!
@@ -126,17 +127,15 @@ class IntegrationMethod {
 
 		
 		/*!
-		 * \brief It calculate the next neural state varaibles of the model.
+		 * \brief It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * It calculate the next neural state varaibles of the model.
+		 * It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * \param index Index of the cell inside the neuron model for method with memory (e.g. BDF).
-		 * \param Model The NeuronModel.
+		 * \param index for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 * \param NeuronState neuron state variables of one neuron.
 		 * \param elapsed_time integration time step.
-		 * \param CPU_thread_index index of the OpenMP thread.
 		 */
-		virtual void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index) = 0;
+		virtual void NextDifferentialEcuationValue(int index, float * NeuronState, float elapsed_time) = 0;
 
 
 		/*!
@@ -162,11 +161,11 @@ class IntegrationMethod {
 
 
 		/*!
-		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF).
+		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It initialize the state of the integration method for method with memory (e.g. BDF).
+		 * It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * \param N_neuron number of neuron in the neuron model.
+		 * \param N_neuron number of neurons in the neuron model.
 		 * \param inicialization vector with initial values.
 		 */
 		virtual void InitializeStates(int N_neurons, float * inicialization) = 0;
@@ -181,31 +180,17 @@ class IntegrationMethod {
 		 */
 		virtual enum IntegrationMethodType GetMethodType() = 0;
 
-
+	
 		/*!
 		 * \brief It calculate numerically the Jacobian .
 		 *
 		 * It calculate numerically the Jacobian.
 		 *
-		 * \param Model neuron model.
 		 * \param NeuronState neuron state variables of one neuron.
 		 * \param jancum vector where is stored the Jacobian.
-		 * \param CPU_thread_index index of the OpenMP thread.
-		 */
-		void Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index);
-		
-		/*!
-		 * \brief It calculate numerically the Jacobian .
-		 *
-		 * It calculate numerically the Jacobian.
-		 *
-		 * \param Model neuron model.
-		 * \param NeuronState neuron state variables of one neuron.
-		 * \param jancum vector where is stored the Jacobian.
-		 * \param CPU_thread_index index of the OpenMP thread.
 		 * \param elapsed_time integration method step.
 		 */
-		void Jacobian(TimeDrivenNeuronModel * Model, float * NeuronState, float * jacnum, int CPU_thread_index, float elapsed_time);
+		void Jacobian(float * NeuronState, float * jacnum, float elapsed_time);
 
 		/*!
 		 * \brief It calculate the inverse of a square matrix using Gauss-Jordan Method.
@@ -214,29 +199,31 @@ class IntegrationMethod {
 		 *
 		 * \param a pointer to the square matrix.
 		 * \param ainv pointer to the inverse of the square matrix.
-		 * \param CPU_thread_index index of the OpenMP thread.
 		 */
-		void invermat(float *a, float *ainv, int CPU_thread_index);
+		void invermat(float *a, float *ainv);
 
 
 		/*!
-		 * \brief It reset the state of the integration method for method with memory (e.g. BDF).
+		 * \brief It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It reset the state of the integration method for method with memory (e.g. BDF).
+		 * It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
 		 * \param index indicate witch neuron must be reseted.
 		 */
 		virtual void resetState(int index) = 0;
 
 
-		/*
-		 * \brief It load the parameter of the integration method.
+		/*!
+		 * \brief It loads the integration method parameters.
 		 *
-		 * It load the parameter of the integration method.
+		 * It loads the integration method parameters from the file that define the parameter of the neuron model.
 		 *
-		 * \param fh pointer to the neuron model description.
-		 * \param Currentline curren line in the file fh.
-		*/
+		 * \param Pointer to a neuron description file (*.cfg). At the end of this file must be included 
+		 *  the integration method type and its parameters.
+		 * \param Currentline line inside the neuron description file where start the description of the integration method parameter. 
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
+		 */
 		virtual void loadParameter(FILE *fh, long * Currentline) throw (EDLUTFileException) = 0 ;
 
 };

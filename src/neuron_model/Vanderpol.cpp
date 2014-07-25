@@ -21,12 +21,7 @@
 #include <cmath>
 #include <string>
 
-#ifdef _OPENMP
-	#include <omp.h>
-#else
-	#define omp_get_thread_num() 0
-	#define omp_get_num_thread() 1
-#endif
+#include "../../include/openmp/openmp.h"
 
 #include "../../include/spike/EDLUTFileException.h"
 #include "../../include/spike/Neuron.h"
@@ -47,7 +42,7 @@ void Vanderpol::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
 		this->InitialState = (VectorNeuronState *) new VectorNeuronState(2, true);
 
 		//INTEGRATION METHOD
-		this->integrationMethod = LoadIntegrationMethod::loadIntegrationMethod(fh, &Currentline,N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, N_CPU_thread);
+		this->integrationMethod = LoadIntegrationMethod::loadIntegrationMethod((TimeDrivenNeuronModel *)this, fh, &Currentline,N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState);
 	}
 }
 
@@ -94,7 +89,7 @@ bool Vanderpol::UpdateState(int index, VectorNeuronState * State, double Current
 	float * NeuronState;
 
 	if(index==-1){
-		#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime) private(i, last_update, NeuronState, CPU_thread_index, elapsed_time, elapsed_time_f)
+//		#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime) private(i, last_update, NeuronState, CPU_thread_index, elapsed_time, elapsed_time_f)
 		for (int i=0; i< Size; i++){
 
 			last_update = State->GetLastUpdateTime(i);
@@ -104,8 +99,7 @@ bool Vanderpol::UpdateState(int index, VectorNeuronState * State, double Current
 
 			NeuronState=State->GetStateVariableAt(i);
 
-			CPU_thread_index=omp_get_thread_num();
-			this->integrationMethod->NextDifferentialEcuationValue(i, this, NeuronState, elapsed_time_f, CPU_thread_index);
+			this->integrationMethod->NextDifferentialEcuationValue(i, NeuronState, elapsed_time_f);
 
 			State->SetLastUpdateTime(i,CurrentTime);
 		}
@@ -121,13 +115,14 @@ bool Vanderpol::UpdateState(int index, VectorNeuronState * State, double Current
 
 		NeuronState=State->GetStateVariableAt(index);
 
-		this->integrationMethod->NextDifferentialEcuationValue(index, this, NeuronState, elapsed_time_f, 0);
+		this->integrationMethod->NextDifferentialEcuationValue(index, NeuronState, elapsed_time_f);
 
 		State->SetLastUpdateTime(index,CurrentTime);
 	}
 
 	return false;
 }
+
 
 
 

@@ -37,8 +37,10 @@ TCPIPOutputSpikeDriver::~TCPIPOutputSpikeDriver(){
 	
 void TCPIPOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
 	OutputSpike spike(NewSpike->GetSource()->GetIndex(),NewSpike->GetTime());
-		
-	this->OutputBuffer.push_back(spike);	
+	#pragma omp critical (TCPIPOutputSpikeDriver)
+	{		
+	this->OutputBuffer.push_back(spike);
+	}
 }
 		
 void TCPIPOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){

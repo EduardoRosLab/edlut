@@ -70,6 +70,8 @@ class Simulation;
  *          -logp File_Name It saves all events register in file File_Name.
  * 			-if Input_File	It adds the Input_File file in the input sources of the simulation.
  * 			-of Output_File	It adds the Output_File file in the output targets of the simulation.
+ *          -openmpQ number_of_OpenMP_queues It sets the number of OpenMP queues.
+ *          -openmp number_of_OpenMP_threads It sets the number of OpenMP threads.
  * 			-ic IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the input sources of the simulation.
  * 			-oc IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the output targets of the simulation.
  * 			-ioc IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the input sources and in the output targets.	 
@@ -112,16 +114,6 @@ class Simulation;
  		 */
  		double SimulationStepTime;
 
-		/*!
- 		 * Simulation time-driven step time. 
- 		 */
- 		double TimeDrivenStepTime;
-
-		/*!
- 		 * Simulation time-driven step time for GPU. 
- 		 */
- 		double TimeDrivenStepTimeGPU;
- 		 		
  		/*!
  		 * Input drivers.
  		 */ 	
@@ -140,7 +132,17 @@ class Simulation;
  		/*!
  		 * Output drivers. 
  		 */ 	
- 		vector<OutputWeightDriver *> OutputWeightDrivers;  
+ 		vector<OutputWeightDriver *> OutputWeightDrivers; 
+
+ 		/*!
+ 		 * Number of OpenMP thread. 
+ 		 */
+		int NumberOfThreads;
+
+ 		/*!
+ 		 * Number of OpenMP queues. 
+ 		 */
+		int NumberOfQueues;
  	
  		/*!
  		 * \brief It parses the input arguments.
@@ -184,7 +186,7 @@ class Simulation;
  		 * \brief It gets the total simulation time.
  		 * 
  		 * It gets the total simulation time. The argument indicator for simulation time
- 		 * is -time, so it searchs -time and returns the value as a float.
+ 		 * is -time, so it searchs -time and returns the value as a double.
  		 * 
  		 * \return The total simulation time. -1 if the parameter isn't used.
  		 */
@@ -194,7 +196,7 @@ class Simulation;
  		 * \brief It gets the saving weights step time.
  		 * 
  		 * It gets the saving weights step time. The argument indicator for saving weights step time
- 		 * is -wt, so it searchs -wt and returns the value as a float.
+ 		 * is -wt, so it searchs -wt and returns the value as a double.
  		 * 
  		 * \return The saving weights step time. -1 if the parameter isn't used.
  		 */
@@ -241,24 +243,24 @@ class Simulation;
  		double GetSimulationStepTime();
 
 		/*!
- 		 * \brief It gets the simulation time-driven step time.
+ 		 * \brief It gets the total number of OpenMP thread.
  		 * 
- 		 * It gets the simulation time-driven step time. The argument indicator for simulation step time
- 		 * is -ts, so it searchs -ts and returns the value as a float.
+ 		 * It gets the total number of OpenMP thread. The argument indicator for number of OpenMP thread
+ 		 * is -openmp, so it searchs -openmp and returns the value as a int.
  		 * 
- 		 * \return The simulation time-driven step time. -1 if this option isn't enabled. 
+ 		 * \return The total number of OpenMP thread. 1 if the parameter isn't used.
  		 */
- 		double GetTimeDrivenStepTime();
+ 		int GetNumberOfThreads();
 
 		/*!
- 		 * \brief It gets the simulation time-driven step time for GPU.
+ 		 * \brief It gets the total number of OpenMP queues.
  		 * 
- 		 * It gets the simulation time-driven step time for GPU. The argument indicator for simulation step time
- 		 * is -tsGPU, so it searchs -tsGPU and returns the value as a float.
+ 		 * It gets the total number of OpenMP queues. The argument indicator for number of OpenMP queues
+ 		 * is -openmpQ, so it searchs -openmpQ and returns the value as a int.
  		 * 
- 		 * \return The simulation time-driven step time for GPU. -1 if this option isn't enabled. 
+ 		 * \return The total number of OpenMP queues. 1 if the parameter isn't used.
  		 */
- 		double GetTimeDrivenStepTimeGPU();
+		int GetNumberOfQueues();
  		
  		
  		/*!

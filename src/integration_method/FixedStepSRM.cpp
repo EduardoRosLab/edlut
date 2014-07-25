@@ -18,7 +18,7 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 
 
-FixedStepSRM::FixedStepSRM():IntegrationMethod("FixedStepSRM",0,0,0,0,false,false){
+FixedStepSRM::FixedStepSRM():IntegrationMethod(NULL, "FixedStepSRM",0,0,0,false,false){
 
 }
 

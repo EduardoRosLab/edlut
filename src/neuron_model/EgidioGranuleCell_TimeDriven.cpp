@@ -21,12 +21,7 @@
 #include <cmath>
 #include <string>
 
-#ifdef _OPENMP
-	#include <omp.h>
-#else
-	#define omp_get_thread_num() 0
-	#define omp_get_num_thread() 1
-#endif
+#include "../../include/openmp/openmp.h"
 
 //This neuron model is implemented in milisecond. EDLUT is implemented in second and it is necesary to
 //use this constant in order to adapt this model to EDLUT.
@@ -107,18 +102,18 @@ void EgidioGranuleCell_TimeDriven::LoadNeuronModel(string ConfigFile) throw (EDL
 		}
 
 		//INTEGRATION METHOD
-		this->integrationMethod = LoadIntegrationMethod::loadIntegrationMethod(fh, &Currentline, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, N_CPU_thread);
+		this->integrationMethod = LoadIntegrationMethod::loadIntegrationMethod((TimeDrivenNeuronModel *)this, fh, &Currentline, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState);
 	}
 }
 
-void EgidioGranuleCell_TimeDriven::SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection){
+void EgidioGranuleCell_TimeDriven::SynapsisEffect(int index, Interconnection * InputConnection){
 
 	switch (InputConnection->GetType()){
 		case 0: {
-			State->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState,1e-9f*InputConnection->GetWeight());
+			this->GetVectorNeuronState()->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState,1e-9f*InputConnection->GetWeight());
 			break;
 		}case 1:{
-			State->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState+1,1e-9f*InputConnection->GetWeight());
+			this->GetVectorNeuronState()->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState+1,1e-9f*InputConnection->GetWeight());
 			break;
 		}default :{
 			printf("ERROR: EgidioGranuleCell_TimeDriven only support two kind of input synapses \n");
@@ -184,24 +179,21 @@ VectorNeuronState * EgidioGranuleCell_TimeDriven::InitializeState(){
 
 
 InternalSpike * EgidioGranuleCell_TimeDriven::ProcessInputSpike(PropagatedSpike *  InputSpike){
-	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(InputSpike->GetTarget());
+	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(omp_get_thread_num(),InputSpike->GetTarget());
 
 	Neuron * TargetCell = inter->GetTarget();
 
-	VectorNeuronState * CurrentState = TargetCell->GetVectorNeuronState();
-
 	// Add the effect of the input spike
-	this->SynapsisEffect(inter->GetTarget()->GetIndex_VectorNeuronState(),(VectorNeuronState *)CurrentState,inter);
+	this->SynapsisEffect(inter->GetTarget()->GetIndex_VectorNeuronState(),inter);
 
 	return 0;
 }
 
 
 InternalSpike * EgidioGranuleCell_TimeDriven::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
-	VectorNeuronState * CurrentState = target->GetVectorNeuronState();
 
 	// Add the effect of the input spike
-	this->SynapsisEffect(target->GetIndex_VectorNeuronState(),CurrentState,inter);
+	this->SynapsisEffect(target->GetIndex_VectorNeuronState(),inter);
 
 	return 0;
 }
@@ -217,7 +209,7 @@ float EgidioGranuleCell_TimeDriven::linoid(float x, float y){
 	if (abs(x/y)<1e-06f){
 		f=y*(1-x/y/2);
 	}else{
-		f=x/(exp(x/y)-1);
+		f=x/(ExponentialTable::GetResult(x/y)-1);
 	}
 	return f;
 }
@@ -236,11 +228,11 @@ bool EgidioGranuleCell_TimeDriven::UpdateState(int index, VectorNeuronState * St
 	float vm_cou;
 	int i;
 	float previous_V;
-	int CPU_thread_index;
+
 
 	float * NeuronState;
 	if(index==-1){
-		#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime) private(i, last_update, last_spike, spike, vm_cou, NeuronState, previous_V, CPU_thread_index, elapsed_time, elapsed_time_f)
+//		#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime) private(i, last_update, last_spike, spike, vm_cou, NeuronState, previous_V,elapsed_time, elapsed_time_f)
 		for (int i=0; i< Size; i++){
 
 			last_update = State->GetLastUpdateTime(i);
@@ -256,8 +248,7 @@ bool EgidioGranuleCell_TimeDriven::UpdateState(int index, VectorNeuronState * St
 
 
 			previous_V=NeuronState[14];
-			CPU_thread_index=omp_get_thread_num();
-			this->integrationMethod->NextDifferentialEcuationValue(i, this, NeuronState, elapsed_time_f, CPU_thread_index);
+			this->integrationMethod->NextDifferentialEcuationValue(i, NeuronState, elapsed_time_f);
 			if(NeuronState[14]>vthr && previous_V<vthr){
 				State->NewFiredSpike(i);
 				spike = true;
@@ -286,7 +277,7 @@ bool EgidioGranuleCell_TimeDriven::UpdateState(int index, VectorNeuronState * St
 
 
 		previous_V=NeuronState[14];
-		this->integrationMethod->NextDifferentialEcuationValue(index, this, NeuronState, elapsed_time_f, 0);
+		this->integrationMethod->NextDifferentialEcuationValue(index, NeuronState, elapsed_time_f);
 		if(NeuronState[14]>vthr && previous_V<vthr){
 			State->NewFiredSpike(index);
 			spike = true;
@@ -300,6 +291,9 @@ bool EgidioGranuleCell_TimeDriven::UpdateState(int index, VectorNeuronState * St
 
 	return false;
 }
+
+
+
 
 
 ostream & EgidioGranuleCell_TimeDriven::PrintInfo(ostream & out){
@@ -341,56 +335,56 @@ void EgidioGranuleCell_TimeDriven::EvaluateDifferentialEcuation(float * NeuronSt
 
 	float VCa=nernst(NeuronState[13],cao,2,temper);
 	float alphaxNa_f = Q10_20*(-0.3f)*linoid(previous_V+19, -10);
-	float betaxNa_f  = Q10_20*12*exp(-(previous_V+44)/18.182f);
+	float betaxNa_f  = Q10_20*12*ExponentialTable::GetResult(-(previous_V+44)/18.182f);
 	float xNa_f_inf    = alphaxNa_f/(alphaxNa_f + betaxNa_f);
 	float inv_tauxNa_f     = (alphaxNa_f + betaxNa_f);
-	float alphayNa_f = Q10_20*0.105f*exp(-(previous_V+44)/3.333f);
-	float betayNa_f   = Q10_20*1.5f/(1+exp(-(previous_V+11)/5));
+	float alphayNa_f = Q10_20*0.105f*ExponentialTable::GetResult(-(previous_V+44)/3.333f);
+	float betayNa_f   = Q10_20*1.5f/(1+ExponentialTable::GetResult(-(previous_V+11)/5));
 	float yNa_f_inf    = alphayNa_f/(alphayNa_f + betayNa_f);
 	float inv_tauyNa_f     = (alphayNa_f + betayNa_f);
 	float alphaxNa_r = Q10_20*(0.00008f-0.00493f*linoid(previous_V-4.48754f,-6.81881f));
 	float betaxNa_r   = Q10_20*(0.04752f+0.01558f*linoid(previous_V+43.97494f,0.10818f));
 	float xNa_r_inf    = alphaxNa_r/(alphaxNa_r + betaxNa_r);
 	float inv_tauxNa_r     = (alphaxNa_r + betaxNa_r);
-	float alphayNa_r = Q10_20*0.31836f*exp(-(previous_V+80)/62.52621f);
-	float betayNa_r   = Q10_20*0.01014f*exp((previous_V+83.3332f)/16.05379f);
+	float alphayNa_r = Q10_20*0.31836f*ExponentialTable::GetResult(-(previous_V+80)/62.52621f);
+	float betayNa_r   = Q10_20*0.01014f*ExponentialTable::GetResult((previous_V+83.3332f)/16.05379f);
 	float yNa_r_inf     = alphayNa_r/(alphayNa_r + betayNa_r);
 	float inv_tauyNa_r      = (alphayNa_r + betayNa_r);
 	float alphaxNa_p = Q10_30*(-0.091f)*linoid(previous_V+42,-5);
 	float betaxNa_p   = Q10_30*0.062f*linoid(previous_V+42,5);
-	float xNa_p_inf    = 1/(1+exp(-(previous_V+42)/5));
+	float xNa_p_inf    = 1/(1+ExponentialTable::GetResult(-(previous_V+42)/5));
 	float inv_tauxNa_p     = (alphaxNa_p + betaxNa_p)*0.2f;
 	float alphaxK_V = Q10_6_3*(-0.01f)*linoid(previous_V+25,-10);
-	float betaxK_V   = Q10_6_3*0.125f*exp(-0.0125f*(previous_V+35));
+	float betaxK_V   = Q10_6_3*0.125f*ExponentialTable::GetResult(-0.0125f*(previous_V+35));
 	float xK_V_inf    = alphaxK_V/(alphaxK_V + betaxK_V);
 	float inv_tauxK_V     = (alphaxK_V + betaxK_V);
-	float alphaxK_A = (Q10_20*4.88826f)/(1+exp(-(previous_V+9.17203f)/23.32708f));
-	float betaxK_A  = (Q10_20*0.99285f)/exp((previous_V+18.27914f)/19.47175f);
-	float xK_A_inf    = 1/(1+exp((previous_V-V0_xK_Ai)/K_xK_Ai));
+	float alphaxK_A = (Q10_20*4.88826f)/(1+ExponentialTable::GetResult(-(previous_V+9.17203f)/23.32708f));
+	float betaxK_A  = (Q10_20*0.99285f)/ExponentialTable::GetResult((previous_V+18.27914f)/19.47175f);
+	float xK_A_inf    = 1/(1+ExponentialTable::GetResult((previous_V-V0_xK_Ai)/K_xK_Ai));
 	float inv_tauxK_A     = (alphaxK_A + betaxK_A);
-	float alphayK_A = (Q10_20*0.11042f)/(1+exp((previous_V+111.33209f)/12.8433f));
-	float betayK_A   = (Q10_20*0.10353f)/(1+exp(-(previous_V+49.9537f)/8.90123f));
-	float yK_A_inf    = 1/(1+exp((previous_V-V0_yK_Ai)/K_yK_Ai));
+	float alphayK_A = (Q10_20*0.11042f)/(1+ExponentialTable::GetResult((previous_V+111.33209f)/12.8433f));
+	float betayK_A   = (Q10_20*0.10353f)/(1+ExponentialTable::GetResult(-(previous_V+49.9537f)/8.90123f));
+	float yK_A_inf    = 1/(1+ExponentialTable::GetResult((previous_V-V0_yK_Ai)/K_yK_Ai));
 	float inv_tauyK_A     = (alphayK_A + betayK_A);
-	float alphaxK_IR = Q10_20*0.13289f*exp(-(previous_V+83.94f)/24.3902f);
-	float betaxK_IR  = Q10_20*0.16994f*exp((previous_V+83.94f)/35.714f);
+	float alphaxK_IR = Q10_20*0.13289f*ExponentialTable::GetResult(-(previous_V+83.94f)/24.3902f);
+	float betaxK_IR  = Q10_20*0.16994f*ExponentialTable::GetResult((previous_V+83.94f)/35.714f);
 	float xK_IR_inf    = alphaxK_IR/(alphaxK_IR + betaxK_IR);
 	float inv_tauxK_IR     = (alphaxK_IR + betaxK_IR);
-	float alphaxK_Ca = (Q10_30*2.5f)/(1+(0.0015f*exp(-previous_V/11.765f))/NeuronState[13]);
-	float betaxK_Ca   = (Q10_30*1.5f)/(1+NeuronState[13]/(0.00015*exp(-previous_V/11.765f)));
+	float alphaxK_Ca = (Q10_30*2.5f)/(1+(0.0015f*ExponentialTable::GetResult(-previous_V/11.765f))/NeuronState[13]);
+	float betaxK_Ca   = (Q10_30*1.5f)/(1+NeuronState[13]/(0.00015*ExponentialTable::GetResult(-previous_V/11.765f)));
 	float xK_Ca_inf    = alphaxK_Ca/(alphaxK_Ca + betaxK_Ca);
 	float inv_tauxK_Ca     = (alphaxK_Ca + betaxK_Ca);
-	float alphaxCa  = Q10_20*0.04944f*exp((previous_V+29.06f)/15.87301587302f);
-	float betaxCa   = Q10_20*0.08298f*exp(-(previous_V+18.66f)/25.641f);
+	float alphaxCa  = Q10_20*0.04944f*ExponentialTable::GetResult((previous_V+29.06f)/15.87301587302f);
+	float betaxCa   = Q10_20*0.08298f*ExponentialTable::GetResult(-(previous_V+18.66f)/25.641f);
 	float xCa_inf    = alphaxCa/(alphaxCa + betaxCa);
 	float inv_tauxCa     = (alphaxCa + betaxCa);
-	float alphayCa = Q10_20*0.0013f*exp(-(previous_V+48)/18.183f);
-	float betayCa   = Q10_20*0.0013f*exp((previous_V+48)/83.33f);
+	float alphayCa = Q10_20*0.0013f*ExponentialTable::GetResult(-(previous_V+48)/18.183f);
+	float betayCa   = Q10_20*0.0013f*ExponentialTable::GetResult((previous_V+48)/83.33f);
 	float yCa_inf    = alphayCa/(alphayCa + betayCa);
 	float inv_tauyCa     = (alphayCa + betayCa);
-	float alphaxK_sl = Q10_22*0.0033f*exp((previous_V+30)/40);
-	float betaxK_sl   = Q10_22*0.0033f*exp(-(previous_V+30)/20);
-	float xK_sl_inf    = 1/(1+exp(-(previous_V-V0_xK_sli)/B_xK_sli));
+	float alphaxK_sl = Q10_22*0.0033f*ExponentialTable::GetResult((previous_V+30)/40);
+	float betaxK_sl   = Q10_22*0.0033f*ExponentialTable::GetResult(-(previous_V+30)/20);
+	float xK_sl_inf    = 1/(1+ExponentialTable::GetResult(-(previous_V-V0_xK_sli)/B_xK_sli));
 	float inv_tauxK_sl     = (alphaxK_sl + betaxK_sl);
 	float gNa_f = gMAXNa_f * NeuronState[0]*NeuronState[0]*NeuronState[0] * NeuronState[1];
 	float gNa_r = gMAXNa_r * NeuronState[2] * NeuronState[3];
@@ -422,17 +416,17 @@ void EgidioGranuleCell_TimeDriven::EvaluateDifferentialEcuation(float * NeuronSt
 
 
 void EgidioGranuleCell_TimeDriven::EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time){
-	//NeuronState[15]*= exp(-(ms_to_s*elapsed_time/this->texc));
-	//NeuronState[16]*= exp(-(ms_to_s*elapsed_time/this->tinh));
+	//NeuronState[15]*= ExponentialTable::GetResult(-(ms_to_s*elapsed_time/this->texc));
+	//NeuronState[16]*= ExponentialTable::GetResult(-(ms_to_s*elapsed_time/this->tinh));
 
 	if(NeuronState[15]<1e-30){
 		NeuronState[15]=0.0f;
 	}else{
-		NeuronState[15]*= exp(-(ms_to_s*elapsed_time/this->texc));
+		NeuronState[15]*= ExponentialTable::GetResult(-(ms_to_s*elapsed_time/this->texc));
 	}
 	if(NeuronState[16]<1e-30){
 		NeuronState[16]=0.0f;
 	}else{
-		NeuronState[16]*= exp(-(ms_to_s*elapsed_time/this->tinh));
+		NeuronState[16]*= ExponentialTable::GetResult(-(ms_to_s*elapsed_time/this->tinh));
 	}
 }

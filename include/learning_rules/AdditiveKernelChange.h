@@ -64,9 +64,19 @@ class AdditiveKernelChange : public WithoutPostSynaptic {
 
 	public:
 
+		/*!
+   		 * \brief Default constructor.
+   		 * 
+   		 * It creates and initializes a new AdditiveKernelChange object.
+   		 */
 		AdditiveKernelChange();
 
 
+		/*!
+		 * \brief Object destructor.
+		 *
+		 * It remove the object.
+		 */
 		virtual ~AdditiveKernelChange();
 
 
@@ -75,7 +85,7 @@ class AdditiveKernelChange : public WithoutPostSynaptic {
 		 *
 		 * It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * \return The state that the learning rule needs for all the synapses.
+		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
 		 */
 		virtual void InitializeConnectionState(unsigned int NumberOfSynapses) = 0;
 

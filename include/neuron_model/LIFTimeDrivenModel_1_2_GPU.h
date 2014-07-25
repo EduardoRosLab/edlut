@@ -41,6 +41,8 @@ class VectorNeuronState;
 class VectorNeuronState_GPU;
 class Interconnection;
 
+class LIFTimeDrivenModel_1_2_GPU2;
+
 
 /*!
  * \class LIFTimeDrivenModel_1_2_GPU
@@ -106,10 +108,7 @@ class LIFTimeDrivenModel_1_2_GPU : public TimeDrivenNeuronModel_GPU {
 		float grest;
 
 
-		/*!
-		 * \brief GPU properties
-		 */
-		cudaDeviceProp prop;
+		LIFTimeDrivenModel_1_2_GPU2 ** NeuronModel_GPU2;
 
 
 		/*!
@@ -177,6 +176,8 @@ class LIFTimeDrivenModel_1_2_GPU : public TimeDrivenNeuronModel_GPU {
 		 * \brief It loads the neuron model description and tables (if necessary).
 		 *
 		 * It loads the neuron model description and tables (if necessary).
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
 		 */
 		virtual void LoadNeuronModel() throw (EDLUTFileException);
 
@@ -263,15 +264,21 @@ class LIFTimeDrivenModel_1_2_GPU : public TimeDrivenNeuronModel_GPU {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		virtual void InitializeClassGPU(int N_neurons);
-
+		virtual void InitializeClassGPU2(int N_neurons);
 
 		/*!
 		 * \brief It delete a neuron model in GPU.
 		 *
 		 * It delete a neuron model in GPU.
 		 */
-		virtual void DeleteClassGPU();
+		virtual void DeleteClassGPU2();
+
+		/*!
+		 * \brief It create a object of type VectorNeuronState_GPU2 in GPU.
+		 *
+		 * It create a object of type VectorNeuronState_GPU2 in GPU.
+		 */
+		virtual void InitializeVectorNeuronState_GPU2();
 
 };
 

@@ -15,6 +15,10 @@
 #ifndef _EDLUT_INTERFACE_H_
 #define _EDLUT_INTERFACE_H_
 
+
+//Number of internal spikes in each slot time.
+extern long N_one_slot_internal_spikes2;
+
 /*!
  * \file C_interface_for_robot_control.h
  *
@@ -36,8 +40,8 @@
 
 
 #ifdef __cplusplus
-//#include "../include/simulation/Simulation.h"
-class Simulation;
+#include "../../include/simulation/Simulation.h"
+//class Simulation;
 #else // incomplete typedef for Simulation
 typedef struct Simulation_tag Simulation;
 #endif
@@ -45,14 +49,8 @@ typedef struct Simulation_tag Simulation;
 /// \brief Duration of a inner control loop iteration (time slot)
 /// A smaller length provides a higher accuracy
 #define SIM_SLOT_LENGTH 0.002
-
-/// \brief Approximate maximum acceptable time which can be consunsed by EDLUT in each slot
-/// Used in real time only
-#define MAX_SIM_SLOT_CONSUMED_TIME SIM_SLOT_LENGTH*0.5
-
-/// \brief Length of a EDLUT simulation step for time-driven neural models
-/// (should be smaller than SIM_SLOT_LENGTH)
-#define TIME_DRIVEN_STEP_TIME 0.001
+///// \brief Simulation time in seconds required to execute the desired trajectory once
+#define TRAJECTORY_TIME 1 
 
 /// \brief Maximum delay time that a delay line can have in seconds
 /// (The particular delay of each line is specified when calling init_delay())
@@ -60,7 +58,7 @@ typedef struct Simulation_tag Simulation;
 
 /// \brief Number of used robot's joints
 /// (depends on the number of joints moved during the performed trajectory)
-#define NUM_JOINTS 3
+#define NUM_JOINTS 1//3
 
 /// \brief Number of RBFs to encode the trajectory in the cerebellum's mossy fibers
 /// (the correponsing distribution mathematical expression can be printed with printRBFs())
@@ -79,39 +77,39 @@ typedef struct Simulation_tag Simulation;
 #define NUM_ROBOT_STATE_INPUT_NEURONS NUM_ROBOT_STATE_INPUT_VARS*NUM_RBFS
 /// \brief Number of the first network neuron which correspong to a mossy fiber
 /// (depends on the neural network definition: EDLUT net input file)
-#define FIRST_INPUT_NEURON 8
+#define FIRST_INPUT_NEURON 0
 
 /// \brief Number of cerebellum's output variables (encoded by DNC cells)
 /// (usually 2 (positive and negative torque) per joint)
 #define NUM_OUTPUT_VARS NUM_JOINTS*2
 /// \brief number of cerebellum's DCN cells used to encode one cerebellar output variable
 /// (depends on the neural network definition)
-#define NUM_NEURONS_PER_OUTPUT_VAR 4
+#define NUM_NEURONS_PER_OUTPUT_VAR 1
 /// \brief Total number of cerebellum's DCN cells used to encode the cerebellar output variables
 /// (depends on NUM_OUTPUT_VARS and NUM_NEURONS_PER_OUTPUT_VAR)
 #define NUM_OUTPUT_NEURONS NUM_OUTPUT_VARS*NUM_NEURONS_PER_OUTPUT_VAR
 /// \brief Number of the first network neuron which correspong to a DCN cell
 /// (depends on the neural network definition: EDLUT net input file)
-#define FIRST_OUTPUT_NEURON 1796
+#define FIRST_OUTPUT_NEURON 2120 //2160
 
 /// \brief Number of the first network neuron which correspong to a climbing fiber
 /// (depends on the neural network definition: EDLUT net input file)
-#define FIRST_LEARNING_NEURON 1823
+#define FIRST_LEARNING_NEURON 2122 //2166
 /// \brief Number of cerebellum's climbing fibers which correspond to one cerebellar output variable
 /// (depends on the neural network definition)
-#define NUM_LEARNING_NEURONS_PER_OUTPUT_VAR 8
+#define NUM_LEARNING_NEURONS_PER_OUTPUT_VAR 1  //
 /// \brief Total number of cerebellum's climbing fibers
 /// (depends on NUM_JOINTS and NUM_LEARNING_NEURONS_PER_OUTPUT_VAR)
 #define NUM_LEARNING_NEURONS NUM_JOINTS*2*NUM_LEARNING_NEURONS_PER_OUTPUT_VAR
 
 /// \brief Maximum applicable torque for each robot's joint (in N/m)
 /// (used to calculate the performed trajectory error)
-static const double MAX_ROBOT_JOINT_TORQUE[NUM_JOINTS]={100, 100, 100};
+static const double MAX_ROBOT_JOINT_TORQUE[NUM_JOINTS]={1};//{1, 1, 1};
 
 /// \brief proportional and derivative error factor for each robot's joint
 /// (used to calculate the performed trajectory error and therefore the corresponding activity of climbing fibers)
-static const double ROBOT_JOINT_ERROR_KP[NUM_JOINTS] = {10.0*36,10.0*6,10.0*12}; // proportional error
-static const double ROBOT_JOINT_ERROR_KD[NUM_JOINTS] = {23.0*36,23.0*6,23.0*12}; // derivative error;
+static const double ROBOT_JOINT_ERROR_KP[NUM_JOINTS] = {1};//{1,1,1}; // proportional error {160}
+static const double ROBOT_JOINT_ERROR_KD[NUM_JOINTS] = {0};//{0,0,0}; // derivative error;
 
 /// \brief A structure definiton used to specify radial basis function (RBF) shape
 /// (used to encode input variables in mossy fibers)
@@ -122,6 +120,7 @@ struct rbf_set
    double bell_overlap;
    double first_bell_pos, last_bell_pos;
   };
+
 
 ///////////////////////////// SIMULATION MANAGEMENT //////////////////////////
 
@@ -135,7 +134,7 @@ struct rbf_set
 /// \param weight_save_period Time interval used to save network weights in \a output_weight_file
 /// \param real_time_simulation Indicates if the simulation must be performed in real time (1=real time, 0=normal simulation)
 /// \return A pointer to the created neural network
-EXTERN_C Simulation *create_neural_simulation(const char *net_file, const char *input_weight_file, const char *input_spike_file, const char *output_weight_file, const char *output_spike_file, double weight_save_period, int real_time_simulation);
+EXTERN_C Simulation *create_neural_simulation(const char *net_file, const char *input_weight_file, const char *input_spike_file, const char *output_weight_file, const char *output_spike_file, double weight_save_period, int number_of_openmp_queues, int number_of_openmp_threads);
 
 /// \brief Finishes and deletes a neural network simulation.
 /// Neural simulation output data is stored in the previously-specified files
@@ -150,7 +149,7 @@ EXTERN_C void finish_neural_simulation(Simulation *neural_sim);
 /// \note If the real_time_simulation parameter is set to 1 (true) when the neural simulation
 /// \note was crated (create_neural_simulation function), the processing of some events can
 /// \note be skipped in order not to exceed the computation time limit in a time slot (SIM_SLOT_LENGTH)
-EXTERN_C int run_neural_simulation_slot(Simulation *neural_sim, double slot_end_time);
+EXTERN_C int run_neural_simulation_slot(Simulation *neural_sim, double next_step_sim_time);
 
 /// \brief Saves the neural network weights.
 /// All the neural network weights are save in a text file which name is specified when creating the network.
@@ -168,7 +167,7 @@ EXTERN_C void reset_neural_simulation(Simulation *neural_sim);
 /// This value is related to the consumed computation time
 /// \param neural_sim Pointer to a Simulation created by create_neural_simulation()
 /// \return Number of processed spikes
-EXTERN_C long get_neural_simulation_spike_counter(Simulation *neural_sim);
+EXTERN_C long get_neural_simulation_spike_counter_for_each_slot_time();
 
 /// \brief Returns the number of events processed by the neural network
 /// This value is used for statistics and to obtain information about the simulation
@@ -188,11 +187,22 @@ EXTERN_C long long get_accumulated_heap_occupancy_counter(Simulation *neural_sim
 ///  A pointer to a structure of this type is passed as parameter to all the delay functions
 struct delay
   {
-   double buffer[(int)(MAX_DELAY_TIME/SIM_SLOT_LENGTH+1.5)][NUM_JOINTS]; // Circular buffer
-   int length; // the useful length od the line is length-1
+   double buffer[(int)(MAX_DELAY_TIME/SIM_SLOT_LENGTH+1.5)][NUM_OUTPUT_VARS];//[NUM_JOINTS]; // Circular buffer
+   int length; // the useful length of the line is length-1
    // This index points to the place where the new element will be stored.
    // index+1 is the oldest element in the buffer
    int index;
+  };
+
+/// \brief The structure of a delay line per joint
+///  A pointer to a structure of this type is passed as parameter to all the delay functions
+struct delay_joint
+  {
+   double buffer_joint[(int)(MAX_DELAY_TIME/SIM_SLOT_LENGTH+1.5)][NUM_JOINTS];//[NUM_JOINTS]; // Circular buffer
+   int length_joint; // the useful length of the line is length-1
+   // This index points to the place where the new element will be stored.
+   // index+1 is the oldest element in the buffer
+   int index_joint;
   };
 
 /// \brief Initializes and clear a delay line.
@@ -207,12 +217,32 @@ EXTERN_C void init_delay(struct delay *d, double del_time);
 /// The delay line is shifted one position
 /// \param d Pointer to the delay structure to be shifed.
 /// \param elem Pointer to the new elem to be inserted in the line.
+///  Each delay line element is a group of NUM_OUTPUT_VARS] doubles, therefore \a elem must
+///  point to at least NUM_JOINT doubles.
+/// \return Pointer to the oldest element group if the line.
+/// \post The returned value points to NUM_OUTPUT_VARS] doubles which are allocated in the
+///  delay-line buffer. These values can be used until this function is called again.
+EXTERN_C double *delay_line(struct delay *d, double *elem);
+
+
+/// \brief Initializes and clear a delay line.
+/// A specificed delay line is initialized to a particular length and cleared
+/// (values set to 0).
+/// \param d Pointer to the delay structure to be init.
+/// \param del_time Delay introduced by the line in seconds.
+/// \pre The \a d strucure must be previously allocated.
+EXTERN_C void init_delay_joint(struct delay_joint *d, double del_time);
+
+/// \brief Inserts a new element in the delay line and get the oldest element.
+/// The delay line is shifted one position
+/// \param d Pointer to the delay structure to be shifed.
+/// \param elem Pointer to the new elem to be inserted in the line.
 ///  Each delay line element is a group of NUM_JOINT doubles, therefore \a elem must
 ///  point to at least NUM_JOINT doubles.
 /// \return Pointer to the oldest element group if the line.
 /// \post The returned value points to NUM_JOINT doubles which are allocated in the
 ///  delay-line buffer. These values can be used until this function is called again.
-EXTERN_C double *delay_line(struct delay *d, double *elem);
+EXTERN_C double *delay_line_joint(struct delay_joint *d, double *elem);
 
 ///////////////////////////// INPUT TRAJECTORY //////////////////////////
 
@@ -236,6 +266,37 @@ double gaussian_function(double a, double b, double c, double x);
 /// \param amplitude trajectory amplitude
 /// \param tsimul time corresponing to the trajectory point which must be calculated (0.0=trajectoy beginning)
 EXTERN_C void calculate_input_trajectory(double *inp, double amplitude, double tsimul);
+
+/// \brief Calculates the desired error value to be injected through IO. This value is base on a Gaussian function
+/// The value is calculated accoring to the expression: f(x) = a e^{- { \frac{(x-b)^2 }{ 2 c^2} } }
+/// This value is used to calculate the error shape and therefore the current injected in
+///  inferior olive cells.
+///			   In the first NUM_JOINTS positions of \a inp the injected error shapes for each joint are stored.
+///            In the next  NUM_JOINTS positions of \a inp the diff values of the injected error shapes are stored.
+///            In the next  NUM_JOINTS positions of \a inp the second diff values of the injected error shapes are stored.
+/// \param amplitude trajectory amplitude (a)
+/// \param trajectory time 
+/// \param tsimul time corresponing to the trajectory point which must be calculated (0.0=trajectoy beginning)(x)
+/// \param *centerpos Centers of the gaussian shapes conforming the positive error part(b).
+/// \param *centerneg Centers of the gaussian shapes conforming the negative error part (b).
+/// \param *sigma Width (c)
+EXTERN_C void calculate_input_error(double *inp, double amplitude,double trajectory_time,double tsimul,double centerpos[],double centerneg[], double sigma[]);
+
+/// \brief Calculates the desired error value to be injected through IO. This value is base on a Gaussian function
+/// The value is calculated accoring to the expression: f(x) = a e^{- { \frac{(x-b)^2 }{ 2 c^2} } }
+/// This value is used to calculate the error shape and therefore the current injected in
+///  inferior olive cells.
+///			   In the first NUM_JOINTS positions of \a inp the injected error shapes for each joint are stored.
+///            In the next  NUM_JOINTS positions of \a inp the diff values of the injected error shapes are stored.
+///            In the next  NUM_JOINTS positions of \a inp the second diff values of the injected error shapes are stored.
+/// \param amplitude trajectory amplitude (a)
+/// \param trajectory time 
+/// \param tsimul time corresponing to the trajectory point which must be calculated (0.0=trajectoy beginning)(x)
+/// \param *centerpos Centers of the gaussian shapes conforming the positive error part(b).
+/// \param *centerneg Centers of the gaussian shapes conforming the negative error part (b).
+/// \param *sigma Width (c)
+/// \param number_of_rep Number of times that the double gaussian function is going to be repeated along the trajectory time
+EXTERN_C void calculate_input_error_repetitions(double *inp, double amplitude,double trajectory_time,double tsimul,double centerpos[],double centerneg[],double sigma[],int number_of_rep);
 
 /// \brief Calculates maximum and minimum values of the trajectory positions, velocities and accelerations.
 /// These values are used to set the rages of the input variables which will be encoded in mossy fiber activity
@@ -422,12 +483,38 @@ EXTERN_C int create_log(struct log *log, int total_traj_executions, int trajecto
 /// \pre The log must be previously initialized (calling init_log())
 EXTERN_C void log_vars(struct log *log, double time, double *input_vars, double *state_vars, double *torque_vars, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter);
 
+/// \brief Stores all the interesting variables during the simulation process. 
+///   These variables are logged during the simulation process.
+/// This function must be called at each simulation step.
+/// \param log Pointer to an initialized log structure where the variables will be stored.
+/// \param time Simulation time of the simulation process.
+/// \param input_vars Desired ERROR, First diff and Second diff Values.
+/// \param output_vars_normalized Cerebellum output variables  normalized(corerctive torque values).
+/// \param output_vars Cerebellum output variables (corerctive torque values).
+/// \param learning_vars Learning variables calculated from the performed error.
+/// \param error_vars Actual ERROR (first diff and second diff)Values-Desired ERROR (first diff and second diff)Values.
+/// \param elapsed_time Computation time consumed by a control loop iteration.
+/// \param spk_counter Processed events during a control loop iteration.
+/// \pre The log must be previously initialized (calling init_log())
+EXTERN_C void log_vars_reduced(struct log *log, double time, double *input_vars,double *output_vars_normalized, double *output_vars, double *learning_vars, double *error_vars, float elapsed_time, unsigned long spk_counter);
+
+
 /// \brief Saves the previously stored log registers in a text file.
 /// This function must be called at the end of the logging process.
 /// \param log Pointer to an initialized log structure where the variables have been stored.
 /// \param file_name Pointer to an array containing the name of the output log file.
 /// \pre The log must be previously initialized (calling init_log())
 /// \return Error occurred during the function execution (0 if it is successfully executed)
-EXTERN_C int save_and_finish_log(struct log *log, const char *file_name);
+EXTERN_C int save_and_finish_log(struct log *log, char *file_name);
 
+
+EXTERN_C void calculate_input_activity_for_one_trajectory(Simulation *neural_sim, double time);
+
+EXTERN_C void init_real_time_restriction(Simulation * neural_sim, float new_slot_time, float new_first_section, float new_second_section, float new_third_section);
+
+EXTERN_C void start_real_time_restriction(Simulation * neural_sim);
+
+EXTERN_C void reset_real_time_restriction(Simulation * neural_sim);
+
+EXTERN_C void stop_real_time_restriction(Simulation * neural_sim);
 #endif /*_EDLUT_INTERFACE_H_*/

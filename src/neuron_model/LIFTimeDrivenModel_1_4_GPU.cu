@@ -31,6 +31,8 @@
 
 #include "../../include/simulation/Utils.h"
 
+#include "../../include/openmp/openmp.h"
+
 #include "../../include/cudaError.h"
 //Library for CUDA
 #include <helper_cuda.h>
@@ -153,11 +155,10 @@ void LIFTimeDrivenModel_1_4_GPU::SynapsisEffect(int index, VectorNeuronState_GPU
 
 LIFTimeDrivenModel_1_4_GPU::LIFTimeDrivenModel_1_4_GPU(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel_GPU(NeuronTypeID, NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), tampa(0), tnmda(0), tinh(0), tgj(0),
 		tref(0), grest(0){
-	HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));
 }
 
 LIFTimeDrivenModel_1_4_GPU::~LIFTimeDrivenModel_1_4_GPU(void){
-	DeleteClassGPU();
+	DeleteClassGPU2();
 }
 
 void LIFTimeDrivenModel_1_4_GPU::LoadNeuronModel() throw (EDLUTFileException){
@@ -170,7 +171,7 @@ VectorNeuronState * LIFTimeDrivenModel_1_4_GPU::InitializeState(){
 
 
 InternalSpike * LIFTimeDrivenModel_1_4_GPU::ProcessInputSpike(PropagatedSpike *  InputSpike){
-	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(InputSpike->GetTarget());
+	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(omp_get_thread_num(),InputSpike->GetTarget());
 
 	Neuron * TargetCell = inter->GetTarget();
 
@@ -197,12 +198,8 @@ InternalSpike * LIFTimeDrivenModel_1_4_GPU::ProcessInputSpike(Interconnection * 
 }
 
 
-__global__ void LIFTimeDrivenModel_1_4_GPU_UpdateState(TimeDrivenNeuronModel_GPU2 ** timeDrivenNeuronModel_GPU2, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates, double CurrentTime){
-	int index = blockIdx.x * blockDim.x + threadIdx.x;
-	while (index<SizeStates){
-		(*timeDrivenNeuronModel_GPU2)->UpdateState(index, AuxStateGPU, StateGPU, LastUpdateGPU, LastSpikeTimeGPU, InternalSpikeGPU, SizeStates, CurrentTime);
-		index+=blockDim.x*gridDim.x;
-	}
+__global__ void LIFTimeDrivenModel_1_4_GPU_UpdateState(LIFTimeDrivenModel_1_4_GPU2 ** NeuronModel_GPU2, double CurrentTime){
+	(*NeuronModel_GPU2)->UpdateState(CurrentTime);
 }
 		
 bool LIFTimeDrivenModel_1_4_GPU::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
@@ -211,10 +208,10 @@ bool LIFTimeDrivenModel_1_4_GPU::UpdateState(int index, VectorNeuronState * Stat
 
 	//----------------------------------------------
 	if(prop.canMapHostMemory){
-		LIFTimeDrivenModel_1_4_GPU_UpdateState<<<N_block,N_thread>>>(timeDrivenNeuronModel_GPU2, state->AuxStateGPU, state->VectorNeuronStates_GPU, state->LastUpdateGPU, state->LastSpikeTimeGPU, state->InternalSpikeGPU, state->SizeStates, CurrentTime);
+		LIFTimeDrivenModel_1_4_GPU_UpdateState<<<N_block,N_thread>>>(NeuronModel_GPU2, CurrentTime);
 	}else{
 		HANDLE_ERROR(cudaMemcpy(state->AuxStateGPU,state->AuxStateCPU,4*state->SizeStates*sizeof(float),cudaMemcpyHostToDevice));
-		LIFTimeDrivenModel_1_4_GPU_UpdateState<<<N_block,N_thread>>>(timeDrivenNeuronModel_GPU2, state->AuxStateGPU, state->VectorNeuronStates_GPU, state->LastUpdateGPU, state->LastSpikeTimeGPU, state->InternalSpikeGPU, state->SizeStates, CurrentTime);
+		LIFTimeDrivenModel_1_4_GPU_UpdateState<<<N_block,N_thread>>>(NeuronModel_GPU2, CurrentTime);
 		HANDLE_ERROR(cudaMemcpy(state->InternalSpikeCPU,state->InternalSpikeGPU,state->SizeStates*sizeof(bool),cudaMemcpyDeviceToHost));
 	}
 
@@ -257,22 +254,25 @@ void LIFTimeDrivenModel_1_4_GPU::InitializeStates(int N_neurons){
 	state->InitializeStatesGPU(N_neurons, initialization, N_TimeDependentNeuronState);
 
 	//INITIALIZE CLASS IN GPU
-	this->InitializeClassGPU(N_neurons);
+	this->InitializeClassGPU2(N_neurons);
+
+
+	InitializeVectorNeuronState_GPU2();
 }
 
 
 
 
-__global__ void LIFTimeDrivenModel_1_4_GPU_InitializeClassGPU(TimeDrivenNeuronModel_GPU2 ** timeDrivenNeuronModel_GPU2,
+__global__ void LIFTimeDrivenModel_1_4_GPU_InitializeClassGPU2(LIFTimeDrivenModel_1_4_GPU2 ** NeuronModel_GPU2, double new_elapsed_time,
 		float eexc,float einh,float erest,float vthr,float cm,float tampa,float tnmda,float tinh,float tgj,float tref,
-		float grest,float fgj, char const* integrationName, int N_neurons, int Total_N_thread, void ** Buffer_GPU){
+		float grest,float fgj, char const* integrationName, int N_neurons, void ** Buffer_GPU){
 	if(blockIdx.x==0 && threadIdx.x==0){
-		(*timeDrivenNeuronModel_GPU2) = (LIFTimeDrivenModel_1_4_GPU2 *) new LIFTimeDrivenModel_1_4_GPU2(eexc,einh,erest,vthr,cm,
-        tampa,tnmda,tinh,tgj,tref,grest,fgj,integrationName, N_neurons, Total_N_thread, Buffer_GPU);
+		(*NeuronModel_GPU2) = new LIFTimeDrivenModel_1_4_GPU2(new_elapsed_time, eexc,einh,erest,vthr,cm,
+        tampa,tnmda,tinh,tgj,tref,grest,fgj,integrationName, N_neurons, Buffer_GPU);
 	}
 }
-void LIFTimeDrivenModel_1_4_GPU::InitializeClassGPU(int N_neurons){
-	cudaMalloc(&timeDrivenNeuronModel_GPU2, sizeof(TimeDrivenNeuronModel_GPU2 **));
+void LIFTimeDrivenModel_1_4_GPU::InitializeClassGPU2(int N_neurons){
+	cudaMalloc(&NeuronModel_GPU2, sizeof(LIFTimeDrivenModel_1_4_GPU2 **));
 	
 	char * integrationNameGPU;
 	cudaMalloc((void **)&integrationNameGPU,32*4);
@@ -289,25 +289,38 @@ void LIFTimeDrivenModel_1_4_GPU::InitializeClassGPU(int N_neurons){
 
 	integrationMethod_GPU->InitializeMemoryGPU(N_neurons, Total_N_thread);
 
-	LIFTimeDrivenModel_1_4_GPU_InitializeClassGPU<<<1,1>>>(timeDrivenNeuronModel_GPU2,eexc,einh,erest,vthr,cm,tampa,
-		tnmda,tinh,tgj,tref,grest,fgj,integrationNameGPU, N_neurons,Total_N_thread, integrationMethod_GPU->Buffer_GPU);
+	LIFTimeDrivenModel_1_4_GPU_InitializeClassGPU2<<<1,1>>>(NeuronModel_GPU2,TimeDrivenStep_GPU, eexc,einh,erest,vthr,cm,tampa,
+		tnmda,tinh,tgj,tref,grest,fgj,integrationNameGPU, N_neurons, integrationMethod_GPU->Buffer_GPU);
 
 	cudaFree(integrationNameGPU);
 }
 
 
 
-
-
-__global__ void LIFTimeDrivenModel_1_4_GPU_DeleteClassGPU(TimeDrivenNeuronModel_GPU2 ** timeDrivenNeuronModel_GPU2){
+__global__ void initializeVectorNeuronState_GPU2(LIFTimeDrivenModel_1_4_GPU2 ** NeuronModel_GPU2, float * AuxStateGPU, float * StateGPU, double * LastUpdateGPU, double * LastSpikeTimeGPU, bool * InternalSpikeGPU, int SizeStates){
 	if(blockIdx.x==0 && threadIdx.x==0){
-		delete (*timeDrivenNeuronModel_GPU2); 
+		(*NeuronModel_GPU2)->InitializeVectorNeuronState_GPU2(AuxStateGPU, StateGPU, LastUpdateGPU, LastSpikeTimeGPU, InternalSpikeGPU, SizeStates);
+	}
+}
+
+void LIFTimeDrivenModel_1_4_GPU::InitializeVectorNeuronState_GPU2(){
+	VectorNeuronState_GPU *state = (VectorNeuronState_GPU *) InitialState;
+	initializeVectorNeuronState_GPU2<<<1,1>>>(NeuronModel_GPU2, state->AuxStateGPU, state->VectorNeuronStates_GPU, state->LastUpdateGPU, state->LastSpikeTimeGPU, state->InternalSpikeGPU, state->SizeStates);
+}
+
+
+__global__ void DeleteClass_GPU2(LIFTimeDrivenModel_1_4_GPU2 ** NeuronModel_GPU2){
+	if(blockIdx.x==0 && threadIdx.x==0){
+		delete (*NeuronModel_GPU2); 
 	}
 }
 
 
-void LIFTimeDrivenModel_1_4_GPU::DeleteClassGPU(){
-    LIFTimeDrivenModel_1_4_GPU_DeleteClassGPU<<<1,1>>>(timeDrivenNeuronModel_GPU2);
-    cudaFree(timeDrivenNeuronModel_GPU2);
+void LIFTimeDrivenModel_1_4_GPU::DeleteClassGPU2(){
+    DeleteClass_GPU2<<<1,1>>>(NeuronModel_GPU2);
+    cudaFree(NeuronModel_GPU2);
 }
+
+
+
 

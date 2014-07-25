@@ -61,18 +61,21 @@ The different parameters for EDLUTKernel are the followings:
  
 * Optional parameters:
 	-info 	It shows the network information.
- 	-sf File_Name	It saves the final weights in file File_Name.
+	-sf File_Name	It saves the final weights in file File_Name.
 	-wt Save_Weight_Step	It sets the step time between weights saving.
- 	-st Step_Time(in_seconds) It sets the step time in simulation.
- 	-log File_Name	It saves the activity register in file File_Name.
- 	-if Input_File	It adds the Input_File file in the input sources of the simulation.
- 	-of Output_File	It adds the Output_File file in the output targets of the simulation.
- 	-ic IPDirection:Port Server|Client	It adds the connection as a server or a client 
-	in the specified address in the input sources of the simulation.
- 	-oc IPDirection:Port Server|Client	It adds the connection as a server or a client 
-	in the specified address in the output targets of the simulation.	
- 	-ioc IPDirection:Port Server|Client	It adds the connection as a server or a client 
-	in the specified address in the input sources and in the output targets of the simulation.
+	-st Step_Time(in_seconds) It sets the step time in simulation.
+	-log File_Name It saves the activity register in file File_Name.
+        -logp File_Name It saves all events register in file File_Name.
+	-if Input_File	It adds the Input_File file in the input sources of the simulation.
+	-of Output_File	It adds the Output_File file in the output targets of the simulation.
+        -openmpQ number_of_OpenMP_queues It sets the number of OpenMP queues.
+        -openmp number_of_OpenMP_threads It sets the number of OpenMP threads.
+	-ic IPAddress:Port Server|Client	It adds the connection as a server or a client in 
+	the specified direction in the input sources of the simulation.
+	-oc IPAddress:Port Server|Client	It adds the connection as a server or a client in
+	the specified direction in the output targets of the simulation.
+	-ioc IPAddress:Port Server|Client	It adds the connection as a server or a client in
+	the specified direction in the input sources and in the output targets.
 	
 Additional Notes
 ================

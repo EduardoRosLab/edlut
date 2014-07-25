@@ -24,7 +24,7 @@
  * \date May 2013
  *
  * This file declares a class which implement the Euler integration method in GPU (this class is stored
- * in CPU memory and controles the reservation and freeing of GPU auxiliar memory). All integration
+ * in CPU memory and controles the allocation and deleting of GPU auxiliar memory). All integration
  * methods in GPU are fixed step due to the parallel architecture of this one.
  */
 
@@ -70,7 +70,7 @@ class Euler_GPU: public IntegrationMethod_GPU{
 		 *
 		 * It destroys an object of this class.
 		 */
-		~Euler_GPU();
+		virtual ~Euler_GPU();
 
 
 		/*!

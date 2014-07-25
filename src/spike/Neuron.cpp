@@ -27,6 +27,8 @@
 
 #include "../../include/learning_rules/WithoutPostSynaptic.h"
 
+#include "../../include/openmp/openmp.h"
+
 #include <string>
 
 using namespace std;
@@ -34,14 +36,17 @@ using namespace std;
 Neuron::Neuron(){
 }
 
-Neuron::Neuron(int NewIndex, NeuronModel * Type, bool Monitored, bool IsOutput){
-	InitNeuron(NewIndex,-1,Type,Monitored,IsOutput);
-
-}
+//Neuron::Neuron(int NewIndex, NeuronModel ** Type, bool Monitored, bool IsOutput){
+//	InitNeuron(NewIndex,-1,Type,Monitored,IsOutput);
+//
+//}
 
 Neuron::~Neuron(){
 	//state is deleted en Neuron Model.
 	if (this->OutputConnections!=0){
+		for(int i=0; i<NumberOfOpenMPQueues; i++){
+			delete [] OutputConnections[i];
+		}
 		delete [] this->OutputConnections;
 	}
 
@@ -54,11 +59,11 @@ Neuron::~Neuron(){
 	}
 }
 
-void Neuron::InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel * Type, bool Monitored, bool IsOutput){
+void Neuron::InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel * Type, bool Monitored, bool IsOutput, int blockIndex){
 
 	this->type = Type;
 
-	this->state = Type->InitializeState();
+	this->state = type->InitializeState();
 
 	this->OutputConnections = 0;
 
@@ -74,7 +79,7 @@ void Neuron::InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel *
 
 	this->index = NewIndex;
 
-	this->index_VectorNeuronState=index_VectorNeuronState;
+	this->index_VectorNeuronState = index_VectorNeuronState;
 
 	this->monitored=Monitored;
 
@@ -82,7 +87,7 @@ void Neuron::InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel *
 
 	this->isOutput = IsOutput;
 
-	this->TriggerConnection=0;
+	this->OpenMP_queue_index=blockIndex;
 }
 
 long int Neuron::GetIndex() const{
@@ -102,8 +107,8 @@ unsigned int Neuron::GetInputNumberWithoutPostSynapticLearning() const{
 }
 
    		
-//unsigned int Neuron::GetOutputNumber() const{
-//	return this->OutputConNumber;
+//unsigned int Neuron::GetOutputNumber(int index) const{
+//	return this->OutputConNumber[index];
 //}
 
 Interconnection * Neuron::GetInputConnectionWithPostSynapticLearningAt(unsigned int index) const{
@@ -133,7 +138,9 @@ void Neuron::SetInputConnectionsWithoutPostSynapticLearning(Interconnection ** C
 
 	this->InputConLearningNumberWithoutPostSynaptic = NumberOfConnections;
 
-	//We search the trigger connection.
+
+//////////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	TriggerConnection=0;
 	for(int i=0; i<NumberOfConnections; i++){
 		WithoutPostSynaptic * wchani=(WithoutPostSynaptic *)Connections[i]->GetWeightChange_withoutPost();
 		if(wchani->trigger==1){
@@ -141,16 +148,17 @@ void Neuron::SetInputConnectionsWithoutPostSynapticLearning(Interconnection ** C
 			break;
 		}
 	}
+/////////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 }
 
 
 
    		
-//Interconnection * Neuron::GetOutputConnectionAt(unsigned int index) const{
-//	return *(this->OutputConnections+index);
+//Interconnection * Neuron::GetOutputConnectionAt(unsigned int index1, unsigned int index2) const{
+//	return OutputConnections[index1][index2];
 //}
    		
-void Neuron::SetOutputConnections(Interconnection ** Connections, unsigned int NumberOfConnections){
+void Neuron::SetOutputConnections(Interconnection *** Connections, unsigned long * NumberOfConnections){
 	if (this->OutputConnections!=0){
 		delete [] this->OutputConnections;
 	}
@@ -160,8 +168,8 @@ void Neuron::SetOutputConnections(Interconnection ** Connections, unsigned int N
 	this->OutputConNumber = NumberOfConnections;
 }
 
-bool Neuron::IsOutputConnected() const{
-	return this->OutputConNumber!=0;
+bool Neuron::IsOutputConnected(int index) const{
+	return this->OutputConNumber[index]!=0;
 }
    		
 //bool Neuron::IsMonitored() const{
@@ -211,3 +219,7 @@ void Neuron::SetIndex_VectorNeuronState(long int index){
 //long Neuron::GetIndex_VectorNeuronState(){
 //	return index_VectorNeuronState;
 //}
+
+void Neuron::set_OpenMP_queue_index(int index){
+	this->OpenMP_queue_index=index;
+}

@@ -118,17 +118,17 @@ unsigned int VectorNeuronState::GetNumberOfVariables(){
 	return this->NumberOfVariables;
 }
 
-float VectorNeuronState::GetStateVariableAt(int index, int position){
-	if(Is_GPU==false){
-		return VectorNeuronStates[index*NumberOfVariables + position];
-	}else{
-		return VectorNeuronStates[this->SizeStates*position + index];
-	}
-}
+//float VectorNeuronState::GetStateVariableAt(int index, int position){
+//	if(Is_GPU==false){
+//		return VectorNeuronStates[index*NumberOfVariables + position];
+//	}else{
+//		return VectorNeuronStates[this->SizeStates*position + index];
+//	}
+//}
 
-float * VectorNeuronState::GetStateVariableAt(int index){
-	return VectorNeuronStates+(index*NumberOfVariables);
-}
+//float * VectorNeuronState::GetStateVariableAt(int index){
+//	return VectorNeuronStates+(index*NumberOfVariables);
+//}
 
 //double VectorNeuronState::GetLastUpdateTime(int index){
 //	return this->LastUpdate[index];

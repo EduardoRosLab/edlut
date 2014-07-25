@@ -67,7 +67,9 @@ class STDPLSState : public STDPState{
 		 *
 		 * It set new time to spikes.
 		 *
+		 * \param index The synapse's index inside the learning rule.
 		 * \param NewTime new time.
+		 * \param pre_post In some learning rules (i.e. STDPLS) this variable indicate wether the update affects the pre- or post- variables.
 		 */
 		virtual void SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post);
 
@@ -76,6 +78,8 @@ class STDPLSState : public STDPState{
 		 *
 		 * It implements the behaviour when it transmits a spike. It must be implemented
 		 * by any inherited class.
+		 *
+		 * \param index The synapse's index inside the learning rule.
 		 */
 		virtual void ApplyPresynapticSpike(unsigned int index);
 
@@ -84,6 +88,8 @@ class STDPLSState : public STDPState{
 		 *
 		 * It implements the behaviour when it the target cell fires a spike. It must be implemented
 		 * by any inherited class.
+		 *
+		 * \param index The synapse's index inside the learning rule.
 		 */
 		virtual void ApplyPostsynapticSpike(unsigned int index);
 

@@ -48,7 +48,7 @@ class Event{
    		/*!
    		 * Time when the event happens.
    		 */
-   		double time;
+   		const double time;
    
    	public:
    		
@@ -84,33 +84,47 @@ class Event{
    		 */
    		double GetTime() const;
    		
-   		/*!
-   		 * \brief It sets the event time.
-   		 * 
-   		 * It sets the event time.
-   		 * 
-   		 * \param NewTime The new event time.
-   		 */
-   		void SetTime (double NewTime);
    	
    		/*!
-   		 * \brief It process an event in the simulation.
+   		 * \brief It process an event in the simulation with the option of real time available.
    		 * 
-   		 * It process the event in the simulation.
+   		 * It process an event in the simulation with the option of real time available.
    		 * 
    		 * \param CurrentSimulation The simulation object where the event is working.
-		 * \param RealTimeRestriction This variable indicates whether we are making a 
-		 * real-time simulation and the watchdog is enabled.
+		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
+		 * control the consumed time in each slot.
    		 */
-   		virtual void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction) = 0;
+   		virtual void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction) = 0;
 
+		/*!
+   		 * \brief It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * \param CurrentSimulation The simulation object where the event is working.
+   		 */
+		virtual void ProcessEvent(Simulation * CurrentSimulation) = 0;
 
    		/*!
    		 * \brief this method indicates if this event is and spike event.
    		 * 
    		 * This method indicates if this event is and spike event.
 		 */
-		virtual bool IsSpike();
+		virtual bool IsSpike() const;
+
+   		/*!
+   		 * \brief this method print the event type.
+   		 * 
+   		 * This method print the event type..
+		 */
+		virtual void PrintType();
+
+   		/*!
+   		 * \brief The event queue uses this preference variable to sort the events with the same time stamp.
+   		 * 
+   		 * The event queue uses this preference variable to sort the events with the same time stamp.
+		 */
+		virtual int ProcessingPriority()=0;
 };
 
-#endif /*SPIKE_H_*/
+#endif /*EVENT_H_*/

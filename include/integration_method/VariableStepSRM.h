@@ -86,17 +86,15 @@ class VariableStepSRM : public IntegrationMethod {
 
 		
 		/*!
-		 * \brief It calculate the next neural state varaibles of the model.
+		 * \brief It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * It calculate the next neural state varaibles of the model.
+		 * It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * \param index Index of the cell inside the neuron model for method with memory (e.g. BDF).
-		 * \param Model The NeuronModel.
+		 * \param index for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 * \param NeuronState neuron state variables of one neuron.
 		 * \param elapsed_time integration time step.
-		 * \param CPU_thread_index index of the OpenMP thread.
 		 */
-		void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index) ;
+		void NextDifferentialEcuationValue(int index, float * NeuronState, float elapsed_time) ;
 
 		/*!
 		 * \brief It prints the integration method info.
@@ -111,11 +109,11 @@ class VariableStepSRM : public IntegrationMethod {
 
 
 		/*!
-		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF).
+		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It initialize the state of the integration method for method with memory (e.g. BDF).
+		 * It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * \param N_neuron number of neuron in the neuron model.
+		 * \param N_neuron number of neurons in the neuron model.
 		 * \param inicialization vector with initial values.
 		 */
 		void InitializeStates(int N_neurons, float * inicialization);
@@ -130,23 +128,26 @@ class VariableStepSRM : public IntegrationMethod {
 		enum IntegrationMethodType GetMethodType();
 
 		/*!
-		 * \brief It reset the state of the integration method for method with memory (e.g. BDF).
+		 * \brief It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It reset the state of the integration method for method with memory (e.g. BDF).
+		 * It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
 		 * \param index indicate witch neuron must be reseted.
 		 */
 		void resetState(int index) {}
 
 
-		/*
-		 * \brief It load the parameter of the integration method.
+		/*!
+		 * \brief It loads the integration method parameters.
 		 *
-		 * It load the parameter of the integration method.
+		 * It loads the integration method parameters from the file that define the parameter of the neuron model.
 		 *
-		 * \param fh pointer to the neuron model description.
-		 * \param Currentline curren line in the file fh.
-		*/
+		 * \param Pointer to a neuron description file (*.cfg). At the end of this file must be included 
+		 *  the integration method type and its parameters.
+		 * \param Currentline line inside the neuron description file where start the description of the integration method parameter. 
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
+		 */
 		void loadParameter(FILE *fh, long * Currentline) throw (EDLUTFileException);
 
 };

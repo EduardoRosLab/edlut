@@ -62,7 +62,7 @@ class WithPostSynaptic : public LearningRule {
 		/*!
 		 * \brief Object destructor.
 		 *
-		 * It remove a WithPostSynaptic object.
+		 * It remove the object.
 		 */
 		virtual ~WithPostSynaptic();
 
