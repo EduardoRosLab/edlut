@@ -19,6 +19,10 @@
 #include <stdio.h>
 
 
+RealTimeRestriction::RealTimeRestriction(): slot_time(0.0f), first_section(1.0f), second_section(1.0f), third_section(1.0f),
+		Reset(false), Stop(false), RestrictionLevel(0){
+}
+
 RealTimeRestriction::RealTimeRestriction(float new_slot_time, float new_first_section, float new_second_section, float new_third_section): slot_time(new_slot_time), 
 		Reset(false), Stop(false), RestrictionLevel(0){
 
@@ -61,6 +65,45 @@ RealTimeRestriction::RealTimeRestriction(float new_slot_time, float new_first_se
   		
 RealTimeRestriction::~RealTimeRestriction(){
 }
+
+void RealTimeRestriction::SetParameterWatchDog(float new_slot_time, float new_first_section, float new_second_section, float new_third_section){
+	slot_time=new_slot_time;
+
+	if(new_third_section<=1 && new_third_section>=0){
+		third_section=new_third_section;
+	}else{
+		third_section=1;
+	}
+
+	if(new_second_section<=third_section && new_second_section>=0){
+		second_section=new_second_section;
+	}else{
+		second_section=third_section;
+	}
+
+	if(new_first_section<=second_section && new_first_section>=0){
+		first_section=new_first_section;
+	}else{
+		first_section=second_section;
+	}
+
+
+	#if defined(REAL_TIME_WINNT)
+		if(!QueryPerformanceFrequency(&freq))
+			puts("QueryPerformanceFrequency failed");
+	#elif defined (REAL_TIME_LINUX)
+		if(clock_getres(CLOCK_REALTIME, &freq))
+			puts("clock_getres failed");
+	#elif defined (REAL_TIME_OSX)
+		// If this is the first time we've run, get the timebase.
+		// We can use denom == 0 to indicate that sTimebaseInfo is
+		// uninitialised because it makes no sense to have a zero
+		// denominator is a fraction.
+		if (freq.denom == 0 ) {
+			(void) mach_timebase_info(&freq);
+		}
+	#endif
+}
  
 
 void RealTimeRestriction::ResetWatchDog(){
@@ -73,6 +116,10 @@ void RealTimeRestriction::StopWatchDog(){
 }
 
 void RealTimeRestriction::Watchdog(){
+	if(this->slot_time=0.0f){
+		puts("Real time restriction object parameter not initialized");
+	}
+
 	while(true){
 		if(Stop==true){
 			break;

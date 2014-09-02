@@ -21,6 +21,10 @@
 
 #include <string.h>
 
+#include <iostream>
+#include <cstdio>
+using namespace std;
+
 #define A 1.0f/2.0f
 
 
@@ -52,6 +56,7 @@ SinState::SinState(unsigned int NumSynapses, unsigned int NewExponent, float New
 		this->tau = 1e-6;
 	}
 	inv_tau=1.0f/tau;
+
 }
 
 SinState::~SinState() {
@@ -80,113 +85,13 @@ double SinState::GetPrintableValuesAt(unsigned int position){
 }
 
 
-
-//void SinState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_post){
-//	// Update the activity value
-//	float OldExpon = this->GetStateVariableAt(index, 1);
-//
-//	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
-//	float ElapsedRelative = ElapsedTime*this->inv_tau;
-//	float expon = ExponentialTable::GetResult(-ElapsedRelative);
-//
-//	this->SetLastUpdateTime(index, NewTime);
-//
-//	unsigned int ExponenLine = this->exponent>>1;
-//
-//	const float* TermPointer = this->terms[ExponenLine]; 
-//
-//	float NewActivity =OldExpon*(*(TermPointer++))*expon;
-//
-//	float NewExpon = OldExpon * expon;
-//
-//	unsigned int aux=(int)(ElapsedRelative*inv_LUTStep + 0.5f);
-//
-//	for (unsigned int grade=2; grade<=this->exponent; grade+=2){
-//
-//		unsigned int LUTindex = (grade*aux)%(TERMSLUT2);
-//		float SinVar = SinLUT[LUTindex];
-//		float CosVar = SinLUT[LUTindex+1];
-//
-//		float OldVarCos = this->GetStateVariableAt(index, grade);
-//		float OldVarSin = this->GetStateVariableAt(index, grade + 1);
-//
-//		float NewVarCos = (OldVarCos*CosVar-OldVarSin*SinVar)*expon;
-//		float NewVarSin = (OldVarSin*CosVar+OldVarCos*SinVar)*expon;
-//
-//		
-//		NewActivity += (NewVarCos*(*(TermPointer++)));
-//
-//		/*if(spike){  // if spike, we need to increase the e1 variable
-//			NewVarCos += 1;
-//		}*/
-//
-//		//this->SetStateVariableAt(index, grade, NewVarCos);
-//		//this->SetStateVariableAt(index, grade + 1, NewVarSin);
-//		this->SetStateVariableAt(index, grade , NewVarCos, NewVarSin);
-//
-//	}
-//	NewActivity*=this->factor;
-//	this->SetStateVariableAt(index, 0, NewActivity, NewExpon);
-//
-//}
-
-//void SinState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_post){
-//	// Update the activity value
-//	float OldExpon = this->GetStateVariableAt(index, 1);
-//
-//	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
-//	float ElapsedRelative = ElapsedTime*this->inv_tau;
-//	float expon = ExponentialTable::GetResult(-ElapsedRelative);
-//
-//	this->SetLastUpdateTime(index, NewTime);
-//
-//	unsigned int ExponenLine = this->exponent>>1;
-//
-//	const float* TermPointer = this->terms[ExponenLine]; 
-//
-//	float NewActivity =OldExpon*(*(TermPointer++))*expon;
-//
-//	float NewExpon = OldExpon * expon;
-//
-//	unsigned int aux=((int)(ElapsedRelative*inv_LUTStep + 0.5f))*2;
-//	unsigned int LUTindex=0;
-//
-//
-//	for (unsigned int grade=2; grade<=this->exponent; grade+=2){
-//
-//		LUTindex = (LUTindex+aux)%(TERMSLUT*2);
-//		float SinVar = SinLUT[LUTindex];
-//		float CosVar = SinLUT[LUTindex+1];
-//
-//		float OldVarCos = this->GetStateVariableAt(index, grade);
-//		float OldVarSin = this->GetStateVariableAt(index, grade + 1);
-//
-//		float NewVarCos = (OldVarCos*CosVar-OldVarSin*SinVar)*expon;
-//		float NewVarSin = (OldVarSin*CosVar+OldVarCos*SinVar)*expon;
-//
-//		
-//		NewActivity += (NewVarCos*(*(TermPointer++)));
-//
-//		/*if(spike){  // if spike, we need to increase the e1 variable
-//			NewVarCos += 1;
-//		}*/
-//
-//		//this->SetStateVariableAt(index, grade, NewVarCos);
-//		//this->SetStateVariableAt(index, grade + 1, NewVarSin);
-//		this->SetStateVariableAt(index, grade , NewVarCos, NewVarSin);
-//
-//	}
-//	NewActivity*=this->factor;
-//	this->SetStateVariableAt(index, 0, NewActivity, NewExpon);
-//
-//}
-
 void SinState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_post){
 	// Update the activity value
 	float OldExpon = this->GetStateVariableAt(index, 1);
 
 	float ElapsedTime = float(NewTime - this->GetLastUpdateTime(index));
 	float ElapsedRelative = ElapsedTime*this->inv_tau;
+
 	float expon = ExponentialTable::GetResult(-ElapsedRelative);
 
 	this->SetLastUpdateTime(index, NewTime);
@@ -199,7 +104,7 @@ void SinState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_po
 
 	float NewExpon = OldExpon * expon;
 
-	unsigned int aux=((int)(ElapsedRelative*inv_LUTStep + 0.5f))*2;
+	unsigned int aux=((int)(2*ElapsedRelative*inv_LUTStep + 0.5f))*2;
 	unsigned int LUTindex=0;
 
 	float SinVar, CosVar, OldVarCos, OldVarSin, NewVarCos, NewVarSin;

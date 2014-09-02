@@ -840,7 +840,7 @@ extern "C" void calculate_input_activity_for_one_trajectory(Simulation *neural_s
 }
 
 extern "C" void init_real_time_restriction(Simulation * neural_sim, float slot_time, float first_section, float second_section, float third_section){
-	neural_sim->RealTimeRestrictionObject=new RealTimeRestriction(slot_time, first_section, second_section,third_section);	
+	neural_sim->RealTimeRestrictionObject->SetParameterWatchDog(slot_time, first_section, second_section,third_section);	
 }
 
 

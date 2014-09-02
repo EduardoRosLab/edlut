@@ -180,13 +180,14 @@ int main(int ac, char *av[])
 //			_CrtMemCheckpoint(&state0);
 
 
-			init_real_time_restriction(neural_sim, SIM_SLOT_LENGTH, FIRST_REAL_TIME_RESTRICTION, SECOND_REAL_TIME_RESTRICTION, THIRD_REAL_TIME_RESTRICTION);
 			bool real_time_neural_simulation=false;
 			if(REAL_TIME_NEURAL_SIM==1){
 				#ifdef _OPENMP 
 					omp_set_nested(true);
 					real_time_neural_simulation=true;
 					cout<<"\nFixed REAL TIME SIMULATION option\n"<<endl;
+					init_real_time_restriction(neural_sim, SIM_SLOT_LENGTH, FIRST_REAL_TIME_RESTRICTION, SECOND_REAL_TIME_RESTRICTION, THIRD_REAL_TIME_RESTRICTION);
+
 				#else
 					cout<<"\nREAL TIME SIMULATION option is not available due to the openMP support is disabled\n"<<endl;
 				#endif

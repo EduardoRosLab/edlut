@@ -75,6 +75,9 @@ Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, doubl
 	Net = new Network(NetworkFile, WeightsFile, this->Queue, NumberOfQueues);
 
 	MinInterpropagationTime=Net->GetMinInterpropagationTime();
+
+	//Create the real time restriction object with default parameter. This object need its own thread to work properly.
+	RealTimeRestrictionObject=new RealTimeRestriction();
 }
 
 Simulation::Simulation(const Simulation & ant):Net(ant.Net), Queue(ant.Queue), InputSpike(ant.InputSpike), OutputSpike(ant.OutputSpike), OutputWeight(ant.OutputWeight), Totsimtime(ant.Totsimtime), SaveWeightStep(ant.SaveWeightStep), EndOfSimulation(ant.EndOfSimulation), Updates(ant.Updates), Heapoc(ant.Heapoc), NumberOfQueues(ant.NumberOfQueues), NumberOfThreads(ant.NumberOfThreads){
@@ -246,14 +249,12 @@ void Simulation::InitSimulation() throw (EDLUTException){
 
 
 void Simulation::SynchronizeThreads(){
-
 	#pragma omp barrier
 
 	bool end=false;
 	for(int i=0; i<NumberOfQueues; i++){
 		if(EndOfSimulation[i]==true || this->StopOfSimulation[i]==true){
 			end=true;
-
 		}
 	}
 
@@ -261,49 +262,16 @@ void Simulation::SynchronizeThreads(){
 		#pragma omp single
 		{
 			Event * newEvent=this->GetQueue()->RemoveEventWithSynchronization();
-
 			newEvent->ProcessEvent(this);
-
 			delete newEvent;
 		}
-
 
 		if(omp_get_thread_num()>=NumberOfQueues){
 			SynchronizeThreads();
 		}
-
 	}
 }
 
-void Simulation::SynchronizeThreadsForSlot(){
-
-	#pragma omp barrier
-
-	bool end=false;
-	for(int i=0; i<NumberOfQueues; i++){
-		if(EndOfSimulation[i]==true || this->StopOfSimulation[i]==true){
-			end=true;
-
-		}
-	}
-
-	if(!end){
-		#pragma omp single
-		{
-			Event * newEvent=this->GetQueue()->RemoveEventWithSynchronization();
-
-			newEvent->ProcessEvent(this, &(this->RealTimeRestrictionObject->RestrictionLevel));
-
-			delete newEvent;
-		}
-
-
-		if(omp_get_thread_num()>=NumberOfQueues){
-			SynchronizeThreads();
-		}
-
-	}
-}
 
 void Simulation::RunSimulation()  throw (EDLUTException){
 	this->InitSimulation();
@@ -356,19 +324,6 @@ void Simulation::RunSimulation()  throw (EDLUTException){
 }
 
 void Simulation::RunSimulationSlot(double preempt_time)  throw (EDLUTException){
-
-//    bool real_time_restriction;
-//#if defined(_WIN32) || defined(_WIN64)
-//    LARGE_INTEGER slot_start_time,slot_end_time;
-//    unsigned long num_events_per_time_measurement;
-//    if(this->MaxSlotConsumedTime != 0UL){
-//        num_events_per_time_measurement=0UL;
-//        QueryPerformanceCounter(&slot_start_time);
-//        }
-//#endif
-//    real_time_restriction=false;
-
-
 	Event * NewEvent;
 	int	openMP_index = omp_get_thread_num();
 
@@ -383,7 +338,7 @@ void Simulation::RunSimulationSlot(double preempt_time)  throw (EDLUTException){
 
 			if (this->GetSynchronizeSimulationEvent(openMP_index)){
 				ResetSynchronizeSimulationEvent(openMP_index);
-				SynchronizeThreadsForSlot();
+				SynchronizeThreads();
 			}
 
 			NewEvent=this->Queue->RemoveEvent(openMP_index);
@@ -405,23 +360,6 @@ void Simulation::RunSimulationSlot(double preempt_time)  throw (EDLUTException){
 			NewEvent->ProcessEvent(this, &(this->RealTimeRestrictionObject->RestrictionLevel));
 
 			delete NewEvent;
-		
-			//#if defined(_WIN32) || defined(_WIN64)
-			//	if(this->MaxSlotConsumedTime != 0UL){
-			//		unsigned long slot_elapsed_time;
-			//		if(num_events_per_time_measurement > NUM_EVENTS_PER_TIME_SLOT_CHECK){
-			//			num_events_per_time_measurement=0UL;
-			//			QueryPerformanceCounter(&slot_end_time);
-			//			slot_elapsed_time=(unsigned long)(slot_end_time.QuadPart-slot_start_time.QuadPart);
-			//			if(slot_elapsed_time > this->MaxSlotConsumedTime){
-			//				real_time_restriction=true;
-			//			}
-			//		}
-			//		else{
-			//			num_events_per_time_measurement++;
-			//		}
-			//	}
-			//#endif
 		}
 		if(omp_get_num_threads()>NumberOfQueues){
 			SynchronizeThreads();
