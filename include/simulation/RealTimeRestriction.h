@@ -137,9 +137,16 @@ public:
 	
    	public:
    		
-   		/*!
+
+		 /*!
    		 * \brief Default constructor.
    		 * 
+   		 * It creates and initializes a new event object.
+		 *
+   		 */
+   		RealTimeRestriction();
+
+   		/*!
    		 * It creates and initializes a new event object.
 		 *
 		 * \param new_slot_time
@@ -157,6 +164,14 @@ public:
    		 */
    		~RealTimeRestriction();
 
+
+   		/*!
+   		 * \brief It sets the watchdog parameter.
+   		 * 
+   		 * It sets the watchdog parameter.
+   		 */
+		void SetParameterWatchDog(float new_slot_time, float new_first_section, float new_second_section, float new_third_section);
+
    		/*!
    		 * \brief It resets the watchdog.
    		 * 
@@ -171,6 +186,11 @@ public:
    		 */	
 		void StopWatchDog();
 
+   		/*!
+   		 * \brief It start the watchdog.
+   		 * 
+   		 * It start the watchdog.
+   		 */	
 		void Watchdog();
 
 };
