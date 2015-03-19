@@ -649,6 +649,7 @@ matlab
 mextarget
 use_matlab
 MATLAB
+use_openmp
 openmp_cxxflags
 OPENMP_CXXFLAGS
 dox
@@ -4321,6 +4322,14 @@ $as_echo "$ac_cv_prog_cxx_openmp" >&6; }
 
 openmp_cxxflags=$OPENMP_CXXFLAGS
 
+
+if test "x$OPENMP_CXXFLAGS" == "x"; then :
+  use_openmp=false
+
+else
+  use_openmp=true
+
+fi
 
 
 
