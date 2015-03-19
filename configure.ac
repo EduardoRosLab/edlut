@@ -54,6 +54,10 @@ AC_OPENMP
 
 AC_SUBST(openmp_cxxflags,$OPENMP_CXXFLAGS)
 
+AS_IF([test "x$OPENMP_CXXFLAGS" == "x"],
+ [AC_SUBST(use_openmp, false)],
+ [AC_SUBST(use_openmp, true)])
+
 
 
 ################################################################################

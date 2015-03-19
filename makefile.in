@@ -88,6 +88,9 @@ profile := @profile_code@
 #cuda_enabled := false
 cuda_enabled := @use_cuda@
 
+# If you want to optimize the software to run on multicores with OPENMP set: openmp_enabled->true
+openmp_enabled := @use_openmp@
+
 
 # Set the installation path of CUDA (where nvcc is located)
 #CUDA_INSTALL_PATH := /usr/local/cuda
@@ -275,7 +278,7 @@ sources			:= $(communication-sources) \
 			$(simulation-sources) \
 			$(spike-sources)\
 			$(openmp-sources)
-			
+
 ifeq ($(generate_robot),true)
 sources		+= $(robot-arm-sources)
 endif
