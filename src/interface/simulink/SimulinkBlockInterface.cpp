@@ -92,7 +92,7 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 	time_T Step = ssGetSampleTime(S, 0);
 
 	try {
-		this->Simul = new Simulation(NetworkFile, WeightFile, SimulationTime, 0);
+		this->Simul = new Simulation(NetworkFile, WeightFile, SimulationTime);
 
 		this->WeightDriver = new FileOutputWeightDriver (SavingWeightFile);
 		this->Simul->AddOutputWeightDriver(this->WeightDriver);
@@ -103,11 +103,11 @@ void SimulinkBlockInterface::InitializeSimulation(SimStruct *S){
 			this->Simul->SetSaveStep(SWStep);
 		}
 		
-		real_T * TimeDrivenStep = (real_T *)mxGetData(PARAMTDSTEP);
+		/*real_T * TimeDrivenStep = (real_T *)mxGetData(PARAMTDSTEP);
 		double TDStep = (double) TimeDrivenStep[0];
 		if (TDStep!=0){
 			this->Simul->SetTimeDrivenStep(TDStep);
-		}
+		}*/
 
 		real_T * InputCells = (real_T *)mxGetData(PARAMINPUT);
 		unsigned int NumberOfElements = (unsigned int) mxGetNumberOfElements(PARAMINPUT);

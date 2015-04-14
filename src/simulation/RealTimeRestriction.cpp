@@ -21,6 +21,7 @@
 
 RealTimeRestriction::RealTimeRestriction(): slot_time(0.0f), first_section(1.0f), second_section(1.0f), third_section(1.0f),
 		Reset(false), Stop(false), RestrictionLevel(0){
+
 }
 
 RealTimeRestriction::RealTimeRestriction(float new_slot_time, float new_first_section, float new_second_section, float new_third_section): slot_time(new_slot_time), 
@@ -46,18 +47,18 @@ RealTimeRestriction::RealTimeRestriction(float new_slot_time, float new_first_se
 
 
 	#if defined(REAL_TIME_WINNT)
-		if(!QueryPerformanceFrequency(&freq))
+		if(!QueryPerformanceFrequency(&this->freq))
 			puts("QueryPerformanceFrequency failed");
 	#elif defined (REAL_TIME_LINUX)
-		if(clock_getres(CLOCK_REALTIME, &freq))
+		if(clock_getres(CLOCK_REALTIME, &this->freq))
 			puts("clock_getres failed");
 	#elif defined (REAL_TIME_OSX)
 		// If this is the first time we've run, get the timebase.
 		// We can use denom == 0 to indicate that sTimebaseInfo is
 		// uninitialised because it makes no sense to have a zero
 		// denominator is a fraction.
-		if (freq.denom == 0 ) {
-			(void) mach_timebase_info(&freq);
+		if (this->freq.denom == 0 ) {
+			(void) mach_timebase_info(&this->freq);
 		}
 	#endif
 }
@@ -89,18 +90,18 @@ void RealTimeRestriction::SetParameterWatchDog(float new_slot_time, float new_fi
 
 
 	#if defined(REAL_TIME_WINNT)
-		if(!QueryPerformanceFrequency(&freq))
+		if(!QueryPerformanceFrequency(&this->freq))
 			puts("QueryPerformanceFrequency failed");
 	#elif defined (REAL_TIME_LINUX)
-		if(clock_getres(CLOCK_REALTIME, &freq))
+		if(clock_getres(CLOCK_REALTIME, &this->freq))
 			puts("clock_getres failed");
 	#elif defined (REAL_TIME_OSX)
 		// If this is the first time we've run, get the timebase.
 		// We can use denom == 0 to indicate that sTimebaseInfo is
 		// uninitialised because it makes no sense to have a zero
 		// denominator is a fraction.
-		if (freq.denom == 0 ) {
-			(void) mach_timebase_info(&freq);
+		if (this->freq.denom == 0 ) {
+			(void) mach_timebase_info(&this->freq);
 		}
 	#endif
 }
@@ -138,7 +139,7 @@ void RealTimeRestriction::Watchdog(){
 
 		#if defined(REAL_TIME_WINNT)
 			QueryPerformanceCounter(&endt); // measures time
-			slot_elapsed_time=(endt.QuadPart-startt.QuadPart)/(float)freq.QuadPart; // to be logged
+			slot_elapsed_time=(endt.QuadPart-startt.QuadPart)/(float)this->freq.QuadPart; // to be logged
 		#elif defined(REAL_TIME_LINUX)
 			clock_gettime(CLOCK_REALTIME, &endt);
 			// Calculate time it took
@@ -148,7 +149,7 @@ void RealTimeRestriction::Watchdog(){
 			endt = mach_absolute_time();
 			// Calculate the duration.
 			elapsed = endt - startt;
-			slot_elapsed_time = 1e-9 * elapsed * freq.numer / freq.denom;
+			slot_elapsed_time = 1e-9 * elapsed * this->freq.numer / this->freq.denom;
 		#endif
 
 		if(slot_elapsed_time>(slot_time*third_section) && Reset==false){
