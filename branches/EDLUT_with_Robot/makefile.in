@@ -96,6 +96,8 @@ openmp_enabled := @use_openmp@
 #CUDA_INSTALL_PATH := /usr/local/cuda
 cudarootdir := @cuda@
 
+cudalib		:= @cuda@/@cuda_lib@
+
 # Set the architecture of CUDA
 cudaversion := @cudaversion@
 cudamajor 	:= @cudamajor@
@@ -242,7 +244,7 @@ simulation-sources	:= $(srcdir)/simulation/CommunicationEvent.cpp \
 			$(srcdir)/simulation/Utils.cpp 
 ifeq ($(cuda_enabled),true)
 simulation-sources	+= $(srcdir)/simulation/Simulation_GPU.cu \
-			$(srcdir)/simulation/TimeEventAllNeurons_GPU.cpp
+			$(srcdir)/simulation/TimeEventAllNeurons_GPU.cu
 else
 simulation-sources	+= $(srcdir)/simulation/Simulation.cpp
 endif

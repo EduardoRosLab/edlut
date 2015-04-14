@@ -87,7 +87,7 @@ public:
 
 	#elif defined(REAL_TIME_OSX)
 		uint64_t startt, endt, elapsed;
-		static mach_timebase_info_data_t freq;
+		mach_timebase_info_data_t freq;
 	
 	#elif defined(REAL_TIME_LINUX)
 		// Calculate time taken by a request - Link with real-time library -lrt

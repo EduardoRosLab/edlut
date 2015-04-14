@@ -86,8 +86,12 @@ else
 	AC_MSG_CHECKING([whether to enable Cuda support])
 	if test x$ax_enable_cuda != xno ; then
 	    if test "${CUDA+set}" = set && test -d "$CUDA/include" && test -d "$CUDA/lib" ; then
-			ax_enable_cuda=yes
-	    	elif test x$ax_enable_cuda = x ; then
+	    	ax_enable_cuda=yes
+	    	CUDA_LIB=lib
+	  	elif test "${CUDA+set}" = set && test -d "$CUDA/include" && test -d "$CUDA/lib64" ; then
+	  		ax_enable_cuda=yes
+	    	CUDA_LIB=lib64
+	    elif test x$ax_enable_cuda = x ; then
 			ax_enable_cuda=no
 	    else
 			# Fail if Cuda was explicitly enabled.
@@ -102,8 +106,9 @@ else
 		AC_CACHE_VAL(mx_cv_CXXFLAGS,mx_cv_CXXFLAGS="${CXXFLAGS}")
 		AC_CACHE_VAL(mx_cv_LDFLAGS,mx_cv_LDFLAGS="${LDFLAGS}")
 	    
-		AC_SUBST(CXXFLAGS,"${CXXFLAGS} -I${CUDA}/include")
-		AC_SUBST(LDFLAGS,"${LDFLAGS} -L${CUDA}/lib -lcudart")
+		#AC_SUBST(CXXFLAGS,"${CXXFLAGS} -I${CUDA}/include")
+		AC_SUBST(CXX,"nvcc")
+		#AC_SUBST(LDFLAGS,"${LDFLAGS} -L${CUDA}/{CUDA_LIB} -lcudart")
 	    
 		AC_CACHE_VAL(mx_cv_cuda_driver_version,
 			if test "${CUDA_DRIVER_VERSION+set}" = set ; then
@@ -118,6 +123,7 @@ else
 						#include <cstdlib> 		
 						#include <cuda.h>		
 						#include <cuda_runtime.h> 
+						#include <stdio.h>
 						
 						int main(){
 							int deviceCount=0, driverVersion = 0;												
@@ -146,6 +152,7 @@ else
 						#include <cstdlib> 		
 						#include <cuda.h>		
 						#include <cuda_runtime.h> 
+						#include <stdio.h>
 						
 						int main(){
 							int deviceCount=0, driverVersion = 0;												
@@ -174,6 +181,7 @@ else
 						#include <cstdlib> 		
 						#include <cuda.h>		
 						#include <cuda_runtime.h> 
+						#include <stdio.h>
 						
 						int main(){
 							int deviceCount=0, driverVersion = 0;												

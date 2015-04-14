@@ -631,6 +631,7 @@ USEROBOT
 cudaminor
 cudamajor
 cudaversion
+cuda_lib
 cuda
 use_cuda
 CUDA
@@ -4644,8 +4645,12 @@ $as_echo "$ax_cv_cuda" >&6; }
 $as_echo_n "checking whether to enable Cuda support... " >&6; }
 	if test x$ax_enable_cuda != xno ; then
 	    if test "${CUDA+set}" = set && test -d "$CUDA/include" && test -d "$CUDA/lib" ; then
-			ax_enable_cuda=yes
-	    	elif test x$ax_enable_cuda = x ; then
+	    	ax_enable_cuda=yes
+	    	CUDA_LIB=lib
+	  	elif test "${CUDA+set}" = set && test -d "$CUDA/include" && test -d "$CUDA/lib64" ; then
+	  		ax_enable_cuda=yes
+	    	CUDA_LIB=lib64
+	    elif test x$ax_enable_cuda = x ; then
 			ax_enable_cuda=no
 	    else
 			# Fail if Cuda was explicitly enabled.
@@ -4672,10 +4677,10 @@ else
 fi
 
 
-		CXXFLAGS="${CXXFLAGS} -I${CUDA}/include"
+		#AC_SUBST(CXXFLAGS,"${CXXFLAGS} -I${CUDA}/include")
+		CXX="nvcc"
 
-		LDFLAGS="${LDFLAGS} -L${CUDA}/lib -lcudart"
-
+		#AC_SUBST(LDFLAGS,"${LDFLAGS} -L${CUDA}/{CUDA_LIB} -lcudart")
 
 		if ${mx_cv_cuda_driver_version+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -4695,6 +4700,7 @@ $as_echo_n "checking whether to enable Cuda compiling... " >&6; }
 						#include <cstdlib>
 						#include <cuda.h>
 						#include <cuda_runtime.h>
+						#include <stdio.h>
 
 						int main(){
 							int deviceCount=0, driverVersion = 0;
@@ -4736,6 +4742,7 @@ $as_echo_n "checking whether to enable Cuda linking... " >&6; }
 						#include <cstdlib>
 						#include <cuda.h>
 						#include <cuda_runtime.h>
+						#include <stdio.h>
 
 						int main(){
 							int deviceCount=0, driverVersion = 0;
@@ -4784,6 +4791,7 @@ else
 						#include <cstdlib>
 						#include <cuda.h>
 						#include <cuda_runtime.h>
+						#include <stdio.h>
 
 						int main(){
 							int deviceCount=0, driverVersion = 0;
@@ -5036,6 +5044,8 @@ else
   use_cuda=true
 
  cuda=$CUDA
+
+ cuda_lib=$CUDA_LIB
 
  cudaversion=$CUDA_VERSION
 

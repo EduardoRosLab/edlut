@@ -106,6 +106,7 @@ AS_IF([test "x$CUDA" == "x"],
  [AC_SUBST(use_cuda, false)],
  [AC_SUBST(use_cuda, true)
  AC_SUBST(cuda, $CUDA)
+ AC_SUBST(cuda_lib, $CUDA_LIB)
  AC_SUBST(cudaversion, $CUDA_VERSION)
  AC_SUBST(cudamajor, $CUDA_MAJOR)
  AC_SUBST(cudaminor, $CUDA_MINOR)])
