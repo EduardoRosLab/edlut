@@ -53,11 +53,13 @@ class WithPostSynaptic : public LearningRule {
 
 
 		/*!
-		 * \brief Default constructor.
-		 * 
-		 * It creates a new WithPostSynaptic object.
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule with its index.
+		 *
+		 * \param NewLearningRuleIndex learning rule index.
 		 */ 
-		WithPostSynaptic();
+		WithPostSynaptic(int NewLearningRuleIndex);
 
 		/*!
 		 * \brief Object destructor.

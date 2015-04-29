@@ -34,7 +34,7 @@ SaveWeightsEvent::SaveWeightsEvent(double NewTime, Simulation * CurrentSimulatio
 SaveWeightsEvent::~SaveWeightsEvent(){
 }
 
-void SaveWeightsEvent::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+void SaveWeightsEvent::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
 	CurrentSimulation->SaveWeights();
 
 	if (CurrentSimulation->GetSaveStep()>0.0){
@@ -56,7 +56,7 @@ void SaveWeightsEvent::PrintType(){
 	cout<<"SaveWeightsEvent"<<endl;
 }
 
-int SaveWeightsEvent::ProcessingPriority(){
-	return 5;
+enum EventPriority SaveWeightsEvent::ProcessingPriority(){
+	return SAVEWEIGHTEVENT;
 }
 

@@ -229,20 +229,6 @@ class EgidioGranuleCell_TimeDriven_GPU : public TimeDrivenNeuronModel_GPU {
 		 *
 		 * \note This function doesn't generate the next propagated spike. It must be externally done.
 		 *
-		 * \param InputSpike The spike happened.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
-
-
-		/*!
-		 * \brief It processes a propagated spike (input spike in the cell).
-		 *
-		 * It processes a propagated spike (input spike in the cell).
-		 *
-		 * \note This function doesn't generate the next propagated spike. It must be externally done.
-		 *
 		 * \param inter the interconection which propagate the spike
 		 * \param target the neuron which receives the spike
 		 * \param time the time of the spike.
@@ -285,7 +271,7 @@ class EgidioGranuleCell_TimeDriven_GPU : public TimeDrivenNeuronModel_GPU {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		virtual void InitializeStates(int N_neurons);
+		virtual void InitializeStates(int N_neurons, int OpenMPQueueIndex);
 
 
 		/*!
@@ -310,6 +296,18 @@ class EgidioGranuleCell_TimeDriven_GPU : public TimeDrivenNeuronModel_GPU {
 		 * It create a object of type VectorNeuronState_GPU2 in GPU.
 		 */
 		virtual void InitializeVectorNeuronState_GPU2();
+
+
+		/*!
+		 * \brief It Checks if the neuron model has this connection type.
+		 *
+		 * It Checks if the neuron model has this connection type.
+		 *
+		 * \param Type input connection type.
+		 *
+		 * \return A a valid connection type for this neuron model.
+		 */
+		virtual int CheckSynapseTypeNumber(int Type);
 
 	};
 

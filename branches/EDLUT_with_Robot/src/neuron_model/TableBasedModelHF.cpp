@@ -62,7 +62,7 @@ void TableBasedModelHF::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExcep
 			InitValues=new float[NumStateVar+1]();
 
 			// Create a new initial state
-       		this->InitialState = (VectorNeuronState *) new VectorNeuronState(this->NumStateVar+1, false);
+       		this->State = (VectorNeuronState *) new VectorNeuronState(this->NumStateVar+1, false);
 //       		this->InitialState->SetLastUpdateTime(0);
 //       		this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 //      		this->InitialState->SetStateVariableAt(0,0);
@@ -176,8 +176,7 @@ void TableBasedModelHF::LoadTables(string TableFile) throw (EDLUTException){
 TableBasedModelHF::TableBasedModelHF(string NeuronTypeID, string NeuronModelID): EventDrivenNeuronModel(NeuronTypeID, NeuronModelID),
 		NumStateVar(0), NumTimeDependentStateVar(0), NumSynapticVar(0), SynapticVar(0),
 		StateVarOrder(0), StateVarTable(0), FiringTable(0), EndFiringTable(0),
-		NumTables(0), Tables(0),ToleranceTime(0.000001) {
-
+		NumTables(0), Tables(0), tableBasedModelHFTime(-1) {
 }
 
 TableBasedModelHF::~TableBasedModelHF() {
@@ -204,16 +203,21 @@ TableBasedModelHF::~TableBasedModelHF() {
 	}
 }
 
+
+
 void TableBasedModelHF::LoadNeuronModel() throw (EDLUTFileException){
 
 	this->LoadNeuronModel(this->GetModelID()+".cfg");
 
 	this->LoadTables(this->GetModelID()+".dat");
-
 }
 
+
+
+
+
 VectorNeuronState * TableBasedModelHF::InitializeState(){
-	return InitialState;
+	return State;
 }
 
 InternalSpike * TableBasedModelHF::GenerateInitialActivity(Neuron *  Cell){
@@ -276,32 +280,6 @@ double TableBasedModelHF::EndRefractoryPeriod(int index, VectorNeuronState * Sta
 }
 
 
-InternalSpike * TableBasedModelHF::ProcessInputSpike(PropagatedSpike *  InputSpike){
-
-	double time=InputSpike->GetTime();
-
-	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(omp_get_thread_num(),InputSpike->GetTarget());
-
-	Neuron * target = inter->GetTarget();
-
-	InternalSpike * newEvent=0;
-
-	int TargetIndex=target->GetIndex_VectorNeuronState();
-
-
-	// Update the neuron state until the current time
-	if(time - this->GetVectorNeuronState()->GetLastUpdateTime(TargetIndex)>this->ToleranceTime){
-		this->UpdateState(TargetIndex,this->GetVectorNeuronState(),time);
-		newEvent=(InternalSpike*)new TableBasedModelHFEvent(time+this->ToleranceTime, target);
-	}
-
-	// Add the effect of the input spike
-	this->SynapsisEffect(TargetIndex,inter);
-
-	return newEvent;
-}
-
-
 InternalSpike * TableBasedModelHF::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
 
 	InternalSpike * newEvent=0;
@@ -310,9 +288,14 @@ InternalSpike * TableBasedModelHF::ProcessInputSpike(Interconnection * inter, Ne
 
 
 	// Update the neuron state until the current time
-	if(time - this->GetVectorNeuronState()->GetLastUpdateTime(TargetIndex)>this->ToleranceTime){
+	if(time != this->GetVectorNeuronState()->GetLastUpdateTime(TargetIndex)){
+		if(time!=this->tableBasedModelHFTime){
+			this->tableBasedModelHFTime=time;
+			tableBasedModelHFEvent = new TableBasedModelHFEvent(time, this->GetVectorNeuronState()->GetSizeState());
+			newEvent=(InternalSpike*)tableBasedModelHFEvent;
+		}
 		this->UpdateState(TargetIndex,this->GetVectorNeuronState(),time);
-		newEvent=(InternalSpike*)new TableBasedModelHFEvent(time+this->ToleranceTime, target);
+		tableBasedModelHFEvent->IncludeNewNeuron(target);
 	}
 
 	// Add the effect of the input spike
@@ -426,6 +409,16 @@ ostream & TableBasedModelHF::PrintInfo(ostream & out) {
 }
 
 
-void TableBasedModelHF::InitializeStates(int N_neurons){
-	InitialState->InitializeStates(N_neurons, InitValues);
+void TableBasedModelHF::InitializeStates(int N_neurons, int OpenMPQueueIndex){
+	State->InitializeStates(N_neurons, InitValues);
+}
+
+
+int TableBasedModelHF::CheckSynapseTypeNumber(int Type){
+	if(Type<NumSynapticVar && Type>=0){
+		return Type;
+	}else{
+		cout<<"Neuron model "<<this->GetTypeID()<<", "<<this->GetModelID()<<" does not support input synapses of type "<<Type<<endl;
+		return 0;
+	}
 }

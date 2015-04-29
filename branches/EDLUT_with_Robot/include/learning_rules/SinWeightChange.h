@@ -52,11 +52,13 @@ class SinWeightChange: public AdditiveKernelChange{
 		
 	public:
 		/*!
-		 * \brief Default constructor.
-		 * 
-		 * It creates a new object.
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule with its index.
+		 *
+		 * \param NewLearningRuleIndex learning rule index.
 		 */ 
-		SinWeightChange();
+		SinWeightChange(int NewLearningRuleIndex);
 
 		/*!
 		 * \brief Object destructor.

@@ -35,39 +35,46 @@
 
 #include "../../include/openmp/openmp.h"
 
-TableBasedModelHFEvent::TableBasedModelHFEvent():InternalSpike() {
-}
    	
-TableBasedModelHFEvent::TableBasedModelHFEvent(double NewTime, Neuron * NewSource): InternalSpike(NewTime,NewSource){
+TableBasedModelHFEvent::TableBasedModelHFEvent(double NewTime, int NewMaxSize): InternalSpike(NewTime, NULL), MaxSize(NewMaxSize), NElements(0){
+	Neurons= (Neuron**) new Neuron * [MaxSize];
 }
    		
 TableBasedModelHFEvent::~TableBasedModelHFEvent(){
 }
 
-void TableBasedModelHFEvent::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+void TableBasedModelHFEvent::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
 
-	if(*RealTimeRestriction<3){
-		Neuron * neuron=this->GetSource();  // source of the spike
+	if(RealTimeRestriction<3){
+		TableBasedModelHF * Model = (TableBasedModelHF *) Neurons[0]->GetNeuronModel();
 
-		TableBasedModelHF * Model = (TableBasedModelHF *) neuron->GetNeuronModel();
+		for(int i=0; i<NElements; i++){
+			this->SetSource(Neurons[i]);
 
-		InternalSpike * Generated = Model->ProcessActivityAndPredictSpike(neuron);
-		if(Generated!=0){
-			CurrentSimulation->GetQueue()->InsertEvent(neuron->get_OpenMP_queue_index(),Generated);
+			InternalSpike * Generated = Model->ProcessActivityAndPredictSpike(Neurons[i]);
+			if(Generated!=0){
+				CurrentSimulation->GetQueue()->InsertEvent(Neurons[i]->get_OpenMP_queue_index(),Generated);
+			}
 		}
 	}
 }
 
 void TableBasedModelHFEvent::ProcessEvent(Simulation * CurrentSimulation){
+	TableBasedModelHF * Model = (TableBasedModelHF *) Neurons[0]->GetNeuronModel();
 
-	Neuron * neuron=this->GetSource();  // source of the spike
+	for(int i=0; i<NElements; i++){
+		this->SetSource(Neurons[i]);
 
-	TableBasedModelHF * Model = (TableBasedModelHF *) neuron->GetNeuronModel();
-
-	InternalSpike * Generated = Model->ProcessActivityAndPredictSpike(neuron);
-	if(Generated!=0){
-		CurrentSimulation->GetQueue()->InsertEvent(neuron->get_OpenMP_queue_index(),Generated);
+		InternalSpike * Generated = Model->ProcessActivityAndPredictSpike(Neurons[i]);
+		if(Generated!=0){
+			CurrentSimulation->GetQueue()->InsertEvent(Neurons[i]->get_OpenMP_queue_index(),Generated);
+		}
 	}
+}
+
+void TableBasedModelHFEvent::IncludeNewNeuron(Neuron * neuron){
+	Neurons[NElements]=neuron;
+	NElements++;
 }
 
    	
@@ -76,6 +83,6 @@ void TableBasedModelHFEvent::PrintType(){
 }
 
 
-int TableBasedModelHFEvent::ProcessingPriority(){
-	return 8;
+enum EventPriority TableBasedModelHFEvent::ProcessingPriority(){
+	return TABLEBASEDMODELHFEVENT;
 }

@@ -28,7 +28,7 @@ EndSimulationEvent::EndSimulationEvent(double NewTime): Event(NewTime){
 EndSimulationEvent::~EndSimulationEvent(){
 }
 
-void EndSimulationEvent::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+void EndSimulationEvent::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
 	CurrentSimulation->EndSimulation(omp_get_thread_num()); /*asdfgf*/		
 }
 
@@ -41,7 +41,7 @@ void EndSimulationEvent::PrintType(){
 }
 
 
-int EndSimulationEvent::ProcessingPriority(){
-	return 0;
+enum EventPriority EndSimulationEvent::ProcessingPriority(){
+	return ENDSIMULATIONEVENT;
 }
 

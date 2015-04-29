@@ -25,10 +25,11 @@
 #include "../../include/spike/TimeDrivenInternalSpike.h"
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Neuron.h"
+#include "../../include/spike/NeuronModelPropagationDelayStructure.h"
 
 #include "../../include/openmp/openmp.h"
 
-TimeEventAllNeurons::TimeEventAllNeurons(double NewTime, TimeDrivenNeuronModel * newNeuronModel, Neuron ** newNeurons) : TimeEventOneNeuron(NewTime, newNeuronModel, newNeurons, -1) {
+TimeEventAllNeurons::TimeEventAllNeurons(double NewTime, TimeDrivenNeuronModel * newNeuronModel, Neuron ** newNeurons) : Event(NewTime), neuronModel(newNeuronModel), neurons(newNeurons) {
 
 }
 
@@ -39,22 +40,22 @@ TimeEventAllNeurons::~TimeEventAllNeurons(){
 
 
 //Optimized version which executes the internal spikes instead of insert them in the queue.
-void TimeEventAllNeurons::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+void TimeEventAllNeurons::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
 
 	double CurrentTime = this->GetTime();
 	
-	if(*RealTimeRestriction<3){
+	if(RealTimeRestriction<3){
 		VectorNeuronState * State=neuronModel->GetVectorNeuronState();
 
-		neuronModel->UpdateState(-1, State, CurrentTime);
+		neuronModel->UpdateState(NULL, CurrentTime);
 
-		TimeDrivenInternalSpike NewEvent(CurrentTime, State, neurons);
+		TimeDrivenInternalSpike NewEvent(CurrentTime, State, neuronModel->PropagationStructure, neurons, omp_get_thread_num());
 		NewEvent.ProcessEvent(CurrentSimulation, RealTimeRestriction);
 	}
 
 
 	//Next TimeEvent for all cell
-	CurrentSimulation->GetQueue()->InsertEvent(new TimeEventAllNeurons(CurrentTime + neuronModel->integrationMethod->PredictedElapsedTime[0], GetModel(), GetNeurons()));
+	CurrentSimulation->GetQueue()->InsertEvent(new TimeEventAllNeurons(CurrentTime + neuronModel->integrationMethod->ElapsedTime, GetModel(), GetNeurons()));
 }
 
 //Optimized version which executes the internal spikes instead of insert them in the queue.
@@ -64,17 +65,28 @@ void TimeEventAllNeurons::ProcessEvent(Simulation * CurrentSimulation){
 
 	VectorNeuronState * State=neuronModel->GetVectorNeuronState();
 
-	neuronModel->UpdateState(-1, State, CurrentTime);
+	neuronModel->UpdateState(NULL, CurrentTime);
 
-	TimeDrivenInternalSpike NewEvent(CurrentTime, State, neurons);
+	TimeDrivenInternalSpike NewEvent(CurrentTime, State, neuronModel->PropagationStructure, neurons, omp_get_thread_num());
 	NewEvent.ProcessEvent(CurrentSimulation);
 
 	//Next TimeEvent for all cell
-	CurrentSimulation->GetQueue()->InsertEvent(new TimeEventAllNeurons(CurrentTime + neuronModel->integrationMethod->PredictedElapsedTime[0], GetModel(), GetNeurons()));
+	CurrentSimulation->GetQueue()->InsertEvent(new TimeEventAllNeurons(CurrentTime + neuronModel->integrationMethod->ElapsedTime, GetModel(), GetNeurons()));
 }
 
+TimeDrivenNeuronModel * TimeEventAllNeurons::GetModel(){
+	return neuronModel;
+}
+
+Neuron ** TimeEventAllNeurons::GetNeurons(){
+	return neurons;
+}
 
 
 void TimeEventAllNeurons::PrintType(){
 	cout<<"TimeEventAllNeurons"<<endl;
+}
+
+enum EventPriority TimeEventAllNeurons::ProcessingPriority(){
+	return TIMEEVENT;
 }

@@ -48,10 +48,15 @@ class SimetricCosState : public ConnectionState{
 		
 
 		/*!
-		 * Tau constant of the learning rule.
+		 * \brief Kernel amplitude in second.
 		 */
 		float tau;
 		float inv_tau;
+
+		/*!
+		 * \brief Exponent
+		 */
+		float exponent;
 
 
 	public:
@@ -65,7 +70,7 @@ class SimetricCosState : public ConnectionState{
 		 * \param NewExponent The exponent of the sinusoidal function.
 		 * \param MaxPosition Temporal position of the peak.
 		 */
-		SimetricCosState(unsigned int NumSynapses, float NewTau);
+		SimetricCosState(unsigned int NumSynapses, float NewTau, float NewExponent);
 
 		/*!
 		 * \brief Class destructor.

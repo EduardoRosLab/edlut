@@ -45,11 +45,13 @@ class STDPLSWeightChange: public STDPWeightChange {
 	public:
 
 		/*!
-		 * \brief Default constructor.
-		 * 
-		 * It creates a new object.
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule with its index.
+		 *
+		 * \param NewLearningRuleIndex learning rule index.
 		 */ 
-		STDPLSWeightChange();
+		STDPLSWeightChange(int NewLearningRuleIndex);
 
 		/*!
 		 * \brief Object destructor.

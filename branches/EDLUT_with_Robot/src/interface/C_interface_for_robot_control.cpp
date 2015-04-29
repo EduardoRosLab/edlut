@@ -51,6 +51,7 @@
 #include "../../include/interface/C_interface_for_robot_control.h"
 
 #include "../../include/simulation/RealTimeRestriction.h"
+#include "../../include/simulation/RandomGenerator.h"
 
 #include "../../include/openmp/openmp.h"
 
@@ -582,8 +583,9 @@ void generate_stochastic_activity(Simulation *sim, double cur_slot_init, double 
          cur_spk_end_zone=cur_spk_init_zone+min_spk_per;
          if(cur_spk_end_zone > cur_slot_end)
             cur_spk_end_zone=cur_slot_end;
-         if((cur_spk_end_zone-cur_spk_init_zone)*input_current*current_freq_factor*max_spk_freq > rand()/(double)RAND_MAX)
+		 if((cur_spk_end_zone-cur_spk_init_zone)*input_current*current_freq_factor*max_spk_freq > RandomGenerator::drand())
            {
+
 			cur_neuron=sim->GetNetwork()->GetNeuronAt(first_learning_neuron+nneu);
             double cur_spk_time=(cur_spk_end_zone+cur_spk_init_zone)/2;
 			sim->GetQueue()->InsertInputSpikeEvent(cur_spk_time, cur_neuron);
@@ -815,32 +817,44 @@ extern "C" int save_and_finish_log(struct log *log, char *file_name)
 
 
 extern "C" void calculate_input_activity_for_one_trajectory(Simulation *neural_sim, double time){
+	//int N_neuron=80;
+	//int N_microZones=3;
+	//int i=0;
+	//int j=0;
+
+	//for(int z=0; z<N_microZones; z++){
+	//	for(double t=0; t<0.999; t+=0.002){
+	//		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(z*N_neuron + j));
+	//		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(z*N_neuron + j + 1));
+	//		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(z*N_neuron + j + 2));
+	//		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(z*N_neuron + j + 3));
+	//		if(i==25){
+	//			i=0;
+	//			j+=4;
+	//		}
+	//	}
+	//}
+
+	int N_neuron=80*expan_factor;
+	int N_microZones=3;
 	int i=0;
 	int j=0;
-	int n=100;
-	for(double t=0; t<0.999; t+=0.002){
-		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(n));
-		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(n+1));
-		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(n+2));
-		neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(n+3));
-		n+=4;
 
-		if(i<19){
-			neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(j));
-			neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(j+1));
-			neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(j+2));
-			neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(j+3));
-		}
-		i++;
-		if(i==20){
-			i=0;
-			j+=4;
+	for(int z=0; z<N_microZones; z++){
+		for(double t=0; t<0.999; t+=0.002){
+			for(int r=0; r<4; r++){
+				neural_sim->GetQueue()->InsertInputSpikeEvent(time+t, neural_sim->GetNetwork()->GetNeuronAt(z*N_neuron + j + r));
+			}
+			if(i==(25+expan_factor-1)/expan_factor){
+				i=0;
+				j+=4;
+			}
 		}
 	}
 }
 
-extern "C" void init_real_time_restriction(Simulation * neural_sim, float slot_time, float first_section, float second_section, float third_section){
-	neural_sim->RealTimeRestrictionObject->SetParameterWatchDog(slot_time, first_section, second_section,third_section);	
+extern "C" void init_real_time_restriction(Simulation * neural_sim, float slot_time, float max_simulation_delay, float first_section, float second_section, float third_section){
+	neural_sim->RealTimeRestrictionObject->SetParameterWatchDog(slot_time, max_simulation_delay, first_section, second_section,third_section);	
 }
 
 
@@ -850,6 +864,10 @@ extern "C" void start_real_time_restriction(Simulation * neural_sim){
 
 extern "C" void reset_real_time_restriction(Simulation * neural_sim){
 	neural_sim->RealTimeRestrictionObject->ResetWatchDog();
+}
+
+extern "C" void next_step_real_time_restriction(Simulation * neural_sim){
+	neural_sim->RealTimeRestrictionObject->NextStepWatchDog();
 }
 
 extern "C" void stop_real_time_restriction(Simulation * neural_sim){

@@ -1,8 +1,8 @@
 /***************************************************************************
- *                           ActivityRegister.cpp                          *
+ *                           TrigonometricTable.cpp                        *
  *                           -------------------                           *
- * copyright            : (C) 2009 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2015 by Francisco Naveros                    *
+ * email                : fnaveros@ugr.es                                  *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,34 +14,13 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/learning_rules/ActivityRegister.h"
+#include <cmath>
+#include <iostream>
+
+#include "../../include/simulation/TrigonometricTable.h"
 
 
-ActivityRegister::ActivityRegister(int VarNumber): numvar(VarNumber) {
-	if (VarNumber>0){
-		values = new float[VarNumber];			
-	}else{
-		values = 0;
-	}
-}
+const float TrigonometricTable::LUTStep = 2.0f*4.0f*atan(1.0f)/TrigonometricTable::N_ELEMENTS;
+const float TrigonometricTable::inv_LUTStep = 1.0f/TrigonometricTable::LUTStep;
 
-ActivityRegister::~ActivityRegister(){
-	if (values!=0){
-		delete [] values;
-	}	
-}
-
-int ActivityRegister::GetVarNumber() const{
-	return numvar;
-}
-
-float ActivityRegister::GetVarValueAt(unsigned int index) const{
-	return values[index];
-}
-		
-void ActivityRegister::SetVarValueAt(unsigned int index, float value){
-	values[index]=value;
-}
-		
-		
-		
+float * TrigonometricTable::TrigonometricLUT=GenerateTrigonometricLUT();

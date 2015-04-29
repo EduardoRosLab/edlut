@@ -143,6 +143,13 @@ class Simulation;
  		 * Number of OpenMP queues. 
  		 */
 		int NumberOfQueues;
+
+ 		float rtgap;
+        float rt1;
+        float rt2;
+        float rt3;
+
+		bool RealTimeOption;
  	
  		/*!
  		 * \brief It parses the input arguments.
@@ -261,8 +268,13 @@ class Simulation;
  		 * \return The total number of OpenMP queues. 1 if the parameter isn't used.
  		 */
 		int GetNumberOfQueues();
+
+		float GetRtGap();
+		float GetRt1();
+ 		float GetRt2();
+		float GetRt3();
  		
- 		
+		bool GetRealTimeOption();
  		/*!
  		 * \brief It gets the input drivers.
  		 * 

@@ -34,8 +34,8 @@ SynchronizeActivityEvent::SynchronizeActivityEvent(double NewTime, Simulation * 
 SynchronizeActivityEvent::~SynchronizeActivityEvent(){
 }
 
-void SynchronizeActivityEvent::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
-	if(*RealTimeRestriction<2){
+void SynchronizeActivityEvent::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
+	if(RealTimeRestriction<2){
 		for(int i=0; i<CurrentSimulation->GetNumberOfQueues(); i++){
 			#ifdef _OPENMP 
 				#if	_OPENMP >= OPENMPVERSION30
@@ -103,7 +103,7 @@ void SynchronizeActivityEvent::PrintType(){
 	cout<<"SynchronizeActivityEvent"<<endl;
 }
 
-int SynchronizeActivityEvent::ProcessingPriority(){
-	return 4;
+enum EventPriority SynchronizeActivityEvent::ProcessingPriority(){
+	return SYNCHRONIZEACTIVITYEVENT;
 }
 

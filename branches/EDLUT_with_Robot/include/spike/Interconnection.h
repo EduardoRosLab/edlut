@@ -32,7 +32,6 @@
 
 class Neuron;
 class LearningRule;
-class ActivityRegister;
 class ConnectionState;
 
 /*!
@@ -108,6 +107,11 @@ class Interconnection : public PrintableObject {
 		 * \brief Index inside the Learning Rule.
 		 */
 		int LearningRuleIndex_withoutPost;
+
+		/*!
+		 * \brief This connection is a trigger connection for the learning rule without post synpatic effect
+		 */
+		bool TriggerConnection;
 		
 	public:
 	
@@ -221,7 +225,7 @@ class Interconnection : public PrintableObject {
 		 * 
 		 * \param NewDelay The new connection delay.
 		 */
-		void SetDelay(float NewDelay);
+		void SetDelay(double NewDelay);
 		
 		/*!
 		 * \brief It gets the connection type.
@@ -451,6 +455,20 @@ class Interconnection : public PrintableObject {
 		 * \return The stream after the printer.
 		 */
 		virtual ostream & PrintInfo(ostream & out);
+
+		/*!
+		 * \brief It sets the trigger connection option to true.
+		 * 
+		 * It sets the trigger connection option to true.
+		 */
+		void SetTriggerConnection();
+
+		/*!
+		 * \brief It return the trigger connection option.
+		 * 
+		 * It return the trigger connection option.
+		 */
+		bool GetTriggerConnection();
 };
   
 #endif /*INTERCONNECTION_H_*/

@@ -86,7 +86,7 @@ class InputSpike: public Spike{
 		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
 		 * control the consumed time in each slot.
    		 */
-   		void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction);
+   		void ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction);
 
 		/*!
    		 * \brief It process an event in the simulation without the option of real time available.

@@ -17,7 +17,7 @@
 #include "../../include/learning_rules/LearningRule.h"
 
 
-LearningRule::LearningRule(): State(0), counter(0){
+LearningRule::LearningRule(int NewLearningRuleIndex): State(0), counter(0), LearningRuleIndex (NewLearningRuleIndex){
 
 }
 

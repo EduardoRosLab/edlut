@@ -14,9 +14,9 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/learning_rules/SimetricSTDPWeightChange.h"
+#include "../../include/learning_rules/SimetricCosSinSTDPWeightChange.h"
 
-#include "../../include/learning_rules/SimetricSTDPState.h"
+#include "../../include/learning_rules/SimetricCosSinSTDPState.h"
 
 #include "../../include/spike/Interconnection.h"
 
@@ -26,21 +26,20 @@
 #include "../../include/spike/Neuron.h"
 
 
-SimetricSTDPWeightChange::SimetricSTDPWeightChange():WithPostSynaptic(){
+SimetricCosSinSTDPWeightChange::SimetricCosSinSTDPWeightChange(int NewLearningRuleIndex):WithPostSynaptic(NewLearningRuleIndex){
 }
 
-SimetricSTDPWeightChange::~SimetricSTDPWeightChange(){
+SimetricCosSinSTDPWeightChange::~SimetricCosSinSTDPWeightChange(){
 
 }
 
 
-void SimetricSTDPWeightChange::InitializeConnectionState(unsigned int NumberOfSynapsesAndNeurons){
-	this->State=(ConnectionState *) new SimetricSTDPState(NumberOfSynapsesAndNeurons, this->tau);
+void SimetricCosSinSTDPWeightChange::InitializeConnectionState(unsigned int NumberOfSynapsesAndNeurons){
+	this->State=(ConnectionState *) new SimetricCosSinSTDPState(NumberOfSynapsesAndNeurons, this->MaxMinDistance, this->CentralAmplitudeFactor, this->LateralAmplitudeFactor);
 }
 
-void SimetricSTDPWeightChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
-
-	//Increment propagate spike kernel previous to the "future internal spike"
+void SimetricCosSinSTDPWeightChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
+	
 	int LearningRuleIndex = Connection->GetLearningRuleIndex_withPost();
 
 	// Update the presynaptic activity
@@ -50,71 +49,64 @@ void SimetricSTDPWeightChange::ApplyPreSynapticSpike(Interconnection * Connectio
 	State->ApplyPresynapticSpike(LearningRuleIndex);
 
 
-
-	//aplicate internal spike kernel to "future propagate spike"
+	//LTD
 	int SecondLearningRuleIndex = Connection->GetTarget()->GetIndex();
-
+	
+	// Update the presynaptic activity
 	State->SetNewUpdateTime(SecondLearningRuleIndex, SpikeTime, false);
 
-	Connection->IncrementWeight((this->MaxChangeLTP+this->MaxChangeLTD)*State->GetPresynapticActivity(SecondLearningRuleIndex) - this->MaxChangeLTD);
+	// Update synaptic weight
+	Connection->IncrementWeight(State->GetPresynapticActivity(SecondLearningRuleIndex));
+//	cout<<State->GetPresynapticActivity(SecondLearningRuleIndex)<<endl;
+
 }
 
-void SimetricSTDPWeightChange::ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime){
+void SimetricCosSinSTDPWeightChange::ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime){
+
+
 	//increment internal spike kernel previous to "future propagate spike"
 	int SecondLearningRuleIndex = Connection->GetTarget()->GetIndex();
-	if(SpikeTime < State->GetLastUpdateTime(SecondLearningRuleIndex)){
+	if(SpikeTime > State->GetLastUpdateTime(SecondLearningRuleIndex)){
 		State->SetNewUpdateTime(SecondLearningRuleIndex, SpikeTime, false);
 
 		State->ApplyPresynapticSpike(SecondLearningRuleIndex);
+
 	}
 
 
+	Neuron * TargetNeuron=Connection->GetTarget();
 
-	//Aplicate propagate spike kernel to "future internal spike"
 	int LearningRuleIndex = Connection->GetLearningRuleIndex_withPost();
 
 	// Update the presynaptic activity
 	State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-
+			
 	// Update synaptic weight
-	Connection->IncrementWeight((this->MaxChangeLTP+this->MaxChangeLTD)*State->GetPresynapticActivity(LearningRuleIndex) - this->MaxChangeLTD);
-
-
+	Connection->IncrementWeight(State->GetPresynapticActivity(LearningRuleIndex));
 
 	return;
 }
 
 
-void SimetricSTDPWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException){
+void SimetricCosSinSTDPWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException){
 	skip_comments(fh,Currentline);
 
-	if(!(fscanf(fh,"%f",&this->tau)==1 && fscanf(fh,"%f",&this->MaxChangeLTP)==1 && fscanf(fh,"%f",&this->MaxChangeLTD)==1)){
+	if(fscanf(fh,"%f",&this->MaxMinDistance)==1 && fscanf(fh,"%f",&this->CentralAmplitudeFactor)==1 && fscanf(fh,"%f",&this->LateralAmplitudeFactor)==1){
+		if(this->CentralAmplitudeFactor * this->LateralAmplitudeFactor > 0.0f){
+			throw EDLUTFileException(4,27,22,1,Currentline);
+		}
+	}else{
 		throw EDLUTFileException(4,28,23,1,Currentline);
 	}
-
 }
 
-ostream & SimetricSTDPWeightChange::PrintInfo(ostream & out){
+ostream & SimetricCosSinSTDPWeightChange::PrintInfo(ostream & out){
 
-	out << "- SimetricSTDP Learning Rule: LTD " << this->MaxChangeLTD << "\tLTP " << this->MaxChangeLTP << "\tTau" << this->tau << endl;
+//	out << "- SimetricSTDP Learning Rule: LTD " << this->MaxChangeLTD << "\tLTP " << this->MaxChangeLTP << "\tTau" << this->tau << endl;
 
 	return out;
 }
 
-float SimetricSTDPWeightChange::GetMaxWeightChangeLTP() const{
-	return this->MaxChangeLTP;
-}
 
-void SimetricSTDPWeightChange::SetMaxWeightChangeLTP(float NewMaxChange){
-	this->MaxChangeLTP = NewMaxChange;
-}
-
-float SimetricSTDPWeightChange::GetMaxWeightChangeLTD() const{
-	return this->MaxChangeLTD;
-}
-
-void SimetricSTDPWeightChange::SetMaxWeightChangeLTD(float NewMaxChange){
-	this->MaxChangeLTD = NewMaxChange;
-}
 
 

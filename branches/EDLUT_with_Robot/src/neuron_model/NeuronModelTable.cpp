@@ -273,6 +273,38 @@ void NeuronModelTable::LoadTableDescription(FILE *fh, long & Currentline) throw 
 	}
 }
 
+float NeuronModelTable::GetMaxElementInTable(){
+	unsigned int idim,tind;
+	float elem;
+	void **cpointer;
+	NeuronModelTable::TableDimension *dim;
+	cpointer=(void **)this->elems;
+	return CalculateMaxElementInTableRecursively(cpointer, 0, this->ndims);
+}
+
+float NeuronModelTable::CalculateMaxElementInTableRecursively(void **cpointer, int idim, int ndims){
+	NeuronModelTable::TableDimension *recrusivedim;
+	void **recursivecpointer;
+	recrusivedim = (this->dims + idim);
+	float result=0.0;
+
+	for(int tind=0; tind<recrusivedim->size; tind++){
+		if(idim<ndims-1){
+			recursivecpointer=(void **)*(cpointer+tind);
+			float value=CalculateMaxElementInTableRecursively(recursivecpointer,idim+1,ndims);
+			if(value>result){
+				result=value;
+			}
+		}else{
+			float value=*(((float *)cpointer)+tind);
+			if(value>result){
+				result=value;
+			}
+		}
+	}
+	return result;
+}
+
 
 const NeuronModelTable::TableDimension * NeuronModelTable::GetDimensionAt(int index) const{
 	return this->dims+index;	

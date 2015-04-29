@@ -17,16 +17,14 @@
 #include "../../include/learning_rules/SimetricCosState.h"
 
 #include "../../include/simulation/ExponentialTable.h"
+#include "../../include/simulation/TrigonometricTable.h"
 
 #include <cmath>
 #include <string.h>
 
 
 
-SimetricCosState::SimetricCosState(unsigned int NumSynapses, float NewTau): ConnectionState(NumSynapses, 3), tau(NewTau){
-	if (this->tau==0){
-		this->tau = 0.5f;
-	}
+SimetricCosState::SimetricCosState(unsigned int NumSynapses, float NewTau, float NewExponent): ConnectionState(NumSynapses, 3), tau(NewTau), exponent(NewExponent){
 	inv_tau=1.0f/tau;
 }
 
@@ -54,26 +52,27 @@ double SimetricCosState::GetPrintableValuesAt(unsigned int position){
 }
 
 
-
 void SimetricCosState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_post){
 	float OldCos2= this->GetStateVariableAt(index, 0);
 	float OldSin2= this->GetStateVariableAt(index, 1);
 	float OldCosSin= this->GetStateVariableAt(index, 2);
 
 	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
-	float ElapsedRelative = ElapsedTime*this->inv_tau;
+	float ElapsedRelative = exponent*ElapsedTime*this->inv_tau;
 	float expon = ExponentialTable::GetResult(-ElapsedRelative);
 
+	float ElapsedRelativeTrigonometric=ElapsedTime*this->inv_tau*1.5708f;
 
-	//float auxCos2=cos(ElapsedRelative)*cos(ElapsedRelative);
-	//float auxSin2=sin(ElapsedRelative)*sin(ElapsedRelative);
-	//float auxCosSin=cos(ElapsedRelative)*sin(ElapsedRelative);
 
-	float auxCos2=cos(ElapsedRelative);
-	float auxSin2=sin(ElapsedRelative);
-	float auxCosSin=auxCos2*auxSin2;
-	auxCos2*=auxCos2;
-	auxSin2*=auxSin2;
+	int LUTindex=TrigonometricTable::CalculateOffsetPosition(ElapsedRelativeTrigonometric);
+	LUTindex = TrigonometricTable::CalculateValidPosition(0,LUTindex);
+
+	float SinVar = TrigonometricTable::GetElement(LUTindex);
+	float CosVar = TrigonometricTable::GetElement(LUTindex+1);
+		
+	float auxCos2=CosVar*CosVar;
+	float auxSin2=SinVar*SinVar;
+	float auxCosSin=CosVar*SinVar;
 
 	
 	float NewCos2 = expon*(OldCos2 * auxCos2 + OldSin2*auxSin2-2*OldCosSin*auxCosSin);
@@ -85,6 +84,7 @@ void SimetricCosState::SetNewUpdateTime (unsigned int index, double NewTime, boo
 
 	this->SetLastUpdateTime(index, NewTime);
 }
+
 
 
 void SimetricCosState::ApplyPresynapticSpike(unsigned int index){

@@ -26,7 +26,6 @@
 
 #include "../../include/simulation/Simulation.h"
 #include "../../include/simulation/StopSimulationEvent.h"
-#include "../../include/simulation/TimeEventOneNeuron.h"
 #include "../../include/simulation/TimeEventAllNeurons.h"
 #include "../../include/simulation/TimeEventAllNeurons_GPU.h"
 
@@ -54,6 +53,8 @@
 
 #include "../../include/openmp/openmp.h"
 
+#include "../../include/cudaError.h"
+
 Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, double SimulationTime, double NewSimulationStep, int NewNumberOfQueues, int NewNumberOfThreads) throw (EDLUTException): Net(0), Queue(0), InputSpike(), OutputSpike(), OutputWeight(), Totsimtime(SimulationTime), SimulationStep(NewSimulationStep), SaveWeightStep(0), RealTimeRestrictionObject(0){
 	//Fixe the number of OpenMP threads.
 	Set_Number_of_openmp_threads(NewNumberOfQueues, NewNumberOfThreads);
@@ -66,8 +67,10 @@ Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, doubl
 	SynchronizeThread=new bool[NumberOfQueues]();
 	Updates=new long long[NumberOfQueues]();
 	Heapoc=new long long[NumberOfQueues]();
-	TotalSpikeCounter=new long[NumberOfQueues]();
-	TotalPropagateCounter=new long[NumberOfQueues]();
+	TotalSpikeCounter=new long long[NumberOfQueues]();
+	TotalPropagateCounter=new long long[NumberOfQueues]();
+	TotalPropagateEventCounter=new long long[NumberOfQueues]();
+
 
 	//Initialize one eventqueue object that manage one queue for each OpenMP thread.
 	Queue=new EventQueue(NumberOfQueues);
@@ -202,29 +205,18 @@ void Simulation::InitSimulation() throw (EDLUTException){
 		for(int z=0; z<this->GetNetwork()->GetNneutypes(); z++){
 			if(N_TimeDrivenNeuron[z][i]>0){
 				TimeDrivenNeuronModel * model=(TimeDrivenNeuronModel *) this->GetNetwork()->GetNeuronModelAt(z,i);
-				//If this model implement a fixed step integration method, one TimeEvent can manage all
-				//neurons in this neuron model
-				if(model->integrationMethod->GetMethodType()==FIXED_STEP){
-					this->Queue->InsertEvent(i, new TimeEventAllNeurons(model->integrationMethod->PredictedElapsedTime[0],((TimeDrivenNeuronModel *)this->GetNetwork()->GetNeuronModelAt(z,i)),this->GetNetwork()->GetTimeDrivenNeuronAt(z,i)));
-				}
-				//If this model implement a variable step integration method, it is necesary to 
-				//implement a TimeEvent for each neuron in this neuron model.
-				else{
-					for(int j=0; j<N_TimeDrivenNeuron[z][i]; j++){
-						this->Queue->InsertEvent(i,new TimeEventOneNeuron(model->integrationMethod->PredictedElapsedTime[i],((TimeDrivenNeuronModel *)this->GetNetwork()->GetNeuronModelAt(z,i)),this->GetNetwork()->GetTimeDrivenNeuronAt(z,i), j));
-					}
-				}
+
+				this->Queue->InsertEvent(i, new TimeEventAllNeurons(model->integrationMethod->ElapsedTime,((TimeDrivenNeuronModel *)this->GetNetwork()->GetNeuronModelAt(z,i)),this->GetNetwork()->GetTimeDrivenNeuronAt(z,i)));
 			}
 		}
 	
 		// Add the GPU time-driven simulation events
-		if(i==0){
-			int ** N_TimeDrivenNeuron_GPU=this->GetNetwork()->GetTimeDrivenNeuronNumberGPU();
-			for(int z=0; z<this->GetNetwork()->GetNneutypes(); z++){
-				if(N_TimeDrivenNeuron_GPU[z][i]>0){
-					TimeDrivenNeuronModel_GPU * model=(TimeDrivenNeuronModel_GPU *) this->GetNetwork()->GetNeuronModelAt(z,i);
-					this->Queue->InsertEventWithSynchronization(new TimeEventAllNeurons_GPU(model->TimeDrivenStep_GPU,((TimeDrivenNeuronModel_GPU *)this->GetNetwork()->GetNeuronModelAt(z,i)),this->GetNetwork()->GetTimeDrivenNeuronGPUAt(z,i), this));
-				}
+		int ** N_TimeDrivenNeuronGPU=this->GetNetwork()->GetTimeDrivenNeuronNumberGPU();
+		for(int z=0; z<this->GetNetwork()->GetNneutypes(); z++){
+			if(N_TimeDrivenNeuronGPU[z][i]>0){
+				TimeDrivenNeuronModel_GPU * model=(TimeDrivenNeuronModel_GPU *) this->GetNetwork()->GetNeuronModelAt(z,i);
+
+				this->Queue->InsertEvent(i, new TimeEventAllNeurons_GPU(model->TimeDrivenStep_GPU, model,this->GetNetwork()->GetTimeDrivenNeuronGPUAt(z,i)));
 			}
 		}
 
@@ -248,23 +240,42 @@ void Simulation::InitSimulation() throw (EDLUTException){
 }
 
 
+//void Simulation::SynchronizeThreads(){
+//	#pragma omp barrier
+//
+//	bool end=false;
+//	for(int i=0; i<NumberOfQueues; i++){
+//		if(EndOfSimulation[i]==true || this->StopOfSimulation[i]==true){
+//			end=true;
+//		}
+//	}
+//
+//	if(!end){
+//		#pragma omp single
+//		{
+//			Event * newEvent=this->GetQueue()->RemoveEventWithSynchronization();
+//			newEvent->ProcessEvent(this);
+//			delete newEvent;
+//		}
+//
+//		if(omp_get_thread_num()>=NumberOfQueues){
+//			SynchronizeThreads();
+//		}
+//	}
+//}
+
 void Simulation::SynchronizeThreads(){
 	#pragma omp barrier
 
-	bool end=false;
-	for(int i=0; i<NumberOfQueues; i++){
-		if(EndOfSimulation[i]==true || this->StopOfSimulation[i]==true){
-			end=true;
-		}
-	}
 
-	if(!end){
-		#pragma omp single
-		{
+	if(!StopOfSimulation[0] && !EndOfSimulation[0] ){
+		if(omp_get_thread_num()==0){
 			Event * newEvent=this->GetQueue()->RemoveEventWithSynchronization();
 			newEvent->ProcessEvent(this);
 			delete newEvent;
 		}
+
+		#pragma omp barrier
 
 		if(omp_get_thread_num()>=NumberOfQueues){
 			SynchronizeThreads();
@@ -274,7 +285,6 @@ void Simulation::SynchronizeThreads(){
 
 
 void Simulation::RunSimulation()  throw (EDLUTException){
-	this->InitSimulation();
 
 	Event * NewEvent;
 	int openMP_index;
@@ -282,6 +292,11 @@ void Simulation::RunSimulation()  throw (EDLUTException){
 	#pragma omp parallel num_threads(NumberOfThreads) if(NumberOfThreads>1) private(NewEvent, openMP_index)
 	{
 		openMP_index = omp_get_thread_num();
+
+		//Select the correspondent device.
+		if(NumberOfGPUs>0){
+			HANDLE_ERROR(cudaSetDevice(GPUsIndex[openMP_index % NumberOfGPUs])); 
+		}
 
 		//Only NumberofQueues threads process queues. The other threads wait for openMP tasks.
 		if (openMP_index<NumberOfQueues){
@@ -357,7 +372,7 @@ void Simulation::RunSimulationSlot(double preempt_time)  throw (EDLUTException){
 
 			this->CurrentSimulationTime[openMP_index]=NewEvent->GetTime(); // only for checking 
 
-			NewEvent->ProcessEvent(this, &(this->RealTimeRestrictionObject->RestrictionLevel));
+			NewEvent->ProcessEvent(this, this->RealTimeRestrictionObject->RestrictionLevel);
 
 			delete NewEvent;
 		}
@@ -426,19 +441,19 @@ void Simulation::GetInput(){
 	}
 }
 
-long Simulation::GetTotalSpikeCounter(int indexThread){
+long long Simulation::GetTotalSpikeCounter(int indexThread){
 	return this->TotalSpikeCounter[indexThread];
 }
 
-long Simulation::GetTotalSpikeCounter(){
-	long counter=0;
+long long Simulation::GetTotalSpikeCounter(){
+	long long counter=0;
 	for(int i=0; i<NumberOfQueues; i++){
 		counter+=this->TotalSpikeCounter[i];
 	}
 	return counter;
 }
 
-void Simulation::SetTotalSpikeCounter(int indexThread, long int value) {
+void Simulation::SetTotalSpikeCounter(int indexThread, long long value) {
 	this->TotalSpikeCounter[indexThread] = value;
 }
 
@@ -446,16 +461,49 @@ void Simulation::IncrementTotalSpikeCounter(int indexThread) {
 	this->TotalSpikeCounter[indexThread]++;
 }
 
-long Simulation::GetTotalPropagateCounter(int indexThread){
+
+long long Simulation::GetTotalPropagateCounter(int indexThread){
 	return this->TotalPropagateCounter[indexThread];
 }
 
-void Simulation::SetTotalPropagateCounter(int indexThread, long int value) {
+long long Simulation::GetTotalPropagateCounter(){
+	long long counter=0;
+	for(int i=0; i<NumberOfQueues; i++){
+		counter+=this->TotalPropagateCounter[i];
+	}
+	return counter;
+}
+
+long long Simulation::GetTotalPropagateEventCounter(int indexThread){
+	return this->TotalPropagateEventCounter[indexThread];
+}
+
+long long Simulation::GetTotalPropagateEventCounter(){
+	long long counter=0;
+	for(int i=0; i<NumberOfQueues; i++){
+		counter+=this->TotalPropagateEventCounter[i];
+	}
+	return counter;
+}
+
+void Simulation::SetTotalPropagateCounter(int indexThread, long long value) {
 	this->TotalPropagateCounter[indexThread] = value;
+}
+
+void Simulation::SetTotalPropagateEventCounter(int indexThread, long long value) {
+	this->TotalPropagateEventCounter[indexThread] = value;
 }
 
 void Simulation::IncrementTotalPropagateCounter(int indexThread) {
 	this->TotalPropagateCounter[indexThread]++;
+}
+
+void Simulation::IncrementTotalPropagateCounter(int indexThread, int increment) {
+	this->TotalPropagateCounter[indexThread]+=increment;
+}
+
+void Simulation::IncrementTotalPropagateEventCounter(int indexThread) {
+	this->TotalPropagateEventCounter[indexThread]++;
 }
 
 Network * Simulation::GetNetwork() const{
@@ -625,4 +673,11 @@ int Simulation::GetNumberOfThreads(){
 
 double Simulation::GetMinInterpropagationTime(){
 	return MinInterpropagationTime;
+}
+
+
+void Simulation::SelectGPU(int OpenMP_index){
+	if(NumberOfGPUs>0){
+		HANDLE_ERROR(cudaSetDevice(GPUsIndex[OpenMP_index % NumberOfGPUs])); 
+	}
 }

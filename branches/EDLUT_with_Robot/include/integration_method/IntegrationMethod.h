@@ -38,13 +38,7 @@ using namespace std;
 class TimeDrivenNeuronModel;
 
 
-
-//There are two differente approach:
-// Fixed Step: all neurons have always the same integration step.
-// Variable Step: each neuron has its own integration step and it can change along the simulation.
-enum IntegrationMethodType {VARIABLE_STEP, FIXED_STEP};
-
-#define MAX_VARIABLES 15 
+#define MAX_VARIABLES 17 
 
 /*!
  * \class IntegrationMethod
@@ -91,7 +85,7 @@ class IntegrationMethod {
 		 * \brief PredictedElapsedTime. This vector contains only one element for fixed step itegration method or one
 		 * element for each neuron for variable step integration method.
 		*/
-		double * PredictedElapsedTime;
+		double ElapsedTime;
 
 
 		/*!
@@ -172,16 +166,6 @@ class IntegrationMethod {
 
 
 		/*!
-		 * \brief It gets the integration method tipe (variable step, fixed step).
-		 *
-		 * It gets the integration method tipe (variable step, fixed step).
-		 *
-		 * \return the integration method tipe (variable step, fixed step).
-		 */
-		virtual enum IntegrationMethodType GetMethodType() = 0;
-
-	
-		/*!
 		 * \brief It calculate numerically the Jacobian .
 		 *
 		 * It calculate numerically the Jacobian.
@@ -190,7 +174,7 @@ class IntegrationMethod {
 		 * \param jancum vector where is stored the Jacobian.
 		 * \param elapsed_time integration method step.
 		 */
-		void Jacobian(float * NeuronState, float * jacnum, float elapsed_time);
+		void Jacobian(float * NeuronState, float * jacnum, float elapsed_time, int index);
 
 		/*!
 		 * \brief It calculate the inverse of a square matrix using Gauss-Jordan Method.

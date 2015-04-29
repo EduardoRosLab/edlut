@@ -27,7 +27,7 @@ Euler::~Euler(){
 void Euler::NextDifferentialEcuationValue(int index,float * NeuronState, float elapsed_time){
 	float AuxNeuronState[MAX_VARIABLES];
 	
-	this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState);
+	this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState, index);
 
 	for (int j=0; j<N_DifferentialNeuronState; j++){
 		NeuronState[j]+=elapsed_time*AuxNeuronState[j];

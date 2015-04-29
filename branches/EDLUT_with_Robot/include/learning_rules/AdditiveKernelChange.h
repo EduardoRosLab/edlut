@@ -48,11 +48,6 @@ class AdditiveKernelChange : public WithoutPostSynaptic {
 		float maxpos;
 
 		/*!
-		 * Number of activity registers.
-		 */
-		int numexps;
-
-		/*!
 		 * Learning rule parameter 1.
 		 */
 		float a1pre;
@@ -65,11 +60,13 @@ class AdditiveKernelChange : public WithoutPostSynaptic {
 	public:
 
 		/*!
-   		 * \brief Default constructor.
-   		 * 
-   		 * It creates and initializes a new AdditiveKernelChange object.
-   		 */
-		AdditiveKernelChange();
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule with its index.
+		 *
+		 * \param NewLearningRuleIndex learning rule index.
+		 */ 
+		AdditiveKernelChange(int NewLearningRuleIndex);
 
 
 		/*!

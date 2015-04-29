@@ -22,7 +22,7 @@
 
 const float ExponentialTable::Min=-20.0f;
 
-const float ExponentialTable::Max=0.0f;
+const float ExponentialTable::Max=20.0f;
 
 const float ExponentialTable::aux=(ExponentialTable::TableSize-1)/( ExponentialTable::Max- ExponentialTable::Min);
    		

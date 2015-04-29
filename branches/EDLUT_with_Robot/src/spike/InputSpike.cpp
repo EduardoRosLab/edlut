@@ -39,19 +39,15 @@ InputSpike::InputSpike(double NewTime, Neuron * NewSource): Spike(NewTime,NewSou
 InputSpike::~InputSpike(){
 }
 
-void InputSpike::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+void InputSpike::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
 
-	if(*RealTimeRestriction<2){
+	if(RealTimeRestriction<2){
 		
-		Neuron * neuron=this->source;  // source of the spike
-	    
 		CurrentSimulation->WriteSpike(this);
 		
-		// CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(), this->GetSource());
-		
 		for(int i=0; i<NumberOfOpenMPQueues; i++){
-			if (neuron->IsOutputConnected(i)){
-				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(i,0)->GetDelay(), neuron, 0,i);
+			if (source->IsOutputConnected(i)){
+				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + source->GetOutputConnectionAt(i,0)->GetDelay(), source, 0, source->PropagationStructure->NDifferentDelays[i], i);
 				if(i==omp_get_thread_num()){
 					CurrentSimulation->GetQueue()->InsertEvent(i,spike);
 				}else{
@@ -66,15 +62,11 @@ void InputSpike::ProcessEvent(Simulation * CurrentSimulation, volatile int * Rea
 void InputSpike::ProcessEvent(Simulation * CurrentSimulation){
 
 		
-	Neuron * neuron=this->source;  // source of the spike
-    
 	CurrentSimulation->WriteSpike(this);
 	
-	// CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(), this->GetSource());
-	
 	for(int i=0; i<NumberOfOpenMPQueues; i++){
-		if (neuron->IsOutputConnected(i)){
-			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(i,0)->GetDelay(), neuron, 0,i);
+		if (source->IsOutputConnected(i)){
+			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + source->GetOutputConnectionAt(i,0)->GetDelay(), source, 0, source->PropagationStructure->NDifferentDelays[i], i);
 			if(i==omp_get_thread_num()){
 				CurrentSimulation->GetQueue()->InsertEvent(i,spike);
 			}else{

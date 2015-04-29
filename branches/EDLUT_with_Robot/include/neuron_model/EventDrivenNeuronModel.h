@@ -126,8 +126,19 @@ class EventDrivenNeuronModel : public NeuronModel {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		virtual void InitializeStates(int N_neurons)=0;
+		virtual void InitializeStates(int N_neurons, int OpenMPQueueIndex)=0;
 
+
+		/*!
+		 * \brief It Checks if the neuron model has this connection type.
+		 *
+		 * It Checks if the neuron model has this connection type.
+		 *
+		 * \param Type input connection type.
+		 *
+		 * \return A a valid connection type for this neuron model.
+		 */
+		virtual int CheckSynapseTypeNumber(int Type)=0;
 
 
 

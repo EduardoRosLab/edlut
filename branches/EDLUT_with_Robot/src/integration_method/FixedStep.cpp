@@ -27,17 +27,12 @@ FixedStep::~FixedStep(){
 
 }
 
-enum IntegrationMethodType FixedStep::GetMethodType(){
-	return FIXED_STEP;
-}
-
 
 void FixedStep::loadParameter(FILE *fh, long * Currentline) throw (EDLUTFileException){
-	this->PredictedElapsedTime=new double [1];
 
 	skip_comments(fh,*Currentline);
-	if(fscanf(fh,"%lf",PredictedElapsedTime)==1){
-		if(PredictedElapsedTime[0]<=0.0){
+	if(fscanf(fh,"%lf",&ElapsedTime)==1){
+		if(ElapsedTime<=0.0){
 ////NEW CODE------------------------------------------------------------------------------
 			throw EDLUTFileException(4,7,6,1,*Currentline);
 ////--------------------------------------------------------------------------------------

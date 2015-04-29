@@ -32,6 +32,8 @@
 #include "../simulation/Configuration.h"
 
 #include "../simulation/PrintableObject.h"
+
+#include "../../include/spike/NeuronPropagationDelayStructure.h"
  
 using namespace std;
 
@@ -42,6 +44,8 @@ class EventQueue;
 class InternalSpike;
 class PropagatedSpike;
 class Spike;
+
+
 
 
 /*!
@@ -132,10 +136,18 @@ class Neuron : public PrintableObject {
    		 */
    		bool isOutput;
 
-		///////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAA
-		Interconnection * TriggerConnection;
+
+		int N_TriggerConnection;
+		Interconnection** TriggerConnection;
+
    		
    	public:
+
+		/*!
+   		 * Propagation delay structure.
+   		 */
+		NeuronPropagationDelayStructure * PropagationStructure;
+
    		/*!
 		 * \brief Default constructor without parameters.
 		 *
@@ -144,19 +156,6 @@ class Neuron : public PrintableObject {
 		 */
    		Neuron();
 
-		///*!
-		// * \brief Neuron constructor with parameters.
-		// *
-		// * It generates a new neuron with neuron model Type and neuron index NewIndex.
-		// * Moreover, it initializes the neuron variables with the model initial values.
-		// *
-		// * \param NewIndex The neuron index into the network order.
-		// * \param Type The neuron type. It can't be null.
-		// * \param Monitored If true, the neuron activity will be registered.
-		// * \param IsOutput If true, the neuron activity will be send to output driver
-		// * \sa InitNeuron()
-		// */   	
-  // 		Neuron(int NewIndex, NeuronModel ** Type, bool Monitored, bool IsOutput);
 
 		/*!
 		 * \brief Default destructor.
@@ -410,9 +409,17 @@ class Neuron : public PrintableObject {
 			return OpenMP_queue_index;
 		}
 
-		//////////////////AAAAAAAAAAAAAAAAAAAAAA
-		inline Interconnection * GetTriggerConnection() const{
+		void CalculateOutputDelayStructure();
+
+		void CalculateOutputDelayIndex();
+
+
+		inline Interconnection ** GetTriggerConnection() const{
 			return this->TriggerConnection;
+		}
+
+		inline int GetN_TriggerConnection() const{
+			return this->N_TriggerConnection;
 		}
 
 };

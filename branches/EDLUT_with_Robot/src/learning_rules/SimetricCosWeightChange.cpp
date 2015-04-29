@@ -26,7 +26,7 @@
 
 #include "../../include/openmp/openmp.h"
 
-SimetricCosWeightChange::SimetricCosWeightChange():WithoutPostSynaptic(){
+SimetricCosWeightChange::SimetricCosWeightChange(int NewLearningRuleIndex):WithoutPostSynaptic(NewLearningRuleIndex){
 }
 
 SimetricCosWeightChange::~SimetricCosWeightChange(){
@@ -35,14 +35,14 @@ SimetricCosWeightChange::~SimetricCosWeightChange(){
 
 
 void SimetricCosWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
-	this->State=(ConnectionState *) new SimetricCosState(NumberOfSynapses, this->tau);
+	this->State=(ConnectionState *) new SimetricCosState(NumberOfSynapses, this->tau, this->exponent);
 }
 
 
 void SimetricCosWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException){
 	skip_comments(fh,Currentline);
 
-	if(fscanf(fh,"%i",&this->trigger)==1 && fscanf(fh,"%f",&this->tau)==1 && fscanf(fh,"%f",&this->a1pre)==1 && fscanf(fh,"%f",&this->a2prepre)==1){
+	if(fscanf(fh,"%f",&this->tau)==1 && fscanf(fh,"%f",&this->exponent)==1 && fscanf(fh,"%f",&this->a1pre)==1 && fscanf(fh,"%f",&this->a2prepre)==1){
 		if(this->a1pre < -1.0 || this->a1pre > 1.0){
 			throw EDLUTFileException(4,27,22,1,Currentline);
 		}
@@ -52,73 +52,10 @@ void SimetricCosWeightChange::LoadLearningRule(FILE * fh, long & Currentline) th
 }
 
 
-//void SimetricCosWeightChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
-//	
-//	if(this->trigger ==0){
-//		int LearningRuleIndex = Connection->GetLearningRuleIndex_withoutPost();
-//
-//		//LTP
-//		// Second case: the weight change is linked to this connection
-//		Connection->IncrementWeight(this->a1pre);
-//
-//		// Update the presynaptic activity
-//		State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-//
-//		// Add the presynaptic spike influence
-//		State->ApplyPresynapticSpike(LearningRuleIndex);
-//
-//
-//		//LTD
-//		Interconnection * inter=Connection->GetTarget()->GetTriggerConnection();
-//		if(inter!=0){
-//			SimetricCosWeightChange *wchani=(SimetricCosWeightChange *)inter->GetWeightChange_withoutPost();
-//			// Apply sinaptic plasticity driven by teaching signal
-//			// Get connection state
-//			ConnectionState * ConnectionStatePre = wchani->GetConnectionState();
-//			int LearningRuleIndex = inter->GetLearningRuleIndex_withoutPost();
-//
-//			// Update the presynaptic activity
-//			ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-//
-//			// Update synaptic weight
-//			Connection->IncrementWeight(this->a2prepre*ConnectionStatePre->GetPresynapticActivity(LearningRuleIndex));
-//		}
-//	}
-//
-//	// Check if this is the teaching signal
-//	if(this->trigger == 1){
-//
-//		int LearningRuleIndex = Connection->GetLearningRuleIndex_withoutPost();
-//
-//		// Update the presynaptic activity
-//		State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-//		// Add the presynaptic spike influence
-//		State->ApplyPresynapticSpike(LearningRuleIndex);
-//
-//
-//		for(int i=0; i<Connection->GetTarget()->GetInputNumberWithoutPostSynapticLearning(); ++i){
-//			Interconnection * interi=Connection->GetTarget()->GetInputConnectionWithoutPostSynapticLearningAt(i);
-//		    SimetricCosWeightChange *wchani=(SimetricCosWeightChange *)interi->GetWeightChange_withoutPost();
-//
-//			if(wchani->trigger!=1){
-//				// Apply sinaptic plasticity driven by teaching signal
-//				// Get connection state
-//				ConnectionState * ConnectionStatePre = wchani->GetConnectionState();
-//				int LearningRuleIndex = interi->GetLearningRuleIndex_withoutPost();
-//
-//				// Update the presynaptic activity
-//				ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-//
-//				// Update synaptic weight
-//				interi->IncrementWeight(wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity(LearningRuleIndex));
-//			}
-//		}
-//	}
-//}
 
 void SimetricCosWeightChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
 	
-	if(this->trigger ==0){
+	if(Connection->GetTriggerConnection()==false){
 		int LearningRuleIndex = Connection->GetLearningRuleIndex_withoutPost();
 
 		//LTP
@@ -133,24 +70,21 @@ void SimetricCosWeightChange::ApplyPreSynapticSpike(Interconnection * Connection
 
 
 		//LTD
-		Interconnection * inter=Connection->GetTarget()->GetTriggerConnection();
-		if(inter!=0){
-			SimetricCosWeightChange *wchani=(SimetricCosWeightChange *)inter->GetWeightChange_withoutPost();
-			// Apply sinaptic plasticity driven by teaching signal
-			// Get connection state
-			ConnectionState * ConnectionStatePre = wchani->GetConnectionState();
-			int LearningRuleIndex = inter->GetLearningRuleIndex_withoutPost();
+		int N_TriggerConnection=Connection->GetTarget()->GetN_TriggerConnection();
+		if(N_TriggerConnection>0){
+			Interconnection ** inter=Connection->GetTarget()->GetTriggerConnection();
+			for(int i=0; i<N_TriggerConnection; i++){
+				// Apply sinaptic plasticity driven by teaching signal
+				int LearningRuleIndex = inter[i]->GetLearningRuleIndex_withoutPost();
 
-			// Update the presynaptic activity
-			ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
+				// Update the presynaptic activity
+				State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
 
-			// Update synaptic weight
-			Connection->IncrementWeight(this->a2prepre*ConnectionStatePre->GetPresynapticActivity(LearningRuleIndex));
+				// Update synaptic weight
+				Connection->IncrementWeight(this->a2prepre*State->GetPresynapticActivity(LearningRuleIndex));
+			}
 		}
-	}
-
-	// Check if this is the teaching signal
-	if(this->trigger == 1){
+	}else{
 		int LearningRuleIndex = Connection->GetLearningRuleIndex_withoutPost();
 
 		// Update the presynaptic activity
@@ -179,19 +113,16 @@ void SimetricCosWeightChange::ApplyPreSynapticSpike(Interconnection * Connection
 				for(int i=start; i<end; ++i){
 
 					Interconnection * interi=TargetNeuron->GetInputConnectionWithoutPostSynapticLearningAt(i);
-					SimetricCosWeightChange *wchani=(SimetricCosWeightChange *)interi->GetWeightChange_withoutPost();
 
-					if(wchani->trigger!=1){
+					if(interi->GetTriggerConnection()==false){
 						// Apply sinaptic plasticity driven by teaching signal
-						// Get connection state
-						ConnectionState * ConnectionStatePre = wchani->GetConnectionState();
 						int LearningRuleIndex = interi->GetLearningRuleIndex_withoutPost();
 
 						// Update the presynaptic activity
-						ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
+						State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
 
 						// Update synaptic weight
-						interi->IncrementWeight(wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity(LearningRuleIndex));
+						interi->IncrementWeight(this->a2prepre*State->GetPresynapticActivity(LearningRuleIndex));
 					}
 				}
 			}
@@ -206,15 +137,8 @@ void SimetricCosWeightChange::ApplyPreSynapticSpike(Interconnection * Connection
 
 ostream & SimetricCosWeightChange::PrintInfo(ostream & out){
 
-	out << "- Cos Kernel Learning Rule: " << this->trigger << "\t" << this->tau << "\t" << this->a1pre << "\t" << this->a2prepre << endl;
+	out << "- Simetric Cos Kernel Learning Rule: \t" << this->tau << "\t" << this->exponent<< "\t" << this->a1pre << "\t" << this->a2prepre << endl;
 
 
 	return out;
 }
-
-
-
-
-
-
-

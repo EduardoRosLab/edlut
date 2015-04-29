@@ -34,10 +34,6 @@ using namespace std;
 		HANDLE_ERROR(cudaFreeHost(AuxStateCPU));
 		HANDLE_ERROR(cudaFreeHost(InternalSpikeCPU));
 
-		//Memory for GPU
-		cudaDeviceProp prop;
-		HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));	
-		
 		//GPU can use MapHostMemory
 		if(!prop.canMapHostMemory){
 			HANDLE_ERROR(cudaFree(AuxStateGPU));
@@ -46,7 +42,8 @@ using namespace std;
 	}
 
 
-void VectorNeuronState_GPU::InitializeStatesGPU(int N_Neurons, float * initialization, int N_AuxNeuronStates){
+void VectorNeuronState_GPU::InitializeStatesGPU(int N_Neurons, float * initialization, int N_AuxNeuronStates, cudaDeviceProp NewProp){
+	prop=NewProp;
 
 	//Initilize State in CPU
 	SetSizeState(N_Neurons);
@@ -83,11 +80,6 @@ void VectorNeuronState_GPU::InitializeStatesGPU(int N_Neurons, float * initializ
 	HANDLE_ERROR(cudaHostAlloc((void**)&InternalSpikeCPU, GetSizeState()*sizeof(bool),cudaHostAllocMapped));
 
 
-	//Memory for GPU
-	cudaDeviceProp prop;
-	HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));	
-	
-	
 	//GPU can use MapHostMemory
 	if(prop.canMapHostMemory){
 		HANDLE_ERROR ( cudaHostGetDevicePointer( (void**)&AuxStateGPU,AuxStateCPU, 0 ) );

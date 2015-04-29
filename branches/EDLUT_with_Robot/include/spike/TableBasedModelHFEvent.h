@@ -50,14 +50,12 @@ class Simulation;
 class TableBasedModelHFEvent: public InternalSpike{
 	
 	public:
+
+		Neuron** Neurons;
+		int MaxSize;
+		int NElements;
    		
-   		/*!
-   		 * \brief Default constructor.
-   		 * 
-   		 * It creates and initializes a new spike object.
-   		 */
-   		TableBasedModelHFEvent();
-   	
+ 	
    		/*!
    		 * \brief Constructor with parameters.
    		 * 
@@ -66,7 +64,7 @@ class TableBasedModelHFEvent: public InternalSpike{
    		 * \param NewTime Time of the new spike.
    		 * \param NewSource Source neuron of the spike.
    		 */
-   		TableBasedModelHFEvent(double NewTime, Neuron * NewSource);
+   		TableBasedModelHFEvent(double NewTime, int NewMaxSize);
    		
    		/*!
    		 * \brief Class destructor.
@@ -85,7 +83,7 @@ class TableBasedModelHFEvent: public InternalSpike{
 		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
 		 * control the consumed time in each slot.
    		 */
-   		void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction);
+   		void ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction);
 
 		/*!
    		 * \brief It process an event in the simulation without the option of real time available.
@@ -95,6 +93,9 @@ class TableBasedModelHFEvent: public InternalSpike{
    		 * \param CurrentSimulation The simulation object where the event is working.
    		 */
 		void ProcessEvent(Simulation * CurrentSimulation);
+
+
+		void IncludeNewNeuron(Neuron * neuron);
    		 
     		/*!
    		 * \brief this method print the event type.
@@ -108,7 +109,7 @@ class TableBasedModelHFEvent: public InternalSpike{
    		 * 
    		 * The event queue uses this preference variable to sort the events with the same time stamp.
 		 */
-		virtual int ProcessingPriority();
+		virtual enum EventPriority ProcessingPriority();
 
 
 };

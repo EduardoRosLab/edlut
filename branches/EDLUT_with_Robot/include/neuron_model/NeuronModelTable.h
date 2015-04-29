@@ -289,9 +289,30 @@ class NeuronModelTable {
   		 * \return The value of the table (with or without interpolation).
   		 */
   		float TableAccess(int index, VectorNeuronState * statevars);
-   		
-  		
+
+   		/*!
+  		 * \brief It gets the maximum value inside the table.
+  		 * 
+  		 * It gets the maximum value inside the table.
+  		 * 
+  		 * \return The maximum value inside the table.
+  		 */
+  		float GetMaxElementInTable();
 	private:
+
+   		/*!
+  		 * \brief Recrusive function used by GetMaxElementInTable().
+  		 * 
+  		 * Recrusive function used by GetMaxElementInTable().
+		 * 
+  		 * \param cpointer pointer to a dimension inside the table
+		 * \param idim dimension inside the table
+		 * \param ndims total number of dimensions.
+  		 * 
+  		 * \return The maximum value inside the table.
+  		 */
+		float CalculateMaxElementInTableRecursively(void **cpointer, int idim, int ndims);
+
 	
 		/*!
 		 * Function used in function arrays.

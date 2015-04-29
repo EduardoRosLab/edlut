@@ -36,6 +36,9 @@ using namespace std;
 class Neuron;
 class Simulation;
 class VectorNeuronState;
+class TimeDrivenPropagatedSpike;
+class NeuronModelPropagationDelayStructure;
+
 
 /*!
  * \class TimeDrivenInternalSpike
@@ -56,10 +59,16 @@ class TimeDrivenInternalSpike: public Spike{
 		*/
 		VectorNeuronState * State;
 
+		NeuronModelPropagationDelayStructure * PropagationStructure;
+
 		/*!
 		* \brief Neuron model.
 		*/
 		Neuron** Neurons;
+
+		TimeDrivenPropagatedSpike *** timeDrivenPropagatedSpike;
+
+		const int OpenMP_index;
 
 		/*!
    		 * \brief It process the internal spike associated to the "index" neuron.
@@ -74,12 +83,6 @@ class TimeDrivenInternalSpike: public Spike{
 
 	public:
    		
-   		/*!
-   		 * \brief Default constructor.
-   		 * 
-   		 * It creates and initializes a new spike object.
-   		 */
-   		TimeDrivenInternalSpike();
    	
    		/*!
    		 * \brief Constructor with parameters.
@@ -90,7 +93,7 @@ class TimeDrivenInternalSpike: public Spike{
    		 * \param NewState Vector neuron state for the time driven neuron model.
 		 * \param Vector of neuron associated to the time driven neuron model.
    		 */
-   		TimeDrivenInternalSpike(double NewTime, VectorNeuronState * NewState, Neuron ** NewNeurons);
+   		TimeDrivenInternalSpike(double NewTime, VectorNeuronState * NewState, NeuronModelPropagationDelayStructure * NewPropagationStrucuture, Neuron ** NewNeurons, int NewOpenMP_index);
    		
    		/*!
    		 * \brief Class destructor.
@@ -109,7 +112,7 @@ class TimeDrivenInternalSpike: public Spike{
 		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
 		 * control the consumed time in each slot.
    		 */
-   		void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction);
+   		void ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction);
 
 		/*!
    		 * \brief It process an event in the simulation without the option of real time available.

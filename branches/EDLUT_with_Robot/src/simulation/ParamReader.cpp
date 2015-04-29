@@ -295,7 +295,53 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 				NumberOfQueues=1;
 			#endif
 
-		} 
+		} else if(CurrentArgument=="-rtgap"){
+			if (i+1<Number){
+				// Check if it is a number
+				istringstream Argument(Arguments[++i]);
+   
+   				if (!(Argument >> this->rtgap))
+     				throw ParameterException(Arguments[i], "Invalid real time gap");
+			} else {
+				throw ParameterException(Arguments[i],"Invalid real time gap");				
+			}
+		}
+		else if(CurrentArgument=="-rt1"){
+			if (i+1<Number){
+				// Check if it is a number
+				istringstream Argument(Arguments[++i]);
+   
+   				if (!(Argument >> this->rt1))
+     				throw ParameterException(Arguments[i], "Invalid first real time factor");
+			} else {
+				throw ParameterException(Arguments[i],"Invalid first real time factor");				
+			}		
+		}
+		else if(CurrentArgument=="-rt2"){
+			if (i+1<Number){
+				// Check if it is a number
+				istringstream Argument(Arguments[++i]);
+   
+   				if (!(Argument >> this->rt2))
+     				throw ParameterException(Arguments[i], "Invalid second real time factor");
+			} else {
+				throw ParameterException(Arguments[i],"Invalid second real time factor");				
+			}	
+		}
+		else if(CurrentArgument=="-rt3"){
+			if (i+1<Number){
+				// Check if it is a number
+				istringstream Argument(Arguments[++i]);
+   
+   				if (!(Argument >> this->rt3))
+     				throw ParameterException(Arguments[i], "Invalid third real time factor");
+			} else {
+				throw ParameterException(Arguments[i],"Invalid third real time factor");				
+			}	
+		}
+		else if(CurrentArgument=="-rt"){
+			this->RealTimeOption=true;
+		}
 		else {
 				throw ParameterException(Arguments[i],"Invalid parameter.");
 		}	
@@ -304,6 +350,10 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 	//We check the number of OpenMP threads is higher or equal to the number of queues.
 	if(NumberOfThreads<NumberOfQueues){
 		NumberOfThreads=NumberOfQueues;
+	}
+
+	if(SimulationStepTime>rtgap){
+		rtgap=SimulationStepTime;
 	}
 
 	if (this->SimulationTime==-1.0){
@@ -329,7 +379,7 @@ bool ParamReader::FileExists(string Name){
 }
  		 
 ParamReader::ParamReader(int ArgNumber, char ** Arg) throw (ParameterException, ConnectionException) :SimulationTime(-1.0), NetworkFile(NULL), WeightsFile(NULL), WeightTime(0.0), NetworkInfo(false),
-	SimulationStepTime(0.0), InputDrivers(), OutputDrivers(), OutputWeightDrivers(), NumberOfThreads(1), NumberOfQueues(1) {
+	SimulationStepTime(0.0), InputDrivers(), OutputDrivers(), OutputWeightDrivers(), NumberOfThreads(1), NumberOfQueues(1), rtgap(0.0f), rt1(1.0f), rt2(1.0f), rt3(1.0f), RealTimeOption(false) {
 	ParseArguments(ArgNumber,Arg);	
 }
  		
@@ -364,6 +414,27 @@ int ParamReader::GetNumberOfThreads(){
 int ParamReader::GetNumberOfQueues(){
 	return this->NumberOfQueues;
 }
+
+float ParamReader::GetRtGap(){
+	return this->rtgap;
+}
+
+float ParamReader::GetRt1(){
+	return this->rt1;
+}
+
+float ParamReader::GetRt2(){
+	return this->rt2;
+}
+
+float ParamReader::GetRt3(){
+	return this->rt3;
+}
+
+bool ParamReader::GetRealTimeOption(){
+	return this->RealTimeOption;
+}
+
  		
 vector<InputSpikeDriver *> ParamReader::GetInputSpikeDrivers(){
 	return this->InputDrivers;

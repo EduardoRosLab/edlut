@@ -108,14 +108,6 @@ class FixedStep : public IntegrationMethod {
 		 */
 		virtual void InitializeStates(int N_neurons, float * inicialization) = 0;
 
-		/*!
-		 * \brief It gets the integration method tipe (variable step, fixed step).
-		 *
-		 * It gets the integration method tipe (variable step, fixed step).
-		 *
-		 * \return the integration method tipe (variable step, fixed step).
-		 */
-		virtual enum IntegrationMethodType GetMethodType();
 
 		/*!
 		 * \brief It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).

@@ -8,13 +8,22 @@ mex			:= $(matlabrootdir)/bin/mex
 cudacompiler	:= $(cudarootdir)/bin/nvcc
 
 
-all	: $(exetarget) $(steptarget) $(precisiontarget) @mextarget@ @sfunctiontarget@ @robottarget@ library 
+all	: $(exetarget) $(rtexetarget) $(steptarget) $(precisiontarget) @mextarget@ @sfunctiontarget@ @robottarget@ library 
 
 .PHONY         : $(exetarget)
 $(exetarget) : $(exe-objects)
 	@echo compiler path = ${compiler}
 	@echo
 	@echo ------------------ making executable
+	@echo
+	@mkdir -p $(bindir)
+	$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+.PHONY         : $(rtexetarget)
+$(rtexetarget) : $(rtexe-objects)
+	@echo compiler path = ${compiler}
+	@echo
+	@echo ------------------ making real time executable
 	@echo
 	@mkdir -p $(bindir)
 	$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
@@ -32,7 +41,7 @@ $(steptarget) : $(step-objects)
 $(precisiontarget) : $(precision-objects)
 	@echo compiler path = ${compiler}
 	@echo
-	@echo ------------------ making step-by-step example
+	@echo ------------------ making precision example
 	@echo
 	@mkdir -p $(bindir)
 	$(compiler) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
@@ -139,6 +148,7 @@ install: $(libtarget) pkgfile uninstall install-exe
 .PHONY: install-exe
 install-exe: $(exetarget)
 	@cp $(exetarget) $(installdir)/bin
+	@cp $(rtexetarget) $(installdir)/bin
 
 .PHONY: install-dev
 install-dev : $(libtarget) pkgfile uninstall

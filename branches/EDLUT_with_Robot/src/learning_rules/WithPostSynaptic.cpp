@@ -17,7 +17,7 @@
 #include "../../include/learning_rules/WithPostSynaptic.h"
 
 
-WithPostSynaptic::WithPostSynaptic():LearningRule(){
+WithPostSynaptic::WithPostSynaptic(int NewLearningRuleIndex):LearningRule(NewLearningRuleIndex){
 
 }
 

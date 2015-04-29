@@ -17,7 +17,7 @@
 #include "../../include/learning_rules/WithoutPostSynaptic.h"
 
 
-WithoutPostSynaptic::WithoutPostSynaptic():LearningRule(), trigger(0){
+WithoutPostSynaptic::WithoutPostSynaptic(int NewLearningRuleIndex):LearningRule(NewLearningRuleIndex){
 }
 
 WithoutPostSynaptic::~WithoutPostSynaptic(){

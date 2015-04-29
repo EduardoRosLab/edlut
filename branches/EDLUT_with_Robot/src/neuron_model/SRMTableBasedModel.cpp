@@ -22,6 +22,7 @@
 #include "../../include/spike/Neuron.h"
 
 #include "../../include/simulation/Utils.h"
+#include "../../include/simulation/RandomGenerator.h"
 
 
 void SRMTableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
@@ -54,7 +55,7 @@ void SRMTableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExce
 			InitValues=new float[NumStateVar+3]();
 
 			// Create a new initial state
-			this->InitialState = (VectorSRMState *) new VectorSRMState(this->NumStateVar+3,0, false);
+			this->State = (VectorSRMState *) new VectorSRMState(this->NumStateVar+3,0, false);
 //			this->InitialState->SetLastUpdateTime(0);
 //			this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 //			this->InitialState->SetStateVariableAt(0,0);
@@ -164,13 +165,12 @@ void SRMTableBasedModel::UpdateState(int index, VectorNeuronState * State, doubl
 }
 
 void SRMTableBasedModel::SynapsisEffect(int index, Interconnection * InputConnection){
-	float Value = this->GetVectorNeuronState()->GetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1);
-	this->GetVectorNeuronState()->SetStateVariableAt(index,this->SynapticVar[InputConnection->GetType()]+1,Value+InputConnection->GetWeight()*exp(1.0));
+	this->GetVectorNeuronState()->IncrementStateVariableAtCPU(index,this->SynapticVar[InputConnection->GetType()]+1,InputConnection->GetWeight()*exp(1.0));
 }
 
 double SRMTableBasedModel::NextFiringPrediction(int index, VectorNeuronState * State){
 	State->SetStateVariableAt(index,this->LastSpikeVar+1,((VectorSRMState *) State)->GetLastSpikeTime(index));
-	State->SetStateVariableAt(index,this->SeedVar+1,rand()%10);
+	State->SetStateVariableAt(index,this->SeedVar+1,RandomGenerator::rand()%10);
 	return this->FiringTable->TableAccess(index,State);
 }
 
@@ -188,7 +188,7 @@ SRMTableBasedModel::~SRMTableBasedModel(){
 
 VectorNeuronState * SRMTableBasedModel::InitializeState(){
 	//return (VectorSRMState *) new VectorSRMState(*((VectorSRMState *) this->InitialState));
-	return InitialState;
+	return State;
 }
 
 InternalSpike * SRMTableBasedModel::GenerateNextSpike(InternalSpike *  OutputSpike){
@@ -216,6 +216,6 @@ InternalSpike * SRMTableBasedModel::GenerateNextSpike(InternalSpike *  OutputSpi
 	return NextSpike;
 }
 
-void SRMTableBasedModel::InitializeStates(int N_neurons){
-	InitialState->InitializeStates(N_neurons, InitValues);
+void SRMTableBasedModel::InitializeStates(int N_neurons, int OpenMPQueueIndex){
+	State->InitializeStates(N_neurons, InitValues);
 }

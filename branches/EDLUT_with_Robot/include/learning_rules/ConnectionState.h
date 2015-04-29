@@ -145,6 +145,7 @@ class ConnectionState {
 			
 		}
 
+
 		/*!
 		 * \brief It gets the state variable in a specified position.
 		 *
@@ -158,7 +159,8 @@ class ConnectionState {
 		inline float GetStateVariableAt(unsigned int index, unsigned int position){
 			return *(this->StateVars + index*NumberOfVariables + position);
 		}
-		
+
+	
 		/*!
 		 * \brief It multiply the state variable in a specified position by factor.
 		 *

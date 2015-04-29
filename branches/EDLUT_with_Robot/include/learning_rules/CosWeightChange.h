@@ -24,8 +24,10 @@
  * \author Niceto Luque
  * \date May 2014
  *
- * This file declares a class which abstracts a exponential-cosinusoidal additive learning rule. This learning rule only uses the previous 
- * spikes to the trigger spike to update the weight. 
+ * This file declares a class which abstracts the behaviour of a exponential-cosinusoidal additive learning rule. When a spike arrive 
+ * for a non-trigger synapse, a LTP method with value a1pre is applied. When a spike arrive for a trigger synapse, a LTD method with kernel 
+ * a2prepre*exp(exponent*t/tau)*cos^2((pi/2)*t/tau), for all non-trigger synapses. This kernel is applied only to the previous activity
+ * to the trigger synapse.
  */
  
 #include "./WithoutPostSynaptic.h"
@@ -35,7 +37,10 @@
  *
  * \brief Cosinusoidal learning rule.
  *
- * This class abstract the behaviour of a exponential-cosinusoidal additive learning rule.
+ * This class abstract the behaviour of a exponential-cosinusoidal additive learning rule. When a spike arrive for a non-trigger synapse,
+ * a LTP method with value a1pre is applied. When a spike arrive for a trigger synapse, a LTD method with kernel 
+ * a2prepre*exp(exponent*t/tau)*cos^2((pi/2)*t/tau), for all non-trigger synapses. This kernel is applied only to the previous activity
+ * to the trigger synapse.
  *
  * \author Francisco Naveros
  * \author Niceto Luque
@@ -46,9 +51,14 @@ class CosWeightChange: public WithoutPostSynaptic{
 
 
 		/*!
-		 * \brief Kernel amplitude.
+		 * \brief Kernel amplitude in second.
 		 */
 		float tau;
+
+		/*!
+		 * \brief Exponent
+		 */
+		float exponent;
 
 		/*!
 		 * \brief Maximum weight change for LTP
@@ -64,11 +74,13 @@ class CosWeightChange: public WithoutPostSynaptic{
 	
 	public:
 		/*!
-		 * \brief Default constructor. 
-		 * 
-		 * Default constructor. 
-		 */
-		CosWeightChange();
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule with its index.
+		 *
+		 * \param NewLearningRuleIndex learning rule index.
+		 */ 
+		CosWeightChange(int NewLearningRuleIndex);
 
 		/*!
 		 * \brief Object destructor.

@@ -136,7 +136,17 @@ class Network : public PrintableObject{
  		 * Number of OpenMP thread. 
  		 */
 		int NumberOfQueues;
-   		
+
+		/*!
+ 		 * Minimun propagation delay. Each propagation delay will be rounded to a multiple of this value. 
+ 		 */
+		double minpropagationdelay; 
+
+		/*!
+ 		 * Inverse of minpropagationdelay. 
+ 		 */
+		double invminpropagationdelay;
+
    		/*!
    		 * \brief It sorts the connections by the source neuron and the delay and add the output connections
    		 * 
@@ -426,8 +436,27 @@ class Network : public PrintableObject{
 		 * \return The number of OpenMP thread.
 		 */
 		int GetNumberOfQueues();
-
+		
+		/*!
+		 * \brief It calculate the minimun propagation delay between neurons of different OpenMP queues. This time is the maximun value that can be used in the synchronization between OpenMP queues.
+		 * 
+		 * It calculate the minimun propagation delay between neurons of different OpenMP queues.
+		 * 
+		 * \return The minimun propagation delay between neurons of different OpenMP queues.
+		 */
 		double GetMinInterpropagationTime();
+
+
+		/*!
+		 * \brief It rounds the propagation delay to a value multiple of "minpropagationdelay".
+		 * 
+		 * It rounds the propagation delay to a value multiple of "minpropagationdelay".
+		 *
+		  * \param time propagation delay.
+		 * 
+		 * \return A propagation delay multiple of "minpropagationdelay".
+		 */
+		double RoundPropagationDelay(double time);
    		
 };
 

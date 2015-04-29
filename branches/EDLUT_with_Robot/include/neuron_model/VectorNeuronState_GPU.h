@@ -46,6 +46,8 @@
  */
 
 #include "./VectorNeuronState.h"
+//Library for CUDA
+#include <helper_cuda.h>
 
 class VectorNeuronState_GPU: public VectorNeuronState {
 
@@ -89,6 +91,12 @@ class VectorNeuronState_GPU: public VectorNeuronState {
 		 */
 		bool * InternalSpikeCPU;
 
+		
+		/*!
+		 * \brief GPU properties
+		 */
+		cudaDeviceProp prop;
+
 		/*!
 		 * \brief Default constructor with parameters.
 		 *
@@ -117,7 +125,7 @@ class VectorNeuronState_GPU: public VectorNeuronState {
 		 * \param N_AuxNeuronStates number of AuxNeuronState for each neuron (number of parameters which have 
 		 * to be transferred between CPU and GPU for each neuron).
 		 */
-		void InitializeStatesGPU(int N_Neurons, float * initialization, int N_AuxNeuronStates);
+		void InitializeStatesGPU(int N_Neurons, float * initialization, int N_AuxNeuronStates, cudaDeviceProp NewProp);
 
 		/*!
 		 * \brief It gets the InternalSpike vector.

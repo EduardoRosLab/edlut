@@ -201,20 +201,6 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 		 *
 		 * \note This function doesn't generate the next propagated spike. It must be externally done.
 		 *
-		 * \param InputSpike The spike happened.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
-
-
-		/*!
-		 * \brief It processes a propagated spike (input spike in the cell).
-		 *
-		 * It processes a propagated spike (input spike in the cell).
-		 *
-		 * \note This function doesn't generate the next propagated spike. It must be externally done.
-		 *
 		 * \param inter the interconection which propagate the spike
 		 * \param target the neuron which receives the spike
 		 * \param time the time of the spike.
@@ -235,7 +221,7 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime);
+		virtual bool UpdateState(int index, double CurrentTime);
 
 
 
@@ -258,7 +244,7 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		virtual void InitializeStates(int N_neurons);
+		virtual void InitializeStates(int N_neurons, int OpenMPQueueIndex);
 
 
 		/*!
@@ -269,7 +255,7 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 		 * \param NeuronState value of the neuron state variables where differential equations are evaluated.
 		 * \param AuxNeuronState results of the differential equations evaluation.
 		 */
-		virtual void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState);
+		virtual void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState, int index);
 
 
 		/*!
@@ -281,6 +267,18 @@ class LIFTimeDrivenModel_1_2 : public TimeDrivenNeuronModel {
 		 * \param elapsed_time integration time step.
 		 */
 		virtual void EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time);
+
+
+		/*!
+		 * \brief It Checks if the neuron model has this connection type.
+		 *
+		 * It Checks if the neuron model has this connection type.
+		 *
+		 * \param Type input connection type.
+		 *
+		 * \return A a valid connection type for this neuron model.
+		 */
+		virtual int CheckSynapseTypeNumber(int Type);
 
 };
 

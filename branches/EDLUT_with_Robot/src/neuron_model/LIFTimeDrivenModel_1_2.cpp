@@ -71,7 +71,7 @@ void LIFTimeDrivenModel_1_2::LoadNeuronModel(string ConfigFile) throw (EDLUTFile
 										if(fscanf(fh,"%f",&this->grest)==1){
 											skip_comments(fh,Currentline);
 
-											this->InitialState = (VectorNeuronState *) new VectorNeuronState(3, true);
+											this->State = (VectorNeuronState *) new VectorNeuronState(N_NeuronStateVariables, true);
 
 										} else {
 											throw EDLUTFileException(13,60,3,1,Currentline);
@@ -108,17 +108,7 @@ void LIFTimeDrivenModel_1_2::LoadNeuronModel(string ConfigFile) throw (EDLUTFile
 }
 
 void LIFTimeDrivenModel_1_2::SynapsisEffect(int index, Interconnection * InputConnection){
-	switch (InputConnection->GetType()){
-		case 0: {
-			this->GetVectorNeuronState()->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState,1e-9f*InputConnection->GetWeight());
-			break;
-		}case 1:{
-			this->GetVectorNeuronState()->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState+1,1e-9f*InputConnection->GetWeight());
-			break;
-		}default :{
-			printf("ERROR: LIFTimeDrivenModel_1_2 only support two kind of input synapses \n");
-		}
-	}
+	this->GetVectorNeuronState()->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState+InputConnection->GetType(),1e-9f*InputConnection->GetWeight());
 }
 
 LIFTimeDrivenModel_1_2::LIFTimeDrivenModel_1_2(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel(NeuronTypeID, NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), texc(0), tinh(0),
@@ -138,18 +128,6 @@ VectorNeuronState * LIFTimeDrivenModel_1_2::InitializeState(){
 }
 
 
-InternalSpike * LIFTimeDrivenModel_1_2::ProcessInputSpike(PropagatedSpike *  InputSpike){
-	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(omp_get_thread_num(),InputSpike->GetTarget());
-
-	Neuron * TargetCell = inter->GetTarget();
-
-	// Add the effect of the input spike
-	this->SynapsisEffect(TargetCell->GetIndex_VectorNeuronState(),inter);
-
-	return 0;
-}
-
-
 InternalSpike * LIFTimeDrivenModel_1_2::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
 	// Add the effect of the input spike
 	this->SynapsisEffect(target->GetIndex_VectorNeuronState(),inter);
@@ -162,7 +140,7 @@ InternalSpike * LIFTimeDrivenModel_1_2::ProcessInputSpike(Interconnection * inte
 
 
 
-bool LIFTimeDrivenModel_1_2::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
+bool LIFTimeDrivenModel_1_2::UpdateState(int index, double CurrentTime){
 
 	
 	bool * internalSpike=State->getInternalSpike();
@@ -173,205 +151,78 @@ bool LIFTimeDrivenModel_1_2::UpdateState(int index, VectorNeuronState * State, d
 	//NeuronState[1] --> gexc 
 	//NeuronState[2] --> ginh 
 
+	double last_update = State->GetLastUpdateTime(0);
+	double elapsed_time = CurrentTime - last_update;
+	float elapsed_time_f=elapsed_time;
 
 
-	if(index==-1){
-
-		for(int j=0; j<NumberOfOpenMPTasks-1; j++){
-			#ifdef _OPENMP 
-				#if	_OPENMP >= OPENMPVERSION30
-					#pragma omp task firstprivate (j) shared(internalSpike, State, CurrentTime) 
-				#endif
-			#endif
-			{
-				for (int i=LimitOfOpenMPTasks[j]; i< LimitOfOpenMPTasks[j+1]; i++){
-					double last_update = State->GetLastUpdateTime(i);
-					double elapsed_time = CurrentTime - last_update;
-					float elapsed_time_f=elapsed_time;
-					State->AddElapsedTime(i,elapsed_time);
-					double last_spike = State->GetLastSpikeTime(i);
-
-					float * NeuronState=State->GetStateVariableAt(i);
-				
-					bool spike = false;
-
-					if (last_spike > this->tref) {
-						this->integrationMethod->NextDifferentialEcuationValue(i, NeuronState, elapsed_time_f);
-						if (NeuronState[0] > this->vthr){
-							State->NewFiredSpike(i);
-							spike = true;
-							NeuronState[0] = this->erest;
-							this->integrationMethod->resetState(i);
-						}
-					}else{
-						EvaluateTimeDependentEcuation(NeuronState, elapsed_time_f);
-					}
-
-					internalSpike[i]=spike;
-
-					State->SetLastUpdateTime(i,CurrentTime);
-				}
-			}
-		}
-		
-		for (int i=LimitOfOpenMPTasks[NumberOfOpenMPTasks-1]; i< LimitOfOpenMPTasks[NumberOfOpenMPTasks]; i++){
-			double last_update = State->GetLastUpdateTime(i);
-			double elapsed_time = CurrentTime - last_update;
-			float elapsed_time_f=elapsed_time;
-			State->AddElapsedTime(i,elapsed_time);
-			double last_spike = State->GetLastSpikeTime(i);
-
-			float * NeuronState=State->GetStateVariableAt(i);
-				
-			bool spike = false;
-
-			if (last_spike > this->tref) {
-				this->integrationMethod->NextDifferentialEcuationValue(i, NeuronState, elapsed_time_f);
-				if (NeuronState[0] > this->vthr){
-					State->NewFiredSpike(i);
-					spike = true;
-					NeuronState[0] = this->erest;
-					this->integrationMethod->resetState(i);
-				}
-			}else{
-				EvaluateTimeDependentEcuation(NeuronState, elapsed_time_f);
-			}
-
-			internalSpike[i]=spike;
-
-			State->SetLastUpdateTime(i,CurrentTime);
-		}
-
+	for(int j=0; j<NumberOfOpenMPTasks-1; j++){
 		#ifdef _OPENMP 
 			#if	_OPENMP >= OPENMPVERSION30
-				#pragma omp taskwait
+				#pragma omp task firstprivate (j) shared(internalSpike, CurrentTime) 
 			#endif
 		#endif
+		{
+			for (int i=LimitOfOpenMPTasks[j]; i< LimitOfOpenMPTasks[j+1]; i++){
+				State->AddElapsedTime(i,elapsed_time);
+				double last_spike = State->GetLastSpikeTime(i);
+
+				float * NeuronState=State->GetStateVariableAt(i);
+			
+				bool spike = false;
+
+				if (last_spike > this->tref) {
+					this->integrationMethod->NextDifferentialEcuationValue(i, NeuronState, elapsed_time_f);
+					if (NeuronState[0] > this->vthr){
+						State->NewFiredSpike(i);
+						spike = true;
+						NeuronState[0] = this->erest;
+						this->integrationMethod->resetState(i);
+					}
+				}else{
+					EvaluateTimeDependentEcuation(NeuronState, elapsed_time_f);
+				}
+
+				internalSpike[i]=spike;
+
+				State->SetLastUpdateTime(i,CurrentTime);
+			}
+		}
 	}
+	
+	for (int i=LimitOfOpenMPTasks[NumberOfOpenMPTasks-1]; i< LimitOfOpenMPTasks[NumberOfOpenMPTasks]; i++){
+		State->AddElapsedTime(i,elapsed_time);
+		double last_spike = State->GetLastSpikeTime(i);
 
-	else{
-		double last_update = State->GetLastUpdateTime(index);
-		double elapsed_time = CurrentTime - last_update;
-		float elapsed_time_f=elapsed_time;
-		State->AddElapsedTime(index,elapsed_time);
-		double last_spike = State->GetLastSpikeTime(index);
-
-		float * NeuronState=State->GetStateVariableAt(index);
+		float * NeuronState=State->GetStateVariableAt(i);
 			
 		bool spike = false;
 
 		if (last_spike > this->tref) {
-			this->integrationMethod->NextDifferentialEcuationValue(index, NeuronState, elapsed_time_f);
+			this->integrationMethod->NextDifferentialEcuationValue(i, NeuronState, elapsed_time_f);
 			if (NeuronState[0] > this->vthr){
-				State->NewFiredSpike(index);
+				State->NewFiredSpike(i);
 				spike = true;
 				NeuronState[0] = this->erest;
-				this->integrationMethod->resetState(index);
+				this->integrationMethod->resetState(i);
 			}
 		}else{
 			EvaluateTimeDependentEcuation(NeuronState, elapsed_time_f);
 		}
 
-		internalSpike[index]=spike;
+		internalSpike[i]=spike;
 
-		State->SetLastUpdateTime(index,CurrentTime);
+		State->SetLastUpdateTime(i,CurrentTime);
 	}
+
+	#ifdef _OPENMP 
+		#if	_OPENMP >= OPENMPVERSION30
+			#pragma omp taskwait
+		#endif
+	#endif
 
 	return false;
 }
-
-//
-//bool LIFTimeDrivenModel_1_2::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
-//
-//	
-//	bool * internalSpike=State->getInternalSpike();
-//	int Size=State->GetSizeState();
-//
-//	//NeuronState[0] --> vm 
-//	//NeuronState[1] --> gexc 
-//	//NeuronState[2] --> ginh 
-//
-//
-//
-//	if(index==-1){
-//
-//		for(int j=0; j<NumberOfOpenMPTasks; j++){
-//			#ifdef _OPENMP 
-//				#if	_OPENMP >= OPENMPVERSION30
-//					#pragma omp task if (j<(NumberOfOpenMPTasks-1)) firstprivate (j) shared (internalSpike, Size, State, CurrentTime)
-//				#endif
-//			#endif
-//			{
-//				for (int i=LimitOfOpenMPTasks[j]; i< LimitOfOpenMPTasks[j+1]; i++){
-//					double last_update = State->GetLastUpdateTime(i);
-//					double elapsed_time = CurrentTime - last_update;
-//					float elapsed_time_f=elapsed_time;
-//					State->AddElapsedTime(i,elapsed_time);
-//					double last_spike = State->GetLastSpikeTime(i);
-//
-//					float * NeuronState=State->GetStateVariableAt(i);
-//				
-//					bool spike = false;
-//
-//					if (last_spike > this->tref) {
-//						this->integrationMethod->NextDifferentialEcuationValue(i, NeuronState, elapsed_time_f);
-//						if (NeuronState[0] > this->vthr){
-//							State->NewFiredSpike(i);
-//							spike = true;
-//							NeuronState[0] = this->erest;
-//							this->integrationMethod->resetState(i);
-//						}
-//					}else{
-//						EvaluateTimeDependentEcuation(NeuronState, elapsed_time_f);
-//					}
-//
-//					internalSpike[i]=spike;
-//
-//					State->SetLastUpdateTime(i,CurrentTime);
-//				}
-//			}
-//		}
-//		
-//		#ifdef _OPENMP 
-//			#if	_OPENMP >= OPENMPVERSION30
-//				#pragma omp taskwait
-//			#endif
-//		#endif
-//	}
-//
-//	else{
-//		double last_update = State->GetLastUpdateTime(index);
-//		double elapsed_time = CurrentTime - last_update;
-//		float elapsed_time_f=elapsed_time;
-//		State->AddElapsedTime(index,elapsed_time);
-//		double last_spike = State->GetLastSpikeTime(index);
-//
-//		float * NeuronState=State->GetStateVariableAt(index);
-//			
-//		bool spike = false;
-//
-//		if (last_spike > this->tref) {
-//			this->integrationMethod->NextDifferentialEcuationValue(index, NeuronState, elapsed_time_f);
-//			if (NeuronState[0] > this->vthr){
-//				State->NewFiredSpike(index);
-//				spike = true;
-//				NeuronState[0] = this->erest;
-//				this->integrationMethod->resetState(index);
-//			}
-//		}else{
-//			EvaluateTimeDependentEcuation(NeuronState, elapsed_time_f);
-//		}
-//
-//		internalSpike[index]=spike;
-//
-//
-//
-//		State->SetLastUpdateTime(index,CurrentTime);
-//	}
-//
-//	return false;
-//	
-//}
 
 
 
@@ -389,10 +240,10 @@ ostream & LIFTimeDrivenModel_1_2::PrintInfo(ostream & out){
 
 
 
-void LIFTimeDrivenModel_1_2::InitializeStates(int N_neurons){
+void LIFTimeDrivenModel_1_2::InitializeStates(int N_neurons, int OpenMPQueueIndex){
 	//Initialize neural state variables.
 	float initialization[] = {erest,0.0f,0.0f};
-	InitialState->InitializeStates(N_neurons, initialization);
+	State->InitializeStates(N_neurons, initialization);
 
 	//Initialize integration method state variables.
 	this->integrationMethod->InitializeStates(N_neurons, initialization);
@@ -404,7 +255,7 @@ void LIFTimeDrivenModel_1_2::InitializeStates(int N_neurons){
 
 
 
-void LIFTimeDrivenModel_1_2::EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState){
+void LIFTimeDrivenModel_1_2::EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState, int index){
 	AuxNeuronState[0]=(NeuronState[1] * (this->eexc - NeuronState[0]) + NeuronState[2] * (this->einh - NeuronState[0]) + grest * (this->erest - NeuronState[0]))*this->inv_cm;
 }
 
@@ -424,6 +275,16 @@ void LIFTimeDrivenModel_1_2::EvaluateTimeDependentEcuation(float * NeuronState, 
 	}else{
 		NeuronState[2]*= ExponentialTable::GetResult(-(elapsed_time*this->inv_tinh));
 	}	
+}
+
+
+int LIFTimeDrivenModel_1_2::CheckSynapseTypeNumber(int Type){
+	if(Type<N_TimeDependentNeuronState && Type>=0){
+		return Type;
+	}else{
+		cout<<"Neuron model "<<this->GetTypeID()<<", "<<this->GetModelID()<<" does not support input synapses of type "<<Type<<endl;
+		return 0;
+	}
 }
 
 

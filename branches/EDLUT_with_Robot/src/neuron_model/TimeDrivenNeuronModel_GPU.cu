@@ -29,9 +29,6 @@
 
 TimeDrivenNeuronModel_GPU::TimeDrivenNeuronModel_GPU(string NeuronTypeID, string NeuronModelID): NeuronModel(NeuronTypeID, NeuronModelID), TimeDrivenStep_GPU(0.001) {
 	// TODO Auto-generated constructor stub
-	HANDLE_ERROR(cudaEventCreate(&stop));
-	HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));
-
 }
 
 TimeDrivenNeuronModel_GPU::~TimeDrivenNeuronModel_GPU() {

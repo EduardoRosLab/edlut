@@ -15,6 +15,9 @@
 #ifndef _EDLUT_INTERFACE_H_
 #define _EDLUT_INTERFACE_H_
 
+///////////////////////////////BORRAR///////////////////////
+#define expan_factor 1
+
 
 //Number of internal spikes in each slot time.
 extern long N_one_slot_internal_spikes2;
@@ -52,64 +55,68 @@ typedef struct Simulation_tag Simulation;
 ///// \brief Simulation time in seconds required to execute the desired trajectory once
 #define TRAJECTORY_TIME 1 
 
+/// \brief Approximate maximum acceptable time which can be consunsed by EDLUT in each slot
+/// Used in real time only
+#define MAX_SIM_SLOT_CONSUMED_TIME (SIM_SLOT_LENGTH*0.5)
+
 /// \brief Maximum delay time that a delay line can have in seconds
 /// (The particular delay of each line is specified when calling init_delay())
 #define MAX_DELAY_TIME 0.1
 
 /// \brief Number of used robot's joints
 /// (depends on the number of joints moved during the performed trajectory)
-#define NUM_JOINTS 1//3
+#define NUM_JOINTS 3//1
 
 /// \brief Number of RBFs to encode the trajectory in the cerebellum's mossy fibers
 /// (the correponsing distribution mathematical expression can be printed with printRBFs())
-#define NUM_RBFS 20
+#define NUM_RBFS (80*expan_factor)
 /// \brief Number of cerebellum's input variables for the desired trajectory (encoded by mossy fibers)
 /// (usually 2 (position and velocity) per joint)
-#define NUM_TRAJECTORY_INPUT_VARS NUM_JOINTS*2 // ECEA
+#define NUM_TRAJECTORY_INPUT_VARS (NUM_JOINTS*2) // ECEA
 /// \brief Number of cerebellum's input variables for the robot's state (encoded by mossy fibers)
 /// (usually 2 (position and velocity) per joint)
-#define NUM_ROBOT_STATE_INPUT_VARS NUM_JOINTS*2 // ICEA
+#define NUM_ROBOT_STATE_INPUT_VARS (NUM_JOINTS*2) // ICEA
 /// \brief Number of cerebellum's mossy fibers used to encode the cerebellar trajectory input variables
 /// (depends on NUM_INPUT_VARS and NUM_RBFS)
-#define NUM_TRAJECTORY_INPUT_NEURONS NUM_TRAJECTORY_INPUT_VARS*NUM_RBFS
+#define NUM_TRAJECTORY_INPUT_NEURONS (NUM_TRAJECTORY_INPUT_VARS*NUM_RBFS)
 /// \brief Number of cerebellum's mossy fibers used to encode the cerebellar robot state variables
 /// (depends on NUM_INPUT_VARS and NUM_RBFS)
-#define NUM_ROBOT_STATE_INPUT_NEURONS NUM_ROBOT_STATE_INPUT_VARS*NUM_RBFS
+#define NUM_ROBOT_STATE_INPUT_NEURONS (NUM_ROBOT_STATE_INPUT_VARS*NUM_RBFS)
 /// \brief Number of the first network neuron which correspong to a mossy fiber
 /// (depends on the neural network definition: EDLUT net input file)
 #define FIRST_INPUT_NEURON 0
 
 /// \brief Number of cerebellum's output variables (encoded by DNC cells)
 /// (usually 2 (positive and negative torque) per joint)
-#define NUM_OUTPUT_VARS NUM_JOINTS*2
+#define NUM_OUTPUT_VARS (NUM_JOINTS*2)
 /// \brief number of cerebellum's DCN cells used to encode one cerebellar output variable
 /// (depends on the neural network definition)
-#define NUM_NEURONS_PER_OUTPUT_VAR 1
+#define NUM_NEURONS_PER_OUTPUT_VAR (4*expan_factor)
 /// \brief Total number of cerebellum's DCN cells used to encode the cerebellar output variables
 /// (depends on NUM_OUTPUT_VARS and NUM_NEURONS_PER_OUTPUT_VAR)
-#define NUM_OUTPUT_NEURONS NUM_OUTPUT_VARS*NUM_NEURONS_PER_OUTPUT_VAR
+#define NUM_OUTPUT_NEURONS (NUM_OUTPUT_VARS*NUM_NEURONS_PER_OUTPUT_VAR)
 /// \brief Number of the first network neuron which correspong to a DCN cell
 /// (depends on the neural network definition: EDLUT net input file)
-#define FIRST_OUTPUT_NEURON 2120 //2160
+#define FIRST_OUTPUT_NEURON (3624*expan_factor) //2120 //
 
 /// \brief Number of the first network neuron which correspong to a climbing fiber
 /// (depends on the neural network definition: EDLUT net input file)
-#define FIRST_LEARNING_NEURON 2122 //2166
+#define FIRST_LEARNING_NEURON (3672*expan_factor) //2122 //
 /// \brief Number of cerebellum's climbing fibers which correspond to one cerebellar output variable
 /// (depends on the neural network definition)
-#define NUM_LEARNING_NEURONS_PER_OUTPUT_VAR 1  //
+#define NUM_LEARNING_NEURONS_PER_OUTPUT_VAR (8*expan_factor)  //
 /// \brief Total number of cerebellum's climbing fibers
 /// (depends on NUM_JOINTS and NUM_LEARNING_NEURONS_PER_OUTPUT_VAR)
-#define NUM_LEARNING_NEURONS NUM_JOINTS*2*NUM_LEARNING_NEURONS_PER_OUTPUT_VAR
+#define NUM_LEARNING_NEURONS (NUM_JOINTS*2*NUM_LEARNING_NEURONS_PER_OUTPUT_VAR)
 
 /// \brief Maximum applicable torque for each robot's joint (in N/m)
 /// (used to calculate the performed trajectory error)
-static const double MAX_ROBOT_JOINT_TORQUE[NUM_JOINTS]={1};//{1, 1, 1};
+static const double MAX_ROBOT_JOINT_TORQUE[NUM_JOINTS]={250,750,1000};//{0.1,0.1,0.5};//{1,1,1}
 
 /// \brief proportional and derivative error factor for each robot's joint
 /// (used to calculate the performed trajectory error and therefore the corresponding activity of climbing fibers)
-static const double ROBOT_JOINT_ERROR_KP[NUM_JOINTS] = {1};//{1,1,1}; // proportional error {160}
-static const double ROBOT_JOINT_ERROR_KD[NUM_JOINTS] = {0};//{0,0,0}; // derivative error;
+static const double ROBOT_JOINT_ERROR_KP[NUM_JOINTS] ={10*36,300*6,300*6};//{1,1,1};// {10.0*36,250.0*6,250.0*12};//{1,1,1};// proportional error
+static const double ROBOT_JOINT_ERROR_KD[NUM_JOINTS] ={23*36,23*6,23*6*5};//{0,0,0};//{23.0*36,23.0*6*5,23.0*12*5};//{0,0,0}//{125*2,125,125/2};//23.0*12}; // derivative error;
 
 /// \brief A structure definiton used to specify radial basis function (RBF) shape
 /// (used to encode input variables in mossy fibers)
@@ -510,11 +517,13 @@ EXTERN_C int save_and_finish_log(struct log *log, char *file_name);
 
 EXTERN_C void calculate_input_activity_for_one_trajectory(Simulation *neural_sim, double time);
 
-EXTERN_C void init_real_time_restriction(Simulation * neural_sim, float new_slot_time, float new_first_section, float new_second_section, float new_third_section);
+EXTERN_C void init_real_time_restriction(Simulation * neural_sim, float new_slot_time, float max_simulation_delay, float new_first_section, float new_second_section, float new_third_section);
 
 EXTERN_C void start_real_time_restriction(Simulation * neural_sim);
 
 EXTERN_C void reset_real_time_restriction(Simulation * neural_sim);
+
+EXTERN_C void next_step_real_time_restriction(Simulation * neural_sim);
 
 EXTERN_C void stop_real_time_restriction(Simulation * neural_sim);
 #endif /*_EDLUT_INTERFACE_H_*/

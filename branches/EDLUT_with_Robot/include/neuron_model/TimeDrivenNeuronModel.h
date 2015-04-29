@@ -108,7 +108,7 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime) = 0;
+		virtual bool UpdateState(int index, double CurrentTime) = 0;
 
 
 
@@ -129,7 +129,7 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		virtual void InitializeStates(int N_neurons)=0;
+		virtual void InitializeStates(int N_neurons, int OpenMPQueueIndex)=0;
 
 
 		/*!
@@ -140,7 +140,7 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 * \param NeuronState value of the neuron state variables where differential equations are evaluated.
 		 * \param AuxNeuronState results of the differential equations evaluation.
 		 */
-		virtual void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState)=0;
+		virtual void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState, int index)=0;
 
 
 		/*!
@@ -164,6 +164,19 @@ class TimeDrivenNeuronModel : public NeuronModel {
 		 * \param minimumSize minimum number of neurons that must contain a task.
 		 */
 		void CalculateTaskSizes(int N_neurons, int minimumSize);
+
+
+
+		/*!
+		 * \brief It Checks if the neuron model has this connection type.
+		 *
+		 * It Checks if the neuron model has this connection type.
+		 *
+		 * \param Type input connection type.
+		 *
+		 * \return A a valid connection type for this neuron model.
+		 */
+		virtual int CheckSynapseTypeNumber(int Type)=0;
 
 
 };

@@ -119,6 +119,7 @@ sfunctiondir	:= ./sfunction
 
 # default file to be included when the executable build is required
 exe-source-file := ${srcdir}/EDLUTKernel.cpp
+rtexe-source-file := ${srcdir}/RealTimeEDLUTKernel.cpp
 step-source-file := ${srcdir}/StepByStep.cpp
 prec-source-file := ${srcdir}/PrecisionTest.cpp
 robot-source-file := ${srcdir}/SimulatedRobotControl.cpp
@@ -153,19 +154,14 @@ communication-sources	:= $(srcdir)/communication/ArrayInputSpikeDriver.cpp \
 			$(srcdir)/communication/TCPIPOutputSpikeDriver.cpp
 
 
-integration-sources	:= $(srcdir)/integration_method/BDF1ad.cpp \
-			$(srcdir)/integration_method/BDF1vs.cpp \
-			$(srcdir)/integration_method/BDFn.cpp \
+integration-sources	:=	$(srcdir)/integration_method/BDFn.cpp \
 			$(srcdir)/integration_method/Euler.cpp \
 			$(srcdir)/integration_method/FixedStep.cpp \
 			$(srcdir)/integration_method/FixedStepSRM.cpp \
 			$(srcdir)/integration_method/IntegrationMethod.cpp \
 			$(srcdir)/integration_method/RK2.cpp \
 			$(srcdir)/integration_method/RK4.cpp \
-			$(srcdir)/integration_method/RK45.cpp \
-			$(srcdir)/integration_method/RK45ad.cpp \
-			$(srcdir)/integration_method/VariableStep.cpp \
-			$(srcdir)/integration_method/VariableStepSRM.cpp  
+			$(srcdir)/integration_method/RK45.cpp
 ifeq ($(cuda_enabled),true)
 integration-sources	+= $(srcdir)/integration_method/BDFn_GPU.cu \
 			$(srcdir)/integration_method/Euler_GPU.cu \
@@ -178,18 +174,21 @@ endif
 interface-sources	:= $(srcdir)/interface/C_Interface.cpp \
 			$(srcdir)/interface/C_interface_for_robot_control.cpp
 
-learning_rules-sources	:= 	$(srcdir)/learning_rules/ActivityRegister.cpp \
-			$(srcdir)/learning_rules/AdditiveKernelChange.cpp \
+learning_rules-sources	:=	$(srcdir)/learning_rules/AdditiveKernelChange.cpp \
 			$(srcdir)/learning_rules/ConnectionState.cpp \
 			$(srcdir)/learning_rules/CosState.cpp \
 			$(srcdir)/learning_rules/CosWeightChange.cpp \
 			$(srcdir)/learning_rules/ExpState.cpp \
 			$(srcdir)/learning_rules/ExpWeightChange.cpp \
 			$(srcdir)/learning_rules/LearningRule.cpp \
+			$(srcdir)/learning_rules/SimetricCosSinState.cpp \
+			$(srcdir)/learning_rules/SimetricCosSinSTDPState.cpp \
+			$(srcdir)/learning_rules/SimetricCosSinSTDPWeightChange.cpp \
+			$(srcdir)/learning_rules/SimetricCosSinWeightChange.cpp \
 			$(srcdir)/learning_rules/SimetricCosState.cpp \
+			$(srcdir)/learning_rules/SimetricCosSTDPState.cpp \
+			$(srcdir)/learning_rules/SimetricCosSTDPWeightChange.cpp \
 			$(srcdir)/learning_rules/SimetricCosWeightChange.cpp \
-			$(srcdir)/learning_rules/SimetricSTDPState.cpp \
-			$(srcdir)/learning_rules/SimetricSTDPWeightChange.cpp \
 			$(srcdir)/learning_rules/SinState.cpp \
 			$(srcdir)/learning_rules/SinWeightChange.cpp \
 			$(srcdir)/learning_rules/STDPLSState.cpp \
@@ -214,6 +213,7 @@ neuron_model-sources	:= $(srcdir)/neuron_model/BufferedState.cpp \
 			$(srcdir)/neuron_model/TableBasedModel.cpp \
 			$(srcdir)/neuron_model/TableBasedModelHF.cpp \
 			$(srcdir)/neuron_model/TimeDrivenNeuronModel.cpp \
+			$(srcdir)/neuron_model/TimeDrivenPurkinjeCell.cpp \
 			$(srcdir)/neuron_model/Vanderpol.cpp \
 			$(srcdir)/neuron_model/VectorBufferedState.cpp \
 			$(srcdir)/neuron_model/VectorNeuronState.cpp \
@@ -223,7 +223,8 @@ neuron_model-sources	+= $(srcdir)/neuron_model/EgidioGranuleCell_TimeDriven_GPU.
 			$(srcdir)/neuron_model/LIFTimeDrivenModel_1_2_GPU.cu \
 			$(srcdir)/neuron_model/LIFTimeDrivenModel_1_4_GPU.cu \
 			$(srcdir)/neuron_model/TimeDrivenNeuronModel_GPU.cu \
-			$(srcdir)/neuron_model/VectorNeuronState_GPU.cpp
+			$(srcdir)/neuron_model/TimeDrivenPurkinjeCell_GPU.cu \
+			$(srcdir)/neuron_model/VectorNeuronState_GPU.cu
 endif
 
 
@@ -234,13 +235,14 @@ simulation-sources	:= $(srcdir)/simulation/CommunicationEvent.cpp \
 			$(srcdir)/simulation/ExponentialTable.cpp \
 			$(srcdir)/simulation/ParameterException.cpp \
 			$(srcdir)/simulation/ParamReader.cpp \
+			$(srcdir)/simulation/RandomGenerator.cpp \
 			$(srcdir)/simulation/RealTimeRestriction.cpp \
 			$(srcdir)/simulation/SaveWeightsEvent.cpp \
 			$(srcdir)/simulation/StopSimulationEvent.cpp \
 			$(srcdir)/simulation/SynchronizeActivityEvent.cpp \
 			$(srcdir)/simulation/SynchronizeSimulationEvent.cpp \
 			$(srcdir)/simulation/TimeEventAllNeurons.cpp \
-			$(srcdir)/simulation/TimeEventOneNeuron.cpp \
+			$(srcdir)/simulation/TrigonometricTable.cpp \
 			$(srcdir)/simulation/Utils.cpp 
 ifeq ($(cuda_enabled),true)
 simulation-sources	+= $(srcdir)/simulation/Simulation_GPU.cu \
@@ -253,13 +255,17 @@ endif
 spike-sources		:= $(srcdir)/spike/EDLUTException.cpp \
 			$(srcdir)/spike/EDLUTFileException.cpp \
 			$(srcdir)/spike/InputSpike.cpp \
+			$(srcdir)/spike/InputSpikeGroupe.cpp \
 			$(srcdir)/spike/Interconnection.cpp \
 			$(srcdir)/spike/InternalSpike.cpp \
 			$(srcdir)/spike/Neuron.cpp \
+			$(srcdir)/spike/NeuronModelPropagationDelayStructure.cpp \
+			$(srcdir)/spike/NeuronPropagationDelayStructure.cpp \
 			$(srcdir)/spike/PropagatedSpike.cpp \
 			$(srcdir)/spike/Spike.cpp \
 			$(srcdir)/spike/TableBasedModelHFEvent.cpp \
-			$(srcdir)/spike/TimeDrivenInternalSpike.cpp
+			$(srcdir)/spike/TimeDrivenInternalSpike.cpp \
+			$(srcdir)/spike/TimeDrivenPropagatedSpike.cpp
 ifeq ($(cuda_enabled),true)
 spike-sources		+= $(srcdir)/spike/Network_GPU.cu
 else
@@ -270,7 +276,12 @@ robot-arm-sources	:= $(srcdir)/arm_robot_simulator/ArmRobotSimulation.c \
 			$(srcdir)/arm_robot_simulator/MatrixOperations.c \
 			$(srcdir)/arm_robot_simulator/RobotRecursiveInverseDynamics.c 
 
+
+ifeq ($(cuda_enabled),true)
+openmp-sources		:= $(srcdir)/openmp/openmp_GPU.cu
+else
 openmp-sources		:= $(srcdir)/openmp/openmp.cpp
+endif
 
 sources			:= $(communication-sources) \
 			$(integration-sources) \
@@ -280,7 +291,7 @@ sources			:= $(communication-sources) \
 			$(simulation-sources) \
 			$(spike-sources)\
 			$(openmp-sources)
-
+			
 ifeq ($(generate_robot),true)
 sources		+= $(robot-arm-sources)
 endif

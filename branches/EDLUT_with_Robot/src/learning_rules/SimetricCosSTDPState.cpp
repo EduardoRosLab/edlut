@@ -1,8 +1,8 @@
 /***************************************************************************
- *                           SimetricSTDPState.cpp                         *
+ *                           SimetricCosSTDPState.cpp                      *
  *                           -------------------                           *
- * copyright            : (C) 2011 by Jesus Garrido                        *
- * email                : jgarrido@atc.ugr.es                              *
+ * copyright            : (C) 2015 by Francisco Naveros                    *
+ * email                : fnaveros@ugr.es                                  *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,30 +14,35 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/learning_rules/SimetricSTDPState.h"
+#include "../../include/learning_rules/SimetricCosSTDPState.h"
 
 #include "../../include/simulation/ExponentialTable.h"
-
+#include "../../include/simulation/TrigonometricTable.h"
 
 #include <cmath>
 #include <stdio.h>
 #include <float.h>
 
-SimetricSTDPState::SimetricSTDPState(int NumSynapsesAndNeurons, float NewTau): ConnectionState(NumSynapsesAndNeurons, 3), tau(NewTau){
-	if (this->tau==0){
-		this->tau = 0.5f;
-	}
+SimetricCosSTDPState::SimetricCosSTDPState(int NumSynapsesAndNeurons, float NewTau, float NewExponent): ConnectionState(NumSynapsesAndNeurons, 3), tau(NewTau), exponent(NewExponent){
 	inv_tau=1.0f/tau;
 }
 
-SimetricSTDPState::~SimetricSTDPState() {
+SimetricCosSTDPState::~SimetricCosSTDPState() {
 }
 
-unsigned int SimetricSTDPState::GetNumberOfPrintableValues(){
+float SimetricCosSTDPState::GetPresynapticActivity(unsigned int index){
+	return this->GetStateVariableAt(index, 0);
+}
+
+float SimetricCosSTDPState::GetPostsynapticActivity(unsigned int index){
+	return this->GetStateVariableAt(index, 0);
+}
+
+unsigned int SimetricCosSTDPState::GetNumberOfPrintableValues(){
 	return ConnectionState::GetNumberOfPrintableValues()+1;
 }
 
-double SimetricSTDPState::GetPrintableValuesAt(unsigned int position){
+double SimetricCosSTDPState::GetPrintableValuesAt(unsigned int position){
 	if (position<ConnectionState::GetNumberOfPrintableValues()){
 		return ConnectionState::GetStateVariableAt(0, position);
 	} else if (position==ConnectionState::GetNumberOfPrintableValues()) {
@@ -48,22 +53,28 @@ double SimetricSTDPState::GetPrintableValuesAt(unsigned int position){
 
 
 
-void SimetricSTDPState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
+void SimetricCosSTDPState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
 	if(NewTime>this->GetLastUpdateTime(index)){
 		float OldCos2= this->GetStateVariableAt(index, 0);
 		float OldSin2= this->GetStateVariableAt(index, 1);
 		float OldCosSin= this->GetStateVariableAt(index, 2);
 
 		float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
-		float ElapsedRelative = ElapsedTime*this->inv_tau;
+		float ElapsedRelative = exponent*ElapsedTime*this->inv_tau;
 		float expon = ExponentialTable::GetResult(-ElapsedRelative);
 
+		float ElapsedRelativeTrigonometric=ElapsedTime*this->inv_tau*1.5708f;
 
-		float auxCos2=cos(ElapsedRelative);
-		float auxSin2=sin(ElapsedRelative);
-		float auxCosSin=auxCos2*auxSin2;
-		auxCos2*=auxCos2;
-		auxSin2*=auxSin2;
+
+		int LUTindex=TrigonometricTable::CalculateOffsetPosition(ElapsedRelativeTrigonometric);
+		LUTindex = TrigonometricTable::CalculateValidPosition(0,LUTindex);
+
+		float SinVar = TrigonometricTable::GetElement(LUTindex);
+		float CosVar = TrigonometricTable::GetElement(LUTindex+1);
+			
+		float auxCos2=CosVar*CosVar;
+		float auxSin2=SinVar*SinVar;
+		float auxCosSin=CosVar*SinVar;
 
 		
 		float NewCos2 = expon*(OldCos2 * auxCos2 + OldSin2*auxSin2-2*OldCosSin*auxCosSin);
@@ -79,13 +90,13 @@ void SimetricSTDPState::SetNewUpdateTime(unsigned int index, double NewTime, boo
 
 
 
-void SimetricSTDPState::ApplyPresynapticSpike(unsigned int index){
+void SimetricCosSTDPState::ApplyPresynapticSpike(unsigned int index){
 	// Increment the activity in the state variable
 	this->incrementStateVaraibleAt(index, 0, 1.0f);
 }
 
-void SimetricSTDPState::ApplyPostsynapticSpike(unsigned int index){
+void SimetricCosSTDPState::ApplyPostsynapticSpike(unsigned int index){
 	// Increment the activity in the state variable
-	return; 
+	this->incrementStateVaraibleAt(index, 0, 1.0f);
 }
 

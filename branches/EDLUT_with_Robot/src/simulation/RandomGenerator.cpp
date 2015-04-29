@@ -1,8 +1,8 @@
 /***************************************************************************
- *                           VariableStep.cpp                              *
+ *                           RandomGenerator.cpp	                       *
  *                           -------------------                           *
- * copyright            : (C) 2013 by Francisco Naveros                    *
- * email                : fnaveros@atc.ugr.es                              *
+ * copyright            : (C) 2015 by Francisco Naveros                    *
+ * email                : fnaveros@ugr.es                                  *
  ***************************************************************************/
 
 /***************************************************************************
@@ -15,19 +15,7 @@
  ***************************************************************************/
 
 
-#include "../../include/integration_method/VariableStep.h"
-#include "../../include/neuron_model/TimeDrivenNeuronModel.h"
+#include "../../include/simulation/RandomGenerator.h"
 
 
-VariableStep::VariableStep(TimeDrivenNeuronModel * NewModel, string integrationMethodType, int N_neuronStateVariables, int N_differentialNeuronState, int N_timeDependentNeuronState, bool jacobian, bool inverse):IntegrationMethod(NewModel,integrationMethodType,N_neuronStateVariables, N_differentialNeuronState, N_timeDependentNeuronState, jacobian, inverse){
-}
-
-VariableStep::~VariableStep(){
-
-}
-
-enum IntegrationMethodType VariableStep::GetMethodType(){
-	return VARIABLE_STEP;
-}
-
-
+unsigned long int RandomGenerator::next_element=1;

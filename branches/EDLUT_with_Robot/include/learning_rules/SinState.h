@@ -21,8 +21,6 @@
 
 #include <cmath>
 
-#define TERMSLUT 1024 // +5000 terms in the LUT produces an error
-
 /*!
  * \file SinState.h
  *
@@ -54,17 +52,7 @@ class SinState : public ConnectionState{
 		 */
 		const static float terms [11][11];
 
-
-		/*!
-		 * Precalculated sin terms.
-		 */
-		static float * SinLUT;
-
-		/*!
-		 * Precalculated LUT Step.
-		 */
-		static float LUTStep;
-		static float inv_LUTStep;
+		const float * TermPointer;
 
 		/*!
 		 * The exponent of the sinuidal function.
@@ -86,6 +74,8 @@ class SinState : public ConnectionState{
 		 * Corrective factor to adjust the maximum to 1.
 		 */
 		float factor;
+
+
 
 	public:
 
@@ -176,20 +166,6 @@ class SinState : public ConnectionState{
 		 * \param index The synapse's index inside the learning rule.
 		 */
 		virtual void ApplyPostsynapticSpike(unsigned int index);
-
-		/*!
-		 * \brief It precompute a look-up table of sin and cos.
-		 */
-		static float * GenerateSinLUT(){
-			float * NewSinLUT=new float[2*TERMSLUT];
-
-			for (unsigned int i=0; i<TERMSLUT; ++i){
-				NewSinLUT[2*i] = sinf(LUTStep*i);
-				NewSinLUT[2*i+1] = cosf(LUTStep*i);
-			}
-
-			return NewSinLUT;
-		}
 
 };
 

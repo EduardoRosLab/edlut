@@ -53,7 +53,14 @@ class PropagatedSpike: public Spike{
    		/*!
    		 * >0: Interneurons spike.
    		 */
-   		int target;
+   		int propagationDelayIndex;
+
+		int NPropagationDelayIndex;
+
+		/*
+		 * Number of synapses with equal propagation delay
+		 */
+		int NSynapses;
 
    		/*!
    		 * Interconnection.
@@ -87,7 +94,7 @@ class PropagatedSpike: public Spike{
    		 * \param NewTarget >0->Interneurons spike.
 		 * \param NewOpenMP_index queue index of the target neuron.
    		 */
-   		PropagatedSpike(double NewTime, Neuron * NewSource, int NewTarget, int NewOpenMP_index);
+   		PropagatedSpike(double NewTime, Neuron * NewSource, int NewPropagationDelayIndex, int NewNPropagationDelayIndex, int NewOpenMP_index);
 
    		/*!
    		 * \brief Constructor with parameters.
@@ -100,7 +107,7 @@ class PropagatedSpike: public Spike{
 		 * \param NewOpenMP_index queue index of the target neuron.
 		 * \param NewInter interconnection associated to this propagated spike.
    		 */
-		PropagatedSpike(double NewTime, Neuron * NewSource, int NewTarget, int NewOpenMP_index, Interconnection * NewInter);
+		PropagatedSpike(double NewTime, Neuron * NewSource, int NewPropagationDelayIndex, int NewNPropagationDelayIndex, int NewOpenMP_index, Interconnection * NewInter);
    		
    		/*!
    		 * \brief Class destructor.
@@ -116,24 +123,9 @@ class PropagatedSpike: public Spike{
    		 * 
    		 * \return The spike source type: -1->Input spike, -2->Internal spike and >0->Interneurons spike.
    		 */
-   		int GetTarget () const;
+   		int GetPropagationDelayIndex();
    		
-   		/*!
-   		 * \brief It sets the spike source type.
-   		 * 
-   		 * It sets the spike source type.
-   		 * 
-   		 * \param NewTarget The new spike source type: -1->Input spike, -2->Internal spike and >0->Interneurons spike.
-   		 */
-   		void SetTarget (int NewTarget);
-
-   		/*!
-   		 * \brief It increment the target neuron index in order to process the next synapse in the source neuron.
-   		 * 
-   		 * It increment the target neuron index in order to process the next synapse in the source neuron.
-   		 */
-		void IncrementTarget();
-
+		int GetNPropagationDelayIndex();
   		
 
    		/*!
@@ -145,7 +137,7 @@ class PropagatedSpike: public Spike{
 		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
 		 * control the consumed time in each slot.
    		 */
-   		virtual void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction);
+   		virtual void ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction);
 
 		/*!
    		 * \brief It process an event in the simulation without the option of real time available.

@@ -83,42 +83,47 @@ public:
 	 */
 	#if defined(REAL_TIME_WINNT)
 		// Variables for consumed-CPU-time measurement
-		LARGE_INTEGER startt,endt,freq;
+		LARGE_INTEGER startt,endt,freq,endt_supervision;
 
 	#elif defined(REAL_TIME_OSX)
-		uint64_t startt, endt, elapsed;
+		uint64_t startt, endt, elapsed,endt_supervision, elapsed_supervision;
 		mach_timebase_info_data_t freq;
 	
 	#elif defined(REAL_TIME_LINUX)
 		// Calculate time taken by a request - Link with real-time library -lrt
-		struct timespec startt, endt, freq;
+		struct timespec startt, endt, freq,endt_supervision;
 	#endif
-
-		/*!
-		 * Auxiliar value where the watch dog measures the consumed time after each reset.
-		 */
-		volatile float slot_elapsed_time;
 
 		/*!
 		 * Restriction level fixed by the batchdog.
 		 */
-		volatile int RestrictionLevel;
+		 int RestrictionLevel;
+
+		 float time;
 
 		/*!
-		 * It controls when the watchdogs must be reseted.
+		 * Auxiliar value where the watch dog measures the consumed time after each reset.
 		 */
-		volatile bool Reset;
+		float * slot_elapsed_times;
+		int position;
+
+		 int init_compensation_factor;
+
 
 		/*!
 		 * It controls when the watchdogs must be stopped.
 		 */
-		volatile bool Stop;
+		 bool Stop;
 
 
 		/*!
 		 * This is the reference slot time. Each execution slot must consume less time that this slot time.
 		 */
 		float slot_time;
+
+		float max_delay;
+
+		int N_elements;
 
 		/*!
 		 * value between 0 and 1 that contain the fraction of slot_time that diffines the first section.
@@ -134,6 +139,10 @@ public:
 		 * value between "second_section" and 1 that contain the fraction of slot_time that diffines the third section.
 		 */
 		float third_section;
+
+		float first_gap_time;
+		float second_gap_time;
+		float third_gap_time;
 	
    	public:
    		
@@ -150,11 +159,12 @@ public:
    		 * It creates and initializes a new event object.
 		 *
 		 * \param new_slot_time
+		 * \param new_max_delay
 		 * \param new_first_section
 		 * \param new_second_section
 		 * \param new_third_section
    		 */
-   		RealTimeRestriction(float new_slot_time, float new_first_section, float new_second_section, float new_third_section);
+   		RealTimeRestriction(float new_slot_time, float new_max_delay, float new_first_section, float new_second_section, float new_third_section);
    	
    		
    		/*!
@@ -170,7 +180,7 @@ public:
    		 * 
    		 * It sets the watchdog parameter.
    		 */
-		void SetParameterWatchDog(float new_slot_time, float new_first_section, float new_second_section, float new_third_section);
+		void SetParameterWatchDog(float new_slot_time, float new_max_delay, float new_first_section, float new_second_section, float new_third_section);
 
    		/*!
    		 * \brief It resets the watchdog.
@@ -178,6 +188,8 @@ public:
    		 * It resets the watchdog.
    		 */		
 		void ResetWatchDog();
+
+		void NextStepWatchDog();
 
    		/*!
    		 * \brief It stops the watchdog.

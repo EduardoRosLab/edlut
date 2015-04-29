@@ -33,6 +33,7 @@
 #include "../../include/integration_method/IntegrationMethod_GPU2.h"
 #include "../../include/integration_method/LoadIntegrationMethod_GPU2.h"
 
+
 //Library for CUDA
 #include <helper_cuda.h>
 
@@ -189,8 +190,8 @@ class EgidioGranuleCell_TimeDriven_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 			gMAXK_Ca(GMAXK_Ca), gMAXCa(GMAXCa), gMAXK_sl(GMAXK_sl), gLkg1(5.68e-5f), gLkg2(2.17e-5f), VNa(87.39f),
 			VK(-84.69f), VLkg1(-58.0f), VLkg2(-65.0f), V0_xK_Ai(-46.7f), K_xK_Ai(-19.8f), V0_yK_Ai(-78.8f), K_yK_Ai(8.4f),
 			V0_xK_sli(-30.0f), B_xK_sli(6.0f), F(96485.309f), A(1e-04f), d(0.2f), betaCa(1.5f), Ca0(1e-04f), R(8.3134f),
-			cao(2.0f), Cm(1.0e-3f), temper(30.0f), Q10_20 ( pow(3,((temper-20.0f)/10.0f))), Q10_22 ( pow(3,((temper-22.0f)/10.0f))),
-			Q10_30 ( pow(3,((temper-30.0f)/10.0f))), Q10_6_3 ( pow(3,((temper-6.3f)/10.0f))), I_inj_abs(11e-12f)/*I_inj_abs(0)*/,
+			cao(2.0f), Cm(1.0e-3f), temper(30.0f), Q10_20 ( pow(3.0f,((temper-20.0f)/10.0f))), Q10_22 ( pow(3.0f,((temper-22.0f)/10.0f))),
+			Q10_30 ( pow(3.0f,((temper-30.0f)/10.0f))), Q10_6_3 ( pow(3.0f,((temper-6.3f)/10.0f))), I_inj_abs(11e-12f)/*I_inj_abs(0)*/,
 			I_inj(-I_inj_abs*1000.0f/299.26058e-8f), eexc(0.0f), einh(-80.0f), texc(0.5f), tinh(10.0f), vthr(-0.25f){
 					
 			integrationMethod_GPU2=LoadIntegrationMethod_GPU2::loadIntegrationMethod_GPU2(this, integrationName, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, Buffer_GPU);

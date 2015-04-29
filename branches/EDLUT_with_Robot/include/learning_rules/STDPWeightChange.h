@@ -66,11 +66,13 @@ class STDPWeightChange: public WithPostSynaptic {
 	public:
 
 		/*!
-		 * \brief Default constructor.
-		 * 
-		 * It creates a new object.
-		 */ 
-		STDPWeightChange();
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule with its index.
+		 *
+		 * \param NewLearningRuleIndex learning rule index.
+		 */  
+		STDPWeightChange(int NewLearningRuleIndex);
 
 		/*!
 		 * \brief Object destructor.

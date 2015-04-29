@@ -40,7 +40,7 @@ void RK4::NextDifferentialEcuationValue(int index, float * NeuronState, float el
 
 
 	//1st term
-	this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState1);
+	this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState1, index);
 	
 	//2nd term
 	for (j=0; j<N_DifferentialNeuronState; j++){
@@ -51,14 +51,14 @@ void RK4::NextDifferentialEcuationValue(int index, float * NeuronState, float el
 	}
 
 	this->model->EvaluateTimeDependentEcuation(AuxNeuronState, elapsed_time_0_5);
-	this->model->EvaluateDifferentialEcuation(AuxNeuronState, AuxNeuronState2);
+	this->model->EvaluateDifferentialEcuation(AuxNeuronState, AuxNeuronState2, index);
 
 	//3rd term
 	for (j=0; j<N_DifferentialNeuronState; j++){
 		AuxNeuronState[j]=NeuronState[j] + AuxNeuronState2[j]*elapsed_time_0_5;
 	}
 
-	this->model->EvaluateDifferentialEcuation(AuxNeuronState, AuxNeuronState3);
+	this->model->EvaluateDifferentialEcuation(AuxNeuronState, AuxNeuronState3, index);
 
 	//4rd term
 	for (j=0; j<N_DifferentialNeuronState; j++){
@@ -66,7 +66,7 @@ void RK4::NextDifferentialEcuationValue(int index, float * NeuronState, float el
 	}
 
 	this->model->EvaluateTimeDependentEcuation(AuxNeuronState, elapsed_time_0_5);
-	this->model->EvaluateDifferentialEcuation(AuxNeuronState, AuxNeuronState4);
+	this->model->EvaluateDifferentialEcuation(AuxNeuronState, AuxNeuronState4, index);
 
 
 	for (j=0; j<N_DifferentialNeuronState; j++){

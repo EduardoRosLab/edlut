@@ -3,6 +3,7 @@
 ################################################################################
 
 exe-sources   := ${sources} ${exe-source-file}
+rtexe-sources   := ${sources} ${rtexe-source-file}
 step-sources   := ${sources} ${step-source-file}
 precision-sources   := ${sources} ${prec-source-file}
 robot-sources	:= ${sources} ${robot-source-file}
@@ -20,6 +21,12 @@ exe-objects       += $(filter %.o,$(subst  .cc,.o,$(exe-sources)))
 exe-objects       += $(filter %.o,$(subst .cpp,.o,$(exe-sources)))
 exe-objects       += $(filter %.o,$(subst .cu,.o,$(exe-sources)))
 exe-dependencies  := $(subst .o,.d,$(exe-objects))
+
+rtexe-objects       := $(filter %.o,$(subst   .c,.o,$(rtexe-sources)))
+rtexe-objects       += $(filter %.o,$(subst  .cc,.o,$(rtexe-sources)))
+rtexe-objects       += $(filter %.o,$(subst .cpp,.o,$(rtexe-sources)))
+rtexe-objects       += $(filter %.o,$(subst .cu,.o,$(rtexe-sources)))
+rtexe-dependencies  := $(subst .o,.d,$(rtexe-objects))
 
 step-objects       := $(filter %.o,$(subst   .c,.o,$(step-sources)))
 step-objects       += $(filter %.o,$(subst  .cc,.o,$(step-sources)))
@@ -54,6 +61,7 @@ sfunction-dependencies  := $(subst .o,.d,$(sfunction-objects))
 
 libtarget     := $(libdir)/lib$(packagename).a
 exetarget     := $(bindir)/$(packagename)
+rtexetarget   := $(bindir)/RealTimeEDLUTKernel
 steptarget     := $(bindir)/stepbystep
 precisiontarget := $(bindir)/precisiontest
 robottarget	:= $(bindir)/robottest

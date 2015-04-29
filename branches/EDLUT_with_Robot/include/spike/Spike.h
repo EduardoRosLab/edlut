@@ -110,7 +110,7 @@ class Spike: public Event{
 		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
 		 * control the consumed time in each slot.
    		 */
-   		virtual void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction) = 0;
+   		virtual void ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction) = 0;
 
 		/*!
    		 * \brief It process an event in the simulation without the option of real time available.
@@ -143,7 +143,7 @@ class Spike: public Event{
    		 * 
    		 * The event queue uses this preference variable to sort the events with the same time stamp.
 		 */
-		virtual int ProcessingPriority();
+		virtual enum EventPriority ProcessingPriority();
    	
 };
 

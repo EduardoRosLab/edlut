@@ -20,7 +20,6 @@
 
 #include "../../include/simulation/Simulation.h"
 #include "../../include/simulation/StopSimulationEvent.h"
-#include "../../include/simulation/TimeEventOneNeuron.h"
 #include "../../include/simulation/TimeEventAllNeurons.h"
 
 #include "../../include/spike/Network.h"
@@ -58,8 +57,9 @@ Simulation::Simulation(const char * NetworkFile, const char * WeightsFile, doubl
 	SynchronizeThread=new bool[NumberOfQueues]();
 	Updates=new long long[NumberOfQueues]();
 	Heapoc=new long long[NumberOfQueues]();
-	TotalSpikeCounter=new long[NumberOfQueues]();
-	TotalPropagateCounter=new long[NumberOfQueues]();
+	TotalSpikeCounter=new long long[NumberOfQueues]();
+	TotalPropagateCounter=new long long[NumberOfQueues]();
+	TotalPropagateEventCounter=new long long[NumberOfQueues]();
 
 	//Initialize one eventqueue object that manage one queue for each OpenMP thread.
 	Queue=new EventQueue(NumberOfQueues);
@@ -192,18 +192,8 @@ void Simulation::InitSimulation() throw (EDLUTException){
 		for(int z=0; z<this->GetNetwork()->GetNneutypes(); z++){
 			if(N_TimeDrivenNeuron[z][i]>0){
 				TimeDrivenNeuronModel * model=(TimeDrivenNeuronModel *) this->GetNetwork()->GetNeuronModelAt(z,i);
-				//If this model implement a fixed step integration method, one TimeEvent can manage all
-				//neurons in this neuron model
-				if(model->integrationMethod->GetMethodType()==FIXED_STEP){
-					this->Queue->InsertEvent(i, new TimeEventAllNeurons(model->integrationMethod->PredictedElapsedTime[0],((TimeDrivenNeuronModel *)this->GetNetwork()->GetNeuronModelAt(z,i)),this->GetNetwork()->GetTimeDrivenNeuronAt(z,i)));
-				}
-				//If this model implement a variable step integration method, it is necesary to 
-				//implement a TimeEvent for each neuron in this neuron model.
-				else{
-					for(int j=0; j<N_TimeDrivenNeuron[z][i]; j++){
-						this->Queue->InsertEvent(i,new TimeEventOneNeuron(model->integrationMethod->PredictedElapsedTime[i],((TimeDrivenNeuronModel *)this->GetNetwork()->GetNeuronModelAt(z,i)),this->GetNetwork()->GetTimeDrivenNeuronAt(z,i), j));
-					}
-				}
+
+				this->Queue->InsertEvent(i, new TimeEventAllNeurons(model->integrationMethod->ElapsedTime,((TimeDrivenNeuronModel *)this->GetNetwork()->GetNeuronModelAt(z,i)),this->GetNetwork()->GetTimeDrivenNeuronAt(z,i)));
 			}
 		}
 
@@ -242,7 +232,7 @@ void Simulation::SynchronizeThreads(){
 		#pragma omp single
 		{
 			Event * newEvent=this->GetQueue()->RemoveEventWithSynchronization();
-			newEvent->ProcessEvent(this, &(this->RealTimeRestrictionObject->RestrictionLevel));
+			newEvent->ProcessEvent(this, this->RealTimeRestrictionObject->RestrictionLevel);
 			delete newEvent;
 		}
 
@@ -255,7 +245,6 @@ void Simulation::SynchronizeThreads(){
 
 
 void Simulation::RunSimulation()  throw (EDLUTException){
-	this->InitSimulation();
 
 	Event * NewEvent;
 	int openMP_index;
@@ -339,7 +328,7 @@ void Simulation::RunSimulationSlot(double preempt_time)  throw (EDLUTException){
 
 			this->CurrentSimulationTime[openMP_index]=NewEvent->GetTime(); // only for checking 
 
-			NewEvent->ProcessEvent(this, &(this->RealTimeRestrictionObject->RestrictionLevel));
+			NewEvent->ProcessEvent(this, this->RealTimeRestrictionObject->RestrictionLevel);
 
 			delete NewEvent;	
 		}
@@ -350,6 +339,7 @@ void Simulation::RunSimulationSlot(double preempt_time)  throw (EDLUTException){
 		SynchronizeThreads();
 	}
 }
+
 
 void Simulation::WriteSpike(const Spike * spike){
 	Neuron * neuron=spike->GetSource();  // source of the spike
@@ -408,19 +398,19 @@ void Simulation::GetInput(){
 	}
 }
 
-long Simulation::GetTotalSpikeCounter(int indexThread){
+long long Simulation::GetTotalSpikeCounter(int indexThread){
 	return this->TotalSpikeCounter[indexThread];
 }
 
-long Simulation::GetTotalSpikeCounter(){
-	long counter=0;
+long long Simulation::GetTotalSpikeCounter(){
+	long long counter=0;
 	for(int i=0; i<NumberOfQueues; i++){
 		counter+=this->TotalSpikeCounter[i];
 	}
 	return counter;
 }
 
-void Simulation::SetTotalSpikeCounter(int indexThread, long int value) {
+void Simulation::SetTotalSpikeCounter(int indexThread, long long value) {
 	this->TotalSpikeCounter[indexThread] = value;
 }
 
@@ -428,16 +418,49 @@ void Simulation::IncrementTotalSpikeCounter(int indexThread) {
 	this->TotalSpikeCounter[indexThread]++;
 }
 
-long Simulation::GetTotalPropagateCounter(int indexThread){
+
+long long Simulation::GetTotalPropagateCounter(int indexThread){
 	return this->TotalPropagateCounter[indexThread];
 }
 
-void Simulation::SetTotalPropagateCounter(int indexThread, long int value) {
+long long Simulation::GetTotalPropagateCounter(){
+	long long counter=0;
+	for(int i=0; i<NumberOfQueues; i++){
+		counter+=this->TotalPropagateCounter[i];
+	}
+	return counter;
+}
+
+long long Simulation::GetTotalPropagateEventCounter(int indexThread){
+	return this->TotalPropagateEventCounter[indexThread];
+}
+
+long long Simulation::GetTotalPropagateEventCounter(){
+	long long counter=0;
+	for(int i=0; i<NumberOfQueues; i++){
+		counter+=this->TotalPropagateEventCounter[i];
+	}
+	return counter;
+}
+
+void Simulation::SetTotalPropagateCounter(int indexThread, long long value) {
 	this->TotalPropagateCounter[indexThread] = value;
+}
+
+void Simulation::SetTotalPropagateEventCounter(int indexThread, long long value) {
+	this->TotalPropagateEventCounter[indexThread] = value;
 }
 
 void Simulation::IncrementTotalPropagateCounter(int indexThread) {
 	this->TotalPropagateCounter[indexThread]++;
+}
+
+void Simulation::IncrementTotalPropagateEventCounter(int indexThread) {
+	this->TotalPropagateEventCounter[indexThread]++;
+}
+
+void Simulation::IncrementTotalPropagateCounter(int indexThread, int increment) {
+	this->TotalPropagateCounter[indexThread]+=increment;
 }
 
 Network * Simulation::GetNetwork() const{
@@ -607,4 +630,7 @@ int Simulation::GetNumberOfThreads(){
 
 double Simulation::GetMinInterpropagationTime(){
 	return MinInterpropagationTime;
+}
+
+void Simulation::SelectGPU(int OpenMP_index){
 }

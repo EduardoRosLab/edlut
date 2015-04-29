@@ -26,6 +26,7 @@
 #include "../include/simulation/Simulation.h"
 
 #include "../include/simulation/ParameterException.h"
+#include "../include/simulation/RandomGenerator.h"
 
 #include "../include/communication/ConnectionException.h"
 #include "../include/communication/InputSpikeDriver.h"
@@ -55,7 +56,7 @@ void GenerateInput(int InputFrequency,double InitTime, double SimulationTime, Si
 
 	for (int i=FirstInputCell; i<=LastInputCell; ++i){
 		for (int j=0; j<NumberOfSpikesPerCell; ++j){
-			double randvalue = rand()/(double)RAND_MAX;
+			double randvalue = RandomGenerator::drand();
 			SpikeTimes[SpikeCounter] = randvalue*SimulationTime + InitTime;
 			SpikeCells[SpikeCounter++] = i;
 		}

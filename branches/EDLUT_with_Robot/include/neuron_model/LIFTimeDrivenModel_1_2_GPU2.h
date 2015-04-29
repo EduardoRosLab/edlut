@@ -231,8 +231,21 @@ class LIFTimeDrivenModel_1_2_GPU2 : public TimeDrivenNeuronModel_GPU2 {
 		 * \param elapsed_time integration time step.
 		 */
 		__device__ void EvaluateTimeDependentEcuation(int index, int SizeStates, float * NeuronState, float elapsed_time){
-			NeuronState[1*SizeStates + index]*= __expf(-(elapsed_time*this->inv_texc));
-			NeuronState[2*SizeStates + index]*= __expf(-(elapsed_time*this->inv_tinh));
+//			NeuronState[1*SizeStates + index]*= __expf(-(elapsed_time*this->inv_texc));
+//			NeuronState[2*SizeStates + index]*= __expf(-(elapsed_time*this->inv_tinh));
+	float limit=1e-20;
+	
+	if(NeuronState[1*SizeStates + index]<limit){
+		NeuronState[1*SizeStates + index]=0.0f;
+	}else{
+		NeuronState[1*SizeStates + index]*= __expf(-(elapsed_time*this->inv_texc));
+	}
+	if(NeuronState[2*SizeStates + index]<limit){
+		NeuronState[2*SizeStates + index]=0.0f;
+	}else{
+		NeuronState[2*SizeStates + index]*= __expf(-(elapsed_time*this->inv_tinh));
+	}
+
 		}
 
 

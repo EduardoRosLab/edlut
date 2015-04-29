@@ -71,7 +71,7 @@ void LIFTimeDrivenModel_1_2_GPU::LoadNeuronModel(string ConfigFile) throw (EDLUT
 										if(fscanf(fh,"%f",&this->grest)==1){
 											skip_comments(fh,Currentline);
 
-											this->InitialState = (VectorNeuronState_GPU *) new VectorNeuronState_GPU(3);
+											this->State = (VectorNeuronState_GPU *) new VectorNeuronState_GPU(N_NeuronStateVariables);
 //NEW CODE------------------------------------------------------------------------------
 											} else {
 											throw EDLUTFileException(13,60,3,1,Currentline);
@@ -112,20 +112,7 @@ void LIFTimeDrivenModel_1_2_GPU::LoadNeuronModel(string ConfigFile) throw (EDLUT
 }
 
 void LIFTimeDrivenModel_1_2_GPU::SynapsisEffect(int index, VectorNeuronState_GPU * state, Interconnection * InputConnection){
-
-	switch (InputConnection->GetType()){
-		case 0: {
-			//gampa
-			state->AuxStateCPU[0*state->GetSizeState() + index]+=1e-9f*InputConnection->GetWeight();
-			break;
-		}case 1:{
-			//gnmda
-			state->AuxStateCPU[1*state->GetSizeState() + index]+=1e-9f*InputConnection->GetWeight();
-			break;
-		}default :{
-			printf("ERROR: LIFTimeDrivenModel_1_2 only support two kind of input synapses \n");
-		}
-	}
+	state->AuxStateCPU[InputConnection->GetType()*state->GetSizeState() + index]+=1e-9f*InputConnection->GetWeight();
 }
 
 LIFTimeDrivenModel_1_2_GPU::LIFTimeDrivenModel_1_2_GPU(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel_GPU(NeuronTypeID, NeuronModelID), eexc(0), einh(0), erest(0), vthr(0), cm(0), texc(0), tinh(0),
@@ -145,25 +132,10 @@ VectorNeuronState * LIFTimeDrivenModel_1_2_GPU::InitializeState(){
 }
 
 
-InternalSpike * LIFTimeDrivenModel_1_2_GPU::ProcessInputSpike(PropagatedSpike *  InputSpike){
-	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(omp_get_thread_num(),InputSpike->GetTarget());
-
-	Neuron * TargetCell = inter->GetTarget();
-
-	int indexGPU =TargetCell->GetIndex_VectorNeuronState();
-
-	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->InitialState;
-
-	// Add the effect of the input spike
-	this->SynapsisEffect(inter->GetTarget()->GetIndex_VectorNeuronState(), state, inter);
-
-	return 0;
-}
-
 InternalSpike * LIFTimeDrivenModel_1_2_GPU::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
 	int indexGPU =target->GetIndex_VectorNeuronState();
 
-	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->InitialState;
+	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->State;
 
 	// Add the effect of the input spike
 	this->SynapsisEffect(target->GetIndex_VectorNeuronState(), state, inter);
@@ -175,6 +147,7 @@ InternalSpike * LIFTimeDrivenModel_1_2_GPU::ProcessInputSpike(Interconnection * 
 __global__ void LIFTimeDrivenModel_1_2_GPU_UpdateState(LIFTimeDrivenModel_1_2_GPU2 ** NeuronModel_GPU2, double CurrentTime){
 	(*NeuronModel_GPU2)->UpdateState(CurrentTime);
 }
+
 		
 bool LIFTimeDrivenModel_1_2_GPU::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
 	VectorNeuronState_GPU *state = (VectorNeuronState_GPU *) State;
@@ -219,12 +192,18 @@ ostream & LIFTimeDrivenModel_1_2_GPU::PrintInfo(ostream & out){
 }	
 
 
-void LIFTimeDrivenModel_1_2_GPU::InitializeStates(int N_neurons){
+void LIFTimeDrivenModel_1_2_GPU::InitializeStates(int N_neurons, int OpenMPQueueIndex){
 
-	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->InitialState;
+	//Select the correnpondent device. 
+	HANDLE_ERROR(cudaSetDevice(GPUsIndex[OpenMPQueueIndex % NumberOfGPUs]));  
+	HANDLE_ERROR(cudaEventCreate(&stop));
+	HANDLE_ERROR(cudaGetDeviceProperties( &prop, GPUsIndex[OpenMPQueueIndex % NumberOfGPUs]));
+
+
+	VectorNeuronState_GPU * state = (VectorNeuronState_GPU *) this->State;
 	
 	float initialization[] = {erest,0.0,0.0};
-	state->InitializeStatesGPU(N_neurons, initialization, N_TimeDependentNeuronState);
+	state->InitializeStatesGPU(N_neurons, initialization, N_TimeDependentNeuronState, prop);
 
 	//INITIALIZE CLASS IN GPU
 	this->InitializeClassGPU2(N_neurons);
@@ -252,8 +231,6 @@ void LIFTimeDrivenModel_1_2_GPU::InitializeClassGPU2(int N_neurons){
 	cudaMalloc((void **)&integrationNameGPU,32*4);
 	HANDLE_ERROR(cudaMemcpy(integrationNameGPU,integrationMethod_GPU->GetType(),32*4,cudaMemcpyHostToDevice));
 
-	cudaDeviceProp prop;
-	HANDLE_ERROR(cudaGetDeviceProperties( &prop, 0 ));	
 	this->N_thread = 128;
 	this->N_block=prop.multiProcessorCount*16;
 	if((N_neurons+N_thread-1)/N_thread < N_block){
@@ -278,7 +255,7 @@ __global__ void initializeVectorNeuronState_GPU2(LIFTimeDrivenModel_1_2_GPU2 ** 
 }
 
 void LIFTimeDrivenModel_1_2_GPU::InitializeVectorNeuronState_GPU2(){
-	VectorNeuronState_GPU *state = (VectorNeuronState_GPU *) InitialState;
+	VectorNeuronState_GPU *state = (VectorNeuronState_GPU *) State;
 	initializeVectorNeuronState_GPU2<<<1,1>>>(NeuronModel_GPU2, state->AuxStateGPU, state->VectorNeuronStates_GPU, state->LastUpdateGPU, state->LastSpikeTimeGPU, state->InternalSpikeGPU, state->SizeStates);
 }
 
@@ -293,4 +270,14 @@ __global__ void DeleteClass_GPU2(LIFTimeDrivenModel_1_2_GPU2 ** NeuronModel_GPU2
 void LIFTimeDrivenModel_1_2_GPU::DeleteClassGPU2(){
     DeleteClass_GPU2<<<1,1>>>(NeuronModel_GPU2);
     cudaFree(NeuronModel_GPU2);
+}
+
+
+int LIFTimeDrivenModel_1_2_GPU::CheckSynapseTypeNumber(int Type){
+	if(Type<N_TimeDependentNeuronState && Type>=0){
+		return Type;
+	}else{
+		cout<<"Neuron model "<<this->GetTypeID()<<", "<<this->GetModelID()<<" does not support input synapses of type "<<Type<<endl;
+		return 0;
+	}
 }

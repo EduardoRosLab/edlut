@@ -35,315 +35,97 @@
 PropagatedSpike::PropagatedSpike(int NewOpenMP_index):Spike(), OpenMP_index(NewOpenMP_index) {
 }
    	
-PropagatedSpike::PropagatedSpike(double NewTime, Neuron * NewSource, int NewTarget, int NewOpenMP_index): Spike(NewTime,NewSource), target(NewTarget), OpenMP_index(NewOpenMP_index){
-	inter=NewSource->GetOutputConnectionAt(NewOpenMP_index,NewTarget);
+PropagatedSpike::PropagatedSpike(double NewTime, Neuron * NewSource, int NewPropagationDelayIndex, int NewNPropagationDelayIndex, int NewOpenMP_index): Spike(NewTime,NewSource), propagationDelayIndex(NewPropagationDelayIndex), NPropagationDelayIndex(NewNPropagationDelayIndex), OpenMP_index(NewOpenMP_index){
+	inter=NewSource->PropagationStructure->OutputConnectionsWithEquealDealy[NewOpenMP_index][NewPropagationDelayIndex];
+	NSynapses=NewSource->PropagationStructure->NSynapsesWithEqualDelay[NewOpenMP_index][NewPropagationDelayIndex];
 }
 
-PropagatedSpike::PropagatedSpike(double NewTime, Neuron * NewSource, int NewTarget, int NewOpenMP_index, Interconnection * NewInter): Spike(NewTime,NewSource), target(NewTarget), OpenMP_index(NewOpenMP_index), inter(NewInter){
+PropagatedSpike::PropagatedSpike(double NewTime, Neuron * NewSource, int NewPropagationDelayIndex, int NewNPropagationDelayIndex, int NewOpenMP_index, Interconnection * NewInter): Spike(NewTime,NewSource), propagationDelayIndex(NewPropagationDelayIndex), NPropagationDelayIndex(NewNPropagationDelayIndex), OpenMP_index(NewOpenMP_index), inter(NewInter){
+	NSynapses=NewSource->PropagationStructure->NSynapsesWithEqualDelay[NewOpenMP_index][NewPropagationDelayIndex];
 }
    		
 PropagatedSpike::~PropagatedSpike(){
 }
 
-int PropagatedSpike::GetTarget () const{
-	return this->target;
+int PropagatedSpike::GetPropagationDelayIndex (){
+	return this->propagationDelayIndex;
 }
-   		
-void PropagatedSpike::SetTarget (int NewTarget) {
-	this->target = NewTarget;
-}
-
-void PropagatedSpike::IncrementTarget() {
-	this->target++;
+ 
+int PropagatedSpike::GetNPropagationDelayIndex (){
+	return this->NPropagationDelayIndex;
 }
 
    	
 
-////Optimized function. This function propagates all neuron output spikes that have the same delay.
-//void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
-//
-//	if(!RealTimeRestriction){
-//		double CurrentTime = this->GetTime();
-//
-//		Neuron * source = this->source;
-//		Neuron * target;
-//		InternalSpike * Generated;
-//		LearningRule * ConnectionRule;
-//
-//		int TargetNum = this->GetTarget();
-//
-//		Interconnection * inter = this->source->GetOutputConnectionAt(this->GetOpenMP_index(), TargetNum);
-//
-//
-//		//Reference delay
-//		double delay=inter->GetDelay();
-//
-//		while(1){	
-//			target = inter->GetTarget();  // target of the spike
-//
-//			Generated = target->GetNeuronModel()->ProcessInputSpike(inter, target, CurrentTime);
-//
-//			if (Generated!=0){
-//				CurrentSimulation->GetQueue()->InsertEvent(Generated->GetSource()->get_OpenMP_index(),Generated);
-//			}
-//
-//			CurrentSimulation->WriteState(CurrentTime, target);
-//
-//
-//			ConnectionRule = inter->GetWeightChange_withoutPost();
-//			// If learning, change weights
-//			if(ConnectionRule != 0){
-//				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
-//
-//			}
-//			ConnectionRule = inter->GetWeightChange_withPost();
-//			// If learning, change weights
-//			if(ConnectionRule != 0){
-//				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
-//			}
-//
-//			// If there are more output connection
-//			if(source->GetOutputNumber(this->GetOpenMP_index()) > TargetNum+1){
-//				inter = source->GetOutputConnectionAt(this->GetOpenMP_index(),TargetNum+1);
-//				// If delays are different
-//				if(inter->GetDelay()!=delay){
-//					double NextSpikeTime = CurrentTime - delay + inter->GetDelay();
-//					PropagatedSpike * nextspike = new PropagatedSpike(NextSpikeTime,source,TargetNum+1,this->GetOpenMP_index());
-//					CurrentSimulation->GetQueue()->InsertEvent(this->GetOpenMP_index(),nextspike);
-//					break;
-//				}
-//			}else{
-//				break;
-//			}
-//			// Selecting next output connection
-//			SetTarget(TargetNum+1);
-//			TargetNum++;
-//		}
-//
-//	}
-//}
 
-////Optimized function. This function propagates all neuron output spikes that have the same delay.
-//void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
-//
-//	if(!RealTimeRestriction){
-//		double CurrentTime = this->GetTime();
-//		int OutputNumber=source->GetOutputNumber(this->GetOpenMP_index());
-//
-//		Neuron * target;
-//		InternalSpike * Generated;
-//		LearningRule * ConnectionRule;
-//
-//
-//		int TargetNum = this->GetTarget();
-//
-//		Interconnection ** ListInter = this->source->GetOutputConnectionAt(this->GetOpenMP_index());
-//		Interconnection * inter=ListInter[TargetNum];
-//
-//
-//		//Reference delay
-//		double delay=inter->GetDelay();
-//
-//		while(1){	
-//			target = inter->GetTarget();  // target of the spike
-//
-//			Generated = target->GetNeuronModel()->ProcessInputSpike(inter, target, CurrentTime);
-//
-//			if (Generated!=0){
-//				CurrentSimulation->GetQueue()->InsertEvent(Generated->GetSource()->get_OpenMP_index(),Generated);
-//			}
-//
-//			CurrentSimulation->WriteState(CurrentTime, target);
-//
-//
-//			ConnectionRule = inter->GetWeightChange_withoutPost();
-//			// If learning, change weights
-//			if(ConnectionRule != 0){
-//				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
-//
-//			}
-//			ConnectionRule = inter->GetWeightChange_withPost();
-//			// If learning, change weights
-//			if(ConnectionRule != 0){
-//				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
-//			}
-//
-//			// If there are more output connection
-//			if( OutputNumber > TargetNum+1){
-//				inter = ListInter[TargetNum+1];
-//				// If delays are different
-//				if(inter->GetDelay()!=delay){
-//					double NextSpikeTime = CurrentTime - delay + inter->GetDelay();
-//					PropagatedSpike * nextspike = new PropagatedSpike(NextSpikeTime,source,TargetNum+1,this->GetOpenMP_index());
-//					CurrentSimulation->GetQueue()->InsertEvent(this->GetOpenMP_index(),nextspike);
-//					break;
-//				}
-//			}else{
-//				break;
-//			}
-//			// Selecting next output connection
-//			SetTarget(TargetNum+1);
-//			TargetNum++;
-//		}
-//
-//	}
-//}
-
-////Optimized function. This function propagates all neuron output spikes that have the same delay.
-//void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
-//
-//	if(!RealTimeRestriction){
-//		double CurrentTime = this->GetTime();
-//		int OutputNumber=source->GetOutputNumber(this->GetOpenMP_index());
-//
-//		Neuron * TargetNeuron;
-//		InternalSpike * Generated;
-//		LearningRule * ConnectionRule;
-//
-//
-//		Interconnection ** ListInter = this->source->GetOutputConnectionAt(this->GetOpenMP_index());
-//		Interconnection * inter=ListInter[this->target];
-//
-//
-//		//Reference delay
-//		double delay=inter->GetDelay();
-//
-//		while(1){	
-//			TargetNeuron = inter->GetTarget();  // target of the spike
-//
-//			Generated = TargetNeuron->GetNeuronModel()->ProcessInputSpike(inter, TargetNeuron, CurrentTime);
-//
-//			if (Generated!=0){
-//				CurrentSimulation->GetQueue()->InsertEvent(Generated->GetSource()->get_OpenMP_index(),Generated);
-//			}
-//
-//			CurrentSimulation->WriteState(CurrentTime, TargetNeuron);
-//
-//
-//			ConnectionRule = inter->GetWeightChange_withoutPost();
-//			// If learning, change weights
-//			if(ConnectionRule != 0){
-//				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
-//
-//			}
-//			ConnectionRule = inter->GetWeightChange_withPost();
-//			// If learning, change weights
-//			if(ConnectionRule != 0){
-//				ConnectionRule->ApplyPreSynapticSpike(inter,CurrentTime);
-//			}
-//
-//			// If there are more output connection
-//			if( OutputNumber > target+1){
-//				inter = ListInter[target+1];
-//				// If delays are different
-//				if(inter->GetDelay()!=delay){
-//					double NextSpikeTime = CurrentTime - delay + inter->GetDelay();
-//					PropagatedSpike * nextspike = new PropagatedSpike(NextSpikeTime,source,target+1,this->GetOpenMP_index());
-//					CurrentSimulation->GetQueue()->InsertEvent(this->GetOpenMP_index(),nextspike);
-//					break;
-//				}
-//			}else{
-//				break;
-//			}
-//			// Selecting next output connection
-//			IncrementTarget();
-//		}
-//
-//	}
-//}
 
 //Optimized function. This function propagates all neuron output spikes that have the same delay.
-void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
 
-	if(*RealTimeRestriction<2){
+	if(RealTimeRestriction<2){
 
-		CurrentSimulation->IncrementTotalPropagateCounter(omp_get_thread_num()); 
-		
-		int OutputNumber=source->GetOutputNumber(this->GetOpenMP_index());
+		CurrentSimulation->IncrementTotalPropagateEventCounter(OpenMP_index); /*asdfgf*/
+		CurrentSimulation->IncrementTotalPropagateCounter(OpenMP_index,NSynapses);
 
 		Neuron * TargetNeuron;
 		InternalSpike * Generated;
 		LearningRule * ConnectionRule;
 
 
-		//Reference delay
-		double delay=inter->GetDelay();
-
-
-		while(1){
+		for(int i=0; i<NSynapses; i++){
 			TargetNeuron = inter->GetTarget();  // target of the spike
 
 			Generated = TargetNeuron->GetNeuronModel()->ProcessInputSpike(inter, TargetNeuron, this->time);
 
 			if (Generated!=0){
-				CurrentSimulation->GetQueue()->InsertEvent(TargetNeuron->get_OpenMP_queue_index(),Generated);
+				CurrentSimulation->GetQueue()->InsertEvent(OpenMP_index,Generated);
 			}
 
 			CurrentSimulation->WriteState(this->time, TargetNeuron);
 
-			if(*RealTimeRestriction<1){
-				ConnectionRule = inter->GetWeightChange_withoutPost();
-				// If learning, change weights
-				if(ConnectionRule != 0){
-					ConnectionRule->ApplyPreSynapticSpike(inter,this->time);
-				}
-				ConnectionRule = inter->GetWeightChange_withPost();
-				// If learning, change weights
-				if(ConnectionRule != 0){
-					ConnectionRule->ApplyPreSynapticSpike(inter,this->time);
-				}
+
+			ConnectionRule = inter->GetWeightChange_withoutPost();
+			// If learning, change weights
+			if(ConnectionRule != 0){
+				ConnectionRule->ApplyPreSynapticSpike(inter,this->time);
 			}
-			// If there are more output connection
-			if( OutputNumber > target+1){
-				inter++;
-				// If delays are different
-				if(inter->GetDelay()!=delay){
-					double NextSpikeTime = this->time - delay + inter->GetDelay();
-					PropagatedSpike * nextspike = new PropagatedSpike(NextSpikeTime,source,target+1,this->GetOpenMP_index(),inter);
-					CurrentSimulation->GetQueue()->InsertEvent(this->GetOpenMP_index(),nextspike);
-					break;
-				}
-			}else{
-				break;
+			ConnectionRule = inter->GetWeightChange_withPost();
+			// If learning, change weights
+			if(ConnectionRule != 0){
+				ConnectionRule->ApplyPreSynapticSpike(inter,this->time);
 			}
-			// Selecting next output connection
-			IncrementTarget();
+
+			inter++;
 		}
+		if(NPropagationDelayIndex>(propagationDelayIndex+1)){
+			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() - this->GetSource()->PropagationStructure->SynapseDelay[OpenMP_index][propagationDelayIndex] + this->GetSource()->PropagationStructure->SynapseDelay[OpenMP_index][propagationDelayIndex+1], this->GetSource(), propagationDelayIndex+1, NPropagationDelayIndex, OpenMP_index);
+			CurrentSimulation->GetQueue()->InsertEvent(OpenMP_index,spike);
+		} 
 
 	}
 }
 
 
+
+
 //Optimized function. This function propagates all neuron output spikes that have the same delay.
 void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
 
+	CurrentSimulation->IncrementTotalPropagateEventCounter(OpenMP_index); /*asdfgf*/
+	CurrentSimulation->IncrementTotalPropagateCounter(OpenMP_index,NSynapses);
 
-	CurrentSimulation->IncrementTotalPropagateCounter(omp_get_thread_num()); /*asdfgf*/
-	
-	int OutputNumber=source->GetOutputNumber(this->GetOpenMP_index());
+	for(int i=0; i<NSynapses; i++){
+		Neuron * TargetNeuron = inter->GetTarget();  // target of the spike
 
-	Neuron * TargetNeuron;
-	InternalSpike * Generated;
-	LearningRule * ConnectionRule;
-
-
-	//Reference delay
-	double delay=inter->GetDelay();
-
-
-	while(1){
-		TargetNeuron = inter->GetTarget();  // target of the spike
-
-		Generated = TargetNeuron->GetNeuronModel()->ProcessInputSpike(inter, TargetNeuron, this->time);
+		InternalSpike * Generated = TargetNeuron->GetNeuronModel()->ProcessInputSpike(inter, TargetNeuron, this->time);
 
 		if (Generated!=0){
-			CurrentSimulation->GetQueue()->InsertEvent(TargetNeuron->get_OpenMP_queue_index(),Generated);
+			CurrentSimulation->GetQueue()->InsertEvent(OpenMP_index,Generated);
 		}
 
 		CurrentSimulation->WriteState(this->time, TargetNeuron);
 
-
-		ConnectionRule = inter->GetWeightChange_withoutPost();
+		LearningRule * ConnectionRule = inter->GetWeightChange_withoutPost();
 		// If learning, change weights
 		if(ConnectionRule != 0){
 			ConnectionRule->ApplyPreSynapticSpike(inter,this->time);
@@ -354,25 +136,13 @@ void PropagatedSpike::ProcessEvent(Simulation * CurrentSimulation){
 			ConnectionRule->ApplyPreSynapticSpike(inter,this->time);
 		}
 
-		// If there are more output connection
-		if( OutputNumber > target+1){
-			inter++;
-			// If delays are different
-			if(inter->GetDelay()!=delay){
-				double NextSpikeTime = this->time - delay + inter->GetDelay();
-				PropagatedSpike * nextspike = new PropagatedSpike(NextSpikeTime,source,target+1,this->GetOpenMP_index(),inter);
-				CurrentSimulation->GetQueue()->InsertEvent(this->GetOpenMP_index(),nextspike);
-				break;
-			}
-		}else{
-			break;
-		}
-		// Selecting next output connection
-		IncrementTarget();
+		inter++;
 	}
+	if(NPropagationDelayIndex>(propagationDelayIndex+1)){
+		PropagatedSpike * spike = new PropagatedSpike(this->GetTime() - this->GetSource()->PropagationStructure->SynapseDelay[OpenMP_index][propagationDelayIndex] + this->GetSource()->PropagationStructure->SynapseDelay[OpenMP_index][propagationDelayIndex+1], this->GetSource(), propagationDelayIndex+1, NPropagationDelayIndex, OpenMP_index);
+		CurrentSimulation->GetQueue()->InsertEvent(OpenMP_index,spike);
+	} 
 }
-
-
 
 
 int PropagatedSpike::GetOpenMP_index() const{

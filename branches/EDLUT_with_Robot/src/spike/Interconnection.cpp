@@ -18,13 +18,12 @@
 
 #include <cmath>
 
-#include "../../include/learning_rules/ActivityRegister.h"
 #include "../../include/spike/Neuron.h"
 
 #include "../../include/learning_rules/LearningRule.h"
 #include "../../include/learning_rules/ConnectionState.h"
 
-Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange_withPost(0), LearningRuleIndex_withPost(0), wchange_withoutPost(0), LearningRuleIndex_withoutPost(0){
+Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange_withPost(0), LearningRuleIndex_withPost(0), wchange_withoutPost(0), LearningRuleIndex_withoutPost(0), TriggerConnection(false){
 	
 }
 
@@ -64,7 +63,7 @@ void Interconnection::SetTarget(Neuron * NewTarget){
 //	return this->delay;
 //}
 		
-void Interconnection::SetDelay(float NewDelay){
+void Interconnection::SetDelay(double NewDelay){
 	this->delay = NewDelay;
 }
 		
@@ -159,4 +158,12 @@ ostream & Interconnection::PrintInfo(ostream & out) {
    	else out << "None learning rule without postsynaptic learning" << endl;
 
    	return out;
+}
+
+void Interconnection::SetTriggerConnection(){
+	this->TriggerConnection=true;
+}
+
+bool Interconnection::GetTriggerConnection(){
+	return this->TriggerConnection;
 }

@@ -37,19 +37,9 @@ enum NeuronModelType TimeDrivenNeuronModel::GetModelType(){
 
 void TimeDrivenNeuronModel::CalculateTaskSizes(int N_neurons, int minimumSize){
 	//Calculate number of OpenMP task and size of each one.
-
-	if((N_neurons/NumberOfOpenMPThreads)>=minimumSize){
+	NumberOfOpenMPTasks=(N_neurons+minimumSize-1)/minimumSize;
+	if(NumberOfOpenMPTasks>NumberOfOpenMPThreads){
 		NumberOfOpenMPTasks=NumberOfOpenMPThreads;
-	}else{
-		if(N_neurons<=minimumSize){
-			NumberOfOpenMPTasks=1;
-		}else{
-			for(int i=NumberOfOpenMPThreads-1; i>1; i--){
-				if((N_neurons/i)>minimumSize){
-					NumberOfOpenMPTasks=i;
-				}
-			}
-		}
 	}
 
 	LimitOfOpenMPTasks = new int[NumberOfOpenMPTasks+1];
