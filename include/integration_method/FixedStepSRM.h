@@ -43,7 +43,6 @@ class TimeDrivenNeuronModel;
  * \date May 2013
  */
 class FixedStepSRM : public IntegrationMethod {
-	protected:
 
 	public:
 
@@ -96,15 +95,6 @@ class FixedStepSRM : public IntegrationMethod {
 		 * \param inicialization vector with initial values.
 		 */
 		 void InitializeStates(int N_neurons, float * inicialization){}
-
-		/*!
-		 * \brief It gets the integration method tipe (variable step, fixed step).
-		 *
-		 * It gets the integration method tipe (variable step, fixed step).
-		 *
-		 * \return the integration method tipe (variable step, fixed step).
-		 */
-		enum IntegrationMethodType GetMethodType();
 
 
 		/*!

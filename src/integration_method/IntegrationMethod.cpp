@@ -39,7 +39,7 @@ string IntegrationMethod::GetType(){
 		
 
 
-void IntegrationMethod::Jacobian(float * NeuronState, float * jacnum, float elapsed_time){
+void IntegrationMethod::Jacobian(float * NeuronState, float * jacnum, float elapsed_time, int index){
 	float epsi=elapsed_time * 0.1f;
 	float inv_epsi=1.0f/epsi;
 	float JacAuxNeuronState[MAX_VARIABLES];
@@ -47,13 +47,13 @@ void IntegrationMethod::Jacobian(float * NeuronState, float * jacnum, float elap
 	float JacAuxNeuronState_neg[MAX_VARIABLES];
 
 	memcpy(JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
-	this->model->EvaluateDifferentialEcuation(JacAuxNeuronState, JacAuxNeuronState_pos);
+	this->model->EvaluateDifferentialEcuation(JacAuxNeuronState, JacAuxNeuronState_pos, index);
 
 	for (int j=0; j<N_DifferentialNeuronState; j++){
 		memcpy(JacAuxNeuronState, NeuronState, sizeof(float)*N_NeuronStateVariables);
 
 		JacAuxNeuronState[j]-=epsi;
-		this->model->EvaluateDifferentialEcuation(JacAuxNeuronState, JacAuxNeuronState_neg);
+		this->model->EvaluateDifferentialEcuation(JacAuxNeuronState, JacAuxNeuronState_neg, index);
 
 		for(int z=0; z<N_DifferentialNeuronState; z++){
 			jacnum[z*N_DifferentialNeuronState+j]=(JacAuxNeuronState_pos[z]-JacAuxNeuronState_neg[z])*inv_epsi;

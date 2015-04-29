@@ -32,7 +32,7 @@ void RK2::NextDifferentialEcuationValue(int index, float * NeuronState, float el
 
 
 	//1st term
-	this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState1);
+	this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState1, index);
 	
 	//2nd term
 	memcpy(AuxNeuronState, NeuronState,sizeof(float)*N_NeuronStateVariables);
@@ -42,7 +42,7 @@ void RK2::NextDifferentialEcuationValue(int index, float * NeuronState, float el
 
 
 	this->model->EvaluateTimeDependentEcuation(AuxNeuronState, elapsed_time);
-	this->model->EvaluateDifferentialEcuation(AuxNeuronState, AuxNeuronState2);
+	this->model->EvaluateDifferentialEcuation(AuxNeuronState, AuxNeuronState2, index);
 
 
 	for (int j=0; j<N_DifferentialNeuronState; j++){
@@ -50,7 +50,6 @@ void RK2::NextDifferentialEcuationValue(int index, float * NeuronState, float el
 	}
 
 	this->model->EvaluateTimeDependentEcuation(NeuronState, elapsed_time);
-
 }
 
 ostream & RK2::PrintInfo(ostream & out){

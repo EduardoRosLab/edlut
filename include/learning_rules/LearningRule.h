@@ -59,6 +59,11 @@ class LearningRule : public PrintableObject {
 		int counter;
 
 		/*!
+		 * \brief Learning rule index inside the whole simulation. This index will be used to identify each learning rule.
+		 */
+		int LearningRuleIndex;
+
+		/*!
 		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *
 		 * It initialize the state associated to the learning rule for all the synapses.
@@ -77,11 +82,13 @@ class LearningRule : public PrintableObject {
 		ConnectionState * GetConnectionState();
 
 		/*!
-		 * \brief Default constructor.
-		 * 
-		 * It creates a new LearningRule object.
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule with its index.
+		 *
+		 * \param NewLearningRuleIndex learning rule index.
 		 */ 
-		LearningRule();
+		LearningRule(int NewLearningRuleIndex);
 
 		/*!
 		 * \brief Object destructor.

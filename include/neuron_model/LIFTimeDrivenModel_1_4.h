@@ -58,6 +58,16 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 	protected:
 
 		/*!
+		 * \brief table values
+		 * gnmdainf
+		 */
+		static float * table_values;
+		static const float Max_V;
+		static const float Min_V;
+		static const int TableSize=1024*1024;
+		static const float aux;
+
+		/*!
 		 * \brief Excitatory reversal potential
 		 */
 		float eexc;
@@ -86,21 +96,25 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 * \brief AMPA receptor time constant
 		 */
 		float tampa;
+		float inv_tampa;
 
 		/*!
 		 * \brief NMDA receptor time constant
 		 */
 		float tnmda;
+		float inv_tnmda;
 		
 		/*!
 		 * \brief GABA receptor time constant
 		 */
 		float tinh;
+		float inv_tinh;
 
 		/*!
 		 * \brief Gap Junction time constant
 		 */
 		float tgj;
+		float inv_tgj;
 
 		/*!
 		 * \brief Refractory period
@@ -204,20 +218,6 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 *
 		 * \note This function doesn't generate the next propagated spike. It must be externally done.
 		 *
-		 * \param InputSpike The spike happened.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
-
-
-		/*!
-		 * \brief It processes a propagated spike (input spike in the cell).
-		 *
-		 * It processes a propagated spike (input spike in the cell).
-		 *
-		 * \note This function doesn't generate the next propagated spike. It must be externally done.
-		 *
 		 * \param inter the interconection which propagate the spike
 		 * \param target the neuron which receives the spike
 		 * \param time the time of the spike.
@@ -238,7 +238,7 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime);
+		virtual bool UpdateState(int index, double CurrentTime);
 
 
 
@@ -261,7 +261,7 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		virtual void InitializeStates(int N_neurons);
+		virtual void InitializeStates(int N_neurons, int OpenMPQueueIndex);
 
 
 		/*!
@@ -272,7 +272,7 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 * \param NeuronState value of the neuron state variables where differential equations are evaluated.
 		 * \param AuxNeuronState results of the differential equations evaluation.
 		 */
-		virtual void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState);
+		virtual void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState, int index);
 
 
 		/*!
@@ -284,6 +284,37 @@ class LIFTimeDrivenModel_1_4 : public TimeDrivenNeuronModel {
 		 * \param elapsed_time integration time step.
 		 */
 		virtual void EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time);
+
+
+		/*!
+		 * \brief It Checks if the neuron model has this connection type.
+		 *
+		 * It Checks if the neuron model has this connection type.
+		 *
+		 * \param Type input connection type.
+		 *
+		 * \return A a valid connection type for this neuron model.
+		 */
+		virtual int CheckSynapseTypeNumber(int Type);
+
+
+		static float * Generate_table_values(){
+			float * NewLookUpTable=new float[TableSize];
+			for(int i=0; i<TableSize; i++){
+				float V = Min_V + ((Max_V-Min_V)*i)/(TableSize-1);
+				
+				//gnmdainf
+				float gnmdainf = 1.0f/(1.0f + exp(-62.0f*V)*(1.2f/3.57f));
+				NewLookUpTable[i]=gnmdainf;
+			}
+			return NewLookUpTable;
+		}
+
+
+		static float Get_table_value(float value){
+				int position=int((value-Min_V)*aux);
+				return table_values[position];
+		} 
 
 };
 

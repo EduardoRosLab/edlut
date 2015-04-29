@@ -26,6 +26,7 @@
 #include "../../include/spike/TimeDrivenInternalSpike.h"
 #include "../../include/spike/Network.h"
 #include "../../include/spike/Neuron.h"
+#include "../../include/spike/NeuronModelPropagationDelayStructure.h"
 
 #include "../../include/simulation/SynchronizeSimulationEvent.h"
 
@@ -33,11 +34,7 @@
 
 		
 
-TimeEventAllNeurons_GPU::TimeEventAllNeurons_GPU(double NewTime, TimeDrivenNeuronModel_GPU * newNeuronModel, Neuron ** newNeurons, Simulation * CurrentSimulation) : Event(NewTime), neuronModel(newNeuronModel), neurons(newNeurons){
-	for(int i=0; i<CurrentSimulation->GetNumberOfQueues(); i++){
-		SynchronizeSimulationEvent * NewEvent = new SynchronizeSimulationEvent(NewTime);
-		CurrentSimulation->GetQueue()->InsertEvent(i,NewEvent);
-	}
+TimeEventAllNeurons_GPU::TimeEventAllNeurons_GPU(double NewTime, TimeDrivenNeuronModel_GPU * newNeuronModel, Neuron ** newNeurons) : Event(NewTime), neuronModel(newNeuronModel), neurons(newNeurons){
 }
 
 TimeEventAllNeurons_GPU::~TimeEventAllNeurons_GPU(){
@@ -46,21 +43,21 @@ TimeEventAllNeurons_GPU::~TimeEventAllNeurons_GPU(){
 
 
 //Optimized version which executes the internal spikes instead of insert them in the queue.
-void TimeEventAllNeurons_GPU::ProcessEvent(Simulation * CurrentSimulation , volatile int * RealTimeRestriction){
+void TimeEventAllNeurons_GPU::ProcessEvent(Simulation * CurrentSimulation , int RealTimeRestriction){
 
 	double CurrentTime = this->GetTime();
 
-	if(*RealTimeRestriction<3){
+	if(RealTimeRestriction<3){
 		VectorNeuronState * State=neuronModel->GetVectorNeuronState();
 
 		neuronModel->UpdateState(-1, State, CurrentTime);
 
-		TimeDrivenInternalSpike NewEvent(CurrentTime, State, neurons);
+		TimeDrivenInternalSpike NewEvent(CurrentTime, State, neuronModel->PropagationStructure, neurons, omp_get_thread_num());
 		NewEvent.ProcessEvent(CurrentSimulation, RealTimeRestriction);
 	}
 
 	//Next TimeEvent for all cell
-	CurrentSimulation->GetQueue()->InsertEventWithSynchronization(new TimeEventAllNeurons_GPU(CurrentTime + neuronModel->TimeDrivenStep_GPU, GetModel(), GetNeurons(), CurrentSimulation));
+	CurrentSimulation->GetQueue()->InsertEvent(new TimeEventAllNeurons_GPU(CurrentTime + neuronModel->TimeDrivenStep_GPU, GetModel(), GetNeurons()));
 }
 
 //Optimized version which executes the internal spikes instead of insert them in the queue.
@@ -72,11 +69,11 @@ void TimeEventAllNeurons_GPU::ProcessEvent(Simulation * CurrentSimulation){
 
 	neuronModel->UpdateState(-1, State, CurrentTime);
 
-	TimeDrivenInternalSpike NewEvent(CurrentTime, State, neurons);
+	TimeDrivenInternalSpike NewEvent(CurrentTime, State, neuronModel->PropagationStructure, neurons, omp_get_thread_num());
 	NewEvent.ProcessEvent(CurrentSimulation);
 
 	//Next TimeEvent for all cell
-	CurrentSimulation->GetQueue()->InsertEventWithSynchronization(new TimeEventAllNeurons_GPU(CurrentTime + neuronModel->TimeDrivenStep_GPU, GetModel(), GetNeurons(), CurrentSimulation));
+	CurrentSimulation->GetQueue()->InsertEvent(new TimeEventAllNeurons_GPU(CurrentTime + neuronModel->TimeDrivenStep_GPU, GetModel(), GetNeurons()));
 }
 
 TimeDrivenNeuronModel_GPU * TimeEventAllNeurons_GPU::GetModel(){
@@ -91,6 +88,6 @@ void TimeEventAllNeurons_GPU::PrintType(){
 	cout<<"TimeEventAllNeurons_GPU"<<endl;
 }
 
-int TimeEventAllNeurons_GPU::ProcessingPriority(){
-	return 7;
+enum EventPriority TimeEventAllNeurons_GPU::ProcessingPriority(){
+	return TIMEEVENT;
 }

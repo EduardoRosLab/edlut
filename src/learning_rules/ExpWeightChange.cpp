@@ -21,7 +21,7 @@
 
 #include "../../include/spike/Interconnection.h"
 
-ExpWeightChange::ExpWeightChange():AdditiveKernelChange(){
+ExpWeightChange::ExpWeightChange(int NewLearningRuleIndex):AdditiveKernelChange(NewLearningRuleIndex){
 }
 
 ExpWeightChange::~ExpWeightChange(){

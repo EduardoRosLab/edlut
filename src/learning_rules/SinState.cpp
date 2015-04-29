@@ -17,6 +17,7 @@
 #include "../../include/learning_rules/SinState.h"
 
 #include "../../include/simulation/ExponentialTable.h"
+#include "../../include/simulation/TrigonometricTable.h"
 
 
 #include <string.h>
@@ -42,11 +43,6 @@ const float SinState::terms[11][11]  = {{1,0,0,0,0,0,0,0,0,0,0},
 	{46189./256.*pow(A,10),-20995./64.*pow(A,10),62985./256.*pow(A,10),-4845./32.*pow(A,10),4845./64.*pow(A,10),-969./32.*pow(A,10),4845./512.*pow(A,10),-285./128.*pow(A,10),95./256.*pow(A,10),-5./128.*pow(A,10),1./512.*pow(A,10)}};
 
 
-float SinState::LUTStep = 2.0f*4.0f*atan(1.0f)/TERMSLUT;
-float SinState::inv_LUTStep = 1.0f/SinState::LUTStep;
-
-float * SinState::SinLUT=GenerateSinLUT();
-
 SinState::SinState(unsigned int NumSynapses, unsigned int NewExponent, float NewMaxpos): ConnectionState(NumSynapses, NewExponent+2), exponent(NewExponent), maxpos(NewMaxpos){
 
 	this->tau = this->maxpos/atan((float)exponent);
@@ -57,6 +53,9 @@ SinState::SinState(unsigned int NumSynapses, unsigned int NewExponent, float New
 	}
 	inv_tau=1.0f/tau;
 
+	unsigned int ExponenLine = NewExponent/2;
+
+	TermPointer = this->terms[ExponenLine]; 
 }
 
 SinState::~SinState() {
@@ -96,49 +95,36 @@ void SinState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_po
 
 	this->SetLastUpdateTime(index, NewTime);
 
-	unsigned int ExponenLine = this->exponent>>1;
-
-	const float* TermPointer = this->terms[ExponenLine]; 
-
-	float NewActivity =OldExpon*(*(TermPointer++))*expon;
-
 	float NewExpon = OldExpon * expon;
+	float NewActivity =NewExpon*TermPointer[0];
 
-	unsigned int aux=((int)(2*ElapsedRelative*inv_LUTStep + 0.5f))*2;
-	unsigned int LUTindex=0;
+	int aux=TrigonometricTable::CalculateOffsetPosition(2*ElapsedRelative);
+	int LUTindex=0;
 
 	float SinVar, CosVar, OldVarCos, OldVarSin, NewVarCos, NewVarSin;
-	for (unsigned int grade=2; grade<=this->exponent; grade+=2){
+	int grade, offset;
+	for (grade=2, offset=1; grade<=this->exponent; grade+=2, offset++){
 
-		LUTindex = (LUTindex+aux)%(TERMSLUT*2);
+		LUTindex =TrigonometricTable::CalculateValidPosition(LUTindex,aux);
 
 		OldVarCos = this->GetStateVariableAt(index, grade);
 		OldVarSin = this->GetStateVariableAt(index, grade + 1);
 
-		SinVar = SinLUT[LUTindex];
-		CosVar = SinLUT[LUTindex+1];
-
-
+		SinVar = TrigonometricTable::GetElement(LUTindex);
+		CosVar = TrigonometricTable::GetElement(LUTindex+1);
 
 		NewVarCos = (OldVarCos*CosVar-OldVarSin*SinVar)*expon;
 		NewVarSin = (OldVarSin*CosVar+OldVarCos*SinVar)*expon;
 
-		
-		NewActivity += (NewVarCos*(*(TermPointer++)));
+		NewActivity+= NewVarCos*TermPointer[offset];
 
-		/*if(spike){  // if spike, we need to increase the e1 variable
-			NewVarCos += 1;
-		}*/
-
-		//this->SetStateVariableAt(index, grade, NewVarCos);
-		//this->SetStateVariableAt(index, grade + 1, NewVarSin);
 		this->SetStateVariableAt(index, grade , NewVarCos, NewVarSin);
 
 	}
 	NewActivity*=this->factor;
 	this->SetStateVariableAt(index, 0, NewActivity, NewExpon);
-
 }
+
 
 
 

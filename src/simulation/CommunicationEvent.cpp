@@ -34,7 +34,7 @@ CommunicationEvent::CommunicationEvent(double NewTime, Simulation * CurrentSimul
 CommunicationEvent::~CommunicationEvent(){
 }
 
-void CommunicationEvent::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+void CommunicationEvent::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
 	// Send the outputs
 	CurrentSimulation->SendOutput();
 		
@@ -64,8 +64,8 @@ void CommunicationEvent::PrintType(){
 	cout<<"CommunicationEvent"<<endl;
 }
 
-int CommunicationEvent::ProcessingPriority(){
-	return 6;
+enum EventPriority CommunicationEvent::ProcessingPriority(){
+	return COMMUNICATIONEVENT;
 }
    	
 

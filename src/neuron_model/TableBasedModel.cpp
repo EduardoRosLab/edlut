@@ -61,7 +61,7 @@ void TableBasedModel::LoadNeuronModel(string ConfigFile) throw (EDLUTFileExcepti
 			InitValues=new float[NumStateVar+1]();
 
 			// Create a new initial state
-       		this->InitialState = (VectorNeuronState *) new VectorNeuronState(this->NumStateVar+1, false);
+       		this->State = (VectorNeuronState *) new VectorNeuronState(this->NumStateVar+1, false);
 //       		this->InitialState->SetLastUpdateTime(0);
 //       		this->InitialState->SetNextPredictedSpikeTime(NO_SPIKE_PREDICTED);
 //      		this->InitialState->SetStateVariableAt(0,0);
@@ -176,7 +176,6 @@ TableBasedModel::TableBasedModel(string NeuronTypeID, string NeuronModelID): Eve
 		NumStateVar(0), NumTimeDependentStateVar(0), NumSynapticVar(0), SynapticVar(0),
 		StateVarOrder(0), StateVarTable(0), FiringTable(0), EndFiringTable(0),
 		NumTables(0), Tables(0) {
-
 }
 
 TableBasedModel::~TableBasedModel() {
@@ -212,7 +211,7 @@ void TableBasedModel::LoadNeuronModel() throw (EDLUTFileException){
 }
 
 VectorNeuronState * TableBasedModel::InitializeState(){
-	return InitialState;
+	return State;
 }
 
 InternalSpike * TableBasedModel::GenerateInitialActivity(Neuron *  Cell){
@@ -277,54 +276,6 @@ double TableBasedModel::EndRefractoryPeriod(int index, VectorNeuronState * State
 }
 
 
-InternalSpike * TableBasedModel::ProcessInputSpike(PropagatedSpike *  InputSpike){
-
-	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(omp_get_thread_num(),InputSpike->GetTarget());
-
-	Neuron * target = inter->GetTarget();
-
-	int TargetIndex=target->GetIndex_VectorNeuronState();
-
-
-	// Update the neuron state until the current time
-if(InputSpike->GetTime() - this->GetVectorNeuronState()->GetLastUpdateTime(TargetIndex)!=0){
-	this->UpdateState(TargetIndex,this->GetVectorNeuronState(),InputSpike->GetTime());
-}
-
-	// Add the effect of the input spike
-	this->SynapsisEffect(TargetIndex,inter);
-
-	InternalSpike * GeneratedSpike = 0;
-
-	// Check if an spike will be fired
-	double NextSpike = this->NextFiringPrediction(TargetIndex, this->GetVectorNeuronState());
-	if (NextSpike != NO_SPIKE_PREDICTED){
-		NextSpike += this->GetVectorNeuronState()->GetLastUpdateTime(TargetIndex);
-
-		if (NextSpike > this->GetVectorNeuronState()->GetEndRefractoryPeriod(TargetIndex)){
-			GeneratedSpike = new InternalSpike(NextSpike,target);
-		} else { // Only for neurons which never stop firing
-			// The generated spike was at refractory period -> Check after refractoriness
-
-			VectorNeuronState newState(*(this->GetVectorNeuronState()), TargetIndex);
-
-			this->UpdateState(0,&newState,newState.GetEndRefractoryPeriod(0));
-
-			NextSpike = this->NextFiringPrediction(0,&newState);
-
-			if(NextSpike != NO_SPIKE_PREDICTED){
-				NextSpike += this->GetVectorNeuronState()->GetEndRefractoryPeriod(TargetIndex);
-
-				GeneratedSpike = new InternalSpike(NextSpike,target);
-			}
-		}
-	}
-
-	this->GetVectorNeuronState()->SetNextPredictedSpikeTime(TargetIndex,NextSpike);
-
-	return GeneratedSpike;
-}
-
 
 InternalSpike * TableBasedModel::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
 
@@ -332,9 +283,9 @@ InternalSpike * TableBasedModel::ProcessInputSpike(Interconnection * inter, Neur
 
 
 	// Update the neuron state until the current time
-if(time - this->GetVectorNeuronState()->GetLastUpdateTime(TargetIndex)!=0){
-	this->UpdateState(TargetIndex,this->GetVectorNeuronState(),time);
-}
+	if(time - this->GetVectorNeuronState()->GetLastUpdateTime(TargetIndex)!=0){
+		this->UpdateState(TargetIndex,this->GetVectorNeuronState(),time);
+	}
 
 	// Add the effect of the input spike
 	this->SynapsisEffect(TargetIndex,inter);
@@ -438,6 +389,16 @@ ostream & TableBasedModel::PrintInfo(ostream & out) {
 }
 
 
-void TableBasedModel::InitializeStates(int N_neurons){
-	InitialState->InitializeStates(N_neurons, InitValues);
+void TableBasedModel::InitializeStates(int N_neurons, int OpenMPQueueIndex){
+	State->InitializeStates(N_neurons, InitValues);
+}
+
+
+int TableBasedModel::CheckSynapseTypeNumber(int Type){
+	if(Type<NumSynapticVar && Type>=0){
+		return Type;
+	}else{
+		cout<<"Neuron model "<<this->GetTypeID()<<", "<<this->GetModelID()<<" does not support input synapses of type "<<Type<<endl;
+		return 0;
+	}
 }

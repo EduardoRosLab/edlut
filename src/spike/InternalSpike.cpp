@@ -44,8 +44,8 @@ InternalSpike::InternalSpike(double NewTime, Neuron * NewSource): Spike(NewTime,
 InternalSpike::~InternalSpike(){
 }
 
-void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
-	if(*RealTimeRestriction<2){
+void InternalSpike::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
+	if(RealTimeRestriction<2){
 	
 		Neuron * neuron=this->GetSource();  // source of the spike
 		
@@ -73,7 +73,7 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, volatile int * 
 				// Generate the output activity
 				for(int i=0; i<NumberOfOpenMPQueues; i++){
 					if (neuron->IsOutputConnected(i)){
-						PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(i,0)->GetDelay(), neuron, 0, i);
+						PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->PropagationStructure->SynapseDelay[i][0], neuron, 0, neuron->PropagationStructure->NDifferentDelays[i], i);
 						if(i==neuron->get_OpenMP_queue_index()){
 							CurrentSimulation->GetQueue()->InsertEvent(i,spike);
 						}else{
@@ -85,7 +85,7 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, volatile int * 
 				if(neuron->GetInputNumberWithPostSynapticLearning()>0){
 					int i;
 					Interconnection * inter;
-					if(*RealTimeRestriction<1){
+					if(RealTimeRestriction<1){
 						for (int i=0; i<neuron->GetInputNumberWithPostSynapticLearning(); ++i){
 							inter = neuron->GetInputConnectionWithPostSynapticLearningAt(i);
 							inter->GetWeightChange_withPost()->ApplyPostSynapticSpike(inter,this->time);
@@ -107,7 +107,7 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, volatile int * 
 			// Generate the output activity
 			for(int i=0; i<NumberOfOpenMPQueues; i++){
 				if (neuron->IsOutputConnected(i)){
-					PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(i,0)->GetDelay(), neuron, 0, i);
+					PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->PropagationStructure->SynapseDelay[i][0], neuron, 0, neuron->PropagationStructure->NDifferentDelays[i], i);
 					if(i==neuron->get_OpenMP_queue_index()){
 						CurrentSimulation->GetQueue()->InsertEvent(i,spike);
 					}else{
@@ -119,9 +119,11 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, volatile int * 
 			if(neuron->GetInputNumberWithPostSynapticLearning()>0){
 				int i;
 				Interconnection * inter;
-				for (int i=0; i<neuron->GetInputNumberWithPostSynapticLearning(); ++i){
-					inter = neuron->GetInputConnectionWithPostSynapticLearningAt(i);
-					inter->GetWeightChange_withPost()->ApplyPostSynapticSpike(inter,this->time);
+				if(RealTimeRestriction<1){
+					for (int i=0; i<neuron->GetInputNumberWithPostSynapticLearning(); ++i){
+						inter = neuron->GetInputConnectionWithPostSynapticLearningAt(i);
+						inter->GetWeightChange_withPost()->ApplyPostSynapticSpike(inter,this->time);
+					}
 				}
 			}
 			
@@ -159,7 +161,9 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 			// Generate the output activity
 			for(int i=0; i<NumberOfOpenMPQueues; i++){
 				if (neuron->IsOutputConnected(i)){
-					PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(i,0)->GetDelay(), neuron, 0, i);
+//double time=(1+int(this->GetTime()*1000))*0.001;
+//PropagatedSpike * spike = new PropagatedSpike(time + neuron->PropagationStructure->SynapseDelay[i][0], neuron, 0, neuron->PropagationStructure->NDifferentDelays[i], i);
+					PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->PropagationStructure->SynapseDelay[i][0], neuron, 0, neuron->PropagationStructure->NDifferentDelays[i], i);
 					if(i==neuron->get_OpenMP_queue_index()){
 						CurrentSimulation->GetQueue()->InsertEvent(i,spike);
 					}else{
@@ -189,7 +193,7 @@ void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
 		// Generate the output activity
 		for(int i=0; i<NumberOfOpenMPQueues; i++){
 			if (neuron->IsOutputConnected(i)){
-				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(i,0)->GetDelay(), neuron, 0, i);
+				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->PropagationStructure->SynapseDelay[i][0], neuron, 0, neuron->PropagationStructure->NDifferentDelays[i], i);
 				if(i==neuron->get_OpenMP_queue_index()){
 					CurrentSimulation->GetQueue()->InsertEvent(i,spike);
 				}else{

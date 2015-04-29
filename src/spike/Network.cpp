@@ -26,7 +26,9 @@
 #include "../../include/learning_rules/SimetricCosWeightChange.h"
 #include "../../include/learning_rules/STDPWeightChange.h"
 #include "../../include/learning_rules/STDPLSWeightChange.h"
-#include "../../include/learning_rules/SimetricSTDPWeightChange.h"
+#include "../../include/learning_rules/SimetricCosSTDPWeightChange.h"
+#include "../../include/learning_rules/SimetricCosSinWeightChange.h"
+#include "../../include/learning_rules/SimetricCosSinSTDPWeightChange.h"
 
 #include "../../include/neuron_model/NeuronModel.h"
 #include "../../include/neuron_model/SRMTimeDrivenModel.h"
@@ -40,10 +42,14 @@
 #include "../../include/neuron_model/VectorNeuronState.h"
 #include "../../include/neuron_model/EgidioGranuleCell_TimeDriven.h"
 #include "../../include/neuron_model/Vanderpol.h"
+#include "../../include/neuron_model/TimeDrivenPurkinjeCell.h"
 
 #include "../../include/simulation/EventQueue.h"
 #include "../../include/simulation/Utils.h"
 #include "../../include/simulation/Configuration.h"
+#include "../../include/simulation/RandomGenerator.h"
+
+#include "../../include/openmp/openmp.h"
 
 
 int qsort_inters(const void *e1, const void *e2){
@@ -240,6 +246,8 @@ NeuronModel ** Network::LoadNetTypes(string ident_type, string neutype, int & ni
 				neutypes[ni][n] = (EgidioGranuleCell_TimeDriven *) new EgidioGranuleCell_TimeDriven(ident_type, neutype);
 			}else if (ident_type=="Vanderpol"){
 				neutypes[ni][n] = (Vanderpol *) new Vanderpol(ident_type, neutype);
+			}else if (ident_type=="TimeDrivenPurkinjeCell"){
+				neutypes[ni][n] = (TimeDrivenPurkinjeCell *) new TimeDrivenPurkinjeCell(ident_type, neutype);
 			}else {
 				throw EDLUTException(13,58,30,0);
 			}
@@ -259,9 +267,9 @@ void Network::InitializeStates(int ** N_neurons){
 	for( int z=0; z< this->nneutypes; z++){
 		for(int j=0; j<this->GetNumberOfQueues(); j++){
 			if(N_neurons[z][j]>0){
-				neutypes[z][j]->InitializeStates(N_neurons[z][j]);
+				neutypes[z][j]->InitializeStates(N_neurons[z][j],j);
 			}else{
-				neutypes[z][j]->InitializeStates(1);
+				neutypes[z][j]->InitializeStates(1,j);
 			}
 		}
 	}
@@ -282,7 +290,7 @@ void Network::InitNetPredictions(EventQueue * Queue){
 
 }
 
-Network::Network(const char * netfile, const char * wfile, EventQueue * Queue, int numberOfQueues) throw (EDLUTException): inters(0), ninters(0), neutypes(0), nneutypes(0), neurons(0), nneurons(0), timedrivenneurons(0), ntimedrivenneurons(0), wchanges(0), nwchanges(0), wordination(0), NumberOfQueues(numberOfQueues){
+Network::Network(const char * netfile, const char * wfile, EventQueue * Queue, int numberOfQueues) throw (EDLUTException): inters(0), ninters(0), neutypes(0), nneutypes(0), neurons(0), nneurons(0), timedrivenneurons(0), ntimedrivenneurons(0), wchanges(0), nwchanges(0), wordination(0), NumberOfQueues(numberOfQueues), minpropagationdelay(0.0001), invminpropagationdelay(1.0/0.0001){
 	this->LoadNet(netfile);	
 	this->LoadWeights(wfile);
 	this->InitNetPredictions(Queue);	
@@ -527,13 +535,13 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
             		throw EDLUTFileException(4,9,8,1,Currentline);
             	}
             	
-
+            	
             	skip_comments(fh,Currentline);
-				int * N_ConectionWithLearning;
+            	int * N_ConectionWithLearning;
         		if(fscanf(fh,"%i",&(this->nwchanges))==1){
         			int wcind;
         			this->wchanges=new LearningRule * [this->nwchanges];
-					N_ConectionWithLearning=new int [this->nwchanges](); 
+        			N_ConectionWithLearning=new int [this->nwchanges](); 
         			if(this->wchanges){
         				for(wcind=0;wcind<this->nwchanges;wcind++){
         					char ident_type[MAXIDSIZE+1];
@@ -541,19 +549,25 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         					string LearningModel;
         					if(fscanf(fh," %"MAXIDSIZEC"[^ ]%*[^ ]",ident_type)==1){
         						if (string(ident_type)==string("ExpAdditiveKernel")){
-        							this->wchanges[wcind] = new ExpWeightChange();
+        							this->wchanges[wcind] = new ExpWeightChange(wcind);
         						} else if (string(ident_type)==string("SinAdditiveKernel")){
-									this->wchanges[wcind] = new SinWeightChange();
+        							this->wchanges[wcind] = new SinWeightChange(wcind);
         						} else if (string(ident_type)==string("CosAdditiveKernel")){
-									this->wchanges[wcind] = new CosWeightChange();
+									this->wchanges[wcind] = new CosWeightChange(wcind);
         						} else if (string(ident_type)==string("SimetricCosAdditiveKernel")){
-									this->wchanges[wcind] = new SimetricCosWeightChange();
+									this->wchanges[wcind] = new SimetricCosWeightChange(wcind);
+								} else if (string(ident_type)==string("SimetricCosSinSTDPAdditiveKernel")){
+									this->wchanges[wcind] = new SimetricCosSinSTDPWeightChange(wcind);
+									N_ConectionWithLearning[wcind]=this->GetNeuronNumber();
+									this->wchanges[wcind]->counter=this->GetNeuronNumber();
+        						} else if (string(ident_type)==string("SimetricCosSinAdditiveKernel")){
+									this->wchanges[wcind] = new SimetricCosSinWeightChange(wcind);
         						} else if (string(ident_type)==string("STDP")){
-        							this->wchanges[wcind] = new STDPWeightChange();
-								} else if (string(ident_type)==string("STDPLS")){
-        							this->wchanges[wcind] = new STDPLSWeightChange();
-        						} else if (string(ident_type)==string("SimetricSTDP")){
-        							this->wchanges[wcind] = new SimetricSTDPWeightChange();
+        							this->wchanges[wcind] = new STDPWeightChange(wcind);
+        						} else if (string(ident_type)==string("STDPLS")){
+        							this->wchanges[wcind] = new STDPLSWeightChange(wcind);
+        						} else if (string(ident_type)==string("SimetricCosSTDPAdditiveKernel")){
+        							this->wchanges[wcind] = new SimetricCosSTDPWeightChange(wcind);
 									N_ConectionWithLearning[wcind]=this->GetNeuronNumber();
 									this->wchanges[wcind]->counter=this->GetNeuronNumber();
         						} else {
@@ -575,7 +589,13 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
 
         		skip_comments(fh,Currentline);
         		if(fscanf(fh,"%li",&(this->ninters))==1){
-        			int source,nsources,target,ntargets,nreps,wchange,wchange2;
+        			int source,nsources,target,ntargets,nreps;
+					char wchange1[80];
+					char wchange2[80];
+					char triggerchar='t';
+					int intwchange1, intwchange2;
+					bool trigger1, trigger2;
+
         			float delay,delayinc,maxweight;
         			int type;
         			int iind,sind,tind,rind,posc;
@@ -584,12 +604,29 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         			if(this->inters && this->wordination){
         				for(iind=0;iind<this->ninters;iind+=nsources*ntargets*nreps){
         					skip_comments(fh,Currentline);
-        					if(fscanf(fh,"%i",&source)==1 && fscanf(fh,"%i",&nsources)==1 && fscanf(fh,"%i",&target)==1 && fscanf(fh,"%i",&ntargets)==1 && fscanf(fh,"%i",&nreps)==1 && fscanf(fh,"%f",&delay)==1 && fscanf(fh,"%f",&delayinc)==1 && fscanf(fh,"%i",&type)==1 && fscanf(fh,"%f",&maxweight)==1 && fscanf(fh,"%i",&wchange)==1){
-								wchange2=-1;
-								if(wchange>=0){
+        					if(fscanf(fh,"%i",&source)==1 && fscanf(fh,"%i",&nsources)==1 && fscanf(fh,"%i",&target)==1 && fscanf(fh,"%i",&ntargets)==1 && fscanf(fh,"%i",&nreps)==1 && fscanf(fh,"%f",&delay)==1 && fscanf(fh,"%f",&delayinc)==1 && fscanf(fh,"%i",&type)==1 && fscanf(fh,"%f",&maxweight)==1 && fscanf(fh,"%s",&wchange1)==1){
+								trigger1=false;
+								int offset1=0;
+								if(wchange1[0]==triggerchar){
+									trigger1=true;
+									offset1=1;
+								}
+								intwchange1 = atoi(wchange1+offset1);
+
+
+								intwchange2=-1;
+								trigger2=false;
+								if(intwchange1>=0){
 									if(is_end_line(fh,Currentline)==false){
-										if(fscanf(fh,"%i",&wchange2)==1){
-											if(wchange2>= this->nwchanges){
+										if(fscanf(fh,"%s",&wchange2)==1){
+											int offset2=0;
+											if(wchange2[0]==triggerchar){
+												trigger2=true;
+												offset2=1;
+											}
+											intwchange2 = atoi(wchange2+offset2);
+															
+											if(intwchange2>= this->nwchanges){
   												throw EDLUTFileException(4,29,24,1,Currentline);
 											}
 										}else{
@@ -603,11 +640,18 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         							if(source+nreps*nsources>this->nneurons || target+nreps*ntargets>this->nneurons){
   										throw EDLUTFileException(4,11,10,1,Currentline);
   									}else{
-  										if(wchange >= this->nwchanges){
+  										if(intwchange1 >= this->nwchanges){
   											throw EDLUTFileException(4,29,24,1,Currentline);
   										}
         							}
         						}
+
+								if(trigger1==false && (intwchange2>=0 && trigger2==false)){
+									cout<<"WARNING: Two learning rules will try to change the same synaptic weight in network file line "<<Currentline<<endl;
+								}
+								if(trigger1==true && trigger2==true){
+									cout<<"ERROR: Two trigger learning rules in the same synpase in network file line "<<Currentline<<endl;
+								}
         						
         						for(rind=0;rind<nreps;rind++){
         							for(sind=0;sind<nsources;sind++){
@@ -616,33 +660,43 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         									this->inters[posc].SetIndex(posc);
         									this->inters[posc].SetSource(&(this->neurons[source+rind*nsources+sind]));
         									this->inters[posc].SetTarget(&(this->neurons[target+rind*ntargets+tind]));
-        									//Net.inters[posc].target=target+rind*nsources+tind;  // other kind of neuron arrangement
-        									this->inters[posc].SetDelay(delay+delayinc*tind);
-        									this->inters[posc].SetType(type);
-        									//this->inters[posc].nextincon=&(this->inters[posc]);       // temporaly used as weight index
+        									this->inters[posc].SetDelay(RoundPropagationDelay(delay+delayinc*tind));
+
+											int validType=this->inters[posc].GetTarget()->GetNeuronModel()->CheckSynapseTypeNumber(type);
+											if(type!=validType){
+												cout<<"synapse "<<posc<<" has a connection type of "<<type<<". It is not supported by the target neuron. It has been set to "<<validType<<endl;
+											}
+        									this->inters[posc].SetType(validType);
         									this->inters[posc].SetWeight(maxweight);   //TODO: Use max interconnection conductance
-        									this->inters[posc].SetMaxWeight(maxweight);
+   									
+											this->inters[posc].SetMaxWeight(maxweight);
 
 											this->inters[posc].SetWeightChange_withPost(0);
 											this->inters[posc].SetWeightChange_withoutPost(0);
-											if(wchange >= 0){
+											if(intwchange1 >= 0){
 												//Set the new learning rule
-												if(wchanges[wchange]->ImplementPostSynaptic()==true){
-													this->inters[posc].SetWeightChange_withPost(this->wchanges[wchange]);
+												if(wchanges[intwchange1]->ImplementPostSynaptic()==true){
+													this->inters[posc].SetWeightChange_withPost(this->wchanges[intwchange1]);
 												}else{
-													this->inters[posc].SetWeightChange_withoutPost(this->wchanges[wchange]);
+													this->inters[posc].SetWeightChange_withoutPost(this->wchanges[intwchange1]);
+													if(trigger1==true){
+														this->inters[posc].SetTriggerConnection();
+													}
 												}
-												N_ConectionWithLearning[wchange]++;
+												N_ConectionWithLearning[intwchange1]++;
 											}
 
-											if(wchange2>= 0){
+											if(intwchange2 >= 0){
 												//Set the new learning rule
-												if(wchanges[wchange2]->ImplementPostSynaptic()==true){
-													this->inters[posc].SetWeightChange_withPost(this->wchanges[wchange2]);
+												if(wchanges[intwchange2]->ImplementPostSynaptic()==true){
+													this->inters[posc].SetWeightChange_withPost(this->wchanges[intwchange2]);
 												}else{
-													this->inters[posc].SetWeightChange_withoutPost(this->wchanges[wchange2]);
+													this->inters[posc].SetWeightChange_withoutPost(this->wchanges[intwchange2]);
+													if(trigger2==true){
+														this->inters[posc].SetTriggerConnection();
+													}
 												}
-												N_ConectionWithLearning[wchange2]++;
+												N_ConectionWithLearning[intwchange2]++;
 											}
                                 		}
         							}
@@ -651,18 +705,28 @@ void Network::LoadNet(const char *netfile) throw (EDLUTException){
         						throw EDLUTFileException(4,12,11,1,Currentline);
         					}
         				}
-for(int t=0; t<this->nwchanges; t++){
-	if(N_ConectionWithLearning[t]>0){
-		this->wchanges[t]->InitializeConnectionState(N_ConectionWithLearning[t]);
-	}
-}
-if(this->nwchanges>0){
-delete [] N_ConectionWithLearning;
-}
+						for(int t=0; t<this->nwchanges; t++){
+							if(N_ConectionWithLearning[t]>0){
+								this->wchanges[t]->InitializeConnectionState(N_ConectionWithLearning[t]);
+							}
+						}
+						if(this->nwchanges>0){
+						delete [] N_ConectionWithLearning;
+						}
         				
 						FindOutConnections();
                     	SetWeightOrdination(); // must be before find_in_c() and after find_out_c()
                     	FindInConnections();
+
+						//Calculate the output delay structure of each neuron.
+						for(int i=0; i<this->GetNeuronNumber(); i++){
+							this->GetNeuronAt(i)->CalculateOutputDelayStructure();
+						}
+						for(int i=0; i<this->GetNeuronNumber(); i++){
+							this->GetNeuronAt(i)->CalculateOutputDelayIndex();
+						}
+						
+
                     }else{
         				throw EDLUTFileException(4,5,28,0,Currentline);
         			}
@@ -706,7 +770,7 @@ void Network::LoadWeights(const char *wfile) throw (EDLUTFileException){
 				
 				for(weind=0;weind<nweights;weind++){
 					Interconnection * Connection = this->wordination[connind+weind];
-					Connection->SetWeight(((weight < 0.0)?rand()*Connection->GetMaxWeight()/RAND_MAX:((weight > Connection->GetMaxWeight())?Connection->GetMaxWeight():weight)));
+					Connection->SetWeight(((weight < 0.0)?RandomGenerator::frand()*Connection->GetMaxWeight():((weight > Connection->GetMaxWeight())?Connection->GetMaxWeight():weight)));
 				}
 			}else{
 				throw EDLUTFileException(11,31,25,1,Currentline);
@@ -814,4 +878,13 @@ double Network::GetMinInterpropagationTime(){
 		time=0;
 	}
 	return time;
+}
+
+
+double Network::RoundPropagationDelay(double time){
+	double result=floor(time*invminpropagationdelay + minpropagationdelay*0.5)*minpropagationdelay;
+	if(result<=0){
+		return minpropagationdelay;
+	} 
+	return result;
 }

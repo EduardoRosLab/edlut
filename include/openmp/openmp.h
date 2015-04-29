@@ -27,6 +27,8 @@
  */
 extern int NumberOfOpenMPThreads;
 extern int NumberOfOpenMPQueues;
+extern int NumberOfGPUs;
+extern int * GPUsIndex;
 
 #ifdef _OPENMP
 	#include <omp.h>

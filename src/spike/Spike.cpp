@@ -43,6 +43,7 @@ void Spike::PrintType(){
 	cout<<"Spike"<<endl;
 }
 
-int Spike::ProcessingPriority(){
-	return 9;
+enum EventPriority Spike::ProcessingPriority(){
+	return SPIKE;
 }
+

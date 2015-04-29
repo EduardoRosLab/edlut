@@ -47,7 +47,7 @@ class ExponentialTable{
 		/*!
    		 * Number of look-up table elements.
    		 */
-		static const int TableSize=1024*1024*4;
+		static const int TableSize=1024*1024*8;
 
 		/*!
    		 * Look-up table computed in "generate_data()" function.

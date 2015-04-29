@@ -45,13 +45,17 @@
 class CosState : public ConnectionState{
 
 	private:
-		
 
 		/*!
-		 * Tau constant of the learning rule.
+		 * \brief Kernel amplitude in second.
 		 */
 		float tau;
 		float inv_tau;
+
+		/*!
+		 * \brief Exponent
+		 */
+		float exponent;
 
 
 	public:
@@ -64,7 +68,7 @@ class CosState : public ConnectionState{
 		 * \param NumSynapses Number of synapses that implement this learning rule.
 		 * \param NewExponent The exponent of the sinusoidal function.
 		 */
-		CosState(unsigned int NumSynapses, float NewTau);
+		CosState(unsigned int NumSynapses, float NewTau, float NewExponent);
 
 		/*!
 		 * \brief Class destructor.

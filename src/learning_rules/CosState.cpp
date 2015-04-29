@@ -17,18 +17,21 @@
 #include "../../include/learning_rules/CosState.h"
 
 #include "../../include/simulation/ExponentialTable.h"
+#include "../../include/simulation/TrigonometricTable.h"
 
 #include <cmath>
 #include <string.h>
 
+#include <iostream>
+#include <cstdio>
+using namespace std;
 
 
-CosState::CosState(unsigned int NumSynapses, float NewTau): ConnectionState(NumSynapses, 3), tau(NewTau){
-	if (this->tau==0){
-		this->tau = 0.5f;
-	}
-	inv_tau=1.0f/tau;
+
+CosState::CosState(unsigned int NumSynapses, float NewTau, float NewExponent): ConnectionState(NumSynapses, 3), tau(NewTau), exponent(NewExponent){
+	this->inv_tau=1.0f/this->tau;
 }
+
 
 CosState::~CosState() {
 }
@@ -55,20 +58,51 @@ double CosState::GetPrintableValuesAt(unsigned int position){
 
 
 
+//void CosState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_post){
+//	float OldCos2= this->GetStateVariableAt(index, 0);
+//	float OldSin2= this->GetStateVariableAt(index, 1);
+//	float OldCosSin= this->GetStateVariableAt(index, 2);
+//
+//	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
+//	float ElapsedRelative = ElapsedTime*this->inv_tau;
+//	float expon = ExponentialTable::GetResult(-ElapsedRelative);
+//
+//		
+//		
+//	float auxCos2=cos(ElapsedRelative)*cos(ElapsedRelative);
+//	float auxSin2=sin(ElapsedRelative)*sin(ElapsedRelative);
+//	float auxCosSin=cos(ElapsedRelative)*sin(ElapsedRelative);
+//	
+//	float NewCos2 = expon*(OldCos2 * auxCos2 + OldSin2*auxSin2-2*OldCosSin*auxCosSin);
+//	float NewSin2 = expon*(OldSin2 * auxCos2 + OldCos2*auxSin2+2*OldCosSin*auxCosSin);
+//	float NewCosSin = expon*(OldCosSin *(auxCos2-auxSin2) + (OldCos2-OldSin2)*auxCosSin);
+//
+//
+//	this->SetStateVariableAt(index, 0, NewCos2, NewSin2, NewCosSin);
+//
+//	this->SetLastUpdateTime(index, NewTime);
+//}
+
 void CosState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_post){
 	float OldCos2= this->GetStateVariableAt(index, 0);
 	float OldSin2= this->GetStateVariableAt(index, 1);
 	float OldCosSin= this->GetStateVariableAt(index, 2);
 
 	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
-	float ElapsedRelative = ElapsedTime*this->inv_tau;
-	float expon = ExponentialTable::GetResult(-ElapsedRelative);
+	float ElapsedRelativeExponential = exponent*ElapsedTime*this->inv_tau;
+	float expon = ExponentialTable::GetResult(-ElapsedRelativeExponential);
 
+	float ElapsedRelativeTrigonometric=ElapsedTime*this->inv_tau*1.5708f; // PI/2=1.5708f
+
+	int LUTindex=TrigonometricTable::CalculateOffsetPosition(ElapsedRelativeTrigonometric);
+	LUTindex = TrigonometricTable::CalculateValidPosition(0,LUTindex);
+
+	float SinVar = TrigonometricTable::GetElement(LUTindex);
+	float CosVar = TrigonometricTable::GetElement(LUTindex+1);
 		
-		
-	float auxCos2=cos(ElapsedRelative)*cos(ElapsedRelative);
-	float auxSin2=sin(ElapsedRelative)*sin(ElapsedRelative);
-	float auxCosSin=cos(ElapsedRelative)*sin(ElapsedRelative);
+	float auxCos2=CosVar*CosVar;
+	float auxSin2=SinVar*SinVar;
+	float auxCosSin=CosVar*SinVar;
 	
 	float NewCos2 = expon*(OldCos2 * auxCos2 + OldSin2*auxSin2-2*OldCosSin*auxCosSin);
 	float NewSin2 = expon*(OldSin2 * auxCos2 + OldCos2*auxSin2+2*OldCosSin*auxCosSin);
@@ -78,6 +112,8 @@ void CosState::SetNewUpdateTime (unsigned int index, double NewTime, bool pre_po
 
 	this->SetLastUpdateTime(index, NewTime);
 }
+
+
 
 
 void CosState::ApplyPresynapticSpike(unsigned int index){

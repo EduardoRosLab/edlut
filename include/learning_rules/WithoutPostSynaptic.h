@@ -49,12 +49,6 @@ class WithoutPostSynaptic : public LearningRule {
 	public:
 
 		/*!
-		 * \brief trigger this variable can be set to 0 (no trigger connection) or 1 (trigger connection).
-		 * 
-		 */ 
-		int trigger;
-
-		/*!
 		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *
 		 * It initialize the state associated to the learning rule for all the synapses.
@@ -65,11 +59,13 @@ class WithoutPostSynaptic : public LearningRule {
 
 
 		/*!
-		 * \brief Default constructor.
-		 * 
-		 * It creates a new WithoutPostSynaptic object.
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule with its index.
+		 *
+		 * \param NewLearningRuleIndex learning rule index.
 		 */ 
-		WithoutPostSynaptic();
+		WithoutPostSynaptic(int NewLearningRuleIndex);
 
 		/*!
 		 * \brief Object destructor.

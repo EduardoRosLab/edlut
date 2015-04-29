@@ -185,19 +185,6 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 */
 		virtual VectorNeuronState * InitializeState();
 
-		/*!
-		 * \brief It processes a propagated spike (input spike in the cell).
-		 *
-		 * It processes a propagated spike (input spike in the cell).
-		 *
-		 * \note This function doesn't generate the next propagated spike. It must be externally done.
-		 *
-		 * \param InputSpike The spike happened.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
-
 
 		/*!
 		 * \brief It processes a propagated spike (input spike in the cell).
@@ -225,7 +212,7 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 *
 		 * \return True if an output spike have been fired. False in other case.
 		 */
-		virtual bool UpdateState(int index, VectorNeuronState * State, double CurrentTime);
+		virtual bool UpdateState(int index, double CurrentTime);
 
 
 		/*!
@@ -247,7 +234,7 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		void InitializeStates(int N_neurons);
+		void InitializeStates(int N_neurons, int OpenMPQueueIndex);
 
 		/*!
 		 * \brief It evaluates the differential equation in NeuronState and it stores the results in AuxNeuronState.
@@ -259,7 +246,7 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 *
 		 * \Note: this function it is not necesary for this neuron model because this one does not use integration method. 
 		 */
-		void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState){};
+		void EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState, int index){};
 
 		/*!
 		 * \brief It evaluates the time depedendent ecuation in NeuronState for elapsed_time and it stores the results in NeuronState.
@@ -273,6 +260,17 @@ class SRMTimeDrivenModel: public TimeDrivenNeuronModel {
 		 */
 		void EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time){};
 
+
+		/*!
+		 * \brief It Checks if the neuron model has this connection type.
+		 *
+		 * It Checks if the neuron model has this connection type.
+		 *
+		 * \param Type input connection type.
+		 *
+		 * \return A a valid connection type for this neuron model.
+		 */
+		virtual int CheckSynapseTypeNumber(int Type);
 };
 
 #endif /* SRMTIMEDRIVENMODEL_H_ */

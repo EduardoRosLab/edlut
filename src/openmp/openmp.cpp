@@ -22,6 +22,8 @@ using namespace std;
 
 int NumberOfOpenMPThreads;
 int NumberOfOpenMPQueues;
+int NumberOfGPUs;
+int * GPUsIndex;
 
 void Set_Number_of_openmp_threads(int NumberOfQueues, int NumberOfThreads){
 	if(NumberOfThreads>omp_get_max_threads()){
@@ -56,5 +58,6 @@ void Set_Number_of_openmp_threads(int NumberOfQueues, int NumberOfThreads){
 	(void) omp_set_num_threads(NumberOfThreads);
 	NumberOfOpenMPThreads=NumberOfThreads;
 	NumberOfOpenMPQueues=NumberOfQueues;
+	NumberOfGPUs=0;
 
 }

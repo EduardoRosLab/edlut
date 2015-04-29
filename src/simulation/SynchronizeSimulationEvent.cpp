@@ -27,7 +27,7 @@ SynchronizeSimulationEvent::SynchronizeSimulationEvent(double NewTime): Event(Ne
 SynchronizeSimulationEvent::~SynchronizeSimulationEvent(){
 }
 
-void SynchronizeSimulationEvent::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+void SynchronizeSimulationEvent::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
 	CurrentSimulation->SetSynchronizeSimulationEvent(omp_get_thread_num());
 }
 
@@ -41,8 +41,8 @@ void SynchronizeSimulationEvent::PrintType(){
 }
    
 
-int SynchronizeSimulationEvent::ProcessingPriority(){
-	return 3;
+enum EventPriority SynchronizeSimulationEvent::ProcessingPriority(){
+	return SYNCHRONIZESIMULATIONEVENT;
 }
 
 

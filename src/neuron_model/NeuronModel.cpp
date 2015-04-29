@@ -17,16 +17,18 @@
 #include "../../include/neuron_model/NeuronModel.h"
 
 #include "../../include/neuron_model/VectorNeuronState.h"
+#include "../../include/spike/NeuronModelPropagationDelayStructure.h"
 
-NeuronModel::NeuronModel(string NeuronTypeID, string NeuronModelID): TypeID(NeuronTypeID),ModelID(NeuronModelID), InitialState(0) {
+NeuronModel::NeuronModel(string NeuronTypeID, string NeuronModelID): TypeID(NeuronTypeID),ModelID(NeuronModelID), State(0) {
 	// TODO Auto-generated constructor stub
+	PropagationStructure=new NeuronModelPropagationDelayStructure();
 
 }
 
 NeuronModel::~NeuronModel() {
 	// TODO Auto-generated destructor stub
-	if (this->InitialState!=0){
-		delete this->InitialState;
+	if (this->State!=0){
+		delete this->State;
 	}
 }
 
@@ -41,3 +43,7 @@ string NeuronModel::GetModelID(){
 //VectorNeuronState * NeuronModel::GetVectorNeuronState(){
 //	return this->InitialState;
 //}
+
+NeuronModelPropagationDelayStructure * NeuronModel::GetNeuronModelPropagationDelayStructure(){
+	return PropagationStructure;
+}

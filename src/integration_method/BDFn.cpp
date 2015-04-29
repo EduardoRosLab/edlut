@@ -59,7 +59,7 @@ void BDFn::NextDifferentialEcuationValue(int index, float * NeuronState, float e
 
 	//If the state of the cell is 0, we use a Euler method to calculate an aproximation of the solution.
 	if(state[index]==0){
-		this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState);
+		this->model->EvaluateDifferentialEcuation(NeuronState, AuxNeuronState, index);
 		for (int j=0; j<N_DifferentialNeuronState; j++){
 			AuxNeuronState_p[j]= NeuronState[j] + elapsed_time*AuxNeuronState[j];
 		}
@@ -89,7 +89,7 @@ void BDFn::NextDifferentialEcuationValue(int index, float * NeuronState, float e
 	//This integration method is an implicit method. We use this loop to iteratively calculate the implicit value.
 	//epsi is the difference between two consecutive aproximation of the implicit method. 
 	while (epsi>1e-16 && k<5){
-		this->model->EvaluateDifferentialEcuation(AuxNeuronState_p, AuxNeuronState);
+		this->model->EvaluateDifferentialEcuation(AuxNeuronState_p, AuxNeuronState, index);
 
 		for (int j=0; j<N_DifferentialNeuronState; j++){
 			AuxNeuronState_c[j]=Coeficient[state[index]][0]*elapsed_time*AuxNeuronState[j] + Coeficient[state[index]][1]*NeuronState[j];
@@ -99,7 +99,7 @@ void BDFn::NextDifferentialEcuationValue(int index, float * NeuronState, float e
 		}
 
 		//jacobian.
-		Jacobian(AuxNeuronState_p, jacnum, elapsed_time);
+		Jacobian(AuxNeuronState_p, jacnum, elapsed_time, index);
 	
 		for(int z=0; z<N_DifferentialNeuronState; z++){
 			for(int t=0; t<N_DifferentialNeuronState; t++){

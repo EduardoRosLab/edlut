@@ -25,7 +25,7 @@
 #include "../../include/neuron_model/NeuronState.h"
 
 
-STDPWeightChange::STDPWeightChange():WithPostSynaptic(){
+STDPWeightChange::STDPWeightChange(int NewLearningRuleIndex):WithPostSynaptic(NewLearningRuleIndex){
 }
 
 STDPWeightChange::~STDPWeightChange(){

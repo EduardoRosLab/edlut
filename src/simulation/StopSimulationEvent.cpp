@@ -28,7 +28,7 @@ StopSimulationEvent::StopSimulationEvent(double NewTime): Event(NewTime){
 StopSimulationEvent::~StopSimulationEvent(){
 }
 
-void StopSimulationEvent::ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction){
+void StopSimulationEvent::ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction){
 	CurrentSimulation->StopSimulation(omp_get_thread_num());	/*asdfgf*/	
 }
 
@@ -40,8 +40,8 @@ void StopSimulationEvent::PrintType(){
 	cout<<"StopSimulationEvent"<<endl;
 }
    	
-int StopSimulationEvent::ProcessingPriority(){
-	return 1;
+enum EventPriority StopSimulationEvent::ProcessingPriority(){
+	return STOPSIMULATIONEVENT;
 }
 
 

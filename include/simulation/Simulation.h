@@ -30,6 +30,7 @@
 #include <list>
 
 #include "../spike/EDLUTException.h"
+#include "./RealTimeRestriction.h"
 
 #include "./PrintableObject.h"
 
@@ -48,7 +49,7 @@ class OutputSpikeDriver;
 class OutputWeightDriver;
 class Spike;
 class Neuron;
-class RealTimeRestriction;
+
 
 /*!
  * \class Simulation
@@ -146,12 +147,17 @@ class Simulation : public PrintableObject{
 		/*!
 		 * Vector of total spike count for each OpenMP thread
 		 */
-		long * TotalSpikeCounter;
+		long long * TotalSpikeCounter;
 
 		/*!
 		 * Vector of total propated spike count for each OpenMP thread
 		 */
-		long * TotalPropagateCounter;
+		long long * TotalPropagateCounter;
+
+		/*!
+		 * Vector of total propated spike event count for each OpenMP thread
+		 */
+		long long * TotalPropagateEventCounter;
 
 		/*!
  		 * Number of OpenMP thread. 
@@ -475,7 +481,7 @@ class Simulation : public PrintableObject{
 		 * Sets the total spike counter.
 		 * \param value is value to set the counter to.
 		 */
-		void SetTotalSpikeCounter(int indexThread, long int value);
+		void SetTotalSpikeCounter(int indexThread, long long value);
 
 		/*!
 		 * \brief Set total spike count.
@@ -491,15 +497,27 @@ class Simulation : public PrintableObject{
 		 * Gets the total spike counter.
 		 * \returns the counter value.
 		 */
-		long GetTotalSpikeCounter(int indexThread);
+		long long GetTotalSpikeCounter(int indexThread);
 
-		long GetTotalSpikeCounter();
+		long long GetTotalSpikeCounter();
 
-		long GetTotalPropagateCounter(int indexThread);
+		long long GetTotalPropagateCounter(int indexThread);
 
-		void SetTotalPropagateCounter(int indexThread, long int value); 
+		long long GetTotalPropagateCounter();
+
+		long long GetTotalPropagateEventCounter(int indexThread);
+
+		long long GetTotalPropagateEventCounter();
+
+		void SetTotalPropagateCounter(int indexThread, long long value); 
+
+		void SetTotalPropagateEventCounter(int indexThread, long long value); 
 
 		void IncrementTotalPropagateCounter(int indexThread); 
+
+		void IncrementTotalPropagateCounter(int indexThread, int increment); 
+
+		void IncrementTotalPropagateEventCounter(int indexThread); 
 
 		/*!
 		 * \brief It gets the input activity.
@@ -580,6 +598,8 @@ class Simulation : public PrintableObject{
 
 		double GetMinInterpropagationTime();
 	
+
+		void SelectGPU(int OpenMP_index);
 };
 
 #endif /*SIMULATION_H_*/

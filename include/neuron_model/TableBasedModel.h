@@ -224,19 +224,6 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 */
 		virtual InternalSpike * GenerateInitialActivity(Neuron *  Cell);
 
-		/*!
-		 * \brief It processes a propagated spike (input spike in the cell).
-		 *
-		 * It processes a propagated spike (input spike in the cell).
-		 *
-		 * \note This function doesn't generate the next propagated spike. It must be externally done.
-		 *
-		 * \param InputSpike The spike happened.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
-
 
 		/*!
 		 * \brief It processes a propagated spike (input spike in the cell).
@@ -300,7 +287,19 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 *
 		 * \param N_neurons cell number inside the VectorNeuronState.
 		 */
-		virtual void InitializeStates(int N_neurons);
+		virtual void InitializeStates(int N_neurons, int OpenMPQueueIndex);
+
+
+		/*!
+		 * \brief It Checks if the neuron model has this connection type.
+		 *
+		 * It Checks if the neuron model has this connection type.
+		 *
+		 * \param Type input connection type.
+		 *
+		 * \return A a valid connection type for this neuron model.
+		 */
+		virtual int CheckSynapseTypeNumber(int Type);
 
 };
 

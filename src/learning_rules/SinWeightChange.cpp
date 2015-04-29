@@ -21,7 +21,7 @@
 
 #include "../../include/spike/Interconnection.h"
 
-SinWeightChange::SinWeightChange():exponent(0){
+SinWeightChange::SinWeightChange(int NewLearningRuleIndex):AdditiveKernelChange(NewLearningRuleIndex), exponent(0){
 }
 
 SinWeightChange::~SinWeightChange(){
@@ -51,8 +51,6 @@ void SinWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDL
 	if(exponent%2 == 1){
 		exponent=(exponent/2)*2;
 		cerr << "Warning: exponent in SinAdditiveKernel must be multiple of 2. It has been rounded to "<< exponent << endl;
-
-
 	}
 
 

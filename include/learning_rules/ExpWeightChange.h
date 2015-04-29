@@ -44,11 +44,13 @@ class ExpWeightChange: public AdditiveKernelChange{
 
 	public:
 		/*!
-		 * \brief Default constructor. It creates a new exponential additive learning-rule.
-		 * 
-		 * Default constructor. It creates a new exponential additive learning-rule
-		 */
-		ExpWeightChange();
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule with its index.
+		 *
+		 * \param NewLearningRuleIndex learning rule index.
+		 */ 
+		ExpWeightChange(int NewLearningRuleIndex);
 
 		/*!
 		 * \brief Object destructor.

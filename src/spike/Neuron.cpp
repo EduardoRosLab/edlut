@@ -29,17 +29,15 @@
 
 #include "../../include/openmp/openmp.h"
 
+#include "../../include/spike/NeuronPropagationDelayStructure.h"
+#include "../../include/spike/NeuronModelPropagationDelayStructure.h"
+
 #include <string>
 
 using namespace std;
 
-Neuron::Neuron(){
+Neuron::Neuron():N_TriggerConnection(0){
 }
-
-//Neuron::Neuron(int NewIndex, NeuronModel ** Type, bool Monitored, bool IsOutput){
-//	InitNeuron(NewIndex,-1,Type,Monitored,IsOutput);
-//
-//}
 
 Neuron::~Neuron(){
 	//state is deleted en Neuron Model.
@@ -57,6 +55,12 @@ Neuron::~Neuron(){
 	if (this->InputLearningConnectionsWithoutPostSynapticLearning!=0){
 		delete [] this->InputLearningConnectionsWithoutPostSynapticLearning;
 	}
+
+	if(N_TriggerConnection>0){
+		delete [] this->TriggerConnection;
+	}
+
+	delete PropagationStructure;
 }
 
 void Neuron::InitNeuron(int NewIndex, int index_VectorNeuronState, NeuronModel * Type, bool Monitored, bool IsOutput, int blockIndex){
@@ -139,16 +143,24 @@ void Neuron::SetInputConnectionsWithoutPostSynapticLearning(Interconnection ** C
 	this->InputConLearningNumberWithoutPostSynaptic = NumberOfConnections;
 
 
-//////////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-	TriggerConnection=0;
-	for(int i=0; i<NumberOfConnections; i++){
-		WithoutPostSynaptic * wchani=(WithoutPostSynaptic *)Connections[i]->GetWeightChange_withoutPost();
-		if(wchani->trigger==1){
-			TriggerConnection=Connections[i];
-			break;
+
+	if(NumberOfConnections>0){
+		Interconnection ** aux= (Interconnection **) new Interconnection * [NumberOfConnections];
+		for(int i=0; i<NumberOfConnections; i++){
+			if(Connections[i]->GetTriggerConnection()){
+				aux[N_TriggerConnection]=Connections[i];
+				N_TriggerConnection++;
+			}
 		}
+
+		if(N_TriggerConnection>0){
+			TriggerConnection=(Interconnection**)new Interconnection*[N_TriggerConnection];
+			for(int i=0; i<N_TriggerConnection; i++){
+				TriggerConnection[i]=aux[i];
+			}
+		}
+		delete [] aux;
 	}
-/////////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 }
 
 
@@ -222,4 +234,19 @@ void Neuron::SetIndex_VectorNeuronState(long int index){
 
 void Neuron::set_OpenMP_queue_index(int index){
 	this->OpenMP_queue_index=index;
+}
+
+void Neuron::CalculateOutputDelayStructure(){
+	PropagationStructure=new NeuronPropagationDelayStructure(this);
+
+	for(int i=0; i<NumberOfOpenMPQueues; i++){
+		for(int j=0;j<PropagationStructure->NDifferentDelays[i];j++){ 
+			this->GetNeuronModel()->GetNeuronModelPropagationDelayStructure()->IncludeNewDelay(i, PropagationStructure->SynapseDelay[i][j]);
+		}
+	}
+}
+
+
+void Neuron::CalculateOutputDelayIndex(){
+	PropagationStructure->CalculateOutputDelayIndex(this->GetNeuronModel()->GetNeuronModelPropagationDelayStructure());
 }

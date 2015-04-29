@@ -69,7 +69,7 @@ public:
 	 * \param NewTime Time of the next state variable update.
 	 * \param indexNeuronModel index neuron model inside the network
 	 */
-	TimeEventAllNeurons_GPU(double NewTime, TimeDrivenNeuronModel_GPU * newNeuronModel, Neuron ** newNeurons, Simulation * CurrentSimulation);
+	TimeEventAllNeurons_GPU(double NewTime, TimeDrivenNeuronModel_GPU * newNeuronModel, Neuron ** newNeurons);
 	
 	/*!
 	 * \brief Class destructor.
@@ -88,7 +88,7 @@ public:
 	 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
 	 * control the consumed time in each slot.
 	 */
-	virtual void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction);
+	virtual void ProcessEvent(Simulation * CurrentSimulation, int RealTimeRestriction);
 
 	/*!
 	 * \brief It process an event in the simulation without the option of real time available.
@@ -130,7 +130,7 @@ public:
 	 * 
 	 * The event queue uses this preference variable to sort the events with the same time stamp.
 	 */
-	virtual int ProcessingPriority();
+	enum EventPriority ProcessingPriority();
 };
 
 #endif

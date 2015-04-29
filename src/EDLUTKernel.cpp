@@ -38,6 +38,8 @@
 
 #include "../include/openmp/openmp.h"
 
+#include "../include/simulation/RandomGenerator.h"
+
 
 //#include "google/profiler.h"
 //#include "vld.h"
@@ -82,7 +84,7 @@ int main(int ac, char *av[]) {
 	clock_t startt,endt;
 	cout << "Loading tables..." << endl;
 
-	srand ( time(NULL) );
+	RandomGenerator::srand(1);
 
 	try {
    		ParamReader Reader(ac, av);
@@ -114,6 +116,8 @@ int main(int ac, char *av[]) {
 			
 		cout << "Simulating network..." << endl;
 		
+		Simul.InitSimulation();
+
 		startt=clock();
 		//ProfilerStart("Profiling.prof");
 		Simul.RunSimulation();
@@ -144,21 +148,17 @@ int main(int ac, char *av[]) {
 		cout << "Oky doky" << endl;  
 
 		cout << "Elapsed time: " << (endt-startt)/(float)CLOCKS_PER_SEC << " sec" << endl;
-		long TotalSpikeCounter=0;
-		long TotalPropagateCounter=0;
 		for(int i=0; i<Simul.GetNumberOfQueues(); i++){
 			cout << "Thread "<<i<<"--> Number of updates: " << Simul.GetSimulationUpdates(i) << endl; /*asdfgf*/
 			cout << "Thread "<<i<<"--> Number of InternalSpike: " << Simul.GetTotalSpikeCounter(i) << endl; /*asdfgf*/
-			cout << "Thread "<<i<<"--> Number of PropagatedEvent: " << Simul.GetTotalPropagateCounter(i) << endl; /*asdfgf*/
+			cout << "Thread "<<i<<"--> Number of Propagated Spikes and Events: " << Simul.GetTotalPropagateCounter(i)<<", "<< Simul.GetTotalPropagateEventCounter(i)<< endl; /*asdfgf*/
 			cout << "Thread "<<i<<"--> Mean number of spikes in heap: " << Simul.GetHeapAcumSize(i)/(float)Simul.GetSimulationUpdates(i) << endl; /*asdfgf*/
 			cout << "Thread "<<i<<"--> Updates per second: " << Simul.GetSimulationUpdates(i)/((endt-startt)/(float)CLOCKS_PER_SEC) << endl; /*asdfgf*/
-			TotalSpikeCounter+=Simul.GetTotalSpikeCounter(i);
-			TotalPropagateCounter+=Simul.GetTotalPropagateCounter(i);
 		}
 		endtotalt=clock();
 		cout << "Total elapsed time: " << (endtotalt-starttotalt)/(float)CLOCKS_PER_SEC << " sec" << endl;
-		cout << "Total InternalSpike: " << TotalSpikeCounter<<endl; 
-		cout << "Total PropagatedEvent: " << TotalPropagateCounter<<endl;
+		cout << "Total InternalSpike: " << Simul.GetTotalSpikeCounter()<<endl; 
+		cout << "Total Propagated Spikes and Events: " << Simul.GetTotalPropagateCounter()<<", "<< Simul.GetTotalPropagateEventCounter()<<endl;
 
 
 	} catch (ParameterException Exc){

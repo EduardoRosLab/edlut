@@ -28,7 +28,11 @@
  * call the update methods from all cell.
  */
 
-#include "../../include/simulation/TimeEventOneNeuron.h"
+#include "../simulation/Event.h"
+
+
+class TimeDrivenNeuronModel;
+class Neuron;
 
 /*!
  * \class TimeEventAllNeurons
@@ -41,9 +45,20 @@
  * \author Francisco Naveros
  * \date May 2013
  */
-class TimeEventAllNeurons : public TimeEventOneNeuron{
+class TimeEventAllNeurons : public Event{
 
 public:
+
+	/*!
+	 * \brief Neuron model.
+	*/
+	TimeDrivenNeuronModel * neuronModel;
+
+	/*!
+	 * \brief Neuron model.
+	*/
+	Neuron** neurons;
+
 
 	/*!
 	 * \brief Constructor with parameters.
@@ -72,7 +87,7 @@ public:
 	 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
 	 * control the consumed time in each slot.
 	 */
-	virtual void ProcessEvent(Simulation * CurrentSimulation, volatile int * RealTimeRestriction);
+	virtual void ProcessEvent(Simulation * CurrentSimulation,  int RealTimeRestriction);
 
 	/*!
 	 * \brief It process an event in the simulation without the option of real time available.
@@ -84,11 +99,37 @@ public:
 	virtual void ProcessEvent(Simulation * CurrentSimulation);
 
 	/*!
+	 * \brief It gets the neuron model.
+	 *
+	 * It gets the neuron model.
+	 *
+	 * \return The neuron model.
+	 */
+	TimeDrivenNeuronModel * GetModel();
+	
+
+	/*!
+	 * \brief It gets neuron list that use this neuron model.
+	 *
+	 * It gets neuron list that use this neuron model.
+	 *
+	 * \return The neuron list that use this neuron model.
+	 */
+	Neuron ** GetNeurons();
+
+	/*!
 	 * \brief this method print the event type.
 	 * 
 	 * This method print the event type..
 	 */
 	virtual void PrintType();
+
+	/*!
+	 * \brief The event queue uses this preference variable to sort the events with the same time stamp.
+	 * 
+	 * The event queue uses this preference variable to sort the events with the same time stamp.
+	 */
+	enum EventPriority ProcessingPriority();
 
 };
 

@@ -158,7 +158,7 @@ class SRMTableBasedModel: public TableBasedModel {
 		 */
 		virtual InternalSpike * GenerateNextSpike(InternalSpike *  OutputSpike);
 
-virtual void InitializeStates(int N_neurons);
+virtual void InitializeStates(int N_neurons, int OpenMPQueueIndex);
 };
 
 #endif /* SRMTABLEBASEDMODEL_H_ */
