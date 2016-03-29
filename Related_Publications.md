@@ -1,0 +1,19 @@
+# Related publications #
+
+The description of the EDLUT simulator is included in:
+  * E. Ros, R. Carrillo, E. M. Ortigosa, B. Barbour, R. Agís, Event-driven simulation scheme for spiking neural networks using look-up tables to characterize neuronal dynamics, Neural Computation, 18(12), pp. 2959-2993, 2006. [doi:10.1162/neco.2006.18.12.2959](http://www.mitpressjournals.org/doi/abs/10.1162/neco.2006.18.12.2959).
+
+More information about the time-driven cell models and the simulation of hybrid networks (including both time-driven and event-driven) can be found in:
+  * J. A. Garrido, R. R. Carrillo, N. R. Luque, E. Ros, Event and time driven hybrid simulation of spiking neural networks. International Work-Conference on Artificial Neural Networks (IWANN 2011). Advances in Computational Intelligence. Lecture Notes in Computer Science, 6691, pp. 554-561. Springer, Heidelberg (2011). [doi:10.1007/978-3-642-21501-8\_69](http://www.springerlink.com/content/2735qn38k3201313/).
+
+Several simulation examples of diverse networks and controlling robotic systems can be seen in:
+  * N. R. Luque, J. A. Garrido, R. R. Carrillo, O. J. M. D. Coenen, E. Ros, Cerebellar Input Configuration Toward Object Model Abstraction in Manipulation Tasks. IEEE Transaction on Neural Networks, 22(8), 1321-1328, 2011. [doi: 10.1109/TNN.2011.2156809](http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5928419)
+  * N. R. Luque, J. A. Garrido, R. R. Carrillo, S. Tolu, E. Ros, Adaptive Cerebellar Spiking Model Embedded In The Control Loop: Context Switching And Robustness Against Noise, Int. Journal of Neural Systems, 21(5), pp. 385-401, 2011. [doi:10.1142/S0129065711002900](http://www.worldscinet.com/ijns/21/2105/S0129065711002900.html).
+  * N. R. Luque, J. A. Garrido, R. R. Carrillo, O. J. M. D. Coenen, E. Ros, Cerebellarlike Corrective Model Inference Engine for Manipulation Tasks, IEEE Transactions on Systems, Man, and Cybernetics, Part B: Cybernetics, 41(5), 2011, [doi: 10.1109/TSMCB.2011.2138693](http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5762389).
+  * N. R. Luque, J. A. Garrido, R. R. Carrillo, E. Ros, Context Separability Mediated by the Granular Layer in a Spiking Cerebellum Model for Robot Control. International Work-Conference on Artificial Neural Networks (IWANN 2011). Advances in Computational Intelligence. Lecture Notes in Computer Science, 6691, pp. 537-546. Springer, Heidelberg (2011). [doi:10.1007/978-3-642-21501-8\_67](http://www.springerlink.com/content/12l21l68834468m5/).
+  * N. R. Luque, J. A. Garrido, R. R. Carrillo, E. Ros, Cerebellar spiking engine: Towards objet model abstraction in manipulation. International Joint Conference on Neural Networks (IJCNN 2010).[doi: 10.1109/IJCNN.2010.5596531](http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5596531).
+  * R. R. Carrillo, E. Ros, C. Boucheny, O. J.-M. D. Coenen, A real-time spiking cerebellum model for learning robot control, Biosystems, 94, pp. 18-27, 2008. [doi:10.1016/j.biosystems.2008.05.008](http://www.sciencedirect.com/science/article/pii/S0303264708001226).
+  * R. R. Carrillo, E. Ros, S. Tolu, T. Nieus, E. D’Angelo, Event-driven simulation of cerebellar granule cells, Biosystems, 94, pp. 10-17, 2008. [doi:10.1016/j.biosystems.2008.05.007](http://www.sciencedirect.com/science/article/pii/S0303264708001214).
+  * R. R. Carrillo, E. Ros, B. Barbour, C. Boucheny, O. Coenen. Event-driven simulation of neural population synchronization facilitated by electrical coupling.  Biosystems, 87, 275–280, 2007. [doi:10.1016/j.biosystems.2006.09.023](http://www.sciencedirect.com/science/article/pii/S0303264706001754).
+
+**IMPORTANT: If you are using EDLUT for research, please refer some of these papers in the obtained publications.** If you do not have access to any of this journal and you are interested in some of these papers, do not hesitate in send me an email to jgarrido at atc.ugr.es and I will kindly provide the paper that you are interested on.
