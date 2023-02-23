@@ -81,7 +81,7 @@ class InputBooleanArrayDriver: public ArrayInputSpikeDriver {
 		 *
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
-		void LoadInputs(EventQueue * Queue, Network * Net, bool * InputLines, double CurrentTime) throw (EDLUTFileException);
+		void LoadInputs(EventQueue * Queue, Network * Net, bool * InputLines, double CurrentTime) noexcept(false);
 
 		/*!
 		 * \brief It prints the information of the object.

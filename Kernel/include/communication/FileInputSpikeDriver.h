@@ -79,7 +79,7 @@ class FileInputSpikeDriver: public InputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens when the file is been read.
 		 */
-		FileInputSpikeDriver(const char * NewFileName) throw (EDLUTException);
+		FileInputSpikeDriver(const char * NewFileName) noexcept(false);
 		
 		/*!
 		 * \brief Class desctructor.
@@ -98,7 +98,7 @@ class FileInputSpikeDriver: public InputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
-		void LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException);
+		void LoadInputs(EventQueue * Queue, Network * Net) noexcept(false);
 
 		/*!
 		 * \brief It prints the information of the object.

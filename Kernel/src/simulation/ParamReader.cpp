@@ -22,6 +22,7 @@
 #include "../../include/communication/TCPIPConnectionType.h"
 
 #include "../../include/communication/FileInputSpikeDriver.h"
+#include "../../include/communication/FileInputCurrentDriver.h"
 #include "../../include/communication/TCPIPInputSpikeDriver.h"
 
 #include "../../include/communication/FileOutputSpikeDriver.h"
@@ -33,8 +34,10 @@
 #include "../../include/communication/ConnectionException.h"
 
 #include "../../include/simulation/ParameterException.h"
+
+#include "../../include/openmp/openmp.h"
  
-void ParamReader::ParseArguments(int Number, char ** Arguments) throw (ParameterException, ConnectionException) {
+void ParamReader::ParseArguments(int Number, char ** Arguments) noexcept(false) {
 	for (int i=1; i<Number; ++i){
 		string CurrentArgument = Arguments[i];
 		if(CurrentArgument=="-time"){ // Simulation Total Time
@@ -94,38 +97,30 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 			} else {
 				throw ParameterException(Arguments[i],"Invalid simulation step time");				
 			}
-		} else if (CurrentArgument=="-ts"){
-			if (i+1<Number){
-				// Check if it is a number
-				istringstream Argument(Arguments[++i]);
-   
-   				if (!(Argument >> this->TimeDrivenStepTime))
-     				throw ParameterException(Arguments[i], "Invalid simulation time-driven step time");
-			} else {
-				throw ParameterException(Arguments[i],"Invalid simulation time-driven step time");				
-			}
-		} else if (CurrentArgument=="-tsGPU"){
-			if (i+1<Number){
-				// Check if it is a number
-				istringstream Argument(Arguments[++i]);
-   
-   				if (!(Argument >> this->TimeDrivenStepTimeGPU))
-     				throw ParameterException(Arguments[i], "Invalid simulation time-driven step time for GPU");
-			} else {
-				throw ParameterException(Arguments[i],"Invalid simulation time-driven step time for GPU");				
-			}
-		} else if (CurrentArgument=="-if"){
+		}  else if (CurrentArgument=="-ifc"){
 			if (i+1<Number){
 				// Check if it is a valid file and exists
 				string File=Arguments[++i];
 				if (!this->FileExists(File)){
 					throw ParameterException(File,"Invalid input file. The file doesn't exist.");
 				}
-				this->InputDrivers.push_back(new FileInputSpikeDriver (File.c_str()));
+				this->InputCurrentDrivers.push_back(new FileInputCurrentDriver (File.c_str()));
 			} else {
 				throw ParameterException(Arguments[i],"Invalid input file");				
 			}
-		} else if (CurrentArgument=="-ic"){
+		}	else if (CurrentArgument == "-if"){
+			if (i + 1<Number){
+				// Check if it is a valid file and exists
+				string File = Arguments[++i];
+				if (!this->FileExists(File)){
+					throw ParameterException(File, "Invalid input file. The file doesn't exist.");
+				}
+				this->InputSpikeDrivers.push_back(new FileInputSpikeDriver(File.c_str()));
+			}
+			else {
+				throw ParameterException(Arguments[i], "Invalid input file");
+			}
+		}	else if (CurrentArgument == "-ic"){
 			if (i+2<Number){
 				string host = Arguments[i+1];
 				string address = "";
@@ -164,7 +159,7 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 				Driver = new TCPIPInputSpikeDriver (Type,address,port);
 
 				i += 2;
-				this->InputDrivers.push_back(Driver);
+				this->InputSpikeDrivers.push_back(Driver);
 				
 			} else {
 				throw ParameterException(Arguments[i],"Invalid input connection.");
@@ -183,7 +178,7 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 		} else if (CurrentArgument=="-of"){
 			if (i+1<Number){
 				// Check if it is a valid file and exists
-				this->OutputDrivers.push_back(new FileOutputSpikeDriver (Arguments[++i],false));
+				this->OutputSpikeDrivers.push_back(new FileOutputSpikeDriver (Arguments[++i],false));
 			}
 		} else if (CurrentArgument=="-oc"){
 			if (i+2<Number){
@@ -224,7 +219,7 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 
 				i += 2;
 				
-				this->OutputDrivers.push_back(Driver);
+				this->OutputSpikeDrivers.push_back(Driver);
 			} else {
 				throw ParameterException(Arguments[i],"Invalid output connection.");
 			}
@@ -266,22 +261,98 @@ void ParamReader::ParseArguments(int Number, char ** Arguments) throw (Parameter
 
 				i += 2;
 				
-				this->InputDrivers.push_back(Driver);
-				this->OutputDrivers.push_back(Driver);
+				this->InputSpikeDrivers.push_back(Driver);
+				this->OutputSpikeDrivers.push_back(Driver);
 			} else {
 				throw ParameterException(Arguments[i],"Invalid input-output connection.");
 			}
-		} else {
+		} else if(CurrentArgument=="-openmp"){
+			#ifdef _OPENMP
+				if (i+1<Number){
+					// Check if it is a number
+					istringstream Argument(Arguments[++i]);
+	   
+   					if (!(Argument >> this->NumberOfQueues) || NumberOfQueues<1)
+     					throw ParameterException(Arguments[i], "Invalid number of OpenMP thread");	
+
+					if(NumberOfQueues>omp_get_max_threads()){
+						NumberOfQueues=omp_get_max_threads();
+					}
+				} else {
+					throw ParameterException(Arguments[i],"Invalid number of OpenMP thread");				
+				}
+			#else	
+				cout<<"WARNING: OPENMP NOT AVAILABLE IN THIS SIMULATION"<<endl;
+				NumberOfQueues=1;
+				i++;
+			#endif
+
+		}  else if(CurrentArgument=="-rtgap"){
+			if (i+1<Number){
+				// Check if it is a number
+				istringstream Argument(Arguments[++i]);
+   
+   				if (!(Argument >> this->rtgap))
+     				throw ParameterException(Arguments[i], "Invalid real time gap");
+			} else {
+				throw ParameterException(Arguments[i],"Invalid real time gap");				
+			}
+		}
+		else if(CurrentArgument=="-rt1"){
+			if (i+1<Number){
+				// Check if it is a number
+				istringstream Argument(Arguments[++i]);
+   
+   				if (!(Argument >> this->rt1))
+     				throw ParameterException(Arguments[i], "Invalid first real time factor");
+			} else {
+				throw ParameterException(Arguments[i],"Invalid first real time factor");				
+			}		
+		}
+		else if(CurrentArgument=="-rt2"){
+			if (i+1<Number){
+				// Check if it is a number
+				istringstream Argument(Arguments[++i]);
+   
+   				if (!(Argument >> this->rt2))
+     				throw ParameterException(Arguments[i], "Invalid second real time factor");
+			} else {
+				throw ParameterException(Arguments[i],"Invalid second real time factor");				
+			}	
+		}
+		else if(CurrentArgument=="-rt3"){
+			if (i+1<Number){
+				// Check if it is a number
+				istringstream Argument(Arguments[++i]);
+   
+   				if (!(Argument >> this->rt3))
+     				throw ParameterException(Arguments[i], "Invalid third real time factor");
+			} else {
+				throw ParameterException(Arguments[i],"Invalid third real time factor");				
+			}	
+		}
+		else if(CurrentArgument=="-rt"){
+			this->RealTimeOption=1;
+		}
+		else {
 				throw ParameterException(Arguments[i],"Invalid parameter.");
 		}	
 	}	
 	
+
 	if (this->SimulationTime==-1.0){
 		throw ParameterException(Arguments[0],"The simulation time isn't specified."); 	
 	} else if (this->NetworkFile==NULL){
 		throw ParameterException(Arguments[0],"The network configuration file isn't specified.");
 	} else if (this->WeightsFile==NULL){
 		throw ParameterException(Arguments[0],"The weight configuration file isn't specified.");
+	} else if(RealTimeOption){
+		if(SimulationStepTime<=0.0){
+			throw ParameterException(Arguments[0],"Real Time option sets: Simulation Step Time (-st) must be higher than 0.");
+		}
+		if(rtgap<=SimulationStepTime){
+			throw ParameterException(Arguments[0],"Real Time option sets: Real Time Gap (-rtgap) must be higher than -st parameter.");
+		}
 	}
 	
 	return;
@@ -298,8 +369,8 @@ bool ParamReader::FileExists(string Name){
 	return flag;	
 }
  		 
-ParamReader::ParamReader(int ArgNumber, char ** Arg) throw (ParameterException, ConnectionException) :SimulationTime(-1.0), NetworkFile(NULL), WeightsFile(NULL), WeightTime(0.0), NetworkInfo(false),
-	SimulationStepTime(0.0), TimeDrivenStepTime(-1.0), TimeDrivenStepTimeGPU(-1.0), InputDrivers(), OutputDrivers(), OutputWeightDrivers() {
+ParamReader::ParamReader(int ArgNumber, char ** Arg) noexcept(false) :SimulationTime(-1.0), NetworkFile(NULL), WeightsFile(NULL), WeightTime(0.0), NetworkInfo(false),
+SimulationStepTime(0.0), InputSpikeDrivers(), InputCurrentDrivers(), OutputSpikeDrivers(), OutputWeightDrivers(), NumberOfQueues(1), rtgap(0.0f), rt1(0.9f), rt2(0.9f), rt3(0.9f), RealTimeOption(0) {
 	ParseArguments(ArgNumber,Arg);	
 }
  		
@@ -327,20 +398,41 @@ double ParamReader::GetSimulationStepTime(){
 	return this->SimulationStepTime;	
 }
 
-double ParamReader::GetTimeDrivenStepTime(){
-	return this->TimeDrivenStepTime;	
+int ParamReader::GetNumberOfQueues(){
+	return this->NumberOfQueues;
 }
 
-double ParamReader::GetTimeDrivenStepTimeGPU(){
-	return this->TimeDrivenStepTimeGPU;	
+float ParamReader::GetRtGap(){
+	return this->rtgap;
 }
+
+float ParamReader::GetRt1(){
+	return this->rt1;
+}
+
+float ParamReader::GetRt2(){
+	return this->rt2;
+}
+
+float ParamReader::GetRt3(){
+	return this->rt3;
+}
+
+int ParamReader::GetRealTimeOption(){
+	return this->RealTimeOption;
+}
+
  		
 vector<InputSpikeDriver *> ParamReader::GetInputSpikeDrivers(){
-	return this->InputDrivers;
+	return this->InputSpikeDrivers;
+}
+
+vector<InputCurrentDriver *> ParamReader::GetInputCurrentDrivers(){
+	return this->InputCurrentDrivers;
 }
  		
 vector<OutputSpikeDriver *> ParamReader::GetOutputSpikeDrivers(){
-	return this->OutputDrivers;
+	return this->OutputSpikeDrivers;
 }
 
 vector<OutputSpikeDriver *> ParamReader::GetMonitorDrivers(){
@@ -351,18 +443,26 @@ vector<OutputWeightDriver *> ParamReader::GetOutputWeightDrivers(){
 	return this->OutputWeightDrivers;
 }
 
-Simulation * ParamReader::CreateAndInitializeSimulation() throw (EDLUTException, ConnectionException){
+
+//REVIEW THIS FUNCTION.
+Simulation * ParamReader::CreateAndInitializeSimulation() noexcept(false){
+cout<<"REVIEW ParamReader::CreateAndInitializeSimulation"<<endl;
 	Simulation * Simul = NULL;
 
 	Simul = new Simulation(this->GetNetworkFile(),
                          this->GetWeightsFile(),
                          this->GetSimulationTime(),
-                         this->GetSimulationStepTime());
+                         this->GetSimulationStepTime(),
+						 this->GetNumberOfQueues());
 
 	Simul->SetSaveStep(this->GetSaveWeightStepTime());
 
 	for (unsigned int i=0; i<this->GetInputSpikeDrivers().size(); ++i){
 		Simul->AddInputSpikeDriver(this->GetInputSpikeDrivers()[i]);
+	}
+
+	for (unsigned int i = 0; i<this->GetInputCurrentDrivers().size(); ++i){
+		Simul->AddInputCurrentDriver(this->GetInputCurrentDrivers()[i]);
 	}
 
 	for (unsigned int i=0; i<this->GetOutputSpikeDrivers().size(); ++i){
@@ -384,7 +484,7 @@ Simulation * ParamReader::CreateAndInitializeSimulation() throw (EDLUTException,
 	}
 
 	// Reset total spike counter
-    Simul->SetTotalSpikeCounter(0);
+    Simul->SetTotalSpikeCounter(0,0); /*asdfgf*/
 
 	// Get the external initial inputs
 	Simul->InitSimulation();

@@ -2,7 +2,7 @@
  *                           FixedStepSRM.h                                *
  *                           -------------------                           *
  * copyright            : (C) 2013 by Francisco Naveros                    *
- * email                : fnaveros@atc.ugr.es                              *
+ * email                : fnaveros@ugr.es                                  *
  ***************************************************************************/
 
 /***************************************************************************
@@ -27,11 +27,7 @@
  * This class only store the value of the integration step size.
  */
 
-#include "./IntegrationMethod.h"
-
-class TimeDrivenNeuronModel;
-
-
+#include "./FixedStep.h"
 
 /*!
  * \class FixedStepSRM
@@ -42,9 +38,16 @@ class TimeDrivenNeuronModel;
  * \author Francisco Naveros
  * \date May 2013
  */
-class FixedStepSRM : public IntegrationMethod {
-	protected:
+class FixedStepSRM : public FixedStep {
 
+	private:
+
+		/*!
+		  * \brief Default constructor of the class.
+		 *
+		 * It generates a new object.
+		 */
+		FixedStepSRM(){};
 	public:
 
 
@@ -54,7 +57,7 @@ class FixedStepSRM : public IntegrationMethod {
 		 * It generates a new FixedStepSRM object.
 		 *
 		 */
-		FixedStepSRM();
+		FixedStepSRM(TimeDrivenNeuronModel * NewModel);
 
 		/*!
 		 * \brief Class destructor.
@@ -65,17 +68,17 @@ class FixedStepSRM : public IntegrationMethod {
 
 		
 		/*!
-		 * \brief It calculate the next neural state varaibles of the model.
+		 * \brief It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * It calculate the next neural state varaibles of the model.
+		 * It calculate the new neural state variables for a defined elapsed_time.
 		 *
-		 * \param index Index of the cell inside the neuron model for method with memory (e.g. BDF).
-		 * \param Model The NeuronModel.
+		 * \param index for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 * \param NeuronState neuron state variables of one neuron.
-		 * \param elapsed_time integration time step.
-		 * \param CPU_thread_index index of the OpenMP thread.
+		 * \return Retrun if the neuron spike
 		 */
-		void NextDifferentialEcuationValue(int index, TimeDrivenNeuronModel * Model, float * NeuronState, float elapsed_time, int CPU_thread_index) {}
+		bool NextDifferentialEquationValues(int index, float * NeuronState) {
+			return false;
+		}
 
 		/*!
 		 * \brief It prints the integration method info.
@@ -90,45 +93,108 @@ class FixedStepSRM : public IntegrationMethod {
 
 
 		/*!
-		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF).
+		 * \brief It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It initialize the state of the integration method for method with memory (e.g. BDF).
+		 * It initialize the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * \param N_neuron number of neuron in the neuron model.
+		 * \param N_neuron number of neurons in the neuron model.
 		 * \param inicialization vector with initial values.
 		 */
-		 void InitializeStates(int N_neurons, float * inicialization){}
-
-		/*!
-		 * \brief It gets the integration method tipe (variable step, fixed step).
-		 *
-		 * It gets the integration method tipe (variable step, fixed step).
-		 *
-		 * \return the integration method tipe (variable step, fixed step).
-		 */
-		enum IntegrationMethodType GetMethodType();
+		 void InitializeStates(int N_neurons, float * initialization){}
 
 
 		/*!
-		 * \brief It reset the state of the integration method for method with memory (e.g. BDF).
+		 * \brief It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * It reset the state of the integration method for method with memory (e.g. BDF).
+		 * It reset the state of the integration method for method with memory (e.g. BDF1ad, BDF2, BDF3, etc.).
 		 *
-		 * \param index indicate witch neuron must be reseted.
+		 * \param index indicate which neuron must be reseted.
 		 */
 		void resetState(int index){}
 
 
-		/*
-		 * \brief It load the parameter of the integration method.
+		/*!
+		 * \brief It calculates the conductance exponential values for time driven neuron models.
 		 *
-		 * It load the parameter of the integration method.
+		 * It calculates the conductance exponential values for time driven neuron models.
+		 */
+		void Calculate_conductance_exp_values(){};
+
+		/*!
+		  * \brief It returns the integration method parameters.
+	   *
+	   * It returns the integration method parameters.
+	   *
+	   * \returns A dictionary with the integration method parameters
+	   */
+		virtual std::map<std::string,boost::any> GetParameters() const;
+
+		/*!
+		 * \brief It loads the integration method properties.
 		 *
-		 * \param fh pointer to the neuron model description.
-		 * \param Currentline curren line in the file fh.
-		*/
-		void loadParameter(FILE *fh, long * Currentline) throw (EDLUTFileException);
+		 * It loads the integration method properties from parameter map.
+		 *
+		 * \param param_map The dictionary with the integration method parameters.
+		 *
+		 * \throw EDLUTFileException If it happens a mistake with the parameters in the dictionary.
+		 */
+		virtual void SetParameters(std::map<std::string, boost::any> param_map) noexcept(false);
+
+		/*!
+		 * \brief It returns the default parameters of the integration method.
+		 *
+		 * It returns the default parameters of the integration method. It may be used to obtained the parameters that can be
+		 * set for this integration method.
+		 *
+		 * \returns A dictionary with the integration method parameters.
+		 */
+		static std::map<std::string,boost::any> GetDefaultParameters();
+
+		/*!
+		 * \brief It loads the integration method description.
+		 *
+		 * It loads the integration method description.
+		 *
+		 * \param fh Filehandler of the file with the information about the integration method.
+		 *
+		 * \return An object with the parameters of the integration method.
+		 */
+		static ModelDescription ParseIntegrationMethod(FILE * fh) noexcept(false);
+
+		/*!
+		 * \brief It returns the name of the integration method
+		 *
+		 * It returns the name of the integration method
+		 */
+		static std::string GetName();
+
+		/*!
+		 * \brief It creates a new integration method object of this type.
+		 *
+		 * It creates a new integration method object of this type.
+		 *
+		 * \param param_map The integration method description object.
+		 *
+		 * \return A newly created integration method object.
+		 */
+		static IntegrationMethod* CreateIntegrationMethod(ModelDescription nmDescription, TimeDrivenNeuronModel *nmodel);
+
+        /*!
+         * \brief Comparison operator between integration methods.
+         *
+         * It compares two integration methods.
+         *
+         * \return True if the integration methods are of the same type and with the same parameters.
+         */
+        virtual bool compare(const IntegrationMethod * rhs) const{
+            if (!FixedStep::compare(rhs)){
+                return false;
+            }
+            const FixedStepSRM * e = dynamic_cast<const FixedStepSRM *> (rhs);
+            if (e == 0) return false;
+            return true;
+        };
 
 };
 
-#endif /* INTEGRATIONMETHOD_H_ */
+#endif /* FIXEDSTEPSRM_H_ */

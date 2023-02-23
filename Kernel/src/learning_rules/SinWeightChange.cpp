@@ -21,11 +21,17 @@
 
 #include "../../include/spike/Interconnection.h"
 
-SinWeightChange::SinWeightChange():exponent(0){
+SinWeightChange::SinWeightChange():AdditiveKernelChange(){
+	// Set the default values for the learning rule parameters
+	this->SetParameters(SinWeightChange::GetDefaultParameters());
 }
 
-void SinWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
-	this->State=(ConnectionState *) new SinState(NumberOfSynapses, this->exponent,this->maxpos);
+SinWeightChange::~SinWeightChange(){
+}
+
+
+void SinWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses, unsigned int NumberOfNeurons){
+	this->State=(ConnectionState *) new SinState(NumberOfSynapses, this->exponent,this->kernelpeak);
 }
 
 int SinWeightChange::GetNumberOfVar() const{
@@ -36,21 +42,64 @@ int SinWeightChange::GetExponent() const{
 	return this->exponent;
 }
 
-void SinWeightChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException){
-	AdditiveKernelChange::LoadLearningRule(fh,Currentline);
+ModelDescription SinWeightChange::ParseLearningRule(FILE * fh) noexcept(false) {
+	ModelDescription lrule = AdditiveKernelChange::ParseLearningRule(fh);
 
-	if(!(fscanf(fh,"%i",&this->exponent)==1)){
-		throw EDLUTFileException(4,28,23,1,Currentline);
+	int exponent;
+	if(fscanf(fh,"%i",&exponent)!=1){
+		throw EDLUTException(TASK_LEARNING_RULE_LOAD, ERROR_LEARNING_RULE_LOAD, REPAIR_SIN_WEIGHT_CHANGE_LOAD);
 	}
-	
-	//exponent must be multiple of 2.
-	if(exponent%2 == 1){
-		exponent=(exponent/2)*2;
-		cerr << "Warning: exponent in SinAdditiveKernel must be multiple of 2. It has been rounded to "<< exponent << endl;
-
-
+	if (exponent <= 0 || exponent % 2 == 1 || exponent > 20){
+		throw EDLUTException(TASK_LEARNING_RULE_LOAD, ERROR_SIN_WEIGHT_CHANGE_EXPONENT, REPAIR_LEARNING_RULE_VALUES);
 	}
 
+	lrule.model_name = SinWeightChange::GetName();
+	lrule.param_map["exp"] = boost::any(exponent);
+	return lrule;
+}
 
+ostream & SinWeightChange::PrintInfo(ostream & out){
+	out << "- SinAdditiveKernel Learning Rule: " << endl;
+	out << "\t kernel_peak:" << this->kernelpeak << endl;
+	out << "\t fixed_change: " << this->fixwchange << endl;
+	out << "\t kernel_change: " << this->kernelwchange << endl;
+	out << "\t exp: " << this->exponent << endl;
+	return out;
+}
+
+void SinWeightChange::SetParameters(std::map<std::string, boost::any> param_map) noexcept(false){
+
+	// Search for the parameters in the dictionary
+	std::map<std::string,boost::any>::iterator it=param_map.find("exp");
+	if (it!=param_map.end()){
+		int newexponent = boost::any_cast<int>(it->second);
+		if (newexponent<=0) {
+			throw EDLUTException(TASK_LEARNING_RULE_LOAD, ERROR_SIN_WEIGHT_CHANGE_EXPONENT,
+								 REPAIR_LEARNING_RULE_VALUES);
+		}
+		this->exponent = newexponent;
+		param_map.erase(it);
+	}
+
+	AdditiveKernelChange::SetParameters(param_map);
+}
+
+LearningRule* SinWeightChange::CreateLearningRule(ModelDescription lrDescription){
+	SinWeightChange * lrule = new SinWeightChange();
+	lrule->SetParameters(lrDescription.param_map);
+	return lrule;
+}
+
+std::map<std::string,boost::any> SinWeightChange::GetParameters(){
+	std::map<std::string,boost::any> newMap = AdditiveKernelChange::GetParameters();
+	newMap["exp"] = boost::any(this->exponent);
+	return newMap;
+}
+
+
+std::map<std::string,boost::any> SinWeightChange::GetDefaultParameters(){
+	std::map<std::string,boost::any> newMap = AdditiveKernelChange::GetDefaultParameters();
+	newMap["exp"] = boost::any(2);
+	return newMap;
 }
 

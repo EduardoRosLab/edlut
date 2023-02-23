@@ -23,6 +23,8 @@
 #include <iostream>
 
 #include "../include/simulation/Simulation.h"
+#include "../include/simulation/RandomGenerator.h"
+
 #include "../include/communication/ArrayInputSpikeDriver.h"
 #include "../include/communication/ArrayOutputSpikeDriver.h"
 #include "../include/communication/FileOutputSpikeDriver.h"
@@ -96,6 +98,9 @@ int main(int ac, char *av[]) {
 	double * OutputSpikeTimes;
 	long int * OutputSpikeCells;
 		
+	//Random generator
+	RandomGenerator randomGenerator;
+
 	// Simulate step by step.
 	for (double CurrentTime = 0; CurrentTime<SimulationTime; CurrentTime+=StepTime){
 		
@@ -103,7 +108,7 @@ int main(int ac, char *av[]) {
 
 		// Generate input spikes (we generate one spike at random time for each input cell)
 		for (int i=0; i<NumberInputCells; ++i){
-			InputSpikeTimes[i] = rand()*StepTime/RAND_MAX+CurrentTime;
+			InputSpikeTimes[i] = randomGenerator.drand()*StepTime + CurrentTime;
 			InputSpikeCells[i] = i;
 		}
 		
@@ -134,10 +139,15 @@ int main(int ac, char *av[]) {
 	cout << "Oky doky" << endl;
 
 	cout << "Elapsed time: " << (endt-startt)/(float)CLOCKS_PER_SEC << " sec" << endl;
-	cout << "Number of updates: " << Simul->GetSimulationUpdates() << endl;
-	cout << "Mean number of spikes in heap: " << Simul->GetHeapAcumSize()/(float)Simul->GetSimulationUpdates() << endl;
-	cout << "Updates per second: " << Simul->GetSimulationUpdates()/((endt-startt)/(float)CLOCKS_PER_SEC) << endl;
-	cout << "Total spikes handled: " << Simul->GetTotalSpikeCounter() << endl;
+	for(int i=0; i<Simul->GetNumberOfQueues(); i++){
+		cout << "Thread "<<i<<"--> Number of updates: " << Simul->GetSimulationUpdates(i) << endl; /*asdfgf*/
+		cout << "Thread "<<i<<"--> Number of InternalSpike: " << Simul->GetTotalSpikeCounter(i) << endl; /*asdfgf*/
+		cout << "Thread "<<i<<"--> Number of Propagated Spikes and Events: " << Simul->GetTotalPropagateCounter(i)<<", "<< Simul->GetTotalPropagateEventCounter(i)<< endl; /*asdfgf*/
+		cout << "Thread "<<i<<"--> Mean number of spikes in heap: " << Simul->GetHeapAcumSize(i)/(float)Simul->GetSimulationUpdates(i) << endl; /*asdfgf*/
+		cout << "Thread "<<i<<"--> Updates per second: " << Simul->GetSimulationUpdates(i)/((endt-startt)/(float)CLOCKS_PER_SEC) << endl; /*asdfgf*/
+	}
+	cout << "Total InternalSpike: " << Simul->GetTotalSpikeCounter()<<endl; 
+	cout << "Total Propagated Spikes and Events: " << Simul->GetTotalPropagateCounter()<<", "<< Simul->GetTotalPropagateEventCounter()<<endl;
 
 	// Closing simulation connections
 	delete Simul;

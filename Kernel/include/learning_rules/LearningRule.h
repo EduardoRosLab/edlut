@@ -21,29 +21,51 @@
 
 #include "../spike/EDLUTFileException.h"
 
+#include <boost/any.hpp>
+
+
 /*!
  * \file LearningRule.h
  *
  * \author Jesus Garrido
  * \date August 2010
  *
- * This file declares a class which abstracts a learning rule.
+ * This class abstracts the behavior of a learning rule in a spiking neural network.
+ * It includes internal model functions which define the behavior of the model
+ * (initialization, update of the state, etc.).
+ * This is only a virtual class (an interface) which defines the functions of the
+ * inherited classes.
  */
 
+#include "../../include/learning_rules/ConnectionState.h"
+#include <map>
+#include <boost/any.hpp>
+
 class Interconnection;
-class ConnectionState;
+class Neuron;
+
 
 /*!
  * \class LearningRule
  *
  * \brief Learning rule.
  *
- * This class abstract the behaviour of a learning rule.
+ * This class abstracts the behavior of a learning rule in a spiking neural network.
+ * It includes internal model functions which define the behavior of the model
+ * (initialization, update of the state, etc.).
+ * This is only a virtual class (an interface) which defines the functions of the
+ * inherited classes.
  *
  * \author Jesus Garrido
  * \date March 2010
  */
 class LearningRule : public PrintableObject {
+	private:
+		/*!
+		 * \brief The index of the learning rule in the network
+		 */
+		unsigned int learningRuleIndex;
+
 
 	public:
 
@@ -63,8 +85,10 @@ class LearningRule : public PrintableObject {
 		 * It initialize the state associated to the learning rule for all the synapses.
 		 *
 		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
+		 * \param NumberOfNeurons the total number of neurons in the network
 		 */
-		virtual void InitializeConnectionState(unsigned int NumberOfSynapses) = 0;
+		virtual void InitializeConnectionState(unsigned int NumberOfSynapses, unsigned int NumberOfNeurons) = 0;
+
 
 		/*!
 		 * \brief It return the state associated to the learning rule for all the synapses.
@@ -76,10 +100,11 @@ class LearningRule : public PrintableObject {
 		ConnectionState * GetConnectionState();
 
 		/*!
-		 * \brief Default constructor.
-		 * 
-		 * It creates a new LearningRule object.
-		 */ 
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule.
+		 *
+		 */
 		LearningRule();
 
 		/*!
@@ -90,18 +115,27 @@ class LearningRule : public PrintableObject {
 		virtual ~LearningRule();
 
 		/*!
-		 * \brief It loads the learning rule properties.
+		 * \brief Return the index of the learning rule in the network
 		 *
-		 * It loads the learning rule properties.
-		 *
-		 * \param fh A file handler placed where the Learning rule properties are defined.
-		 * \param Currentline The file line where the handler is placed.
-		 *
-		 * \throw EDLUTFileException If something wrong happens in reading the learning rule properties.
+		 * Return the index of the learning rule in the network
 		 */
-		virtual void LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException)= 0;
+		inline unsigned int GetLearningRuleIndex(){
+			return this->learningRuleIndex;
+		}
 
-   		/*!
+		/*!
+		 * \brief Set the index of the learning rule in the network
+		 *
+		 * Set the index of the learning rule in the network
+		 *
+		 * \param NewLearningRuleIndex The index of the learning rule in the network
+		 */
+		inline void SetLearningRuleIndex(unsigned int NewLearningRuleIndex){
+			this->learningRuleIndex = NewLearningRuleIndex;
+		}
+
+
+        /*!
    		 * \brief It applies the weight change function when a presynaptic spike arrives.
    		 *
    		 * It applies the weight change function when a presynaptic spike arrives.
@@ -111,15 +145,15 @@ class LearningRule : public PrintableObject {
    		 */
    		virtual void ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime) = 0;
 
-   		/*!
-		 * \brief It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * \param Connection The connection where the learning rule happens.
-		 * \param SpikeTime The spike time of the postsynaptic spike.
-		 */
-		virtual void ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime) = 0;
+		/*!
+		* \brief It applies the weight change function to all its input synapses when a postsynaptic spike arrives.
+		*
+		* It applies the weight change function to all its input synapses when a postsynaptic spike arrives.
+		*
+		* \param neuron The target neuron that manage the postsynaptic spike
+		* \param SpikeTime The spike time of the postsynaptic spike.
+		*/
+		virtual void ApplyPostSynapticSpike(Neuron * neuron, double SpikeTime) = 0;
 
    		/*!
 		 * \brief It prints the learning rule info.
@@ -132,7 +166,7 @@ class LearningRule : public PrintableObject {
 		 */
 		virtual ostream & PrintInfo(ostream & out) = 0;
 
-   		/*!
+   	/*!
 		 * \brief It returns if this learning rule implements postsynaptic learning.
 		 *
 		 * It returns if this learning rule implements postsynaptic learning.
@@ -140,6 +174,46 @@ class LearningRule : public PrintableObject {
 		 * \returns if this learning rule implements postsynaptic learning
 		 */
 		virtual bool ImplementPostSynaptic() = 0;
+
+		/*!
+		 * \brief It returns if this learning rule implements trigger learning.
+		 *
+		 * It returns if this learning rule implements trigger learning.
+		 *
+		 * \returns if this learning rule implements trigger learning
+		 */
+		virtual bool ImplementTriggerSynaptic() = 0;
+
+		/*!
+		 * \brief It returns the learning rule parameters.
+		 *
+		 * It returns the learning rule parameters.
+		 *
+		 * \returns A dictionary with the learning rule parameters
+		 */
+		virtual std::map<std::string,boost::any> GetParameters();
+
+		/*!
+		 * \brief It loads the learning rule properties.
+		 *
+		 * It loads the learning rule properties from parameter map.
+		 *
+		 * \param param_map The dictionary with the learning rule parameters.
+		 *
+		 * \throw EDLUTFileException If it happens a mistake with the parameters in the dictionary.
+		 */
+		virtual void SetParameters(std::map<std::string, boost::any> param_map) noexcept(false);
+
+		/*!
+		 * \brief It returns the default parameters of the learning rule.
+		 *
+		 * It returns the default parameters of the learning rule. It may be used to obtained the parameters that can be
+		 * set for this learning rule.
+		 *
+		 * \returns A dictionary with the learning rule parameters.
+		 */
+		static std::map<std::string,boost::any> GetDefaultParameters();
+
 
 };
 

@@ -2,7 +2,7 @@
  *                           FixedStepSRM.cpp                              *
  *                           -------------------                           *
  * copyright            : (C) 2013 by Francisco Naveros                    *
- * email                : fnaveros@atc.ugr.es                              *
+ * email                : fnaveros@ugr.es                                  *
  ***************************************************************************/
 
 /***************************************************************************
@@ -18,38 +18,52 @@
 #include "../../include/neuron_model/TimeDrivenNeuronModel.h"
 
 
-FixedStepSRM::FixedStepSRM():IntegrationMethod("FixedStepSRM",0,0,0,0,false,false){
-
+FixedStepSRM::FixedStepSRM(TimeDrivenNeuronModel * NewModel) : FixedStep(NewModel){
+	this->SetParameters(FixedStepSRM::GetDefaultParameters());
 }
 
 FixedStepSRM::~FixedStepSRM(){
 
 }
 
-enum IntegrationMethodType FixedStepSRM::GetMethodType(){
-	return FIXED_STEP;
-}
 
-
-void FixedStepSRM::loadParameter(FILE *fh, long * Currentline) throw (EDLUTFileException){
-	this->PredictedElapsedTime=new double [1];
-
-	skip_comments(fh,*Currentline);
-	if(fscanf(fh,"%lf",PredictedElapsedTime)==1){
-		if(PredictedElapsedTime[0]<=0.0){
-////NEW CODE------------------------------------------------------------------------------
-			throw EDLUTFileException(4,7,6,1,*Currentline);
-////--------------------------------------------------------------------------------------
-		}
-	}else{
-//NEW CODE------------------------------------------------------------------------------
-		throw EDLUTFileException(4,7,6,1,*Currentline);
-//--------------------------------------------------------------------------------------
-	}
-}
-
-ostream & FixedStepSRM::PrintInfo(ostream & out){
-	out << "Integration Method Type: " << this->GetType() << endl;
+std::ostream & FixedStepSRM::PrintInfo(std::ostream & out){
+	out << "Integration Method Type: " << FixedStepSRM::GetName() << endl;
 
 	return out;
-}	
+}
+
+void FixedStepSRM::SetParameters(std::map<std::string, boost::any> param_map) noexcept(false){
+	// Search for the parameters in the dictionary
+	FixedStep::SetParameters(param_map);
+}
+
+std::map<std::string,boost::any> FixedStepSRM::GetParameters() const{
+	// Return a dictionary with the parameters
+	std::map<std::string,boost::any> newMap = FixedStep::GetParameters();
+	newMap["Name"] = FixedStepSRM::GetName();
+	return newMap;
+}
+
+std::map<std::string,boost::any> FixedStepSRM::GetDefaultParameters(){
+	std::map<std::string,boost::any> newMap = FixedStep::GetDefaultParameters();
+	newMap["Name"] = FixedStepSRM::GetName();
+	return newMap;
+}
+
+ModelDescription FixedStepSRM::ParseIntegrationMethod(FILE * fh) noexcept(false){
+	ModelDescription nmodel = FixedStep::ParseIntegrationMethod(fh);
+	nmodel.model_name = FixedStepSRM::GetName();
+	return nmodel;
+}
+
+std::string FixedStepSRM::GetName() {
+	return "FixedStepSRM";
+}
+
+IntegrationMethod* FixedStepSRM::CreateIntegrationMethod(ModelDescription nmDescription, TimeDrivenNeuronModel *nmodel){
+	FixedStepSRM * newmodel = new FixedStepSRM();
+	newmodel->model = nmodel;
+	newmodel->SetParameters(nmDescription.param_map);
+	return newmodel;
+}

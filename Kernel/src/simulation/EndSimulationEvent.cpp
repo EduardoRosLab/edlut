@@ -17,19 +17,31 @@
 #include "../../include/simulation/EndSimulationEvent.h"
 
 #include "../../include/simulation/Simulation.h"
+#include "../../include/openmp/openmp.h"
 
-EndSimulationEvent::EndSimulationEvent():Event(0){
+EndSimulationEvent::EndSimulationEvent():Event(0, 0){
 }
    	
-EndSimulationEvent::EndSimulationEvent(double NewTime): Event(NewTime){
+EndSimulationEvent::EndSimulationEvent(double NewTime, int NewQueueIndex) : Event(NewTime, NewQueueIndex){
 }
    		
 EndSimulationEvent::~EndSimulationEvent(){
 }
 
-void EndSimulationEvent::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
-	CurrentSimulation->EndSimulation();		
+void EndSimulationEvent::ProcessEvent(Simulation * CurrentSimulation, RealTimeRestrictionLevel RealTimeRestriction){
+	CurrentSimulation->EndSimulation(this->GetQueueIndex());
+}
+
+void EndSimulationEvent::ProcessEvent(Simulation * CurrentSimulation){
+	CurrentSimulation->EndSimulation(this->GetQueueIndex());		
 }
    	
+void EndSimulationEvent::PrintType(){
+	cout<<"EndSimulationEvent"<<endl;
+}
 
+
+enum EventPriority EndSimulationEvent::ProcessingPriority(){
+	return ENDSIMULATIONEVENT;
+}
 

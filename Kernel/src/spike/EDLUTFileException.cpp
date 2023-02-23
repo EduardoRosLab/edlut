@@ -16,23 +16,29 @@
 
 #include "../../include/spike/EDLUTFileException.h"
 
-EDLUTFileException::EDLUTFileException(int a, int b, int c, int d, long Line): EDLUTException(a,b,c,d), Currentline(Line) {
+EDLUTFileException::EDLUTFileException(TASK_CODE task, ERROR_CODE error, REPAIR_CODE repair, long line, string file) : EDLUTException(task, error, repair), Currentline(line), FileName(file){
+}
+
+EDLUTFileException::EDLUTFileException(EDLUTException exc, long line, string file) : EDLUTException(exc), Currentline(line), FileName(file){
 }
 
 long EDLUTFileException::GetErrorLine() const {
 	return this->Currentline;
 }
 
+string EDLUTFileException::GetFileName() const {
+	return this->FileName;
+}
+
 void EDLUTFileException::display_error() const {
 
-	char msgbuf[160];
+	char msgbuf[1024];
 	if(this->GetErrorNum()){
 		cerr << "Error while: " << this->GetTaskMsg() << endl;
-		if((this->GetErrorNum() & 0xFF) == 1){
-			cerr << "In file line: " << Currentline << endl;
-		}
-		
-		sprintf(msgbuf,"Error message (%08lX): %s",this->GetErrorNum(),this->GetErrorMsg());
+		cerr << "In file " << this->GetFileName().c_str() << ", line: " << this->GetErrorLine() << endl;
+
+		//sprintf(msgbuf,"Error message (%016llX): %s",this->GetErrorNum(),this->GetErrorMsg());
+		sprintf(msgbuf,"Error message (%016ld): %s",this->GetErrorNum(),this->GetErrorMsg());
 		cerr << msgbuf << endl;
 		cerr << "Try to: " << this->GetRepairMsg() << endl;
 	}
@@ -41,14 +47,11 @@ void EDLUTFileException::display_error() const {
 ostream & operator<< (ostream & out, EDLUTFileException Exception){
 	if(Exception.GetErrorNum()){
 		out << "Error while: " << Exception.GetTaskMsg() << endl;
-		if((Exception.GetErrorNum() & 0xFF) == 1){
-			out << "In file line: " << Exception.GetErrorLine() << endl;
-		}
-		
+		out << "In file " << Exception.GetFileName().c_str() << ", line: " << Exception.GetErrorLine() << endl;
+
 		out << "Error message " << Exception.GetErrorNum() << ": " << Exception.GetErrorMsg() << endl;
 		out << "Try to: " << Exception.GetRepairMsg() << endl;
 	}
-	
+
 	return out;
 }
-

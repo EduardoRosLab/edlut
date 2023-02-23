@@ -27,8 +27,8 @@
  * This file declares a class which abstracts an additive learning rule.
  */
 
-#include "./WithoutPostSynaptic.h"
-
+#include "../../include/learning_rules/WithTriggerSynaptic.h"
+#include "../../include/simulation/NetworkDescription.h"
 /*!
  * \class AdditiveKernelChange
  *
@@ -40,43 +40,50 @@
  * \author Richard Carrillo
  * \date March 2010
  */
-class AdditiveKernelChange : public WithoutPostSynaptic {
+class AdditiveKernelChange : public WithTriggerSynaptic {
 	protected:
 		/*!
 		 * Maximum time of the learning rule.
 		 */
-		float maxpos;
-
-		/*!
-		 * Number of activity registers.
-		 */
-		int numexps;
-
-		/*!
-		 * This weight change is a trigger.
-		 */
-		int trigger;
+		float kernelpeak;
 
 		/*!
 		 * Learning rule parameter 1.
 		 */
-		float a1pre;
+		float fixwchange;
 
 		/*!
 		 * Learning rule parameter 2.
 		 */
-		float a2prepre;
+		float kernelwchange;
 
 	public:
+
+		/*!
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule.
+		 */
+		AdditiveKernelChange();
+
+
+		/*!
+		 * \brief Object destructor.
+		 *
+		 * It remove the object.
+		 */
+		virtual ~AdditiveKernelChange();
+
 
 		/*!
 		 * \brief It initialize the state associated to the learning rule for all the synapses.
 		 *
 		 * It initialize the state associated to the learning rule for all the synapses.
 		 *
-		 * \return The state that the learning rule needs for all the synapses.
+		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
+		 * \param NumberOfNeurons the total number of neurons in the network
 		 */
-		virtual void InitializeConnectionState(unsigned int NumberOfSynapses) = 0;
+		virtual void InitializeConnectionState(unsigned int NumberOfSynapses, unsigned int NumberOfNeurons) = 0;
 
 		/*!
 		 * \brief It loads the learning rule properties.
@@ -84,13 +91,14 @@ class AdditiveKernelChange : public WithoutPostSynaptic {
 		 * It loads the learning rule properties.
 		 *
 		 * \param fh A file handler placed where the Learning rule properties are defined.
-		 * \param Currentline The file line where the handler is placed.
 		 *
-		 * \throw EDLUTFileException If something wrong happens in reading the learning rule properties.
+		 * \return The learning rule description object.
+		 *
+		 * \throw EDLUTException If something wrong happens in reading the learning rule properties.
 		 */
-		virtual void LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException);
+		static ModelDescription ParseLearningRule(FILE * fh) noexcept(false);
 
-   		/*!
+		/*!
    		 * \brief It applies the weight change function when a presynaptic spike arrives.
    		 *
    		 * It applies the weight change function when a presynaptic spike arrives.
@@ -109,7 +117,7 @@ class AdditiveKernelChange : public WithoutPostSynaptic {
 		 *
 		 * \return The stream after the printer.
 		 */
-		virtual ostream & PrintInfo(ostream & out);
+		virtual ostream & PrintInfo(ostream & out) = 0;
 
 		/*!
 		 * \brief It gets the number of state variables that this learning rule needs.
@@ -119,6 +127,37 @@ class AdditiveKernelChange : public WithoutPostSynaptic {
 		 * \return The number of state variables that this learning rule needs.
 		 */
 		virtual int GetNumberOfVar() const;
+
+		/*!
+		 * \brief It returns the learning rule parameters.
+		 *
+		 * It returns the learning rule parameters.
+		 *
+		 * \returns A dictionary with the learning rule parameters
+		 */
+		virtual std::map<std::string,boost::any> GetParameters();
+
+		/*!
+		 * \brief It loads the learning rule properties.
+		 *
+		 * It loads the learning rule properties from parameter map.
+		 *
+		 * \param param_map The dictionary with the learning rule parameters.
+		 *
+		 * \throw EDLUTFileException If it happens a mistake with the parameters in the dictionary.
+		 */
+		virtual void SetParameters(std::map<std::string, boost::any> param_map) noexcept(false);
+
+		/*!
+		 * \brief It returns the default parameters of the learning rule.
+		 *
+		 * It returns the default parameters of the learning rule. It may be used to obtained the parameters that can be
+		 * set for this learning rule.
+		 *
+		 * \returns A dictionary with the learning rule parameters.
+		 */
+		static std::map<std::string,boost::any> GetDefaultParameters();
+
 };
 
 

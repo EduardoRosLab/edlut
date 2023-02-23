@@ -89,7 +89,7 @@ extern "C" int LSAM_des_checkIfNeuronExists(Simulation * Simul, int neuron_index
 }
 
 extern "C" void LSAM_des_injectSpike(Simulation * Simul, double time, int neuron_index) {
-  Simul->GetQueue()->InsertEvent(new InputSpike(time, Simul->GetNetwork()->GetNeuronAt(neuron_index)));
+	Simul->GetQueue()->InsertEvent(new InputSpike(time, Simul->GetNetwork()->GetNeuronAt(neuron_index)->get_OpenMP_queue_index(), Simul->GetNetwork()->GetNeuronAt(neuron_index)));
 }
 
 extern "C" int LSAM_des_simulate(Simulation * Simul, double preempt_time) {

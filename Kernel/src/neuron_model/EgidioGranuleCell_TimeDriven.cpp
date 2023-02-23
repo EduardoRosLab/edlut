@@ -1,8 +1,8 @@
 /***************************************************************************
  *                           EdidioGranuleCell_TimeDriven.cpp              *
  *                           -------------------                           *
- * copyright            : (C) 2013 by Francisco Naveros                    *
- * email                : fnaveros@atc.ugr.es                              *
+ * copyright            : (C) 2019 by Francisco Naveros                    *
+ * email                : fnaveros@ugr.es                                  *
  ***************************************************************************/
 
 /***************************************************************************
@@ -14,301 +14,171 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../../include/neuron_model/EgidioGranuleCell_TimeDriven.h"
-#include "../../include/neuron_model/VectorNeuronState.h"
+#include "neuron_model/EgidioGranuleCell_TimeDriven.h"
+#include "neuron_model/VectorNeuronState.h"
+#include "neuron_model/CurrentSynapseModel.h"
+#include "simulation/ExponentialTable.h"
+#include "spike/Neuron.h"
+#include "spike/Interconnection.h"
 
-#include <iostream>
-#include <cmath>
-#include <string>
+#include "integration_method/IntegrationMethodFactory.h"
 
-#ifdef _OPENMP
-	#include <omp.h>
-#else
-	#define omp_get_thread_num() 0
-	#define omp_get_num_thread() 1
-#endif
+	const float EgidioGranuleCell_TimeDriven::gMAXNa_f=0.013f;
+	const float EgidioGranuleCell_TimeDriven::gMAXNa_r=0.0005f;
+	const float EgidioGranuleCell_TimeDriven::gMAXNa_p=0.0002f;
+	const float EgidioGranuleCell_TimeDriven::gMAXK_V=0.003f;
+	const float EgidioGranuleCell_TimeDriven::gMAXK_A=0.004f;
+	const float EgidioGranuleCell_TimeDriven::gMAXK_IR=0.0009f;
+	const float EgidioGranuleCell_TimeDriven::gMAXK_Ca=0.004f;
+	const float EgidioGranuleCell_TimeDriven::gMAXCa=0.00046f;
+	const float EgidioGranuleCell_TimeDriven::gMAXK_sl=0.00035f;
+	const float EgidioGranuleCell_TimeDriven::gLkg1=5.68e-5f;
+	const float EgidioGranuleCell_TimeDriven::gLkg2=2.17e-5f;
+	const float EgidioGranuleCell_TimeDriven::VNa=87.39f;
+	const float EgidioGranuleCell_TimeDriven::VK=-84.69f;
+	const float EgidioGranuleCell_TimeDriven::VLkg1=-58.0f;
+	const float EgidioGranuleCell_TimeDriven::VLkg2=-65.0f;
+	const float EgidioGranuleCell_TimeDriven::V0_xK_Ai=-46.7f;
+	const float EgidioGranuleCell_TimeDriven::K_xK_Ai=-19.8f;
+	const float EgidioGranuleCell_TimeDriven::V0_yK_Ai=-78.8f;
+	const float EgidioGranuleCell_TimeDriven::K_yK_Ai=8.4f;
+	const float EgidioGranuleCell_TimeDriven::V0_xK_sli=-30.0f;
+	const float EgidioGranuleCell_TimeDriven::B_xK_sli=6.0f;
+	const float EgidioGranuleCell_TimeDriven::F=96485.309f;
+	const float EgidioGranuleCell_TimeDriven::A=1e-04f;
+	const float EgidioGranuleCell_TimeDriven::d=0.2f;
+	const float EgidioGranuleCell_TimeDriven::betaCa=1.5f;
+	const float EgidioGranuleCell_TimeDriven::Ca0=1e-04f;
+	const float EgidioGranuleCell_TimeDriven::R=8.3134f;
+	const float EgidioGranuleCell_TimeDriven::cao=2.0f;
+	const float EgidioGranuleCell_TimeDriven::Cm = 1.0e-3f;
+	const float EgidioGranuleCell_TimeDriven::inv_Cm = 1.0f/1.0e-3f;
+	const float EgidioGranuleCell_TimeDriven::temper=30.0f;
+	const float EgidioGranuleCell_TimeDriven::Q10_20 = pow(3.0f,((temper-20.0f)/10.0f));
+	const float EgidioGranuleCell_TimeDriven::Q10_22 = pow(3.0f,((temper-22.0f)/10.0f));
+	const float EgidioGranuleCell_TimeDriven::Q10_30 = pow(3.0f,((temper-30.0f)/10.0f));
+	const float EgidioGranuleCell_TimeDriven::Q10_6_3 = pow(3.0f,((temper-6.3f)/10.0f));
 
-//This neuron model is implemented in milisecond. EDLUT is implemented in second and it is necesary to
-//use this constant in order to adapt this model to EDLUT.
-#define ms_to_s 1000.0f
+	const float EgidioGranuleCell_TimeDriven::Max_V=50.0f;
+	const float EgidioGranuleCell_TimeDriven::Min_V=-100.0f;
 
-#include "../../include/spike/EDLUTFileException.h"
-#include "../../include/spike/Neuron.h"
-#include "../../include/spike/InternalSpike.h"
-#include "../../include/spike/PropagatedSpike.h"
-#include "../../include/spike/Interconnection.h"
+	const float EgidioGranuleCell_TimeDriven::aux=(EgidioGranuleCell_TimeDriven::TableSize-1)/( EgidioGranuleCell_TimeDriven::Max_V - EgidioGranuleCell_TimeDriven::Min_V);
 
-#include "../../include/simulation/Utils.h"
+	float * EgidioGranuleCell_TimeDriven::channel_values=Generate_channel_values();
 
 
-void EgidioGranuleCell_TimeDriven::LoadNeuronModel(string ConfigFile) throw (EDLUTFileException){
-	FILE *fh;
-	long Currentline = 0L;
-	fh=fopen(ConfigFile.c_str(),"rt");
-	if(fh){
-		Currentline=1L;
-		skip_comments(fh,Currentline);
-		if(fscanf(fh,"%f",&this->gMAXNa_f)==1){
-			skip_comments(fh,Currentline);
+void EgidioGranuleCell_TimeDriven::Generate_g_nmda_inf_values(){
+	auxNMDA = (TableSizeNMDA - 1) / (e_exc - e_inh);
+	for (int i = 0; i<TableSizeNMDA; i++){
+		float V = e_inh + ((e_exc - e_inh)*i) / (TableSizeNMDA - 1);
 
-			if (fscanf(fh,"%f",&this->gMAXNa_r)==1){
-				skip_comments(fh,Currentline);
-
-				if(fscanf(fh,"%f",&this->gMAXNa_p)==1){
-					skip_comments(fh,Currentline);
-
-					if(fscanf(fh,"%f",&this->gMAXK_V)==1){
-						skip_comments(fh,Currentline);
-
-						if(fscanf(fh,"%f",&this->gMAXK_A)==1){
-							skip_comments(fh,Currentline);
-
-							if(fscanf(fh,"%f",&this->gMAXK_IR)==1){
-								skip_comments(fh,Currentline);
-
-								if(fscanf(fh,"%f",&this->gMAXK_Ca)==1){
-									skip_comments(fh,Currentline);
-
-									if(fscanf(fh,"%f",&this->gMAXCa)==1){
-										skip_comments(fh,Currentline);
-
-										if(fscanf(fh,"%f",&this->gMAXK_sl)==1){
-											skip_comments(fh,Currentline);
-
-											this->InitialState = (VectorNeuronState *) new VectorNeuronState(17, true);
-										}
-//TODOS LOS CODIGOS DE ERROR HAY QUE MODIFICARLOS, PORQUE AHORA LOS PARAMETROS QUE SE CARGAN SON OTROS.										
-										else {
-											throw EDLUTFileException(13,60,3,1,Currentline);
-										}
-									} else {
-										throw EDLUTFileException(13,61,3,1,Currentline);
-									}
-								} else {
-									throw EDLUTFileException(13,62,3,1,Currentline);
-								}
-							} else {
-								throw EDLUTFileException(13,63,3,1,Currentline);
-							}
-						} else {
-							throw EDLUTFileException(13,64,3,1,Currentline);
-						}
-					} else {
-						throw EDLUTFileException(13,65,3,1,Currentline);
-					}
-				} else {
-					throw EDLUTFileException(13,66,3,1,Currentline);
-				}
-			} else {
-				throw EDLUTFileException(13,67,3,1,Currentline);
-			}
-		} else {
-			throw EDLUTFileException(13,68,3,1,Currentline);
-		}
-
-		//INTEGRATION METHOD
-		this->integrationMethod = LoadIntegrationMethod::loadIntegrationMethod(fh, &Currentline, N_NeuronStateVariables, N_DifferentialNeuronState, N_TimeDependentNeuronState, N_CPU_thread);
-	}
-}
-
-void EgidioGranuleCell_TimeDriven::SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection){
-
-	switch (InputConnection->GetType()){
-		case 0: {
-			State->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState,1e-9f*InputConnection->GetWeight());
-			break;
-		}case 1:{
-			State->IncrementStateVariableAtCPU(index,N_DifferentialNeuronState+1,1e-9f*InputConnection->GetWeight());
-			break;
-		}default :{
-			printf("ERROR: EgidioGranuleCell_TimeDriven only support two kind of input synapses \n");
-		}
+		//g_nmda_inf
+		g_nmda_inf_values[i] = 1.0f / (1.0f + exp(-0.062f*V)*(1.2f / 3.57f));
 	}
 }
 
 
+float EgidioGranuleCell_TimeDriven::Get_g_nmda_inf(float V_m){
+	int position = int((V_m - e_inh)*auxNMDA);
+		if(position<0){
+			position=0;
+		}
+		else if (position>(TableSizeNMDA - 1)){
+			position = TableSizeNMDA - 1;
+		}
+		return g_nmda_inf_values[position];
+}
 
-EgidioGranuleCell_TimeDriven::EgidioGranuleCell_TimeDriven(string NeuronTypeID, string NeuronModelID): TimeDrivenNeuronModel(NeuronTypeID, NeuronModelID), gMAXNa_f(0), gMAXNa_r(0), gMAXNa_p(0), gMAXK_V(0), gMAXK_A(0), gMAXK_IR(0), gMAXK_Ca(0),
-		gMAXCa(0), gMAXK_sl(0),
-gLkg1(5.68e-5),
-gLkg2(2.17e-5),
-VNa(87.39),
-VK(-84.69),
-VLkg1(-58),
-VLkg2(-65),
-V0_xK_Ai(-46.7),
-K_xK_Ai(-19.8),
-V0_yK_Ai(-78.8),
-K_yK_Ai(8.4),
-V0_xK_sli(-30),
-B_xK_sli(6),
-F(96485.309),
-A(1e-04),
-d(0.2),
-betaCa(1.5),
-Ca0(1e-04),
-R(8.3134),
-cao(2),
-Cm(1.0e-3),
-temper(30),
-Q10_20 ( pow(3,((temper-20)/10))),
-Q10_22 ( pow(3,((temper-22)/10))),
-Q10_30 ( pow(3,((temper-30)/10))),
-Q10_6_3 ( pow(3,((temper-6.3)/10))),
 
-//This is a constant current which can be externally injected to the cell.
-I_inj_abs(11e-12)/*I_inj_abs(0)*/,
-I_inj(-I_inj_abs*1000/299.26058e-8),
-eexc(0.0),
-einh(-80),
+void EgidioGranuleCell_TimeDriven::InitializeCurrentSynapsis(int N_neurons){
+	this->CurrentSynapsis = new CurrentSynapseModel(N_neurons);
+}
 
-texc(0.5),
-tinh(10),
 
-vthr(-0.25)
+
+
+//This neuron model is implemented in a milisecond scale.
+EgidioGranuleCell_TimeDriven::EgidioGranuleCell_TimeDriven(): TimeDrivenNeuronModel(MilisecondScale),
+	e_exc(0.0), e_inh(-80), tau_exc(0.5), tau_inh(10.0), tau_nmda(15.0), v_thr(0.0), EXC(false), INH(false), NMDA(false), EXT_I(false)
 {
+	std::map<std::string, boost::any> param_map = EgidioGranuleCell_TimeDriven::GetDefaultParameters();
+	param_map["name"] = EgidioGranuleCell_TimeDriven::GetName();
+	this->SetParameters(param_map);
+
+	this->State = (VectorNeuronState *) new VectorNeuronState(N_NeuronStateVariables, true);
 }
+
 
 EgidioGranuleCell_TimeDriven::~EgidioGranuleCell_TimeDriven(void)
 {
+	// We cannot remove channel_values unless we are sure that there not exist (now or in the future) any object instance
+	/*if(this->channel_values){
+		delete this->channel_values;
+		this->channel_values=0;
+	}*/
 }
-
-void EgidioGranuleCell_TimeDriven::LoadNeuronModel() throw (EDLUTFileException){
-	this->LoadNeuronModel(this->GetModelID()+".cfg");
-}
-
 
 VectorNeuronState * EgidioGranuleCell_TimeDriven::InitializeState(){
 	return this->GetVectorNeuronState();
 }
 
 
-InternalSpike * EgidioGranuleCell_TimeDriven::ProcessInputSpike(PropagatedSpike *  InputSpike){
-	Interconnection * inter = InputSpike->GetSource()->GetOutputConnectionAt(InputSpike->GetTarget());
-
-	Neuron * TargetCell = inter->GetTarget();
-
-	VectorNeuronState * CurrentState = TargetCell->GetVectorNeuronState();
+InternalSpike * EgidioGranuleCell_TimeDriven::ProcessInputSpike(Interconnection * inter, double time){
 
 	// Add the effect of the input spike
-	this->SynapsisEffect(inter->GetTarget()->GetIndex_VectorNeuronState(),(VectorNeuronState *)CurrentState,inter);
+	this->GetVectorNeuronState()->IncrementStateVariableAtCPU(inter->GetTargetNeuronModelIndex(), N_DifferentialNeuronState + inter->GetType(), inter->GetWeight());
 
 	return 0;
 }
 
 
-InternalSpike * EgidioGranuleCell_TimeDriven::ProcessInputSpike(Interconnection * inter, Neuron * target, double time){
-	VectorNeuronState * CurrentState = target->GetVectorNeuronState();
+void EgidioGranuleCell_TimeDriven::ProcessInputCurrent(Interconnection * inter, Neuron * target, float current){
+	//Update the external current in the corresponding input synapse of type EXT_I (defined in pA).
+	this->CurrentSynapsis->SetInputCurrent(target->GetIndex_VectorNeuronState(), inter->GetSubindexType(), current);
 
-	// Add the effect of the input spike
-	this->SynapsisEffect(target->GetIndex_VectorNeuronState(),CurrentState,inter);
-
-	return 0;
+	//Update the total external current that receive the neuron coming from all its EXT_I synapsis (defined in pA).
+	float total_ext_I = this->CurrentSynapsis->GetTotalCurrent(target->GetIndex_VectorNeuronState());
+	State->SetStateVariableAt(target->GetIndex_VectorNeuronState(), EXT_I_index, total_ext_I);
 }
 
 
-float EgidioGranuleCell_TimeDriven::nernst(float ci, float co, float z, float temper){
-	//return (1000*(R*(temper + 273.15f)/F)/z*log(co/ci));
-	return (1000*(R*(temper + 273.15f)/F)/z*log(abs(co/ci)));
-}
+bool EgidioGranuleCell_TimeDriven::UpdateState(int index, double CurrentTime){
+	//Reset the number of internal spikes in this update period
+	this->State->NInternalSpikeIndexs = 0;
 
-float EgidioGranuleCell_TimeDriven::linoid(float x, float y){
-	float f=0.0;
-	if (abs(x/y)<1e-06f){
-		f=y*(1-x/y/2);
-	}else{
-		f=x/(exp(x/y)-1);
-	}
-	return f;
-}
+	this->integration_method->NextDifferentialEquationValues();
 
-
-
-bool EgidioGranuleCell_TimeDriven::UpdateState(int index, VectorNeuronState * State, double CurrentTime){
-	
-	bool * internalSpike=State->getInternalSpike();
-	int Size=State->GetSizeState();
-	double last_update;
-	double elapsed_time;
-	float elapsed_time_f;
-	double last_spike;
-	bool spike;
-	float vm_cou;
-	int i;
-	float previous_V;
-	int CPU_thread_index;
-
-	float * NeuronState;
-	if(index==-1){
-		#pragma omp parallel for default(none) shared(Size, State, internalSpike, CurrentTime) private(i, last_update, last_spike, spike, vm_cou, NeuronState, previous_V, CPU_thread_index, elapsed_time, elapsed_time_f)
-		for (int i=0; i< Size; i++){
-
-			last_update = State->GetLastUpdateTime(i);
-			elapsed_time = CurrentTime - last_update;
-			elapsed_time_f=elapsed_time;
-			State->AddElapsedTime(i,elapsed_time);
-			last_spike = State->GetLastSpikeTime(i);
-
-			NeuronState=State->GetStateVariableAt(i);
-
-			
-			spike = false;
-
-
-			previous_V=NeuronState[14];
-			CPU_thread_index=omp_get_thread_num();
-			this->integrationMethod->NextDifferentialEcuationValue(i, this, NeuronState, elapsed_time_f, CPU_thread_index);
-			if(NeuronState[14]>vthr && previous_V<vthr){
-				State->NewFiredSpike(i);
-				spike = true;
-			}
-
-
-			internalSpike[i]=spike;
-
-			State->SetLastUpdateTime(i,CurrentTime);
-		}
-
-		return false;
-	}
-
-	else{
-		last_update = State->GetLastUpdateTime(index);
-		elapsed_time = CurrentTime - last_update;
-		elapsed_time_f=elapsed_time;
-		State->AddElapsedTime(index,elapsed_time);
-		last_spike = State->GetLastSpikeTime(index);
-
-		NeuronState=State->GetStateVariableAt(index);
-
-		
-		spike = false;
-
-
-		previous_V=NeuronState[14];
-		this->integrationMethod->NextDifferentialEcuationValue(index, this, NeuronState, elapsed_time_f, 0);
-		if(NeuronState[14]>vthr && previous_V<vthr){
-			State->NewFiredSpike(index);
-			spike = true;
-		}
-
-
-		internalSpike[index]=spike;
-
-		State->SetLastUpdateTime(index,CurrentTime);
-	}
+	this->CheckValidIntegration(CurrentTime, this->integration_method->GetValidIntegrationVariable());
 
 	return false;
 }
 
 
+enum NeuronModelOutputActivityType EgidioGranuleCell_TimeDriven::GetModelOutputActivityType(){
+	return OUTPUT_SPIKE;
+}
+
+
+enum NeuronModelInputActivityType EgidioGranuleCell_TimeDriven::GetModelInputActivityType(){
+	return INPUT_SPIKE_AND_CURRENT;
+}
+
 ostream & EgidioGranuleCell_TimeDriven::PrintInfo(ostream & out){
+	out << "- EgidioGranuleCell Time-Driven Model: " << EgidioGranuleCell_TimeDriven::GetName() << endl;
+	out << "\tExcitatory reversal potential (e_exc): " << this->e_exc << "mV" << endl;
+	out << "\tInhibitory reversal potential (e_inh): " << this->e_inh << "mV" << endl;
+	out << "\tAMPA (excitatory) receptor time constant (tau_exc): " << this->tau_exc << "ms" << endl;
+	out << "\tGABA (inhibitory) receptor time constant (tau_inh): " << this->tau_inh << "ms" << endl;
+	out << "\tNMDA (excitatory) receptor time constant (tau_nmda): " << this->tau_nmda << "ms" << endl;
+	out << "\tEffective threshold potential (v_thr): " << this->v_thr << "mV" << endl;
+
+	this->integration_method->PrintInfo(out);
 	return out;
-}	
+}
 
-
-void EgidioGranuleCell_TimeDriven::InitializeStates(int N_neurons){
+void EgidioGranuleCell_TimeDriven::InitializeStates(int N_neurons, int OpenMPQueueIndex){
 	//Initial State
+	float V=-80.0f;
 	float xNa_f=0.00047309535f;
 	float yNa_f=1.0f;
 	float xNa_r=0.00013423511f;
@@ -323,116 +193,332 @@ void EgidioGranuleCell_TimeDriven::InitializeStates(int N_neurons){
 	float yCa=0.89509747f;
 	float xK_sl=0.00024031171f;
 	float Ca=Ca0;
-	float V=-80.0f;
 	float gexc=0.0f;
 	float ginh=0.0f;
+	float gnmda=0.0f;
+	float External_current = 0.0f;
+
+	////Initial State
+	//float V = -59.959327697754f;
+	//float xNa_f = 0.007151846774f;
+	//float yNa_f = 0.999994099140f;
+	//float xNa_r = 0.000353821204f;
+	//float yNa_r = 0.841639518738f;
+	//float xNa_p = 0.026804497465f;
+	//float xK_V = 0.060160592198f;
+	//float xK_A = 0.338571757078f;
+	//float yK_A = 0.096005745232f;
+	//float xK_IR = 0.130047351122f;
+	//float xK_Ca = 0.000681858859f;
+	//float xCa = 0.016704728827f;
+	//float yCa = 0.692971527576f;
+	//float xK_sl = 0.006732143927f;
+	//float Ca = Ca0;
+	//float gexc = 0.0f;
+	//float ginh = 0.0f;
+	//float gnmda = 0.0f;
+	//float External_current = 0.0f;
 
 	//Initialize neural state variables.
-	float initialization[] = {xNa_f,yNa_f,xNa_r,yNa_r,xNa_p,xK_V,xK_A,yK_A,xK_IR,xK_Ca,xCa,yCa,xK_sl,Ca,V,gexc,ginh};
-	InitialState->InitializeStates(N_neurons, initialization);
+	float initialization[] = { V, xNa_f, yNa_f, xNa_r, yNa_r, xNa_p, xK_V, xK_A, yK_A, xK_IR, xK_Ca, xCa, yCa, xK_sl, Ca, gexc, ginh, gnmda, External_current};
+	State->InitializeStates(N_neurons, initialization);
 
 	//Initialize integration method state variables.
-	this->integrationMethod->InitializeStates(N_neurons, initialization);
+	this->integration_method->SetBifixedStepParameters(-50.0f, -50.0f, 2.0f);
+	this->integration_method->Calculate_conductance_exp_values();
+	this->integration_method->InitializeStates(N_neurons, initialization);
+
+	//Initialize the array that stores the number of input current synapses for each neuron in the model
+	InitializeCurrentSynapsis(N_neurons);
+}
+
+void EgidioGranuleCell_TimeDriven::GetBifixedStepParameters(float & startVoltageThreshold, float & endVoltageThreshold, float & timeAfterEndVoltageThreshold){
+	startVoltageThreshold = -50.0f;
+	endVoltageThreshold = -50.0f;
+	timeAfterEndVoltageThreshold = 2.0f;
+	return;
 }
 
 
-void EgidioGranuleCell_TimeDriven::EvaluateDifferentialEcuation(float * NeuronState, float * AuxNeuronState){
-	float previous_V=NeuronState[14];
+void EgidioGranuleCell_TimeDriven::EvaluateSpikeCondition(float previous_V, float * NeuronState, int index, float elapsedTimeInNeuronModelScale){
+	if (NeuronState[V_m_index]>v_thr && previous_V<v_thr){
+		State->NewFiredSpike(index);
+		this->State->InternalSpikeIndexs[this->State->NInternalSpikeIndexs] = index;
+		this->State->NInternalSpikeIndexs++;
+	}
+}
 
-	float VCa=nernst(NeuronState[13],cao,2,temper);
-	float alphaxNa_f = Q10_20*(-0.3f)*linoid(previous_V+19, -10);
-	float betaxNa_f  = Q10_20*12*exp(-(previous_V+44)/18.182f);
-	float xNa_f_inf    = alphaxNa_f/(alphaxNa_f + betaxNa_f);
-	float inv_tauxNa_f     = (alphaxNa_f + betaxNa_f);
-	float alphayNa_f = Q10_20*0.105f*exp(-(previous_V+44)/3.333f);
-	float betayNa_f   = Q10_20*1.5f/(1+exp(-(previous_V+11)/5));
-	float yNa_f_inf    = alphayNa_f/(alphayNa_f + betayNa_f);
-	float inv_tauyNa_f     = (alphayNa_f + betayNa_f);
-	float alphaxNa_r = Q10_20*(0.00008f-0.00493f*linoid(previous_V-4.48754f,-6.81881f));
-	float betaxNa_r   = Q10_20*(0.04752f+0.01558f*linoid(previous_V+43.97494f,0.10818f));
-	float xNa_r_inf    = alphaxNa_r/(alphaxNa_r + betaxNa_r);
-	float inv_tauxNa_r     = (alphaxNa_r + betaxNa_r);
-	float alphayNa_r = Q10_20*0.31836f*exp(-(previous_V+80)/62.52621f);
-	float betayNa_r   = Q10_20*0.01014f*exp((previous_V+83.3332f)/16.05379f);
-	float yNa_r_inf     = alphayNa_r/(alphayNa_r + betayNa_r);
-	float inv_tauyNa_r      = (alphayNa_r + betayNa_r);
-	float alphaxNa_p = Q10_30*(-0.091f)*linoid(previous_V+42,-5);
-	float betaxNa_p   = Q10_30*0.062f*linoid(previous_V+42,5);
-	float xNa_p_inf    = 1/(1+exp(-(previous_V+42)/5));
-	float inv_tauxNa_p     = (alphaxNa_p + betaxNa_p)*0.2f;
-	float alphaxK_V = Q10_6_3*(-0.01f)*linoid(previous_V+25,-10);
-	float betaxK_V   = Q10_6_3*0.125f*exp(-0.0125f*(previous_V+35));
-	float xK_V_inf    = alphaxK_V/(alphaxK_V + betaxK_V);
-	float inv_tauxK_V     = (alphaxK_V + betaxK_V);
-	float alphaxK_A = (Q10_20*4.88826f)/(1+exp(-(previous_V+9.17203f)/23.32708f));
-	float betaxK_A  = (Q10_20*0.99285f)/exp((previous_V+18.27914f)/19.47175f);
-	float xK_A_inf    = 1/(1+exp((previous_V-V0_xK_Ai)/K_xK_Ai));
-	float inv_tauxK_A     = (alphaxK_A + betaxK_A);
-	float alphayK_A = (Q10_20*0.11042f)/(1+exp((previous_V+111.33209f)/12.8433f));
-	float betayK_A   = (Q10_20*0.10353f)/(1+exp(-(previous_V+49.9537f)/8.90123f));
-	float yK_A_inf    = 1/(1+exp((previous_V-V0_yK_Ai)/K_yK_Ai));
-	float inv_tauyK_A     = (alphayK_A + betayK_A);
-	float alphaxK_IR = Q10_20*0.13289f*exp(-(previous_V+83.94f)/24.3902f);
-	float betaxK_IR  = Q10_20*0.16994f*exp((previous_V+83.94f)/35.714f);
-	float xK_IR_inf    = alphaxK_IR/(alphaxK_IR + betaxK_IR);
-	float inv_tauxK_IR     = (alphaxK_IR + betaxK_IR);
-	float alphaxK_Ca = (Q10_30*2.5f)/(1+(0.0015f*exp(-previous_V/11.765f))/NeuronState[13]);
-	float betaxK_Ca   = (Q10_30*1.5f)/(1+NeuronState[13]/(0.00015*exp(-previous_V/11.765f)));
-	float xK_Ca_inf    = alphaxK_Ca/(alphaxK_Ca + betaxK_Ca);
-	float inv_tauxK_Ca     = (alphaxK_Ca + betaxK_Ca);
-	float alphaxCa  = Q10_20*0.04944f*exp((previous_V+29.06f)/15.87301587302f);
-	float betaxCa   = Q10_20*0.08298f*exp(-(previous_V+18.66f)/25.641f);
-	float xCa_inf    = alphaxCa/(alphaxCa + betaxCa);
-	float inv_tauxCa     = (alphaxCa + betaxCa);
-	float alphayCa = Q10_20*0.0013f*exp(-(previous_V+48)/18.183f);
-	float betayCa   = Q10_20*0.0013f*exp((previous_V+48)/83.33f);
-	float yCa_inf    = alphayCa/(alphayCa + betayCa);
-	float inv_tauyCa     = (alphayCa + betayCa);
-	float alphaxK_sl = Q10_22*0.0033f*exp((previous_V+30)/40);
-	float betaxK_sl   = Q10_22*0.0033f*exp(-(previous_V+30)/20);
-	float xK_sl_inf    = 1/(1+exp(-(previous_V-V0_xK_sli)/B_xK_sli));
-	float inv_tauxK_sl     = (alphaxK_sl + betaxK_sl);
-	float gNa_f = gMAXNa_f * NeuronState[0]*NeuronState[0]*NeuronState[0] * NeuronState[1];
-	float gNa_r = gMAXNa_r * NeuronState[2] * NeuronState[3];
-	float gNa_p= gMAXNa_p * NeuronState[4];
-	float gK_V  = gMAXK_V * NeuronState[5]*NeuronState[5]*NeuronState[5]*NeuronState[5];
-	float gK_A  = gMAXK_A * NeuronState[6]*NeuronState[6]*NeuronState[6] * NeuronState[7];
-	float gK_IR = gMAXK_IR * NeuronState[8];
-	float gK_Ca=gMAXK_Ca * NeuronState[9];
-	float gCa    = gMAXCa * NeuronState[10]*NeuronState[10] * NeuronState[11];
-	float gK_sl  = gMAXK_sl * NeuronState[12];
 
-	 AuxNeuronState[0]=ms_to_s*(xNa_f_inf  - NeuronState[0])*inv_tauxNa_f;
-	 AuxNeuronState[1]=ms_to_s*(yNa_f_inf  - NeuronState[1])*inv_tauyNa_f;
-	 AuxNeuronState[2]=ms_to_s*(xNa_r_inf  - NeuronState[2])*inv_tauxNa_r;
-	 AuxNeuronState[3]=ms_to_s*(yNa_r_inf  - NeuronState[3])*inv_tauyNa_r;
-	 AuxNeuronState[4]=ms_to_s*(xNa_p_inf - NeuronState[4])*inv_tauxNa_p;
-	 AuxNeuronState[5]=ms_to_s*(xK_V_inf  - NeuronState[5])*inv_tauxK_V;
-	 AuxNeuronState[6]=ms_to_s*(xK_A_inf  - NeuronState[6])*inv_tauxK_A;
-	 AuxNeuronState[7]=ms_to_s*(yK_A_inf  - NeuronState[7])*inv_tauyK_A;
-	 AuxNeuronState[8]=ms_to_s*(xK_IR_inf - NeuronState[8])*inv_tauxK_IR;
-	 AuxNeuronState[9]=ms_to_s*(xK_Ca_inf - NeuronState[9])*inv_tauxK_Ca;
-	 AuxNeuronState[10]=ms_to_s*(xCa_inf - NeuronState[10])*inv_tauxCa;
-	 AuxNeuronState[11]=ms_to_s*(yCa_inf - NeuronState[11])*inv_tauyCa;
-	 AuxNeuronState[12]=ms_to_s*(xK_sl_inf-NeuronState[12])*inv_tauxK_sl;
-	 AuxNeuronState[13]=ms_to_s*(-gCa*(previous_V-VCa)/(2*F*A*d) - (betaCa*(NeuronState[13] - Ca0)));
-	 AuxNeuronState[14]=ms_to_s*(-1/Cm)*((NeuronState[15]/299.26058e-8f) * (previous_V - eexc) + (NeuronState[16]/299.26058e-8f) * (previous_V - einh)+gNa_f*(previous_V-VNa)+gNa_r*(previous_V-VNa)+gNa_p*(previous_V-VNa)+gK_V*(previous_V-VK)+gK_A*(previous_V-VK)+gK_IR*(previous_V-VK)+gK_Ca*(previous_V-VK)+gCa*(previous_V-VCa)+gK_sl*(previous_V-VK)+gLkg1*(previous_V-VLkg1)+gLkg2*(previous_V-VLkg2)+I_inj);
+void EgidioGranuleCell_TimeDriven::EvaluateDifferentialEquation(float * NeuronState, float * AuxNeuronState, int index, float elapsed_time){
+	float current = 0.0;
+	if(EXC){
+		current += NeuronState[EXC_index] * (this->e_exc - NeuronState[V_m_index]);
+	}
+	if(INH){
+		current += NeuronState[INH_index] * (this->e_inh - NeuronState[V_m_index]);
+	}
+	if(NMDA){
+		//float g_nmda_inf = 1.0f/(1.0f + ExponentialTable::GetResult(-0.062f*NeuronState[V_m_index])*(1.2f/3.57f));
+		float g_nmda_inf = Get_g_nmda_inf(NeuronState[V_m_index]);
+		current += NeuronState[NMDA_index] * g_nmda_inf*(this->e_exc - NeuronState[V_m_index]);
+	}
+	current+=NeuronState[EXT_I_index]; // (defined in pA).
+
+	//We normalize the current.
+	//current *= 1e-9f / 299.26058e-8f;
+	current *= 3.34156941e-4;
+
+	float previous_V=NeuronState[V_m_index];
+
+	float VCa=nernst(NeuronState[Ca_index],cao,2,temper);
+
+	float * values=Get_channel_values(previous_V);
+
+	//////////////////////xNa_f//////////////////////////
+	float xNa_f_inf = values[0];
+	float inv_tau_xNa_f = values[1];
+
+	//////////////////////yNa_f//////////////////////////
+	float yNa_f_inf = values[2];
+	float inv_tau_yNa_f = values[3];
+
+	//////////////////////xNa_r//////////////////////////
+	float xNa_r_inf = values[4];
+	float inv_tau_xNa_r = values[5];
+
+	//////////////////////yNa_r//////////////////////////
+	float yNa_r_inf = values[6];
+	float inv_tau_yNa_r = values[7];
+
+	//////////////////////xNa_p//////////////////////////
+	float xNa_p_inf = values[8];
+	float inv_tau_xNa_p = values[9];
+
+	//////////////////////xK_V//////////////////////////
+	float xK_V_inf = values[10];
+	float inv_tau_xK_V = values[11];
+
+	//////////////////////xK_A//////////////////////////
+	float xK_A_inf = values[12];
+	float inv_tau_xK_A = values[13];
+
+	//////////////////////yK_A//////////////////////////
+	float yK_A_inf = values[14];
+	float inv_tau_yK_A = values[15];
+
+	//////////////////////xK_IR//////////////////////////
+	float xK_IR_inf = values[16];
+	float inv_tau_xK_IR = values[17];
+
+	//////////////////////xK_Ca//////////////////////////
+	float aux_xK_Ca = values[18];
+	float inv_aux_xK_Ca = values[19];
+	float alpha_xK_Ca = (Q10_30*2.5f)/(1.0f + aux_xK_Ca/NeuronState[14]);	//NOOOOOOOOOOOO
+	float beta_xK_Ca = (Q10_30*1.5f)/(1.0f + NeuronState[14]*inv_aux_xK_Ca);	//NOOOOOOOOOOOO
+	float xK_Ca_inf = alpha_xK_Ca / (alpha_xK_Ca + beta_xK_Ca);
+	float inv_tau_xK_Ca = (alpha_xK_Ca + beta_xK_Ca);
+
+	//////////////////////xCa//////////////////////////
+	float xCa_inf = values[20];
+	float inv_tau_xCa = values[21];
+
+	//////////////////////yCa//////////////////////////
+	float yCa_inf = values[22];
+	float inv_tau_yCa = values[23];
+
+	//////////////////////xK_sl//////////////////////////
+	float xK_sl_inf = values[24];
+	float inv_tau_xK_sl = values[25];
+
+
+	float gNa_f = gMAXNa_f * NeuronState[xNa_f_index]*NeuronState[xNa_f_index]*NeuronState[xNa_f_index] * NeuronState[yNa_f_index];
+	float gNa_r = gMAXNa_r * NeuronState[xNa_r_index] * NeuronState[yNa_r_index];
+	float gNa_p= gMAXNa_p * NeuronState[xNa_p_index];
+	float gK_V  = gMAXK_V * NeuronState[xK_V_index]*NeuronState[xK_V_index]*NeuronState[xK_V_index]*NeuronState[xK_V_index];
+	float gK_A  = gMAXK_A * NeuronState[xK_A_index]*NeuronState[xK_A_index]*NeuronState[xK_A_index] * NeuronState[yK_A_index];
+	float gK_IR = gMAXK_IR * NeuronState[xK_IR_index];
+	float gK_Ca = gMAXK_Ca * NeuronState[xK_Ca_index];
+	float gCa    = gMAXCa * NeuronState[xCa_index]*NeuronState[xCa_index] * NeuronState[yCa_index];
+	float gK_sl  = gMAXK_sl * NeuronState[xK_sl_index];
+
+	AuxNeuronState[xNa_f_index] = (xNa_f_inf - NeuronState[xNa_f_index]) * inv_tau_xNa_f;
+	AuxNeuronState[yNa_f_index] = (yNa_f_inf - NeuronState[yNa_f_index]) * inv_tau_yNa_f;
+	AuxNeuronState[xNa_r_index] = (xNa_r_inf - NeuronState[xNa_r_index]) * inv_tau_xNa_r;
+	AuxNeuronState[yNa_r_index] = (yNa_r_inf - NeuronState[yNa_r_index]) * inv_tau_yNa_r;
+	 AuxNeuronState[xNa_p_index]=(xNa_p_inf - NeuronState[xNa_p_index]) * inv_tau_xNa_p;
+	 AuxNeuronState[xK_V_index] = (xK_V_inf - NeuronState[xK_V_index]) * inv_tau_xK_V;
+	 AuxNeuronState[xK_A_index]=(xK_A_inf  - NeuronState[xK_A_index]) * inv_tau_xK_A;
+	 AuxNeuronState[yK_A_index]=(yK_A_inf  - NeuronState[yK_A_index]) * inv_tau_yK_A;
+	 AuxNeuronState[xK_IR_index] = (xK_IR_inf - NeuronState[xK_IR_index]) * inv_tau_xK_IR;
+	 AuxNeuronState[xK_Ca_index] = (xK_Ca_inf - NeuronState[xK_Ca_index]) * inv_tau_xK_Ca;
+	 AuxNeuronState[xCa_index] = (xCa_inf - NeuronState[xCa_index]) * inv_tau_xCa;
+	 AuxNeuronState[yCa_index] = (yCa_inf - NeuronState[yCa_index]) * inv_tau_yCa;
+	 AuxNeuronState[xK_sl_index]=(xK_sl_inf - NeuronState[xK_sl_index]) * inv_tau_xK_sl;
+	 AuxNeuronState[Ca_index]=(-gCa*(previous_V-VCa)/(2*F*A*d) - (betaCa*(NeuronState[Ca_index] - Ca0)));
+	 AuxNeuronState[V_m_index]=(current+
+		 gNa_f*(VNa - previous_V) + gNa_r*(VNa - previous_V) +
+		 gNa_p*(VNa - previous_V) + gK_V*(VK - previous_V) +
+		 gK_A*(VK - previous_V) + gK_IR*(VK - previous_V) +
+		 gK_Ca*(VK - previous_V) + gCa*(VCa - previous_V) +
+		 gK_sl*(VK - previous_V) + gLkg1*(VLkg1 - previous_V) +
+		 gLkg2*(VLkg2 - previous_V))*inv_Cm;
 }
 
 
 
-void EgidioGranuleCell_TimeDriven::EvaluateTimeDependentEcuation(float * NeuronState, float elapsed_time){
-	//NeuronState[15]*= exp(-(ms_to_s*elapsed_time/this->texc));
-	//NeuronState[16]*= exp(-(ms_to_s*elapsed_time/this->tinh));
+void EgidioGranuleCell_TimeDriven::EvaluateTimeDependentEquation(float * NeuronState, int index, int elapsed_time_index){
+	float limit=1e-9;
+	float * Conductance_values=this->Get_conductance_exponential_values(elapsed_time_index);
 
-	if(NeuronState[15]<1e-30){
-		NeuronState[15]=0.0f;
-	}else{
-		NeuronState[15]*= exp(-(ms_to_s*elapsed_time/this->texc));
+	if(EXC){
+		if (NeuronState[EXC_index]<limit){
+			NeuronState[EXC_index] = 0.0f;
+		}else{
+			NeuronState[EXC_index] *= Conductance_values[0];
+		}
 	}
-	if(NeuronState[16]<1e-30){
-		NeuronState[16]=0.0f;
-	}else{
-		NeuronState[16]*= exp(-(ms_to_s*elapsed_time/this->tinh));
+	if(INH){
+		if (NeuronState[INH_index]<limit){
+			NeuronState[INH_index] = 0.0f;
+		}else{
+			NeuronState[INH_index] *= Conductance_values[1];
+		}
 	}
+	if(NMDA){
+		if (NeuronState[NMDA_index]<limit){
+			NeuronState[NMDA_index] = 0.0f;
+		}else{
+			NeuronState[NMDA_index] *= Conductance_values[2];
+		}
+	}
+}
+
+void EgidioGranuleCell_TimeDriven::Calculate_conductance_exp_values(int index, float elapsed_time){
+	//excitatory synapse.
+	Set_conductance_exp_values(index, 0, exp(-elapsed_time/this->tau_exc));
+	//inhibitory synapse.
+	Set_conductance_exp_values(index, 1, exp(-elapsed_time/this->tau_inh));
+	//nmda synapse.
+	Set_conductance_exp_values(index, 2, expf(-elapsed_time/this->tau_nmda));
+}
+
+
+bool EgidioGranuleCell_TimeDriven::CheckSynapseType(Interconnection * connection){
+	int Type = connection->GetType();
+	if (Type<N_TimeDependentNeuronState && Type >= 0){
+		//activaty synapse type
+		if (Type == 0){
+			EXC = true;
+		}
+		if (Type == 1){
+			INH = true;
+		}
+		if (Type == 2){
+			NMDA = true;
+		}
+		if (Type == 3){
+			EXT_I = true;
+		}
+
+		NeuronModel * model = connection->GetSource()->GetNeuronModel();
+		//Synapse types that process input spikes
+		if (Type < N_TimeDependentNeuronState - 1){
+			if (model->GetModelOutputActivityType() == OUTPUT_SPIKE){
+				return true;
+			}
+			else{
+			cout << "Synapses type " << Type << " of neuron model " << EgidioGranuleCell_TimeDriven::GetName() << " must receive spikes. The source model generates currents." << endl;
+				return false;
+			}
+		}
+		//Synapse types that process input current
+		if (Type == N_TimeDependentNeuronState - 1){
+			if (model->GetModelOutputActivityType() == OUTPUT_CURRENT){
+				connection->SetSubindexType(this->CurrentSynapsis->GetNInputCurrentSynapsesPerNeuron(connection->GetTarget()->GetIndex_VectorNeuronState()));
+				this->CurrentSynapsis->IncrementNInputCurrentSynapsesPerNeuron(connection->GetTarget()->GetIndex_VectorNeuronState());
+				return true;
+			}
+			else{
+				cout << "Synapses type " << Type << " of neuron model " << EgidioGranuleCell_TimeDriven::GetName() << " must receive current. The source model generates spikes." << endl;
+				return false;
+			}
+		}
+	}
+	cout << "Neuron model " << EgidioGranuleCell_TimeDriven::GetName() << " does not support input synapses of type " << Type << ". Just defined " << N_TimeDependentNeuronState << " synapses types." << endl;
+	return false;
+}
+
+std::map<std::string,boost::any> EgidioGranuleCell_TimeDriven::GetParameters() const {
+	// Return a dictionary with the parameters
+	std::map<std::string,boost::any> newMap = TimeDrivenNeuronModel::GetParameters();
+	return newMap;
+}
+
+std::map<std::string, boost::any> EgidioGranuleCell_TimeDriven::GetSpecificNeuronParameters(int index) const noexcept(false){
+	return GetParameters();
+}
+
+void EgidioGranuleCell_TimeDriven::SetParameters(std::map<std::string, boost::any> param_map) noexcept(false){
+
+	// Search for the parameters in the dictionary
+	TimeDrivenNeuronModel::SetParameters(param_map);
+
+	//Set the new g_nmda_inf values based on the e_exc and e_inh parameters
+	Generate_g_nmda_inf_values();
+
+	return;
+}
+
+IntegrationMethod * EgidioGranuleCell_TimeDriven::CreateIntegrationMethod(ModelDescription imethodDescription) noexcept(false){
+	return IntegrationMethodFactory<EgidioGranuleCell_TimeDriven>::CreateIntegrationMethod(imethodDescription, (EgidioGranuleCell_TimeDriven*) this);
+}
+
+std::map<std::string,boost::any> EgidioGranuleCell_TimeDriven::GetDefaultParameters() {
+	// Return a dictionary with the parameters
+	std::map<std::string,boost::any> newMap = TimeDrivenNeuronModel::GetDefaultParameters<EgidioGranuleCell_TimeDriven>();
+	return newMap;
+}
+
+NeuronModel* EgidioGranuleCell_TimeDriven::CreateNeuronModel(ModelDescription nmDescription){
+	EgidioGranuleCell_TimeDriven * nmodel = new EgidioGranuleCell_TimeDriven();
+	nmodel->SetParameters(nmDescription.param_map);
+	return nmodel;
+}
+
+ModelDescription EgidioGranuleCell_TimeDriven::ParseNeuronModel(std::string FileName) noexcept(false){
+	FILE *fh;
+	ModelDescription nmodel;
+	nmodel.model_name = EgidioGranuleCell_TimeDriven::GetName();
+	long Currentline = 0L;
+	fh=fopen(FileName.c_str(),"rt");
+	if(!fh) {
+		throw EDLUTFileException(TASK_EGIDIO_GRANULE_CELL_TIME_DRIVEN_LOAD, ERROR_NEURON_MODEL_OPEN, REPAIR_NEURON_MODEL_NAME, Currentline, FileName.c_str());
+	}
+
+	Currentline = 1L;
+	skip_comments(fh, Currentline);
+	try {
+		ModelDescription intMethodDescription = TimeDrivenNeuronModel::ParseIntegrationMethod<EgidioGranuleCell_TimeDriven>(fh, Currentline);
+		nmodel.param_map["int_meth"] = boost::any(intMethodDescription);
+	} catch (EDLUTException exc) {
+		throw EDLUTFileException(exc, Currentline, FileName.c_str());
+	}
+
+	nmodel.param_map["name"] = boost::any(EgidioGranuleCell_TimeDriven::GetName());
+
+	fclose(fh);
+
+	return nmodel;
+}
+
+std::string EgidioGranuleCell_TimeDriven::GetName(){
+	return "EgidioGranuleCell_TimeDriven";
+}
+
+std::map<std::string, std::string> EgidioGranuleCell_TimeDriven::GetNeuronModelInfo() {
+	// Return a dictionary with the parameters
+	std::map<std::string, std::string> newMap;
+	newMap["info"] = std::string("CPU Time-driven complex neuron model representing a cerebellar granular cell with fifteen differential equations(membrane potential (v) and several ionic-channel variables) and four types of input synapses: AMPA (excitatory), GABA (inhibitory), NMDA (excitatory) and external input current (set on pA)");
+	newMap["int_meth"] = std::string("Integraton method dictionary (from the list of available integration methods)");
+	return newMap;
 }

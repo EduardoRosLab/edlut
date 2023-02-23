@@ -24,33 +24,74 @@
 #include "../../include/simulation/Simulation.h"
 
 #include "../../include/neuron_model/NeuronState.h"
+#include "../../include/neuron_model/NeuronModel.h"
 
 #include "../../include/communication/OutputSpikeDriver.h"
 
+#include "../../include/openmp/openmp.h"
+
+
 InputSpike::InputSpike():Spike() {
 }
-   	
-InputSpike::InputSpike(double NewTime, Neuron * NewSource): Spike(NewTime,NewSource){
+
+InputSpike::InputSpike(double NewTime, int NewQueueIndex, Neuron * NewSource) : Spike(NewTime, NewQueueIndex, NewSource){
 }
-   		
+
 InputSpike::~InputSpike(){
 }
 
-void InputSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
+void InputSpike::ProcessEvent(Simulation * CurrentSimulation, RealTimeRestrictionLevel RealTimeRestriction){
 
-	if(!RealTimeRestriction){
-		
-		Neuron * neuron=this->source;  // source of the spike
-	    
-		CurrentSimulation->WriteSpike(this);
-		
-		// CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(), this->GetSource());
-			
-		if (neuron->IsOutputConnected()){
-			PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
-			CurrentSimulation->GetQueue()->InsertEvent(spike);
+	if (RealTimeRestriction < SPIKES_DISABLED){
+		if (source->GetNeuronModel()->GetModelOutputActivityType() == OUTPUT_SPIKE){
+			CurrentSimulation->WriteSpike(this);
+
+			for (int i = 0; i < NumberOfOpenMPQueues; i++){
+				if (source->IsOutputConnected(i)){
+					PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + source->GetOutputConnectionAt(i, 0)->GetDelay(), i, source, 0, source->PropagationStructure->NDifferentDelays[i]);
+					if (i == omp_get_thread_num()){
+						CurrentSimulation->GetQueue()->InsertEvent(i, spike);
+					}
+					else{
+						CurrentSimulation->GetQueue()->InsertEventInBuffer(omp_get_thread_num(), i, spike);
+					}
+
+				}
+			}
+		}
+		else{
+			cout << "Neuron " << source->GetIndex() << " can not generate an output spike." << endl;
 		}
 	}
 }
 
-   	
+void InputSpike::ProcessEvent(Simulation * CurrentSimulation){
+
+	if (source->GetNeuronModel()->GetModelOutputActivityType() == OUTPUT_SPIKE){
+		CurrentSimulation->WriteSpike(this);
+
+		for (int i = 0; i < NumberOfOpenMPQueues; i++){
+			if (source->IsOutputConnected(i)){
+				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + source->GetOutputConnectionAt(i, 0)->GetDelay(), i, source, 0, source->PropagationStructure->NDifferentDelays[i]);
+				if (i == omp_get_thread_num()){
+					CurrentSimulation->GetQueue()->InsertEvent(i, spike);
+				}
+				else{
+					CurrentSimulation->GetQueue()->InsertEventInBuffer(omp_get_thread_num(), i, spike);
+				}
+
+			}
+		}
+	}
+	else{
+		cout << "Neuron " << source->GetIndex() << " can not generate an output spike." << endl;
+	}
+}
+
+void InputSpike::PrintType(){
+	cout<<"InputSpike"<<endl;
+}
+
+enum EventPriority InputSpike::ProcessingPriority(){
+	return PROPAGATEDSPIKE;
+}

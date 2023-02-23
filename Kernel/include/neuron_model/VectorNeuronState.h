@@ -2,7 +2,7 @@
  *                           VectorNeuronState.h                           *
  *                           -------------------                           *
  * copyright            : (C) 2012 by Jesus Garrido and Francisco Naveros  *
- * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
+ * email                : jgarrido@atc.ugr.es, fnaveros@ugr.es             *
  ***************************************************************************/
 
 /***************************************************************************
@@ -91,12 +91,12 @@ class VectorNeuronState {
 		 */
 		int SizeStates;
 
-
 		/*!
 		 * \brief Time-driven methods in CPU use this vector to indicate which neurons have to
 		 * generate a internal spike after a update event.
 		 */
-		bool * InternalSpike;
+		int * InternalSpikeIndexs;
+		int NInternalSpikeIndexs;
 
 
 
@@ -110,6 +110,12 @@ class VectorNeuronState {
 		 * brief It is used to store the state of a GPU neuron model. 
 		 */
 		bool Is_GPU;
+
+
+		/*!
+		 * brief It is used to store initial state of the neuron model. 
+		 */
+		float * InitialState;
 	
 
 		/*!
@@ -188,7 +194,7 @@ class VectorNeuronState {
 			VectorNeuronStates[index*NumberOfVariables + position]+= Increment;
 		}
 
-				/*!
+		/*!
 		 * \brief It increments the state variable for a cell in a specified position.
 		 *
 		 * It increments the state variable for a cell in a specified position.
@@ -211,6 +217,15 @@ class VectorNeuronState {
 		 * \param NewTime The time when the last update happened.
 		 */
 		void SetLastUpdateTime(int index, double NewTime);
+
+		/*!
+		* \brief It sets the time when the last update happened for all cells.
+		*
+		* It sets the time when the last update happened for all cells.
+		*
+		* \param NewTime The time when the last update happened.
+		*/
+		void SetLastUpdateTime(double NewTime);
 
 		/*!
 		 * \brief It sets the time when the next predicted spike will happen for a cell.
@@ -257,7 +272,16 @@ class VectorNeuronState {
 		 * \param position The position of the state variable.
 		 * \return The value of the position-th state variable.
 		 */
-		virtual float GetStateVariableAt(int index, int position);
+		//virtual float GetStateVariableAt(int index, int position);
+		float GetStateVariableAt(int index, int position){
+			if (Is_GPU == false){
+				return VectorNeuronStates[index*NumberOfVariables + position];
+			}
+			else{
+				return VectorNeuronStates[this->SizeStates*position + index];
+			}
+		}
+
 
 		/*!
 		 * \brief It gets the pointer to the state variables for a cell.
@@ -267,7 +291,10 @@ class VectorNeuronState {
 		 * \param index The cell index inside the vector.
 		 * \return The pointer of the position-th state variable.
 		 */
-		virtual float * GetStateVariableAt(int index);
+		//virtual float * GetStateVariableAt(int index);
+		float * GetStateVariableAt(int index){
+			return VectorNeuronStates + (index*NumberOfVariables);
+		}
 
 
 		/*!
@@ -422,6 +449,23 @@ class VectorNeuronState {
 		 */
 		virtual bool * getInternalSpike();
 
+		/*!
+		 * \brief It gets the InternalSpikeIndex vector.
+		 *
+		 * It gets the InternalSpikeIndex vector.
+		 *
+		 * \return The InternalSpikeIndex vector
+		 */
+		int * getInternalSpikeIndexs();
+		
+		/*!
+		 * \brief It gets the NInternalSpikeIndex vector.
+		 *
+		 * It gets the NInternalSpikeIndex vector.
+		 *
+		 * \return The NInternalSpikeIndex vector
+		 */
+		int getNInternalSpikeIndexs();
 
 		/*!
 		 * \brief It sets if some neuron is monitored.
@@ -441,6 +485,16 @@ class VectorNeuronState {
 		 * \return if some neuron is monitored. 
 		 */
 		bool Get_Is_Monitored();
+
+
+		/*!
+		 * \brief It resets the neuron state of a neuron with the initial state.
+		 *
+		 * It resets the neuron state of a neuron with the initial state.
+		 *
+		 * \param index The cell index inside the vector. 
+		 */
+		void ResetState(int index);
 
 };
 

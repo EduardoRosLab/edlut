@@ -64,7 +64,7 @@ class OutputWeightDriver : public PrintableObject{
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		virtual void WriteWeights(Network * Net, float SimulationTime) throw (EDLUTException) = 0;
+		virtual void WriteWeights(Network * Net, float SimulationTime) noexcept(false) = 0;
 
 		/*!
 		 * \brief It communicates the output activity to the external system.
@@ -75,7 +75,7 @@ class OutputWeightDriver : public PrintableObject{
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		virtual void WriteWeights(Network * Net) throw (EDLUTException) = 0;
+		virtual void WriteWeights(Network * Net) noexcept(false) = 0;
 
 };
 

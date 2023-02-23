@@ -61,6 +61,7 @@ CdSocket::~CdSocket(){
 
 void CdSocket::initializeSocket()
 {  
+	cout << "Connecting to Server " << this->serv_host_addr << ":" << this->serv_tcp_port << endl;
 #ifdef _WIN32
 	if (SocketInstances==0){
 		WSADATA wsaData;
@@ -218,6 +219,8 @@ void CdSocket::initializeSocket()
 		//linger ls = {1, 6000} ; 
 		//setsockopt(socket_fd, p->p_proto, SO_LINGER, (const char *)&ls, sizeof(ls)) ;
 	}
+
+	cout << "Connection OK" << endl;
 }
 
 

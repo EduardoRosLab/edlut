@@ -18,18 +18,18 @@
 
 #include <cmath>
 
-#include "../../include/learning_rules/ActivityRegister.h"
 #include "../../include/spike/Neuron.h"
+#include "../../include/neuron_model/NeuronModel.h"
 
 #include "../../include/learning_rules/LearningRule.h"
 #include "../../include/learning_rules/ConnectionState.h"
 
-Interconnection::Interconnection(): source(0), target(0), index(0), delay(0), type(0), weight(0), maxweight(0), wchange_withPost(0), LearningRuleIndex_withPost(0), wchange_withoutPost(0), LearningRuleIndex_withoutPost(0){
-	
+Interconnection::Interconnection() : source(0), target(0), index(0), delay(0), type(0), subindex_type(0), weight(0), maxweight(0), wchange_withPost(0), LearningRuleIndex_withPost(-1), wchange_withTrigger(0), LearningRuleIndex_withTrigger(-1), wchange_withPostAndTrigger(0), LearningRuleIndex_withPostAndTrigger(-1), TriggerConnection(false), LearningRuleIndex_withPost_insideTargetNeuron(-1), LearningRuleIndex_withTrigger_insideTargetNeuron(-1), LearningRuleIndex_withPostAndTrigger_insideTargetNeuron(-1), targetNeuronModel(0), targetNeuronModelIndex(1){
+
 }
 
-Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange_withPost, unsigned int NewLearningRuleIndex_withPost, LearningRule* NewWeightChange_withoutPost, unsigned int NewLearningRuleIndex_withoutPost):
-	source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), weight(NewWeight), maxweight(NewMaxWeight), wchange_withPost(NewWeightChange_withPost),LearningRuleIndex_withPost(NewLearningRuleIndex_withPost), wchange_withoutPost(NewWeightChange_withoutPost),LearningRuleIndex_withoutPost(NewLearningRuleIndex_withoutPost) {
+Interconnection::Interconnection(int NewIndex, Neuron * NewSource, Neuron * NewTarget, float NewDelay, int NewType, float NewWeight, float NewMaxWeight, LearningRule* NewWeightChange_withPost, unsigned int NewLearningRuleIndex_withPost, LearningRule* NewWeightChange_withTrigger, unsigned int NewLearningRuleIndex_withTrigger, LearningRule* NewWeightChange_withPostAndTrigger, unsigned int NewLearningRuleIndex_withPostAndTrigger):
+source(NewSource), target(NewTarget), index(NewIndex), delay(NewDelay), type(NewType), subindex_type(0), weight(NewWeight), maxweight(NewMaxWeight), wchange_withPost(NewWeightChange_withPost), LearningRuleIndex_withPost(NewLearningRuleIndex_withPost), wchange_withTrigger(NewWeightChange_withTrigger), LearningRuleIndex_withTrigger(NewLearningRuleIndex_withTrigger), wchange_withPostAndTrigger(NewWeightChange_withPostAndTrigger), LearningRuleIndex_withPostAndTrigger(NewLearningRuleIndex_withPostAndTrigger), LearningRuleIndex_withPost_insideTargetNeuron(-1), LearningRuleIndex_withTrigger_insideTargetNeuron(-1), LearningRuleIndex_withPostAndTrigger_insideTargetNeuron(-1){
 }
 
 Interconnection::~Interconnection(){
@@ -39,77 +39,92 @@ Interconnection::~Interconnection(){
 long int Interconnection::GetIndex() const{
 	return this->index;
 }
-		
+
 void Interconnection::SetIndex(long int NewIndex){
 	this->index = NewIndex;
 }
-		
+
 //Neuron * Interconnection::GetSource() const{
-//	return this->source;	
+//	return this->source;
 //}
-		
+
 void Interconnection::SetSource(Neuron * NewSource){
-	this->source = NewSource;	
+	this->source = NewSource;
 }
-		
+
 //Neuron * Interconnection::GetTarget() const{
 //	return this->target;
 //}
-		
+
 void Interconnection::SetTarget(Neuron * NewTarget){
 	this->target = NewTarget;
 }
-		
+
 //double Interconnection::GetDelay() const{
 //	return this->delay;
 //}
-		
-void Interconnection::SetDelay(float NewDelay){
+
+void Interconnection::SetDelay(double NewDelay){
 	this->delay = NewDelay;
 }
-		
+
 //int Interconnection::GetType() const{
 //	return this->type;
 //}
-		
+
 void Interconnection::SetType(int NewType){
 	this->type = NewType;
 }
-		
+
+//int Interconnection::GetSubindexType() const{
+//	return this->subindex_type;
+//}
+
+void Interconnection::SetSubindexType(int index){
+	this->subindex_type = index;
+}
+
 //float Interconnection::GetWeight() const{
 //	return this->weight;
 //}
-		
+
 //void Interconnection::SetWeight(float NewWeight){
 //	this->weight = NewWeight;
 //}
-		
+
 //float Interconnection::GetMaxWeight() const{
 //	return this->maxweight;
 //}
-		
+
 void Interconnection::SetMaxWeight(float NewMaxWeight){
 	this->maxweight = NewMaxWeight;
 }
-		
+
 //LearningRule * Interconnection::GetWeightChange_withPost() const{
 //	return this->wchange_withPost;
 //}
-		
+
 void Interconnection::SetWeightChange_withPost(LearningRule * NewWeightChange_withPost){
 	this->wchange_withPost=NewWeightChange_withPost;
 }
 
-//LearningRule * Interconnection::GetWeightChange_withoutPost() const{
-//	return this->wchange_withoutPost;
+//LearningRule * Interconnection::GetWeightChange_withTrigger() const{
+//	return this->wchange_withTrigger;
 //}
-		
-void Interconnection::SetWeightChange_withoutPost(LearningRule * NewWeightChange_withoutPost){
-	this->wchange_withoutPost=NewWeightChange_withoutPost;
+
+void Interconnection::SetWeightChange_withTrigger(LearningRule * NewWeightChange_withTrigger){
+	this->wchange_withTrigger=NewWeightChange_withTrigger;
 }
 
+//LearningRule * Interconnection::GetWeightChange_withPostAndTrigger() const{
+//	return this->wchange_withPostAndTrigger;
+//}
 
-void Interconnection::SetLearningRuleIndex_withPost(int NewIndex){
+void Interconnection::SetWeightChange_withPostAndTrigger(LearningRule * NewWeightChange_withPostAndTrigger){
+	this->wchange_withPostAndTrigger=NewWeightChange_withPostAndTrigger;
+}
+
+void Interconnection::SetLearningRuleIndex_withPost(unsigned int NewIndex){
 	this->LearningRuleIndex_withPost=NewIndex;
 }
 
@@ -117,12 +132,20 @@ void Interconnection::SetLearningRuleIndex_withPost(int NewIndex){
 //	return this->LearningRuleIndex_withPost;
 //}
 
-void Interconnection::SetLearningRuleIndex_withoutPost(int NewIndex){
-	this->LearningRuleIndex_withoutPost=NewIndex;
+void Interconnection::SetLearningRuleIndex_withTrigger(unsigned int NewIndex){
+	this->LearningRuleIndex_withTrigger=NewIndex;
 }
 
-//int Interconnection::GetLearningRuleIndex_withoutPost() const{
-//	return this->LearningRuleIndex_withoutPost;
+//int Interconnection::GetLearningRuleIndex_withTrigger() const{
+//	return this->LearningRuleIndex_withTrigger;
+//}
+
+void Interconnection::SetLearningRuleIndex_withPostAndTrigger(unsigned int NewIndex){
+	this->LearningRuleIndex_withPostAndTrigger=NewIndex;
+}
+
+//int Interconnection::GetLearningRuleIndex_withPostAndTrigger() const{
+//	return this->LearningRuleIndex_withPostAndTrigger;
 //}
 
 //void Interconnection::IncrementWeight(float Increment){
@@ -155,8 +178,19 @@ ostream & Interconnection::PrintInfo(ostream & out) {
    	if (this->GetWeightChange_withPost()!=0) this->GetWeightChange_withPost()->PrintInfo(out);
    	else out << "None learning rule with postsynaptic learning" << endl;
 
-	if (this->GetWeightChange_withoutPost()!=0) this->GetWeightChange_withoutPost()->PrintInfo(out);
-   	else out << "None learning rule without postsynaptic learning" << endl;
+		if (this->GetWeightChange_withTrigger()!=0) this->GetWeightChange_withTrigger()->PrintInfo(out);
+   	else out << "None learning rule with trigger learning" << endl;
+
+		if (this->GetWeightChange_withPostAndTrigger()!=0) this->GetWeightChange_withPostAndTrigger()->PrintInfo(out);
+		else out << "None learning rule without postsynaptic and trigger learning" << endl;
 
    	return out;
+}
+
+void Interconnection::SetTriggerConnection(){
+	this->TriggerConnection=true;
+}
+
+bool Interconnection::GetTriggerConnection(){
+	return this->TriggerConnection;
 }

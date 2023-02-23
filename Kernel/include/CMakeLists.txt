@@ -1,0 +1,8 @@
+add_subdirectory(communication)
+add_subdirectory(integration_method)
+add_subdirectory(interface)
+add_subdirectory(learning_rules)
+add_subdirectory(neuron_model)
+add_subdirectory(openmp)
+add_subdirectory(simulation)
+add_subdirectory(spike)

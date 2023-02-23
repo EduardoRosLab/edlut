@@ -19,25 +19,17 @@
 #include "../../include/simulation/ExponentialTable.h"
 
 ConnectionState::ConnectionState(unsigned int NumSynapses, int NumVariables): NumberOfSynapses(NumSynapses), NumberOfVariables(NumVariables){
-	// TODO Auto-generated constructor stub
 	this->LastUpdate = (double *) new double [NumSynapses]();
 	this->StateVars = (float *) new float [NumSynapses*NumVariables]();
-
-	exponential = new ExponentialTable(-20, 0, 4*1024*1024);
 }
 
 ConnectionState::~ConnectionState() {
-	// TODO Auto-generated destructor stub
 	if (this->LastUpdate!=0){
 		delete [] this->LastUpdate;
 	}
 
 	if (this->StateVars!=0){
 		delete [] this->StateVars;
-	}
-
-	if(exponential!=0){
-		delete exponential;
 	}
 }
 
@@ -65,14 +57,10 @@ unsigned int ConnectionState::GetNumberOfPrintableValues(){
 	return this->GetNumberOfVariables()+1;
 }
 
-double ConnectionState::GetPrintableValuesAt(unsigned int position){
+double ConnectionState::GetPrintableValuesAt(unsigned int index, unsigned int position){
 	if (position<this->GetNumberOfVariables()){
-		return this->GetStateVariableAt(0, position);
+		return this->GetStateVariableAt(index, position);
 	} else if (position==this->GetNumberOfVariables()) {
-		return this->GetLastUpdateTime(0);
+		return this->GetLastUpdateTime(index);
 	} else return -1;
 }
-
-
-
-

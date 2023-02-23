@@ -20,6 +20,8 @@
 
 #include "./WithPostSynaptic.h"
 
+#include "../simulation/NetworkDescription.h"
+
 /*!
  * \file STDPWeightChange.h
  *
@@ -44,28 +46,52 @@ class Interconnection;
 class STDPWeightChange: public WithPostSynaptic {
 	protected:
 		/*!
+		* \brief Maximum weight change for LTP
+		*/
+		float MaxChangeLTP;
+
+		/*!
+		* \brief Decay parameter for LTP
+		*/
+		float tauLTP;
+
+		/*!
+		* \brief Maximum weight change LTD
+		*/
+		float MaxChangeLTD;
+
+		/*!
 		 * \brief Decay parameter LTD
 		 */
 		float tauLTD;
 
-		/*!
-		 * \brief Maximum weight change LTD
-		 */
-		float MaxChangeLTD;
-
-		/*!
-		 * \brief Decay parameter for LTP
-		 */
-		float tauLTP;
-
-		/*!
-		 * \brief Maximum weight change for LTP
-		 */
-		float MaxChangeLTP;
-
 	public:
 
-		virtual void InitializeConnectionState(unsigned int NumberOfSynapses);
+		/*!
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule.
+		 */
+		STDPWeightChange();
+
+		/*!
+		 * \brief Object destructor.
+		 *
+		 * It remove the object.
+		 */
+		virtual ~STDPWeightChange();
+
+
+		/*!
+		 * \brief It initialize the state associated to the learning rule for all the synapses.
+		 *
+		 * It initialize the state associated to the learning rule for all the synapses.
+		 *
+		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
+		 * \param NumberOfNeurons the total number of neurons in the network
+		 */
+		virtual void InitializeConnectionState(unsigned int NumberOfSynapses, unsigned int NumberOfNeurons);
+
 
 		/*!
 		 * \brief It gets the maximum value of the weight change for LTD.
@@ -110,13 +136,14 @@ class STDPWeightChange: public WithPostSynaptic {
 		 * It loads the learning rule properties.
 		 *
 		 * \param fh A file handler placed where the Learning rule properties are defined.
-		 * \param Currentline The file line where the handler is placed.
 		 *
-		 * \throw EDLUTFileException If something wrong happens in reading the learning rule properties.
+		 * \return The learning rule description object.
+		 *
+		 * \throw EDLUTException If something wrong happens in reading the learning rule properties.
 		 */
-		virtual void LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException);
+		static ModelDescription ParseLearningRule(FILE * fh) noexcept(false);
 
-   		/*!
+		/*!
    		 * \brief It applies the weight change function when a presynaptic spike arrives.
    		 *
    		 * It applies the weight change function when a presynaptic spike arrives.
@@ -126,15 +153,15 @@ class STDPWeightChange: public WithPostSynaptic {
    		 */
    		virtual void ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime);
 
-   		/*!
-		 * \brief It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * \param Connection The connection where the learning rule happens.
-		 * \param SpikeTime The spike time of the postsynaptic spike.
-		 */
-		virtual void ApplyPostSynapticSpike(Interconnection * Connection,double SpikeTime);
+		/*!
+		* \brief It applies the weight change function to all its input synapses when a postsynaptic spike arrives.
+		*
+		* It applies the weight change function to all its input synapses when a postsynaptic spike arrives.
+		*
+		* \param neuron The target neuron that manage the postsynaptic spike
+		* \param SpikeTime The spike time of the postsynaptic spike.
+		*/
+		virtual void ApplyPostSynapticSpike(Neuron * neuron, double SpikeTime);
 
 		/*!
 		 * \brief It prints the learning rule info.
@@ -146,6 +173,58 @@ class STDPWeightChange: public WithPostSynaptic {
 		 * \return The stream after the printer.
 		 */
 		virtual ostream & PrintInfo(ostream & out);
+
+		/*!
+		 * \brief It creates a new learning rule object of this type.
+		 *
+		 * It creates a new learning rule object of this type.
+		 *
+		 * \param param_map The learning rule description object.
+		 *
+		 * \return A newly created ExpWeightChange object.
+		 */
+		static LearningRule* CreateLearningRule(ModelDescription lrDescription);
+
+		/*!
+		 * \brief It provides the name of the learning rule
+		 *
+		 * It provides the name of the learning rule, i.e. the name that can be mentioned to use this learning rule.
+		 *
+		 * \return The name of the learning rule
+		 */
+		static std::string GetName(){
+			return "STDP";
+		};
+
+		/*!
+		 * \brief It returns the learning rule parameters.
+		 *
+		 * It returns the learning rule parameters.
+		 *
+		 * \returns A dictionary with the learning rule parameters
+		 */
+		virtual std::map<std::string,boost::any> GetParameters();
+
+		/*!
+		 * \brief It loads the learning rule properties.
+		 *
+		 * It loads the learning rule properties from parameter map.
+		 *
+		 * \param param_map The dictionary with the learning rule parameters.
+		 *
+		 * \throw EDLUTFileException If it happens a mistake with the parameters in the dictionary.
+		 */
+		virtual void SetParameters(std::map<std::string, boost::any> param_map) noexcept(false);
+
+		/*!
+		 * \brief It returns the default parameters of the learning rule.
+		 *
+		 * It returns the default parameters of the learning rule. It may be used to obtained the parameters that can be
+		 * set for this learning rule.
+		 *
+		 * \returns A dictionary with the learning rule parameters.
+		 */
+		static std::map<std::string,boost::any> GetDefaultParameters();
 
 
 };

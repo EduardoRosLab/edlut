@@ -28,13 +28,15 @@ ArrayOutputSpikeDriver::~ArrayOutputSpikeDriver() {
 	// TODO Auto-generated destructor stub
 }
 
-void ArrayOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
+void ArrayOutputSpikeDriver::WriteSpike(const Spike * NewSpike) noexcept(false){
 	OutputSpike spike(NewSpike->GetSource()->GetIndex(),NewSpike->GetTime());
-
-	this->OutputBuffer.push_back(spike);
+	#pragma omp critical (ArrayOutputSpikeDriver)
+	{
+		this->OutputBuffer.push_back(spike);
+	}
 }
 
-void ArrayOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){
+void ArrayOutputSpikeDriver::WriteState(float Time, Neuron * Source) noexcept(false){
 	return;
 }
 
@@ -46,13 +48,13 @@ bool ArrayOutputSpikeDriver::IsWritePotentialCapable() const{
 	return false;
 }
 
-void ArrayOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
+void ArrayOutputSpikeDriver::FlushBuffers() noexcept(false){
 
 	return;
 }
 
-int ArrayOutputSpikeDriver::GetBufferedSpikes(double *& Times, long int *& Cells){
-	int size = this->OutputBuffer.size();
+unsigned int ArrayOutputSpikeDriver::GetBufferedSpikes(double *& Times, long int *& Cells){
+	unsigned int size = this->OutputBuffer.size();
 
 	if (size>0){
 		Times = (double *) new double [size];

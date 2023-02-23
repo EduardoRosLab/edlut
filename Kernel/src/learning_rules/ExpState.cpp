@@ -35,9 +35,9 @@ unsigned int ExpState::GetNumberOfPrintableValues(){
 	return ConnectionState::GetNumberOfPrintableValues()+1;
 }
 
-double ExpState::GetPrintableValuesAt(unsigned int position){
+double ExpState::GetPrintableValuesAt(unsigned int index, unsigned int position){
 	if (position<ConnectionState::GetNumberOfPrintableValues()){
-		return ConnectionState::GetStateVariableAt(0, position);
+		return ConnectionState::GetStateVariableAt(index, position);
 	} else if (position==ConnectionState::GetNumberOfPrintableValues()) {
 		return this->tau;
 	} else return -1;
@@ -52,34 +52,17 @@ float ExpState::GetPostsynapticActivity(unsigned int index){
 }
 
 
-//void ExpState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
-//	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
-//	float factor = ElapsedTime*this->inv_tau;
-//	float expon = exp(-factor);
-//	
-//	// Update the activity value
-//	float OldExpon = this->GetStateVariableAt(index, 0);
-//	float OldExpon1 = this->GetStateVariableAt(index, 1);
-//
-//	float NewExpon = (OldExpon+factor*OldExpon1)*expon;
-//	float NewExpon1 = OldExpon1*expon;
-//
-//	this->SetStateVariableAt(index, 0, NewExpon);
-//	this->SetStateVariableAt(index, 1, NewExpon1);
-//
-//	this->SetLastUpdateTime(index, NewTime);
-//}
 
 void ExpState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post){
 	float ElapsedTime=float(NewTime -  this->GetLastUpdateTime(index));
 	float factor = ElapsedTime*this->inv_tau;
-	float expon = exponential->GetResult(-factor);
-	
+	float expon = ExponentialTable::GetResult(-factor);
+
 	// Update the activity value
 	float OldExpon = this->GetStateVariableAt(index, 0);
 	float OldExpon1 = this->GetStateVariableAt(index, 1);
 
-	float NewExpon = (OldExpon+factor*OldExpon1)*expon;
+	float NewExpon = 2.7183*(OldExpon+factor*OldExpon1)*expon;
 	float NewExpon1 = OldExpon1*expon;
 
 	this->SetStateVariableAt(index, 0, NewExpon);
@@ -91,14 +74,9 @@ void ExpState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_pos
 
 
 void ExpState::ApplyPresynapticSpike(unsigned int index){
-	//float OldExpon = this->GetStateVariableAt(index, 1);
-	//this->SetStateVariableAt(index, 1,OldExpon+1);
-
-	this->incrementStateVaraibleAt(index, 1, 1.0f);
+	this->incrementStateVariableAt(index, 1, 1.0f);
 }
 
 void ExpState::ApplyPostsynapticSpike(unsigned int index){
 	return;
 }
-
-

@@ -67,7 +67,7 @@ class OutputSpikeDriver : public PrintableObject {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		virtual void WriteSpike(const Spike * NewSpike) throw (EDLUTException) = 0;
+		virtual void WriteSpike(const Spike * NewSpike) noexcept(false) = 0;
 
 		/*!
 		 * \brief It communicates the neuron state to the external system.
@@ -79,7 +79,7 @@ class OutputSpikeDriver : public PrintableObject {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */		
-		virtual void WriteState(float Time, Neuron * Source) throw (EDLUTException) = 0;
+		virtual void WriteState(float Time, Neuron * Source) noexcept(false) = 0;
 		
 		/*!
 		 * \brief It checks if the current output driver is buffered.
@@ -106,7 +106,7 @@ class OutputSpikeDriver : public PrintableObject {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		 virtual void FlushBuffers() throw (EDLUTException) = 0;
+		 virtual void FlushBuffers() noexcept(false) = 0;
 	
 };
 

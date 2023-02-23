@@ -34,6 +34,7 @@
 using namespace std;
 
 class Neuron;
+class Interconnection;
 
 /*!
  * \class PropagatedSpike
@@ -50,17 +51,34 @@ class PropagatedSpike: public Spike{
 	
 	protected: 
    		/*!
-   		 * >0: Interneurons spike.
+   		 * Indix of the first output connection that must propagate a spike
    		 */
-   		int target;
-   		
+   		int propagationDelayIndex;
+
+   		/*!
+   		 * Index of the last output connection that must propagate a spike in this event (all output connection 
+		 * since propagationDelayIndex to UpperPropagationDelayIndex has the same propagation delay).
+   		 */
+		int UpperPropagationDelayIndex;
+
+		/*
+		 * Number of synapses with equal propagation delay
+		 */
+		int NSynapses;
+
+   		/*!
+   		 * Interconnection.
+   		 */
+		Interconnection * inter;
+
+  		
    	public:
    		
    		/*!
    		 * \brief Default constructor.
    		 * 
    		 * It creates and initializes a new spike object.
-   		 */
+		 */
    		PropagatedSpike();
    	
    		/*!
@@ -69,10 +87,24 @@ class PropagatedSpike: public Spike{
    		 * It creates and initializes a new spike with the parameters.
    		 * 
    		 * \param NewTime Time of the new spike.
+		 * \param NewQueueIndex Queue index where the event is stored.
    		 * \param NewSource Source neuron of the spike.
    		 * \param NewTarget >0->Interneurons spike.
    		 */
-   		PropagatedSpike(double NewTime, Neuron * NewSource, int NewTarget);
+		PropagatedSpike(double NewTime, int NewQueueIndex, Neuron * NewSource, int NewPropagationDelayIndex, int NewUpperPropagationDelayIndex);
+
+   		/*!
+   		 * \brief Constructor with parameters.
+   		 * 
+   		 * It creates and initializes a new spike with the parameters.
+   		 * 
+   		 * \param NewTime Time of the new spike.
+		 * \param NewQueueIndex Queue index where the event is stored.
+   		 * \param NewSource Source neuron of the spike.
+   		 * \param NewTarget >0->Interneurons spike.
+		 * \param NewInter interconnection associated to this propagated spike.
+   		 */
+		PropagatedSpike(double NewTime, int NewQueueIndex, Neuron * NewSource, int NewPropagationDelayIndex, int NewUpperPropagationDelayIndex, Interconnection * NewInter);
    		
    		/*!
    		 * \brief Class destructor.
@@ -88,29 +120,47 @@ class PropagatedSpike: public Spike{
    		 * 
    		 * \return The spike source type: -1->Input spike, -2->Internal spike and >0->Interneurons spike.
    		 */
-   		int GetTarget () const;
+   		int GetPropagationDelayIndex();
    		
-   		/*!
-   		 * \brief It sets the spike source type.
-   		 * 
-   		 * It sets the spike source type.
-   		 * 
-   		 * \param NewTarget The new spike source type: -1->Input spike, -2->Internal spike and >0->Interneurons spike.
-   		 */
-   		void SetTarget (int NewTarget);
-   		
+		int GetUpperPropagationDelayIndex();
+  		
 
    		/*!
-   		 * \brief It process an event in the simulation.
+   		 * \brief It process an event in the simulation with the option of real time available.
    		 * 
-   		 * It process the event in the simulation.
+   		 * It process an event in the simulation with the option of real time available.
    		 * 
    		 * \param CurrentSimulation The simulation object where the event is working.
-		 * \param RealTimeRestriction This variable indicates whether we are making a 
-		 * real-time simulation and the watchdog is enabled.
+		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
+		 * control the consumed time in each slot.
    		 */
-   		virtual void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction);
+		virtual void ProcessEvent(Simulation * CurrentSimulation, RealTimeRestrictionLevel RealTimeRestriction);
+
+		/*!
+   		 * \brief It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * \param CurrentSimulation The simulation object where the event is working.
+   		 */
+		virtual void ProcessEvent(Simulation * CurrentSimulation);
+
+
+   		/*!
+   		 * \brief this method print the event type.
+   		 * 
+   		 * This method print the event type..
+		 */
+		virtual void PrintType();
+
+
+		/*!
+   		 * \brief The event queue uses this preference variable to sort the events with the same time stamp.
+   		 * 
+   		 * The event queue uses this preference variable to sort the events with the same time stamp.
+		 */
+		virtual enum EventPriority ProcessingPriority();
    		
 };
 
-#endif /*SPIKE_H_*/
+#endif /*PROPAGATEDSPIKE_H_*/

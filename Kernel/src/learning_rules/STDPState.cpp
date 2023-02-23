@@ -18,8 +18,6 @@
 
 #include "../../include/simulation/ExponentialTable.h"
 
-//#include "../../include/parallel_function.h"
-
 #include <cmath>
 #include <stdio.h>
 #include <float.h>
@@ -36,9 +34,9 @@ unsigned int STDPState::GetNumberOfPrintableValues(){
 	return ConnectionState::GetNumberOfPrintableValues()+2;
 }
 
-double STDPState::GetPrintableValuesAt(unsigned int position){
+double STDPState::GetPrintableValuesAt(unsigned int index, unsigned int position){
 	if (position<ConnectionState::GetNumberOfPrintableValues()){
-		return ConnectionState::GetStateVariableAt(0, position);
+		return ConnectionState::GetStateVariableAt(index, position);
 	} else if (position==ConnectionState::GetNumberOfPrintableValues()) {
 		return this->LTPTau;
 	} else if (position==ConnectionState::GetNumberOfPrintableValues()+1) {
@@ -77,9 +75,9 @@ void STDPState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_po
 	float ElapsedTime=(float)(NewTime - this->GetLastUpdateTime(index));
 
     //Accumulate activity since the last update time
-	this->multiplyStateVaraibleAt(index,0,exponential->GetResult(-ElapsedTime*this->inv_LTPTau));
+	this->multiplyStateVariableAt(index,0,ExponentialTable::GetResult(-ElapsedTime*this->inv_LTPTau));
     //Accumulate activity since the last update time
-	this->multiplyStateVaraibleAt(index,1,exponential->GetResult(-ElapsedTime*this->inv_LTDTau));
+	this->multiplyStateVariableAt(index,1,ExponentialTable::GetResult(-ElapsedTime*this->inv_LTDTau));
 
 	this->SetLastUpdateTime(index, NewTime);
 }
@@ -89,12 +87,11 @@ void STDPState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_po
 void STDPState::ApplyPresynapticSpike(unsigned int index){
 	// Increment the activity in the state variable
 	//this->SetStateVariableAt(index, 0, this->GetPresynapticActivity(index)+1.0f);
-	this->incrementStateVaraibleAt(index, 0, 1.0f);
+	this->incrementStateVariableAt(index, 0, 1.0f);
 }
 
 void STDPState::ApplyPostsynapticSpike(unsigned int index){
 	// Increment the activity in the state variable
 	//this->SetStateVariableAt(index, 1, this->GetPostsynapticActivity(index)+1.0f);
-	this->incrementStateVaraibleAt(index, 1, 1.0f); 
+	this->incrementStateVariableAt(index, 1, 1.0f);
 }
-

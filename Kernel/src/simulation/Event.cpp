@@ -18,10 +18,15 @@
 
 #include "../../include/simulation/Simulation.h"
 
-Event::Event():time(0){
+Event::Event() :time(0), queueIndex(0){
+}
+  
+Event::Event(double NewTime): time(NewTime), queueIndex(0){
+
 }
    	
-Event::Event(double NewTime): time(NewTime){
+Event::Event(double NewTime, int NewQueueIndex): time(NewTime), queueIndex(NewQueueIndex){
+
 }
    		
 Event::~Event(){
@@ -31,11 +36,18 @@ double Event::GetTime() const{
 	return time;
 }
    		
-void Event::SetTime (double NewTime){
-	time = NewTime;
-}
 
-bool Event::IsSpike(){
+
+bool Event::IsSpikeOrCurrent() const{
 	return false;
 }
 
+
+void Event::PrintType(){
+	cout<<"Event"<<endl;
+}
+
+
+int Event::GetQueueIndex(){
+	return this->queueIndex;
+}

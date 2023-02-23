@@ -1,0 +1,21 @@
+target_sources(${PROJECT_NAME}
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/Current.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/EDLUTException.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/EDLUTFileException.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/EndRefractoryPeriodEvent.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/InputCurrent.h
+	${CMAKE_CURRENT_SOURCE_DIR}/InputSpike.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Interconnection.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/InternalSpike.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Network.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Neuron.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/NeuronModelPropagationDelayStructure.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/NeuronPropagationDelayStructure.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/PropagatedCurrent.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/PropagatedSpike.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/PropagatedSpikeGroup.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Spike.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/SynchronousTableBasedModelEvent.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/SynchronousTableBasedModelInternalSpike.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/TimeDrivenInternalSpike.h)

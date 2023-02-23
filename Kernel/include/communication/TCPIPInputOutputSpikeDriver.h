@@ -117,7 +117,7 @@ class TCPIPInputOutputSpikeDriver: public InputSpikeDriver, public OutputSpikeDr
 		 * 
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
-		virtual void LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException);
+		virtual void LoadInputs(EventQueue * Queue, Network * Net) noexcept(false);
 		
 		/*!
 		 * \brief It adds the spike to the buffer.
@@ -131,7 +131,7 @@ class TCPIPInputOutputSpikeDriver: public InputSpikeDriver, public OutputSpikeDr
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		virtual void WriteSpike(const Spike * NewSpike) throw (EDLUTException);
+		virtual void WriteSpike(const Spike * NewSpike) noexcept(false);
 		
 		/*!
 		 * \brief This function isn't implemented in TCPIPOutputDriver.
@@ -143,7 +143,7 @@ class TCPIPInputOutputSpikeDriver: public InputSpikeDriver, public OutputSpikeDr
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */		
-		virtual void WriteState(float Time, Neuron * Source) throw (EDLUTException);
+		virtual void WriteState(float Time, Neuron * Source) noexcept(false);
 		
 		/*!
 		 * \brief It checks if the current output driver is buffered.
@@ -170,7 +170,7 @@ class TCPIPInputOutputSpikeDriver: public InputSpikeDriver, public OutputSpikeDr
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		 void FlushBuffers() throw (EDLUTException);
+		 void FlushBuffers() noexcept(false);
 
 		/*!
 		 * \brief It prints the information of the object.

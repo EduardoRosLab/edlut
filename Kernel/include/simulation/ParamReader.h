@@ -3,7 +3,7 @@
  *                           -------------------                           *
  * copyright            : (C) 2009 by Jesus Garrido, Richard Carrillo and  *
  *						: Francisco Naveros                                *
- * email                : jgarrido@atc.ugr.es, fnaveros@atc.ugr.es         *
+ * email                : jgarrido@atc.ugr.es, fnaveros@ugr.es             *
  ***************************************************************************/
 
 /***************************************************************************
@@ -44,6 +44,7 @@
 using namespace std;
 
 class InputSpikeDriver;
+class InputCurrentDriver;
 class OutputSpikeDriver;
 class OutputWeightDriver;
 class Simulation;
@@ -68,11 +69,19 @@ class Simulation;
  * 			-st Step_Time(in_seconds) It sets the step time in simulation.
  * 			-log File_Name It saves the activity register in file File_Name.
  *          -logp File_Name It saves all events register in file File_Name.
- * 			-if Input_File	It adds the Input_File file in the input sources of the simulation.
+ * 			-if Input_File	It adds the Input_File file in the input sources of the simulation (SPIKES).
+ *          -ifc Input_File	It adds the Input_File file in the input sources of the simulation (CURRENTS).
  * 			-of Output_File	It adds the Output_File file in the output targets of the simulation.
+ *          -openmpQ number_of_OpenMP_queues It sets the number of OpenMP queues.
+ *          -openmp number_of_OpenMP_threads It sets the number of OpenMP threads.
  * 			-ic IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the input sources of the simulation.
  * 			-oc IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the output targets of the simulation.
  * 			-ioc IPAddress:Port Server|Client	It adds the connection as a server or a client in the specified direction in the input sources and in the output targets.	 
+ *			-rt   It activates the real time option.
+ *			-rtgap Time     Time in second that the simulation can be executed in advance (time between the generation of an output spike and the arrive of a response to this activity)
+ *          -rt1 factor1    Value between 0 and 1 that represent a precentage of "rtgap".
+ *          -rt2 factor2    Value between factor1 and 1 that represent a precentage of "rtgap".
+ *          -rt3 factor3    Value between factor2 and 1 that represent a precentage of "rtgap".
  *
  *
  * \author Jesus Garrido
@@ -112,25 +121,20 @@ class Simulation;
  		 */
  		double SimulationStepTime;
 
-		/*!
- 		 * Simulation time-driven step time. 
- 		 */
- 		double TimeDrivenStepTime;
+ 		/*!
+ 		 * Input spike drivers.
+ 		 */ 	
+ 		vector<InputSpikeDriver *> InputSpikeDrivers;
 
 		/*!
- 		 * Simulation time-driven step time for GPU. 
- 		 */
- 		double TimeDrivenStepTimeGPU;
- 		 		
- 		/*!
- 		 * Input drivers.
- 		 */ 	
- 		vector<InputSpikeDriver *> InputDrivers;
+		* Input current drivers.
+		*/
+		vector<InputCurrentDriver *> InputCurrentDrivers;
  		
  		/*!
  		 * Output drivers. 
  		 */ 	
- 		vector<OutputSpikeDriver *> OutputDrivers;
+ 		vector<OutputSpikeDriver *> OutputSpikeDrivers;
  		
  		/*!
  		 * Output monitor. 
@@ -140,7 +144,43 @@ class Simulation;
  		/*!
  		 * Output drivers. 
  		 */ 	
- 		vector<OutputWeightDriver *> OutputWeightDrivers;  
+ 		vector<OutputWeightDriver *> OutputWeightDrivers; 
+
+  		/*!
+ 		 * Number of OpenMP queues. 
+ 		 */
+		int NumberOfQueues;
+
+ 		/*!
+ 		 * Variable that indicate if it is a real time simulation (0=no real time, 1=real time).
+ 		 */
+		int RealTimeOption;
+
+		 /*!
+ 		 * Time in second that the simulation can be executed in advance (time between the generation of an output 
+		 * spike and the arrive of a response to this activity).
+ 		 */
+		float rtgap;
+
+		/*!
+ 		 * Value between 0 and 1 that represent a precentage of "rtgap". This boundary is used to calculate which 
+		 * events must be processed in real time and which must be discard in function of the consumed time.
+ 		 */
+        float rt1;
+        
+		/*!
+ 		 * Value between rt1 and 1 that represent a precentage of "rtgap". This boundary is used to calculate which 
+		 * events must be processed in real time and which must be discard in function of the consumed time.
+ 		 */
+		float rt2;
+        
+		/*!
+ 		 * Value between rt2 and 1 that represent a precentage of "rtgap". This boundary is used to calculate which 
+		 * events must be processed in real time and which must be discard in function of the consumed time.
+ 		 */
+		float rt3;
+
+
  	
  		/*!
  		 * \brief It parses the input arguments.
@@ -152,7 +192,7 @@ class Simulation;
  		 * 
  		 * \throw ParameterException When something wrong happens in the parser proccess.
  		 */
- 		void ParseArguments(int Number, char ** Arguments) throw (ParameterException, ConnectionException);
+ 		void ParseArguments(int Number, char ** Arguments) noexcept(false);
  		
  		/*!
  		 * \brief It tests if a file exists.
@@ -178,13 +218,13 @@ class Simulation;
  		 *
  		 * \throw ParameterException When something wrong happens in the parser proccess.
  		 */
- 		ParamReader(int ArgNumber, char ** Arg) throw (ParameterException, ConnectionException);
+ 		ParamReader(int ArgNumber, char ** Arg) noexcept(false);
  		
  		/*!
  		 * \brief It gets the total simulation time.
  		 * 
  		 * It gets the total simulation time. The argument indicator for simulation time
- 		 * is -time, so it searchs -time and returns the value as a float.
+ 		 * is -time, so it searchs -time and returns the value as a double.
  		 * 
  		 * \return The total simulation time. -1 if the parameter isn't used.
  		 */
@@ -194,7 +234,7 @@ class Simulation;
  		 * \brief It gets the saving weights step time.
  		 * 
  		 * It gets the saving weights step time. The argument indicator for saving weights step time
- 		 * is -wt, so it searchs -wt and returns the value as a float.
+ 		 * is -wt, so it searchs -wt and returns the value as a double.
  		 * 
  		 * \return The saving weights step time. -1 if the parameter isn't used.
  		 */
@@ -240,36 +280,83 @@ class Simulation;
  		 */
  		double GetSimulationStepTime();
 
-		/*!
- 		 * \brief It gets the simulation time-driven step time.
- 		 * 
- 		 * It gets the simulation time-driven step time. The argument indicator for simulation step time
- 		 * is -ts, so it searchs -ts and returns the value as a float.
- 		 * 
- 		 * \return The simulation time-driven step time. -1 if this option isn't enabled. 
- 		 */
- 		double GetTimeDrivenStepTime();
 
 		/*!
- 		 * \brief It gets the simulation time-driven step time for GPU.
+ 		 * \brief It gets the total number of OpenMP queues.
  		 * 
- 		 * It gets the simulation time-driven step time for GPU. The argument indicator for simulation step time
- 		 * is -tsGPU, so it searchs -tsGPU and returns the value as a float.
+ 		 * It gets the total number of OpenMP queues. The argument indicator for number of OpenMP queues
+ 		 * is -openmpQ, so it searchs -openmpQ and returns the value as a int.
  		 * 
- 		 * \return The simulation time-driven step time for GPU. -1 if this option isn't enabled. 
+ 		 * \return The total number of OpenMP queues. 1 if the parameter isn't used.
  		 */
- 		double GetTimeDrivenStepTimeGPU();
+		int GetNumberOfQueues();
+
+
+        /*!
+ 		 * \brief It gets the real time option.
+ 		 * 
+ 		 * It gets the real time option.
+ 		 * 
+ 		 * \return The real time option.
+ 		 */
+		int GetRealTimeOption();
+
+		/*!
+ 		 * \brief It gets the RtGap value.
+ 		 * 
+ 		 * It gets the RtGap value.
+ 		 * 
+ 		 * \return The RtGap value.
+ 		 */
+		float GetRtGap();
+
+		/*!
+ 		 * \brief It gets the Rt1 value.
+ 		 * 
+ 		 * It gets the Rt1 value.
+ 		 * 
+ 		 * \return The Rt1 value.
+ 		 */
+		float GetRt1();
+
+		/*!
+ 		 * \brief It gets the Rt2 value.
+ 		 * 
+ 		 * It gets the Rt2 value.
+ 		 * 
+ 		 * \return The Rt2 value.
+ 		 */
+ 		float GetRt2();
+
+		/*!
+ 		 * \brief It gets the Rt3 value.
+ 		 * 
+ 		 * It gets the Rt3 value.
+ 		 * 
+ 		 * \return The Rt3 value.
+ 		 */
+		float GetRt3();
  		
- 		
+
  		/*!
- 		 * \brief It gets the input drivers.
+ 		 * \brief It gets the input spike drivers.
  		 * 
- 		 * It gets the input drivers of the simulation. The argument indicator for weights configuration file
- 		 * is -sf, so it searchs -sf and returns the file name.
+ 		 * It gets the input spike drivers of the simulation. The argument indicator for input spike configuration file
+ 		 * is -if, so it searchs -if and returns the file name.
  		 * 
- 		 * \return A vector of the simulation input drivers. 
+ 		 * \return A vector of the simulation input spike drivers. 
  		 */ 	
  		vector<InputSpikeDriver *> GetInputSpikeDrivers();
+
+		/*!
+		* \brief It gets the input current drivers.
+		*
+		* It gets the input current drivers of the simulation. The argument indicator for input spike configuration file
+		* is -ifc, so it searchs -ifc and returns the file name.
+		*
+		* \return A vector of the simulation input spike drivers.
+		*/
+		vector<InputCurrentDriver *> GetInputCurrentDrivers();
  		
  		/*!
  		 * \brief It gets the output drivers.
@@ -311,7 +398,7 @@ class Simulation;
 		 *
 		 * \param Reader is the parser of parameters
 		 */
-		Simulation * CreateAndInitializeSimulation() throw (EDLUTException, ConnectionException);
+		Simulation * CreateAndInitializeSimulation() noexcept(false);
 };
 
 #endif /*PARAMREADER_H_*/

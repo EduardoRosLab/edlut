@@ -35,13 +35,15 @@ TCPIPOutputSpikeDriver::~TCPIPOutputSpikeDriver(){
 	delete this->Socket;
 }
 	
-void TCPIPOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
+void TCPIPOutputSpikeDriver::WriteSpike(const Spike * NewSpike) noexcept(false){
 	OutputSpike spike(NewSpike->GetSource()->GetIndex(),NewSpike->GetTime());
-		
-	this->OutputBuffer.push_back(spike);	
+	#pragma omp critical (TCPIPOutputSpikeDriver)
+	{		
+	this->OutputBuffer.push_back(spike);
+	}
 }
 		
-void TCPIPOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){
+void TCPIPOutputSpikeDriver::WriteState(float Time, Neuron * Source) noexcept(false){
 	return;	
 }
 		
@@ -53,7 +55,7 @@ bool TCPIPOutputSpikeDriver::IsWritePotentialCapable() const{
 	return false;
 }
 		 
-void TCPIPOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
+void TCPIPOutputSpikeDriver::FlushBuffers() noexcept(false){
 	
 	unsigned short size = (unsigned short)this->OutputBuffer.size();
 	this->Socket->sendBuffer(&size,sizeof(unsigned short));

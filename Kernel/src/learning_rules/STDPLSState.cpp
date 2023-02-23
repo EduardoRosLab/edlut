@@ -20,7 +20,7 @@
 
 #include <cmath>
 
-STDPLSState::STDPLSState(unsigned int NumSynapses, double NewLTPValue, double NewLTDValue): STDPState(NumSynapses, NewLTPValue, NewLTDValue){
+STDPLSState::STDPLSState(int NumSynapses, float NewLTPValue, float NewLTDValue): STDPState(NumSynapses, NewLTPValue, NewLTDValue){
 
 }
 
@@ -59,13 +59,15 @@ void STDPLSState::SetNewUpdateTime(unsigned int index, double NewTime, bool pre_
 	float ElapsedTime=(float)(NewTime - this->GetLastUpdateTime(index));
 	if(pre_post){
 		//Accumulate activity since the last update time
-		this->multiplyStateVaraibleAt(index,0,exponential->GetResult(-ElapsedTime*this->inv_LTPTau));
+		this->multiplyStateVariableAt(index,0,ExponentialTable::GetResult(-ElapsedTime*this->inv_LTPTau));
 	}else{
 		//Accumulate activity since the last update time
-		this->multiplyStateVaraibleAt(index,1,exponential->GetResult(-ElapsedTime*this->inv_LTDTau));
+		this->multiplyStateVariableAt(index,1,ExponentialTable::GetResult(-ElapsedTime*this->inv_LTDTau));
 	}
 	this->SetLastUpdateTime(index, NewTime);
 }
+
+
 
 void STDPLSState::ApplyPresynapticSpike(unsigned int index){
 	// Store the activity in the state variable
@@ -76,5 +78,3 @@ void STDPLSState::ApplyPostsynapticSpike(unsigned int index){
 	// Store the activity in the state variable
 	this->SetStateVariableAt(index, 1, 1.0f);
 }
-
-

@@ -2,7 +2,7 @@
  *                           WithPostSynaptic.h                            *
  *                           -------------------                           *
  * copyright            : (C) 2013 by Francisco Naveros                    *
- * email                : fnaveros@atc.ugr.es                              *
+ * email                : fnaveros@ugr.es                                  *
  ***************************************************************************/
 
 /***************************************************************************
@@ -25,11 +25,17 @@
  * \author Francisco Naveros
  * \date November 2013
  *
- * This file declares a class which abstracts a learning rule that implement postsynaptic learning.
+ * This file declares a class which abstracts a learning rule that implements postsynaptic learning. In this case,
+ * each learning rule has just one type of input synapses: normal synapses. When a spike reaches a target neuron
+ * through a normal presynaptic connection that implement a learning rule of this type, this connection
+ * correlates the spike time with the previous postsynaptic output spike times, thus generating the corresponding LTP or
+ * LTD response in function of the learning rule kernel shape. Additionally, when the target neuron generates a
+ * postsynaptic spike, this neuron checks the presynaptic activity of all its normal input connections and generates the
+ * corresponding LTP or LTD response in each synapse.
  */
 
 /*!
- * \class WithLearningRule
+ * \class WithPostSynaptic
  *
  * \brief Learning rule.
  *
@@ -48,37 +54,26 @@ class WithPostSynaptic : public LearningRule {
 		 * It initialize the state associated to the learning rule for all the synapses.
 		 *
 		 * \param NumberOfSynapses the number of synapses that implement this learning rule.
+		 * \param NumberOfNeurons the total number of neurons in the network
 		 */
-		virtual void InitializeConnectionState(unsigned int NumberOfSynapses) = 0;
+		virtual void InitializeConnectionState(unsigned int NumberOfSynapses, unsigned int NumberOfNeurons) = 0;
 
 
 		/*!
-		 * \brief Default constructor.
-		 * 
-		 * It creates a new WithPostSynaptic object.
-		 */ 
+		 * \brief Default constructor with parameters.
+		 *
+		 * It generates a new learning rule.
+		 */
 		WithPostSynaptic();
 
 		/*!
 		 * \brief Object destructor.
 		 *
-		 * It remove a WithPostSynaptic object.
+		 * It remove the object.
 		 */
 		virtual ~WithPostSynaptic();
 
 		/*!
-		 * \brief It loads the learning rule properties.
-		 *
-		 * It loads the learning rule properties.
-		 *
-		 * \param fh A file handler placed where the Learning rule properties are defined.
-		 * \param Currentline The file line where the handler is placed.
-		 *
-		 * \throw EDLUTFileException If something wrong happens in reading the learning rule properties.
-		 */
-		virtual void LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException)= 0;
-
-   		/*!
    		 * \brief It applies the weight change function when a presynaptic spike arrives.
    		 *
    		 * It applies the weight change function when a presynaptic spike arrives.
@@ -88,15 +83,15 @@ class WithPostSynaptic : public LearningRule {
    		 */
    		virtual void ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime) = 0;
 
-   		/*!
-		 * \brief It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * It applies the weight change function when a postsynaptic spike arrives.
-		 *
-		 * \param Connection The connection where the learning rule happens.
-		 * \param SpikeTime The spike time of the postsynaptic spike.
-		 */
-		virtual void ApplyPostSynapticSpike(Interconnection * Connection, double SpikeTime) = 0;
+		/*!
+		* \brief It applies the weight change function to all its input synapses when a postsynaptic spike arrives.
+		*
+		* It applies the weight change function to all its input synapses when a postsynaptic spike arrives.
+		*
+		* \param neuron The target neuron that manage the postsynaptic spike
+		* \param SpikeTime The spike time of the postsynaptic spike.
+		*/
+		virtual void ApplyPostSynapticSpike(Neuron * neuron, double SpikeTime) = 0;
 
    		/*!
 		 * \brief It prints the learning rule info.
@@ -117,6 +112,25 @@ class WithPostSynaptic : public LearningRule {
 		 * \returns if this learning rule implements postsynaptic learning
 		 */
 		bool ImplementPostSynaptic();
+
+		/*!
+		 * \brief It returns if this learning rule implements trigger learning.
+		 *
+		 * It returns if this learning rule implements trigger learning.
+		 *
+		 * \returns if this learning rule implements trigger learning
+		 */
+		bool ImplementTriggerSynaptic();
+
+		/*!
+		 * \brief It returns the default parameters of the learning rule.
+		 *
+		 * It returns the default parameters of the learning rule. It may be used to obtained the parameters that can be
+		 * set for this learning rule.
+		 *
+		 * \returns A dictionary with the learning rule parameters.
+		 */
+		static std::map<std::string,boost::any> GetDefaultParameters();
 
 };
 

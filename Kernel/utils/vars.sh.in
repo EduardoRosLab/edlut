@@ -1,0 +1,14 @@
+#!/bin/bash
+## This is a script used to create the environment variables required for EDLUT in LINUX.
+
+export EDLUT_INSTALL_DIR=@CMAKE_INSTALL_PREFIX@
+
+# The path where the PyEDLUT bindings are installed.
+export EDLUT_PYTHON_PREFIX=$EDLUT_INSTALL_DIR/@PYEXECDIR@
+export PYTHONPATH=$EDLUT_PYTHON_PREFIX:$PYTHONPATH
+
+# Make executables visible.
+export PATH=$EDLUT_INSTALL_DIR/bin:$PATH
+
+
+

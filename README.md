@@ -2,6 +2,13 @@
 
 ## Lastest news:
 
+### EDLUT v3.0 major changes:
+* EDLUT can now be easyly configured using cmake. 
+* A new python interface has been implemented.
+* New neuron models and learning rules have been implemented.
+* Performance has been notably increased. 
+* Some bugs fixed
+
 ### EDLUT v2.0 major changes:
 * Time-driven cell models can now run on CUDA GPUs.
 * Some pieces of code of the simulation kernel have been parallelized using OpenMP. 
@@ -70,4 +77,3 @@ Further research on this issue and related topics will require intensive collabo
 ## Acknowledgment
 
 The development of the EDLUT platform has been supported by three EU grants, SpikeFORCE (IST-2001-35271), SENSOPAC (Sensorymotor structuring of Perception and Action for emerging cognition) (IST-028056) and REALNET (Realistic Real-time Networks: computation dynamics in the cerebellum) (IST-270434)
-

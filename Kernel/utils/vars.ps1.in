@@ -1,0 +1,26 @@
+## This is a PowerShell script used in WINDOWS OS to create the environment variables required for EDLUT.
+
+## To execute this scrip, open a PowerShell terminal as administrator an execute just the first time the command: "set-executionpolicy remotesigned". 
+## Go to the folder than contains the file (cd ...) and execute de command: ".\vars.ps1"
+
+
+[System.Environment]::SetEnvironmentVariable("EDLUT_INSTALL_DIR", "@CMAKE_INSTALL_PREFIX@", "User")
+
+# The path where the PyEDLUT bindings are installed.
+$EDLUT_PYTHON_PREFIX = "@CMAKE_INSTALL_PREFIX@/@PYEXECDIR@"
+[System.Environment]::SetEnvironmentVariable("EDLUT_PYTHON_PREFIX", "$EDLUT_PYTHON_PREFIX", "User")
+
+$PYTHONPATH = $Env:PYTHONPATH
+if ($PYTHONPATH -like ""){
+  [System.Environment]::SetEnvironmentVariable("PYTHONPATH", "$EDLUT_PYTHON_PREFIX", "User")
+}elseif($PYTHONPATH -notlike "*"+$EDLUT_PYTHON_PREFIX+"*"){
+  [System.Environment]::SetEnvironmentVariable("PYTHONPATH", "$PYTHONPATH;$EDLUT_PYTHON_PREFIX", "User")
+}
+
+
+# Make executables visible.
+$PATH_USER = [System.Environment]::GetEnvironmentVariable('PATH','User')
+$EDLUT_BIN = "@CMAKE_INSTALL_PREFIX@/bin"
+if( $PATH_USER -notlike "*"+$EDLUT_BIN+"*" ){
+  [System.Environment]::SetEnvironmentVariable("Path", "$PATH_USER$EDLUT_BIN", "User")
+}

@@ -106,7 +106,7 @@ class TCPIPInputSpikeDriver: public InputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
-		void LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException);
+		void LoadInputs(EventQueue * Queue, Network * Net) noexcept(false);
 
 		/*!
 		 * \brief It prints the information of the object.

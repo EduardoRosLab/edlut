@@ -27,6 +27,6 @@
  */
 
 
-enum TCPIPConnectionType {SERVER, CLIENT};
+enum TCPIPConnectionType {CLIENT, SERVER};
 
 #endif /* TCPIPCONNECTIONTYPE_H_ */

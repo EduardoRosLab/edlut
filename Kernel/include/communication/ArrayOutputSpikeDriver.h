@@ -100,7 +100,7 @@ class ArrayOutputSpikeDriver: public OutputSpikeDriver {
 		 *
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		void WriteSpike(const Spike * NewSpike) throw (EDLUTException);
+		void WriteSpike(const Spike * NewSpike) noexcept(false);
 
 		/*!
 		 * \brief This function isn't implemented in ArrayOutputDriver.
@@ -112,7 +112,7 @@ class ArrayOutputSpikeDriver: public OutputSpikeDriver {
 		 *
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		void WriteState(float Time, Neuron * Source) throw (EDLUTException);
+		void WriteState(float Time, Neuron * Source) noexcept(false);
 
 		/*!
 		 * \brief It checks if the current output driver is buffered.
@@ -142,7 +142,7 @@ class ArrayOutputSpikeDriver: public OutputSpikeDriver {
 		 *
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		 void FlushBuffers() throw (EDLUTException);
+		 void FlushBuffers() noexcept(false);
 
 		/*!
 		 * \brief It writes the existing spikes in the output buffer.
@@ -160,7 +160,7 @@ class ArrayOutputSpikeDriver: public OutputSpikeDriver {
 		 *
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		 int GetBufferedSpikes(double *& Times, long int *& Cells);
+		 unsigned int GetBufferedSpikes(double *& Times, long int *& Cells);
 
 		/*!
 		 * \brief It pops the first spike from the output buffer.

@@ -77,7 +77,7 @@ class FileOutputSpikeDriver: public OutputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens when the file is been wrotten.
 		 */
-		FileOutputSpikeDriver(const char * NewFileName, bool WritePotential) throw (EDLUTException);
+		FileOutputSpikeDriver(const char * NewFileName, bool WritePotential) noexcept(false);
 		
 		/*!
 		 * \brief Class desctructor.
@@ -95,7 +95,7 @@ class FileOutputSpikeDriver: public OutputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		virtual void WriteSpike(const Spike * NewSpike) throw (EDLUTException);
+		virtual void WriteSpike(const Spike * NewSpike) noexcept(false);
 		
 		/*!
 		 * \brief It communicates the membrane potential to the output file.
@@ -107,7 +107,7 @@ class FileOutputSpikeDriver: public OutputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */		
-		virtual void WriteState(float Time, Neuron * Source) throw (EDLUTException);
+		virtual void WriteState(float Time, Neuron * Source) noexcept(false);
 		
 		/*!
 		 * \brief It checks if the current output driver is buffered.
@@ -134,7 +134,7 @@ class FileOutputSpikeDriver: public OutputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		 virtual void FlushBuffers() throw (EDLUTException);
+		 virtual void FlushBuffers() noexcept(false);
 
 		/*!
 		 * \brief It prints the information of the object.

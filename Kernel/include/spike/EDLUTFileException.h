@@ -56,6 +56,16 @@ class EDLUTFileException: public EDLUTException {
 		 * File line where the error happens.
 		 */
 		long Currentline;
+
+		/*!
+		* File name where the error happens.
+		*/
+		string FileName;
+
+		/*!
+		* Set if the line must be plot.
+		*/
+		bool ShowLine;
 		
 	public:
 	
@@ -64,15 +74,27 @@ class EDLUTFileException: public EDLUTException {
 		 * 
 		 * Class constructor with parameters.
 		 * 
-		 * \param a The most significant integer. Task number.
-		 * \param b The second most significant integer. Error number.
-		 * \param c The third most significant integer. Repair number.
-		 * \param d The less significant integer,
-		 * \param Line Line where the error happened.
-		 */ 
-		EDLUTFileException(int a, int b, int c, int d, long Line);
-		
+		 * \param task The task code
+		 * \param error The error code
+		 * \param repair The repair code
+		 * \param line Line where the error happened.
+		 * \param file File name where the error happened.
+		 */
+		EDLUTFileException(TASK_CODE task, ERROR_CODE error, REPAIR_CODE repair, long line, string file);
+
 		/*!
+		 * \brief Class constructor.
+		 *
+		 * Class constructor with parameters.
+		 *
+		 * \param exc Exception from which we will create a new copy.
+		 * \param line Line where the error happened.
+		 * \param file File name where the error happened.
+		 */
+		EDLUTFileException(EDLUTException exc, long line, string file);
+
+
+	/*!
 		 * \brief It gets the line where the error happened.
 		 * 
 		 * It gets the line where the error happened.
@@ -80,7 +102,16 @@ class EDLUTFileException: public EDLUTException {
 		 * \return The error line.
 		 */
 		long GetErrorLine() const;
-		
+
+		/*!
+		* \brief It gets the file name where the error happened.
+		*
+		* It gets the file name where the error happened.
+		*
+		* \return The file name.
+		*/
+		string GetFileName() const;
+
 		/*!
 		 * \brief It prints in the standard error the error message of this exception.
 		 * 

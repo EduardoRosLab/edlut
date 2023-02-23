@@ -18,10 +18,10 @@
 
 #include "../../include/spike/Neuron.h"
 
-Spike::Spike():Event(0), source(0){
+Spike::Spike():Event(0, 0), source(0){
 }
    	
-Spike::Spike(double NewTime, Neuron * NewSource): Event(NewTime), source(NewSource){
+Spike::Spike(double NewTime, int NewQueueIndex, Neuron * NewSource) : Event(NewTime, NewQueueIndex), source(NewSource){
 }
    		
 Spike::~Spike(){
@@ -30,11 +30,18 @@ Spike::~Spike(){
 Neuron * Spike::GetSource () const{
 	return source;
 }
-   		
-void Spike::SetSource (Neuron * NewSource){
-	source = NewSource;
-}
 
-bool Spike::IsSpike(){
+ void Spike::SetSource (Neuron * NewSource){
+	source=NewSource;
+}
+   		
+bool Spike::IsSpikeOrCurrent() const{
 	return true;
 }
+
+void Spike::PrintType(){
+	cout<<"Spike"<<endl;
+}
+
+
+

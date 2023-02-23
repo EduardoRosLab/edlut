@@ -38,7 +38,7 @@ TCPIPInputOutputSpikeDriver::~TCPIPInputOutputSpikeDriver(){
 	delete this->Socket;
 }
 
-void TCPIPInputOutputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException){
+void TCPIPInputOutputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) noexcept(false){
 	unsigned short csize;
 	
 	this->Socket->receiveBuffer(&csize, sizeof(unsigned short));
@@ -49,9 +49,9 @@ void TCPIPInputOutputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) 
 		this->Socket->receiveBuffer(InputSpikes,sizeof(OutputSpike)*(int) csize);
 		
 		for (int c=0; c<csize; ++c){
-			InputSpike * NewSpike = new InputSpike(InputSpikes[c].Time, Net->GetNeuronAt(InputSpikes[c].Neuron));
+			InputSpike * NewSpike = new InputSpike(InputSpikes[c].Time, Net->GetNeuronAt(InputSpikes[c].Neuron)->get_OpenMP_queue_index(), Net->GetNeuronAt(InputSpikes[c].Neuron));
 						
-			Queue->InsertEvent(NewSpike);				
+			Queue->InsertEvent(NewSpike->GetQueueIndex(),NewSpike);				
 		}
 
 		delete [] InputSpikes;
@@ -59,13 +59,15 @@ void TCPIPInputOutputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) 
 }
 
 	
-void TCPIPInputOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
+void TCPIPInputOutputSpikeDriver::WriteSpike(const Spike * NewSpike) noexcept(false){
 	OutputSpike spike(NewSpike->GetSource()->GetIndex(),NewSpike->GetTime());
-		
-	this->OutputBuffer.push_back(spike);	
+	#pragma omp critical (TCPIPInputOutputSpikeDriver)
+	{	
+	this->OutputBuffer.push_back(spike);
+	}
 }
 		
-void TCPIPInputOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){
+void TCPIPInputOutputSpikeDriver::WriteState(float Time, Neuron * Source) noexcept(false){
 	return;	
 }
 		
@@ -77,7 +79,7 @@ bool TCPIPInputOutputSpikeDriver::IsWritePotentialCapable() const{
 	return false;
 }
 		 
-void TCPIPInputOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
+void TCPIPInputOutputSpikeDriver::FlushBuffers() noexcept(false){
 	
 	unsigned short size = (unsigned short)this->OutputBuffer.size();
 	this->Socket->sendBuffer(&size,sizeof(unsigned short));

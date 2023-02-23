@@ -16,16 +16,37 @@
 
 #include "../../include/neuron_model/EventDrivenNeuronModel.h"
 
-EventDrivenNeuronModel::EventDrivenNeuronModel(string NeuronTypeID, string NeuronModelID): NeuronModel(NeuronTypeID, NeuronModelID) {
-	// TODO Auto-generated constructor stub
+EventDrivenNeuronModel::EventDrivenNeuronModel(): NeuronModel() {
 
 }
 
 EventDrivenNeuronModel::~EventDrivenNeuronModel() {
-	// TODO Auto-generated destructor stub
 }
 
-enum NeuronModelType EventDrivenNeuronModel::GetModelType(){
+enum NeuronModelSimulationMethod EventDrivenNeuronModel::GetModelSimulationMethod(){
 	return EVENT_DRIVEN_MODEL;
 }
 
+
+enum NeuronModelType EventDrivenNeuronModel::GetModelType(){
+	return NEURAL_LAYER;
+}
+
+std::map<std::string,boost::any> EventDrivenNeuronModel::GetParameters() const {
+	// Return a dictionary with the parameters
+	std::map<std::string,boost::any> newMap = NeuronModel::GetParameters();
+	return newMap;
+}
+
+void EventDrivenNeuronModel::SetParameters(std::map<std::string, boost::any> param_map) noexcept(false){
+
+	// Search for the parameters in the dictionary
+	NeuronModel::SetParameters(param_map);
+	return;
+}
+
+std::map<std::string,boost::any> EventDrivenNeuronModel::GetDefaultParameters() {
+	// Return a dictionary with the parameters
+	std::map<std::string,boost::any> newMap = NeuronModel::GetDefaultParameters();
+	return newMap;
+}

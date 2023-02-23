@@ -15,9 +15,11 @@
  ***************************************************************************/
 
 #include "../../include/spike/InternalSpike.h"
+#include "../../include/spike/EndRefractoryPeriodEvent.h"
 #include "../../include/spike/Interconnection.h"
 
 #include "../../include/spike/Neuron.h"
+#include "../../include/spike/Network.h"
 #include "../../include/spike/PropagatedSpike.h"
 
 #include "../../include/neuron_model/VectorNeuronState.h"
@@ -31,84 +33,187 @@
 
 #include "../../include/learning_rules/LearningRule.h"
 
+#include "../../include/spike/Neuron.h"
+
+#include "../../include/openmp/openmp.h"
+
 InternalSpike::InternalSpike():Spike() {
 }
-   	
-InternalSpike::InternalSpike(double NewTime, Neuron * NewSource): Spike(NewTime,NewSource){
+
+InternalSpike::InternalSpike(double NewTime, int NewQueueIndex, Neuron * NewSource) : Spike(NewTime, NewQueueIndex, NewSource){
 }
-   		
+
 InternalSpike::~InternalSpike(){
 }
 
-void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
+void InternalSpike::ProcessEvent(Simulation * CurrentSimulation, RealTimeRestrictionLevel RealTimeRestriction){
 
-	if(!RealTimeRestriction){
-	
+	if (RealTimeRestriction < ALL_UNESSENTIAL_EVENTS_DISABLED){
+
 		Neuron * neuron=this->GetSource();  // source of the spike
-		
-		if (neuron->GetNeuronModel()->GetModelType() == EVENT_DRIVEN_MODEL){
+		if (neuron->GetNeuronModel()->GetModelSimulationMethod() == EVENT_DRIVEN_MODEL){
 			EventDrivenNeuronModel * Model = (EventDrivenNeuronModel *) neuron->GetNeuronModel();
 			if(!Model->DiscardSpike(this)){
+
 				// Add the spike to simulation spike counter
-				CurrentSimulation->IncrementTotalSpikeCounter();
-
+				CurrentSimulation->IncrementTotalSpikeCounter(neuron->get_OpenMP_queue_index());
 				neuron->GetVectorNeuronState()->NewFiredSpike(neuron->GetIndex_VectorNeuronState());
-				// If it is a valid spike (not discard), generate the next spike in this cell.
-				InternalSpike * NextSpike = Model->GenerateNextSpike(this);
 
-				if (NextSpike!=0){
-					CurrentSimulation->GetQueue()->InsertEvent(NextSpike);
+				// Update the neuron state and generate a new event that will check if an spike must be generated after the refractory period.
+				EndRefractoryPeriodEvent * endRefractoryPeriodEvent = Model->ProcessInternalSpike(this);
+
+				if(endRefractoryPeriodEvent!=0){
+					CurrentSimulation->GetQueue()->InsertEvent(neuron->get_OpenMP_queue_index(),endRefractoryPeriodEvent);
 				}
-				
-				
+
 				CurrentSimulation->WriteSpike(this);
-				if (neuron->IsMonitored()){
-					CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(neuron->GetIndex_VectorNeuronState()), neuron);
-				}
+				CurrentSimulation->WriteState(this->GetTime(), neuron);
 
 				// Generate the output activity
-				if (neuron->IsOutputConnected()){
-					PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
-					CurrentSimulation->GetQueue()->InsertEvent(spike);
+				for(int i=0; i<NumberOfOpenMPQueues; i++){
+					if (neuron->IsOutputConnected(i)){
+						PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->PropagationStructure->SynapseDelay[i][0], i, neuron, 0, neuron->PropagationStructure->NDifferentDelays[i]);
+						if(i==neuron->get_OpenMP_queue_index()){
+							CurrentSimulation->GetQueue()->InsertEvent(i,spike);
+						}else{
+							CurrentSimulation->GetQueue()->InsertEventInBuffer(omp_get_thread_num(),i,spike);
+						}
+					}
 				}
 
-				if(neuron->GetInputNumberWithPostSynapticLearning()>0){
-					int i;
-					Interconnection * inter;
-					#pragma omp parallel for if(neuron->GetInputNumberWithPostSynapticLearning()>64) schedule(guided, 16) num_threads(8) shared (neuron) private (i, inter)
-					for (int i=0; i<neuron->GetInputNumberWithPostSynapticLearning(); ++i){
-						inter = neuron->GetInputConnectionWithPostSynapticLearningAt(i);
-						inter->GetWeightChange_withPost()->ApplyPostSynapticSpike(inter,this->time);
+				unsigned int NumLearningRules = CurrentSimulation->GetNetwork()->GetLearningRuleNumber();
+
+				if (RealTimeRestriction < LEARNING_RULES_DISABLED){
+					for (unsigned int wcindex=0; wcindex<NumLearningRules; ++wcindex){
+						if(neuron->GetInputNumberWithPostSynapticLearning(wcindex)>0){
+  						neuron->GetInputConnectionWithPostSynapticLearningAt(wcindex,0)->GetWeightChange_withPost()->ApplyPostSynapticSpike(neuron, this->time);
+  					}
+						if(neuron->GetInputNumberWithPostAndTriggerSynapticLearning(wcindex)>0){
+  						neuron->GetInputConnectionWithPostAndTriggerSynapticLearningAt(wcindex,0)->GetWeightChange_withPostAndTrigger()->ApplyPostSynapticSpike(neuron, this->time);
+  					}
 					}
 				}
 			}
 		} else { // Time-driven model (no check nor update needed
 			// Add the spike to simulation spike counter
-			CurrentSimulation->IncrementTotalSpikeCounter();
+			CurrentSimulation->IncrementTotalSpikeCounter(neuron->get_OpenMP_queue_index());
 
 			CurrentSimulation->WriteSpike(this);
-			if (neuron->IsMonitored()){
-				CurrentSimulation->WriteState(neuron->GetVectorNeuronState()->GetLastUpdateTime(neuron->GetIndex_VectorNeuronState()), neuron);
-			}
-			
-			// Generate the output activity
-			if (neuron->IsOutputConnected()){
-				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->GetOutputConnectionAt(0)->GetDelay(), neuron, 0);
-				CurrentSimulation->GetQueue()->InsertEvent(spike);
-			}
+			CurrentSimulation->WriteState(this->GetTime(), neuron);
 
-			if(neuron->GetInputNumberWithPostSynapticLearning()>0){
-				int i;
-				Interconnection * inter;
-				#pragma omp parallel for if(neuron->GetInputNumberWithPostSynapticLearning()>64) schedule(guided, 16) num_threads(8) shared (neuron) private (i, inter)
-				for (int i=0; i<neuron->GetInputNumberWithPostSynapticLearning(); ++i){
-					inter = neuron->GetInputConnectionWithPostSynapticLearningAt(i);
-					inter->GetWeightChange_withPost()->ApplyPostSynapticSpike(inter,this->time);
+
+			// Generate the output activity
+			for(int i=0; i<NumberOfOpenMPQueues; i++){
+				if (neuron->IsOutputConnected(i)){
+					PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->PropagationStructure->SynapseDelay[i][0], i, neuron, 0, neuron->PropagationStructure->NDifferentDelays[i]);
+					if(i==neuron->get_OpenMP_queue_index()){
+						CurrentSimulation->GetQueue()->InsertEvent(i,spike);
+					}else{
+						CurrentSimulation->GetQueue()->InsertEventInBuffer(omp_get_thread_num(),i,spike);
+					}
 				}
 			}
-			
+
+			unsigned int NumLearningRules = CurrentSimulation->GetNetwork()->GetLearningRuleNumber();
+
+			if (RealTimeRestriction < LEARNING_RULES_DISABLED){
+				for (unsigned int wcindex=0; wcindex<NumLearningRules; ++wcindex){
+					if(neuron->GetInputNumberWithPostSynapticLearning(wcindex)>0){
+						neuron->GetInputConnectionWithPostSynapticLearningAt(wcindex,0)->GetWeightChange_withPost()->ApplyPostSynapticSpike(neuron, this->time);
+					}
+					if(neuron->GetInputNumberWithPostAndTriggerSynapticLearning(wcindex)>0){
+						neuron->GetInputConnectionWithPostAndTriggerSynapticLearningAt(wcindex,0)->GetWeightChange_withPostAndTrigger()->ApplyPostSynapticSpike(neuron, this->time);
+					}
+				}
+			}
 		}
 	}
 }
 
-   	
+
+void InternalSpike::ProcessEvent(Simulation * CurrentSimulation){
+	Neuron * neuron=this->GetSource();  // source of the spike
+
+	if (neuron->GetNeuronModel()->GetModelSimulationMethod() == EVENT_DRIVEN_MODEL){
+		EventDrivenNeuronModel * Model = (EventDrivenNeuronModel *) neuron->GetNeuronModel();
+		if(!Model->DiscardSpike(this)){
+			// Add the spike to simulation spike counter
+			CurrentSimulation->IncrementTotalSpikeCounter(neuron->get_OpenMP_queue_index());
+
+			neuron->GetVectorNeuronState()->NewFiredSpike(neuron->GetIndex_VectorNeuronState());
+
+			// Update the neuron state and generate a new event that will check if an spike must be generated after the refractory period.
+			EndRefractoryPeriodEvent * endRefractoryPeriodEvent = Model->ProcessInternalSpike(this);
+
+			if(endRefractoryPeriodEvent!=0){
+				CurrentSimulation->GetQueue()->InsertEvent(neuron->get_OpenMP_queue_index(),endRefractoryPeriodEvent);
+			}
+
+			CurrentSimulation->WriteSpike(this);
+			CurrentSimulation->WriteState(this->GetTime(), neuron);
+
+
+			// Generate the output activity
+			for(int i=0; i<NumberOfOpenMPQueues; i++){
+				if (neuron->IsOutputConnected(i)){
+					PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->PropagationStructure->SynapseDelay[i][0], i, neuron, 0, neuron->PropagationStructure->NDifferentDelays[i]);
+					if(i==neuron->get_OpenMP_queue_index()){
+						CurrentSimulation->GetQueue()->InsertEvent(i,spike);
+					}else{
+						CurrentSimulation->GetQueue()->InsertEventInBuffer(omp_get_thread_num(),i,spike);
+					}
+				}
+			}
+
+			unsigned int NumLearningRules = CurrentSimulation->GetNetwork()->GetLearningRuleNumber();
+
+			for (unsigned int wcindex=0; wcindex<NumLearningRules; ++wcindex){
+				if(neuron->GetInputNumberWithPostSynapticLearning(wcindex)>0){
+					neuron->GetInputConnectionWithPostSynapticLearningAt(wcindex,0)->GetWeightChange_withPost()->ApplyPostSynapticSpike(neuron, this->time);
+				}
+				if(neuron->GetInputNumberWithPostAndTriggerSynapticLearning(wcindex)>0){
+					neuron->GetInputConnectionWithPostAndTriggerSynapticLearningAt(wcindex,0)->GetWeightChange_withPostAndTrigger()->ApplyPostSynapticSpike(neuron, this->time);
+				}
+			}
+		}
+	} else { // Time-driven model (no check nor update needed
+		// Add the spike to simulation spike counter
+		CurrentSimulation->IncrementTotalSpikeCounter(neuron->get_OpenMP_queue_index());
+
+		CurrentSimulation->WriteSpike(this);
+		CurrentSimulation->WriteState(this->GetTime(), neuron);
+
+
+		// Generate the output activity
+		for(int i=0; i<NumberOfOpenMPQueues; i++){
+			if (neuron->IsOutputConnected(i)){
+				PropagatedSpike * spike = new PropagatedSpike(this->GetTime() + neuron->PropagationStructure->SynapseDelay[i][0], i, neuron, 0, neuron->PropagationStructure->NDifferentDelays[i]);
+				if(i==neuron->get_OpenMP_queue_index()){
+					CurrentSimulation->GetQueue()->InsertEvent(i,spike);
+				}else{
+					CurrentSimulation->GetQueue()->InsertEventInBuffer(omp_get_thread_num(),i,spike);
+				}
+			}
+		}
+
+		unsigned int NumLearningRules = CurrentSimulation->GetNetwork()->GetLearningRuleNumber();
+
+		for (unsigned int wcindex=0; wcindex<NumLearningRules; ++wcindex){
+			if(neuron->GetInputNumberWithPostSynapticLearning(wcindex)>0){
+				neuron->GetInputConnectionWithPostSynapticLearningAt(wcindex,0)->GetWeightChange_withPost()->ApplyPostSynapticSpike(neuron, this->time);
+			}
+			if(neuron->GetInputNumberWithPostAndTriggerSynapticLearning(wcindex)>0){
+				neuron->GetInputConnectionWithPostAndTriggerSynapticLearningAt(wcindex,0)->GetWeightChange_withPostAndTrigger()->ApplyPostSynapticSpike(neuron, this->time);
+			}
+		}
+	}
+}
+
+void InternalSpike::PrintType(){
+	cout<<"InternalSpike"<<endl;
+}
+
+
+enum EventPriority InternalSpike::ProcessingPriority(){
+	return INTERNALSPIKE;
+}

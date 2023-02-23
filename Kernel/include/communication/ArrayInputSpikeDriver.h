@@ -68,7 +68,7 @@ class ArrayInputSpikeDriver: public InputSpikeDriver {
 		 *
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
-		void LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException);
+		void LoadInputs(EventQueue * Queue, Network * Net) noexcept(false);
 
 		/*!
 		 * \brief This method loads spikes from arrays.
@@ -83,7 +83,7 @@ class ArrayInputSpikeDriver: public InputSpikeDriver {
 		 *
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
-		void LoadInputs(EventQueue * Queue, Network * Net, int NumSpikes, double * Times, long int * Cells) throw (EDLUTFileException);
+		void LoadInputs(EventQueue * Queue, Network * Net, int NumSpikes, const double * Times, const long int * Cells) noexcept(false);
 
 		/*!
 		 * \brief It prints the information of the object.

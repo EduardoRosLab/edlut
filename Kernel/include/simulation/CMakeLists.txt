@@ -1,0 +1,25 @@
+target_sources(${PROJECT_NAME}
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/CommunicationEvent.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Configuration.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/EndSimulationEvent.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Event.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/EventQueue.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/ExponentialTable.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/MediananFilter.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/NetworkDescription.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/ParameterException.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/ParamReader.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/PrintableObject.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/RandomGenerator.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/RealTimeRestriction.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/SaveWeightsEvent.h
+	${CMAKE_CURRENT_SOURCE_DIR}/Simulation.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Simulation_API.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/StopSimulationEvent.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/SynchronizeActivityEvent.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/SynchronizeSimulationEvent.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/TimeEventUpdateNeurons.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/TrigonometricTable.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Utils.h
+        )

@@ -25,14 +25,42 @@
 #include "../../include/neuron_model/NeuronState.h"
 
 
+STDPLSWeightChange::STDPLSWeightChange():STDPWeightChange(){
+	this->SetParameters(STDPLSWeightChange::GetDefaultParameters());
+}
 
-void STDPLSWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
+STDPLSWeightChange::~STDPLSWeightChange(){
+}
+
+
+void STDPLSWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses, unsigned int NumberOfNeurons){
 	this->State=(ConnectionState *) new STDPLSState(NumberOfSynapses, this->tauLTP, this->tauLTD);
 }
 
 ostream & STDPLSWeightChange::PrintInfo(ostream & out){
-
-	out << "- STDP Last Spike Learning Rule: LTD " << this->MaxChangeLTD << "\t" << this->tauLTD << "\tLTP " << this->MaxChangeLTP << "\t" << this->tauLTP << endl;
-
+	out << "- STDPLS Learning Rule: " << endl;
+	out << "\t max_LTP:" << this->MaxChangeLTP << endl;
+	out << "\t tau_LTP:" << this->tauLTP << endl;
+	out << "\t max_LTD:" << this->MaxChangeLTD << endl;
+	out << "\t tau_LTD:" << this->tauLTD << endl;
 	return out;
 }
+
+ModelDescription STDPLSWeightChange::ParseLearningRule(FILE * fh) noexcept(false) {
+	ModelDescription lrule = STDPWeightChange::ParseLearningRule(fh);
+	lrule.model_name = STDPLSWeightChange::GetName();
+	return lrule;
+}
+
+LearningRule* STDPLSWeightChange::CreateLearningRule(ModelDescription lrDescription){
+	STDPLSWeightChange * lrule = new STDPLSWeightChange();
+	lrule->SetParameters(lrDescription.param_map);
+	return lrule;
+}
+
+std::map<std::string,boost::any> STDPLSWeightChange::GetDefaultParameters(){
+	std::map<std::string,boost::any> newMap = STDPWeightChange::GetDefaultParameters();
+	return newMap;
+}
+
+

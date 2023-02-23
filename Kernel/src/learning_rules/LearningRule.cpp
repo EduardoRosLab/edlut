@@ -17,8 +17,8 @@
 #include "../../include/learning_rules/LearningRule.h"
 
 
-LearningRule::LearningRule(): State(0), counter(0){
-
+LearningRule::LearningRule(): learningRuleIndex(-1), State(0), counter(0){
+	this->SetParameters(LearningRule::GetDefaultParameters());
 }
 
 LearningRule::~LearningRule(){
@@ -27,11 +27,21 @@ LearningRule::~LearningRule(){
 	}
 }
 
-
+void LearningRule::SetParameters(std::map<std::string, boost::any> param_map) noexcept(false){
+	if (!param_map.empty()){
+		throw EDLUTException(TASK_LEARNING_RULE_LOAD,ERROR_LEARNING_RULE_UNKNOWN_PARAMETER, REPAIR_LEARNING_RULE_PARAMETER_NAME);
+	}
+}
 
 ConnectionState * LearningRule::GetConnectionState(){
 	return this->State;
 }
 
+std::map<std::string,boost::any> LearningRule::GetParameters(){
+	// Return an empty dictionary
+	return std::map<std::string,boost::any> ();
+}
 
-
+std::map<std::string,boost::any> LearningRule::GetDefaultParameters(){
+	return std::map<std::string,boost::any> ();
+}

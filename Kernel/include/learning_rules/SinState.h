@@ -19,6 +19,8 @@
 
 #include "ConnectionState.h"
 
+#include <cmath>
+
 /*!
  * \file SinState.h
  *
@@ -50,21 +52,7 @@ class SinState : public ConnectionState{
 		 */
 		const static float terms [11][11];
 
-		/*!
-		 * Is the LUT initialized?
-		 */
-		static bool InitializedLUT;
-
-		/*!
-		 * Precalculated sin terms.
-		 */
-		static float SinLUT[];
-
-		/*!
-		 * Precalculated LUT Step.
-		 */
-		static float LUTStep;
-		static float inv_LUTStep;
+		const float * TermPointer;
 
 		/*!
 		 * The exponent of the sinuidal function.
@@ -86,6 +74,8 @@ class SinState : public ConnectionState{
 		 * Corrective factor to adjust the maximum to 1.
 		 */
 		float factor;
+
+
 
 	public:
 
@@ -140,9 +130,12 @@ class SinState : public ConnectionState{
 		 *
 		 * It gets a value to be printed from this state.
 		 *
+		 * \param index The synapse's index inside the learning rule.
+		 * \param position Position inside each connection.
+		 *
 		 * \return The value at position-th position in this state.
 		 */
-		virtual double GetPrintableValuesAt(unsigned int position);
+		virtual double GetPrintableValuesAt(unsigned int index, unsigned int position);
 
 
 		/*!
@@ -150,7 +143,9 @@ class SinState : public ConnectionState{
 		 *
 		 * It set new time to spikes.
 		 *
+		 * \param index The synapse's index inside the learning rule.
 		 * \param NewTime new time.
+		 * \param pre_post In some learning rules (i.e. STDPLS) this variable indicate wether the update affects the pre- or post- variables.
 		 */
 		virtual void SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post);
 
@@ -160,6 +155,8 @@ class SinState : public ConnectionState{
 		 *
 		 * It implements the behaviour when it transmits a spike. It must be implemented
 		 * by any inherited class.
+		 *
+		 * \param index The synapse's index inside the learning rule.
 		 */
 		virtual void ApplyPresynapticSpike(unsigned int index);
 
@@ -168,10 +165,22 @@ class SinState : public ConnectionState{
 		 *
 		 * It implements the behaviour when it the target cell fires a spike. It must be implemented
 		 * by any inherited class.
+		 *
+		 * \param index The synapse's index inside the learning rule.
 		 */
 		virtual void ApplyPostsynapticSpike(unsigned int index);
+
+		/*!
+		 * \brief It initialize the synaptic weight and max synaptic weight in the learning rule (required for some specifics learning rules).
+		 *
+		 * It initialize the synaptic weight and max synaptic weight in the learning rule (required for some specifics learning rules).
+		 *
+		 * \param index The synapse's index inside the learning rule.
+		 * \param weight synaptic weight
+		 * \param max_weight max synaptic weight
+		 */
+		virtual void SetWeight(unsigned int index, float weight, float max_weight){}
 
 };
 
 #endif /* NEURONSTATE_H_ */
-

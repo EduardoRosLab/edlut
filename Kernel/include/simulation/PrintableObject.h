@@ -28,8 +28,6 @@
 
 #include <ostream>
 
-using namespace std;
-
 /*!
  * \class PrintableObject
  *
@@ -58,7 +56,7 @@ class PrintableObject {
 		 * \param out The output stream where it prints the object to.
 		 * \return The output stream.
 		 */
-		virtual ostream & PrintInfo(ostream & out) = 0;
+		virtual std::ostream & PrintInfo(std::ostream & out) = 0;
 
 };
 

@@ -68,7 +68,7 @@ class FileOutputWeightDriver: public OutputWeightDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens when the file is been wrotten.
 		 */
-		FileOutputWeightDriver(const char * NewFileName) throw (EDLUTException);
+		FileOutputWeightDriver(const char * NewFileName) noexcept(false);
 		
 		/*!
 		 * \brief Class desctructor.
@@ -87,7 +87,7 @@ class FileOutputWeightDriver: public OutputWeightDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		void WriteWeights(Network * Net, float SimulationTime) throw (EDLUTException);
+		void WriteWeights(Network * Net, float SimulationTime) noexcept(false);
 		
 		/*!
 		 * \brief It communicates the output activity to the external system.
@@ -98,7 +98,7 @@ class FileOutputWeightDriver: public OutputWeightDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		void WriteWeights(Network * Net) throw (EDLUTException);
+		void WriteWeights(Network * Net) noexcept(false);
 		
 		/*!
 		 * \brief It prints the information of the object.

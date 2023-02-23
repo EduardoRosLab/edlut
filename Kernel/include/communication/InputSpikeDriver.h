@@ -73,7 +73,7 @@ class InputSpikeDriver : public PrintableObject{
 		 * 
 		 * \throw EDLUTException If something wrong happens in the input process.
 		 */
-		virtual void LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTException) = 0;
+		virtual void LoadInputs(EventQueue * Queue, Network * Net) noexcept(false) = 0;
 		
 		/*!
 		 * \brief It checks if the input process is finished.

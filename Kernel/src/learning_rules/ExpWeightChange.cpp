@@ -21,9 +21,39 @@
 
 #include "../../include/spike/Interconnection.h"
 
-ExpWeightChange::ExpWeightChange(){
+ExpWeightChange::ExpWeightChange():AdditiveKernelChange(){
 }
 
-void ExpWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses){
-	this->State=(ConnectionState *) new ExpState(NumberOfSynapses, this->maxpos);
+ExpWeightChange::~ExpWeightChange(){
+}
+
+
+void ExpWeightChange::InitializeConnectionState(unsigned int NumberOfSynapses, unsigned int NumberOfNeurons){
+	this->State=(ConnectionState *) new ExpState(NumberOfSynapses, this->kernelpeak);
+}
+
+
+ModelDescription ExpWeightChange::ParseLearningRule(FILE * fh) noexcept(false) {
+	ModelDescription lrule = AdditiveKernelChange::ParseLearningRule(fh);
+	lrule.model_name = ExpWeightChange::GetName();
+	return lrule;
+}
+
+ostream & ExpWeightChange::PrintInfo(ostream & out){
+	out << "- ExpAdditiveKernel Learning Rule: " << endl;
+	out << "\t kernel_peak:" << this->kernelpeak << endl;
+	out << "\t fixed_change: " << this->fixwchange << endl;
+	out << "\t kernel_change: " << this->kernelwchange << endl;
+	return out;
+}
+
+LearningRule* ExpWeightChange::CreateLearningRule(ModelDescription lrDescription){
+	ExpWeightChange * lrule = new ExpWeightChange();
+    lrule->SetParameters(lrDescription.param_map);
+	return lrule;
+}
+
+std::map<std::string,boost::any> ExpWeightChange::GetDefaultParameters(){
+	std::map<std::string,boost::any> newMap = AdditiveKernelChange::GetDefaultParameters();
+	return newMap;
 }

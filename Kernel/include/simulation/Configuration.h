@@ -26,7 +26,7 @@
  *
  * This file defines some configuration constants for simulation.
  */
- 
+
 //#define min(a,b) (((a)<(b))?(a):(b))
 
 /*!
@@ -52,16 +52,15 @@
 /*!
  * Maximum number of state variables.
  */
-#define MAXSTATEVARS 7
+#define MAXSTATEVARS 10
 
 /*!
  * Maximum number of characters of a type identificator.
  */
-#define MAXIDSIZE 32
+#define MAXIDSIZE 64
 
 /*!
  * Maximum number of characters of a type identificator.
  */
-#define MAXIDSIZEC "32"
-
+#define MAXIDSIZEC "64"
 #endif /*CONFIGURATION_H_*/

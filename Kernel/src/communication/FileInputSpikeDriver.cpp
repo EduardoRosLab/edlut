@@ -22,12 +22,16 @@
 #include "../../include/spike/EDLUTFileException.h"
 #include "../../include/spike/Network.h"
 #include "../../include/spike/InputSpike.h"
+#include "../../include/spike/Neuron.h"
 
-FileInputSpikeDriver::FileInputSpikeDriver(const char * NewFileName) throw (EDLUTException): FileName(NewFileName), Currentline(1L){
+#include "../../include/openmp/openmp.h"
+
+
+FileInputSpikeDriver::FileInputSpikeDriver(const char * NewFileName) noexcept(false): FileName(NewFileName), Currentline(1L){
 	this->Finished = false;
 	this->Handler = fopen(NewFileName,"rt");
 	if (!this->Handler){
-		throw EDLUTException(6,20,13,0);
+		throw EDLUTFileException(TASK_FILE_INPUT_SPIKE_DRIVER, ERROR_FILE_INPUT_SPIKE_DRIVER_OPEN_FILE, REPAIR_OPEN_FILE_READ, 0, NewFileName);
 	}
 }
 		
@@ -38,7 +42,7 @@ FileInputSpikeDriver::~FileInputSpikeDriver(){
 	}
 }
 	
-void FileInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException){
+void FileInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) noexcept(false){
 	if (this->Handler){
 		int ninputs,i;
 		skip_comments(this->Handler,Currentline);
@@ -55,31 +59,28 @@ void FileInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (
 						if(i<=ninputs){
 							for(itime=0;itime<nspikes;itime++){
 								for(ineuron=0;ineuron<nreps;ineuron++){
-									InputSpike * ispike = new InputSpike(time+itime*interv, Net->GetNeuronAt(nneuron+ineuron));
-									
-									Queue->InsertEvent(ispike);
+									InputSpike * ispike = new InputSpike(time + itime*interv, Net->GetNeuronAt(nneuron + ineuron)->get_OpenMP_queue_index(), Net->GetNeuronAt(nneuron + ineuron));
+									Queue->InsertEvent(ispike->GetQueueIndex(), ispike);
 								}
 							}
 						}else{
-							throw EDLUTFileException(6,16,15,1,Currentline);
+							throw EDLUTFileException(TASK_FILE_INPUT_SPIKE_DRIVER, ERROR_FILE_INPUT_SPIKE_DRIVER_TOO_MUCH_SPIKES, REPAIR_FILE_INPUT_SPIKE_DRIVER_TOO_MUCH_SPIKES, Currentline, this->FileName.c_str());
 						}
 					}else{
-						throw EDLUTFileException(6,17,16,1,Currentline);
-						break;
+						throw EDLUTFileException(TASK_FILE_INPUT_SPIKE_DRIVER, ERROR_FILE_INPUT_SPIKE_DRIVER_NEURON_INDEX, REPAIR_FILE_INPUT_SPIKE_DRIVER_NEURON_INDEX, Currentline, this->FileName.c_str());
 					}
 				}else{
-					throw EDLUTFileException(6,18,17,1,Currentline);
-					break;
+					throw EDLUTFileException(TASK_FILE_INPUT_SPIKE_DRIVER, ERROR_FILE_INPUT_SPIKE_DRIVER_FEW_SPIKES, REPAIR_FILE_INPUT_SPIKE_DRIVER_FEW_SPIKES, Currentline, this->FileName.c_str());
 				}
 			}			
 		}else{
-			throw EDLUTFileException(6,19,18,1,Currentline);
+			throw EDLUTFileException(TASK_FILE_INPUT_SPIKE_DRIVER, ERROR_FILE_INPUT_SPIKE_DRIVER_N_SPIKES, REPAIR_FILE_INPUT_SPIKE_DRIVER_N_SPIKES, Currentline, this->FileName.c_str());
 		}		
-		
 		this->Finished = true;
 	}
-	
 }
+
+
 
 ostream & FileInputSpikeDriver::PrintInfo(ostream & out){
 

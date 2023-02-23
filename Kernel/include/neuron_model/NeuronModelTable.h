@@ -27,19 +27,19 @@
  * This file declares a class which abstracts a neuron model table.
  */
 
-#define last_coord(dim) (*((dim)->coord+(dim)->size-1))
-#define table_indcomp(dim,coo) (((coo)>last_coord(dim))?((dim)->size-1):(((coo)<(dim)->vfirst)?0:(*((dim)->vindex+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + 0.49) ))))
-#define table_indcomp2(dim,coo) (((coo)>last_coord(dim))?((dim)->size-1):(((coo)<(dim)->vfirst)?0:(*((dim)->vindex+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + 0.5 + *((dim)->voffset+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + 0.5) ) ) ))))
-#define table_ind_int(dim,coo) (*((dim)->vindex+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale + (*((dim)->voffset+(int)( ((coo) - (dim)->vfirst) / (dim)->vscale) ))) ))
+//#define table_indcomp(dim,coo) (((coo)>(dim)->vlast)?((dim)->size-1):(((coo)<(dim)->vfirst)?0:(*((dim)->vindex+(int)( ((coo) - (dim)->vfirst) * (dim)->inv_vscale + 0.49) ))))
+//#define table_indcomp2(dim,coo) (((coo)>(dim)->vlast)?((dim)->size-1):(((coo)<(dim)->vfirst)?0:(*((dim)->vindex+(int)( ((coo) - (dim)->vfirst) * (dim)->inv_vscale + 0.5 + *((dim)->voffset+(int)( ((coo) - (dim)->vfirst) * (dim)->inv_vscale + 0.5) ) ) ))))
+//#define table_ind_int(dim,coo) (*((dim)->vindex+(int)( ((coo) - (dim)->vfirst) * (dim)->inv_vscale + (*((dim)->voffset+(int)( ((coo) - (dim)->vfirst) * (dim)->inv_vscale) ))) ))
+
 
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-#ifdef _WIN32 || _WIN64
-	#include "../stdint_WIN.h"
-#else 
-	#include <stdint.h>
-#endif
+//#if (defined (_WIN32) || defined(_WIN64))
+//	#include "../stdint_WIN.h"
+//#else 
+//	#include <stdint.h>
+//#endif
 
 
 
@@ -101,17 +101,28 @@ class NeuronModelTable {
    				 * Virtual offsets of the dimension.
    				 */
    				float *voffset;
-   			
+
+   				/*!
+   				 * Virtual index and offsets of the dimension
+   				 */
+				float *vindex_voffset;
+							
    				/*! 
    				 * Virtual scale of the dimension.
    				 */
    				float vscale;
+				float inv_vscale;
    				
    				/*!
    				 * First element of the dimension.
    				 */
    				float vfirst;
-   			
+
+				/*!
+   				 * Last element of the dimension.
+   				 */
+				float vlast;
+
    				/*!
    				 * State variable of the dimension.
    				 */
@@ -146,6 +157,12 @@ class NeuronModelTable {
    				 * It destroys an object and frees the used memory.
    				 */
    				~TableDimension();
+
+		
+				int table_indcomp(float coo);
+				int table_indcomp2(float coo);
+				int table_ind_int(float coo);
+				float check_range(float value);
   		};
   		
   		/*!
@@ -182,13 +199,14 @@ class NeuronModelTable {
   		 * 
   		 * \throw EDLUTException If something wrong happens.
   		 */  		
-  		void LoadTable(FILE *fd) throw (EDLUTException);
+  		void LoadTable(FILE *fd) noexcept(false);
   		
   		/*!
   		 * \brief It loads the table description from a file.
   		 * 
   		 * It loads the table description from a .cfg file.
   		 * 
+		 * \param ConfigFile The file name 
   		 * \param fh The file descriptor of the neuron model table description.
   		 * \param Currentline The line in the file where we are reading (for error description reasons).
   		 * \pre The file descriptor must be where this table description starts, so this is thought for loading all tables in order.
@@ -196,7 +214,7 @@ class NeuronModelTable {
   		 * \post Currentline is modified with the next line in the file.
   		 * 
   		 */
-  		void LoadTableDescription(FILE *fh, long & Currentline) throw (EDLUTFileException);
+		void LoadTableDescription(string ConfigFile, FILE *fh, long & Currentline) noexcept(false);
   		
   		//void TableInfo();
   		
@@ -289,15 +307,77 @@ class NeuronModelTable {
   		 * \return The value of the table (with or without interpolation).
   		 */
   		float TableAccess(int index, VectorNeuronState * statevars);
-   		
-  		
+
+		/*!
+   		 * \brief It gets a table value without interpolation.
+   		 * 
+   		 * It gets a table value without interpolation with concrete state variables.
+   		 * 
+   		 * \param statevars State variables of the neuron.
+   		 * 
+   		 * \return The table value with that state.
+   		 */
+   		float TableAccessDirect(int index, VectorNeuronState * statevars);
+
+		/*!
+   		 * \brief It sets the state variable index.
+   		 * 
+   		 * It sets the state variable index.
+   		 * 
+   		 * \param newstatevariableindex state variable index.
+   		 */
+		void SetOutputStateVariableIndex(int newoutputstatevariableindex);
+
+		 /*!
+   		 * \brief It gets the state variable index.
+   		 * 
+   		 * It gets the state variable index.
+   		 * 
+   		 * \return The state variable index.
+   		 */
+		int GetOutputStateVariableIndex();
+
+		/*!
+   		 * \brief It calculates the table dimension index that is related with the outputstatevariableindex (set -1 if there is not relation) 
+   		 * 
+   		 * It calculates the table dimension index that is related with the outputstatevariableindex (set -1 if there is not relation) 
+   		 */
+		void CalculateOutputTableDimensionIndex();
+
+   		/*!
+  		 * \brief It gets the maximum value inside the table.
+  		 * 
+  		 * It gets the maximum value inside the table.
+  		 * 
+  		 * \return The maximum value inside the table.
+  		 */
+  		float GetMaxElementInTable();
 	private:
+
+   		/*!
+  		 * \brief Recrusive function used by GetMaxElementInTable().
+  		 * 
+  		 * Recrusive function used by GetMaxElementInTable().
+		 * 
+  		 * \param cpointer pointer to a dimension inside the table
+		 * \param idim dimension inside the table
+		 * \param ndims total number of dimensions.
+  		 * 
+  		 * \return The maximum value inside the table.
+  		 */
+		float CalculateMaxElementInTableRecursively(void **cpointer, int idim, int ndims);
+
 	
 		/*!
 		 * Function used in function arrays.
 		 */
 		typedef float (NeuronModelTable::*function) (int index, VectorNeuronState * statevars);
    		
+		/*!
+		 * Function arrays.
+		 */
+		function funcArr[7];
+
    		/*!
    		 * Elements of the table.
    		 */
@@ -327,7 +407,21 @@ class NeuronModelTable {
    		 * The first interpolated dimension.
    		 */
    		int firstintdim;
-   		
+
+   		/*!
+   		 * State variable index that store this table (time it is not a state variable).
+   		 */
+		int outputstatevariableindex;
+
+
+		int outputtabledimensionindex;
+
+
+		float maxtimecoordenate;
+		float inv_maxtimecoordenate;
+
+
+  		
    		/*!
    		 * \brief It generates the virtual coordinates of the table.
    		 * 
@@ -336,8 +430,10 @@ class NeuronModelTable {
    		 * 
    		 * \throw EDLUTException If something wrong happens.
    		 */
-   		void GenerateVirtualCoordinates() throw (EDLUTException);
+   		void GenerateVirtualCoordinates() noexcept(false);
    		
+
+
    		/*!
    		 * \brief It gets a table value without interpolation.
    		 * 
@@ -347,7 +443,7 @@ class NeuronModelTable {
    		 * 
    		 * \return The table value with that state.
    		 */
-   		float TableAccessDirect(int index, VectorNeuronState * statevars);
+   		float TableAccessDirectDesviation(int index, VectorNeuronState * statevars);
    		
    		/*!
    		 * \brief It gets a table value with bilinear interpolation.
@@ -403,6 +499,7 @@ class NeuronModelTable {
    		 * \return The table value with that state.
    		 */
    		float TableAccessInterpNLi(int index, VectorNeuronState * statevars);
+
    	
 };
 

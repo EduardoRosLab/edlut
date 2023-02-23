@@ -65,9 +65,10 @@ class InputSpike: public Spike{
    		 * It creates and initializes a new spike with the parameters.
    		 * 
    		 * \param NewTime Time of the new spike.
+		 * \param NewQueueIndex Queue index where the event is stored
    		 * \param NewSource Source neuron of the spike.
    		 */
-   		InputSpike(double NewTime, Neuron * NewSource);
+		InputSpike(double NewTime, int NewQueueIndex, Neuron * NewSource);
    		
    		/*!
    		 * \brief Class destructor.
@@ -77,16 +78,40 @@ class InputSpike: public Spike{
    		~InputSpike();
    		
 
-		/*!
-   		 * \brief It process an event in the simulation.
+   		/*!
+   		 * \brief It process an event in the simulation with the option of real time available.
    		 * 
-   		 * It process the event in the simulation.
+   		 * It process an event in the simulation with the option of real time available.
    		 * 
    		 * \param CurrentSimulation The simulation object where the event is working.
-		 * \param RealTimeRestriction This variable indicates whether we are making a 
-		 * real-time simulation and the watchdog is enabled.
+		 * \param RealTimeRestriction watchdog variable executed in a parallel OpenMP thread that
+		 * control the consumed time in each slot.
    		 */
-   		void ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction);
+		void ProcessEvent(Simulation * CurrentSimulation, RealTimeRestrictionLevel RealTimeRestriction);
+
+		/*!
+   		 * \brief It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * It process an event in the simulation without the option of real time available.
+   		 * 
+   		 * \param CurrentSimulation The simulation object where the event is working.
+   		 */
+		void ProcessEvent(Simulation * CurrentSimulation);
+
+   		/*!
+   		 * \brief this method print the event type.
+   		 * 
+   		 * This method print the event type..
+		 */
+		virtual void PrintType();
+
+
+		/*!
+   		 * \brief The event queue uses this preference variable to sort the events with the same time stamp.
+   		 * 
+   		 * The event queue uses this preference variable to sort the events with the same time stamp.
+		 */
+		virtual enum EventPriority ProcessingPriority();
 };
 
-#endif /*SPIKE_H_*/
+#endif /*INPUTSPIKE_H_*/

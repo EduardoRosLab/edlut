@@ -111,7 +111,7 @@ class TCPIPOutputSpikeDriver: public OutputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		void WriteSpike(const Spike * NewSpike) throw (EDLUTException);
+		void WriteSpike(const Spike * NewSpike) noexcept(false);
 		
 		/*!
 		 * \brief This function isn't implemented in TCPIPOutputDriver.
@@ -123,7 +123,7 @@ class TCPIPOutputSpikeDriver: public OutputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */		
-		void WriteState(float Time, Neuron * Source) throw (EDLUTException);
+		void WriteState(float Time, Neuron * Source) noexcept(false);
 		
 		/*!
 		 * \brief It checks if the current output driver is buffered.
@@ -150,7 +150,7 @@ class TCPIPOutputSpikeDriver: public OutputSpikeDriver {
 		 * 
 		 * \throw EDLUTException If something wrong happens in the output process.
 		 */
-		 void FlushBuffers() throw (EDLUTException);
+		 void FlushBuffers() noexcept(false);
 
 		/*!
 		 * \brief It prints the information of the object.

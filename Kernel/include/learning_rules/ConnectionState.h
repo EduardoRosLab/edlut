@@ -17,7 +17,7 @@
 #ifndef CONNECTIONSTATE_H_
 #define CONNECTIONSTATE_H_
 
-class ExponentialTable;
+#include "../../include/simulation/ExponentialTable.h"
 
 /*!
  * \file ConnectionState.h
@@ -45,6 +45,16 @@ class ConnectionState {
 	protected:
 
 		/*!
+	   	 * \brief Neuron state variables.
+	   	 */
+	   	float * StateVars;
+
+		/*!
+	   	 * \brief Last update time for all neurons
+	   	 */
+	   	double * LastUpdate;
+
+		/*!
 		 * \brief Number of synapses that implement this learning rule.
 		 */
 		unsigned int NumberOfSynapses;
@@ -54,36 +64,8 @@ class ConnectionState {
 		 */
 		unsigned int NumberOfVariables;
 
-	   	/*!
-	   	 * \brief Last update time for all neurons
-	   	 */
-	   	double * LastUpdate;
-
 
 	public:
-		/*!
-	   	 * \brief Neuron state variables.
-	   	 */
-	   	float * StateVars;
-
-		/*!
-		 * \brief exponential look-up table.
-		 */
-		ExponentialTable * exponential;
-
-
-	   	/*!
-		 * \brief It sets the time when the last update happened.
-		 *
-		 * It sets the time when the last update happened.
-		 *
-		 * \param NewUpdateTime The time when the last update happened.
-		 */
-		//void SetLastUpdateTime(int index, double NewUpdateTime);
-		inline void SetLastUpdateTime(unsigned int index, double NewUpdateTime){
-			*(this->LastUpdate+index) = NewUpdateTime;
-		}
-
 
 
 		/*!
@@ -95,6 +77,25 @@ class ConnectionState {
 		 * \param NumVariables Number of the state variables this model needs.
 		 */
 		ConnectionState(unsigned int NumberOfSynapses, int NumVariables);
+
+		/*!
+		 * \brief Class destructor.
+		 *
+		 * It destroys an object of this class.
+		 */
+		virtual ~ConnectionState();
+
+		/*!
+		 * \brief set new time to spikes.
+		 *
+		 * It set new time to spikes.
+		 *
+		 * \param index The synapse's index inside the learning rule.
+		 * \param NewTime new time.
+		 * \param pre_post In some learning rules (i.e. STDPLS) this variable indicate wether the update affects the pre- or post- variables.
+		 */
+		virtual void SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post) = 0;
+
 
 		/*!
 		 * \brief It sets the state variable in a specified position.
@@ -117,56 +118,33 @@ class ConnectionState {
 		 *
 		 * \param index The synapse's index inside the learning rule.
 		 * \param position The position of the state variable.
-		 * \param NewValue The new value of that state variable.
+		 * \param NewValue1 The new value of that state variable.
+		 * \param NewValue2 The new value of that state variable.
 		 */
 		inline void SetStateVariableAt(unsigned int index, unsigned int position,float NewValue1, float NewValue2){
 			*(this->StateVars + index*NumberOfVariables + position) = NewValue1;
 			*(this->StateVars + index*NumberOfVariables + position + 1) = NewValue2;
 		}
 
-		
+
 		/*!
-		 * \brief It increment the state variable in a specified position.
+		 * \brief It sets the state variable in two consecutives position.
 		 *
-		 * It increment the state variable in a specified position.
+		 * It sets the state variable in a specified position.
 		 *
 		 * \param index The synapse's index inside the learning rule.
 		 * \param position The position of the state variable.
-		 * \param increment The increment of that state variable.
+		 * \param NewValue1 The new value of that state variable.
+		 * \param NewValue2 The new value of that state variable.
+		 * \param NewValue3 The new value of that state variable.
 		 */
-		inline void incrementStateVaraibleAt(unsigned int index, unsigned int position, float increment){
-			*(this->StateVars + index*NumberOfVariables + position) += increment;
+		inline void SetStateVariableAt(unsigned int index, unsigned int position,float NewValue1, float NewValue2, float NewValue3){
+			*(this->StateVars + index*NumberOfVariables + position) = NewValue1;
+			*(this->StateVars + index*NumberOfVariables + position + 1) = NewValue2;
+			*(this->StateVars + index*NumberOfVariables + position + 2) = NewValue3;
+
 		}
 
-		/*!
-		 * \brief It multiply the state variable in a specified position by factor.
-		 *
-		 * It multiply the state variable in a specified position by factor.
-		 *
-		 * \param index The synapse's index inside the learning rule.
-		 * \param position The position of the state variable.
-		 * \param factor The multiplier of that state variable.
-		 */
-		inline void multiplyStateVaraibleAt(unsigned int index, unsigned int position, float factor){
-			*(this->StateVars + index*NumberOfVariables + position) *= factor;
-		}
-
-
-		/*!
-		 * \brief Class destructor.
-		 *
-		 * It destroys an object of this class.
-		 */
-		virtual ~ConnectionState();
-
-		/*!
-		 * \brief It gets the number of state variables.
-		 *
-		 * It gets the number of state variables.
-		 *
-		 * \return The number of state variables of this model.
-		 */
-		unsigned int GetNumberOfVariables();
 
 		/*!
 		 * \brief It gets the state variable in a specified position.
@@ -182,6 +160,32 @@ class ConnectionState {
 			return *(this->StateVars + index*NumberOfVariables + position);
 		}
 
+
+		/*!
+		 * \brief It multiply the state variable in a specified position by factor.
+		 *
+		 * It multiply the state variable in a specified position by factor.
+		 *
+		 * \param index The synapse's index inside the learning rule.
+		 * \param position The position of the state variable.
+		 * \param factor The multiplier of that state variable.
+		 */
+		inline void multiplyStateVariableAt(unsigned int index, unsigned int position, float factor){
+			*(this->StateVars + index*NumberOfVariables + position) *= factor;
+		}
+
+	   	/*!
+		 * \brief It sets the time when the last update happened.
+		 *
+		 * It sets the time when the last update happened.
+		 *
+		 * \param NewUpdateTime The time when the last update happened.
+		 */
+		//void SetLastUpdateTime(int index, double NewUpdateTime);
+		inline void SetLastUpdateTime(unsigned int index, double NewUpdateTime){
+			*(this->LastUpdate+index) = NewUpdateTime;
+		}
+
 		/*!
 		 * \brief It gets the time when the last update happened.
 		 *
@@ -195,25 +199,7 @@ class ConnectionState {
 			return *(this->LastUpdate + index);
 		}
 
-		/*!
-		 * \brief It gets the number of variables that you can print in this state.
-		 *
-		 * It gets the number of variables that you can print in this state.
-		 *
-		 * \return The number of variables that you can print in this state.
-		 */
-		virtual unsigned int GetNumberOfPrintableValues();
-
-		/*!
-		 * \brief It gets a value to be printed from this state.
-		 *
-		 * It gets a value to be printed from this state.
-		 *
-		 * \return The value at position-th position in this state.
-		 */
-		virtual double GetPrintableValuesAt(unsigned int position);
-
-		/*!
+				/*!
 		 * \brief It gets the value of the accumulated presynaptic activity.
 		 *
 		 * It gets the value of the accumulated presynaptic activity.
@@ -235,18 +221,6 @@ class ConnectionState {
 
 
 		/*!
-		 * \brief set new time to spikes.
-		 *
-		 * It set new time to spikes.
-		 *
-		 * \param index The synapse's index inside the learning rule.
-		 * \param NewTime new time.
-		 * \param pre_post In some learning rules (i.e. STDPLS) this variable indicate wether the update affects the pre- or post- variables.
-		 */
-		virtual void SetNewUpdateTime(unsigned int index, double NewTime, bool pre_post) = 0;
-
-
-		/*!
 		 * \brief It implements the behaviour when it transmits a spike.
 		 *
 		 * It implements the behaviour when it transmits a spike. It must be implemented
@@ -255,6 +229,20 @@ class ConnectionState {
 		 * \param index The synapse's index inside the learning rule.
 		 */
 		virtual void ApplyPresynapticSpike(unsigned int index) = 0;
+
+
+		/*!
+		 * \brief It increment the state variable in a specified position.
+		 *
+		 * It increment the state variable in a specified position.
+		 *
+		 * \param index The synapse's index inside the learning rule.
+		 * \param position The position of the state variable.
+		 * \param increment The increment of that state variable.
+		 */
+		inline void incrementStateVariableAt(unsigned int index, unsigned int position, float increment){
+			*(this->StateVars + index*NumberOfVariables + position) += increment;
+		}
 
 		/*!
 		 * \brief It implements the behaviour when the target cell fires a spike.
@@ -266,7 +254,50 @@ class ConnectionState {
 		 */
 		virtual void ApplyPostsynapticSpike(unsigned int index) = 0;
 
+
+		/*!
+		 * \brief It gets the number of state variables.
+		 *
+		 * It gets the number of state variables.
+		 *
+		 * \return The number of state variables of this model.
+		 */
+		unsigned int GetNumberOfVariables();
+
+
+		/*!
+		 * \brief It gets the number of variables that you can print in this state.
+		 *
+		 * It gets the number of variables that you can print in this state.
+		 *
+		 * \return The number of variables that you can print in this state.
+		 */
+		virtual unsigned int GetNumberOfPrintableValues();
+
+		/*!
+		 * \brief It gets a value to be printed from this state.
+		 *
+		 * It gets a value to be printed from this state.
+		 *
+		 * \param index The synapse's index inside the learning rule.
+		 * \param position Position inside each connection.
+		 *
+		 * \return The value at position-th position in this state.
+		 */
+		virtual double GetPrintableValuesAt(unsigned int index, unsigned int position);
+
+
+		/*!
+		 * \brief It initialize the synaptic weight and max synaptic weight in the learning rule (required for some specifics learning rules).
+		 *
+		 * It initialize the synaptic weight and max synaptic weight in the learning rule (required for some specifics learning rules).
+		 *
+		 * \param index The synapse's index inside the learning rule.
+		 * \param weight synaptic weight
+		 * \param max_weight max synaptic weight
+		 */
+		virtual void SetWeight(unsigned int index, float weight, float max_weight)=0;
+
 };
 
 #endif /* CONNECTIONSTATE_H_ */
-

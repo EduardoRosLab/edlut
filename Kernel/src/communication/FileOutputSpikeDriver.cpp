@@ -15,17 +15,18 @@
  ***************************************************************************/
  
 #include "../../include/communication/FileOutputSpikeDriver.h"
+#include "../../include/spike/EDLUTFileException.h"
 
 #include "../../include/neuron_model/VectorNeuronState.h"
 
 #include "../../include/spike/Spike.h"
 #include "../../include/spike/Neuron.h"
 
-FileOutputSpikeDriver::FileOutputSpikeDriver(const char * NewFileName, bool WritePotential) throw (EDLUTException): FileName(NewFileName){
+FileOutputSpikeDriver::FileOutputSpikeDriver(const char * NewFileName, bool WritePotential) noexcept(false): FileName(NewFileName){
 	this->PotentialWriteable = WritePotential;
 	this->Handler = fopen(NewFileName,"wt");
 	if (!this->Handler){
-		throw EDLUTException(2,2,2,0);
+		throw EDLUTFileException(TASK_FILE_OUTPUT_SPIKE_DRIVER, ERROR_FILE_OUTPUT_SPIKE_DRIVER_OPEN_FILE, REPAIR_OPEN_FILE_WRITE, 0, NewFileName);
 	}
 }
 		
@@ -36,22 +37,28 @@ FileOutputSpikeDriver::~FileOutputSpikeDriver(){
 	}
 }
 
-void FileOutputSpikeDriver::WriteSpike(const Spike * NewSpike) throw (EDLUTException){
+void FileOutputSpikeDriver::WriteSpike(const Spike * NewSpike) noexcept(false){
+	#pragma omp critical (FileOutputSpikeDriver) 
+	{
 	if(fprintf(this->Handler,"%f\t%li\n",NewSpike->GetTime(),NewSpike->GetSource()->GetIndex())<0)
-    	throw EDLUTException(3,3,2,0);
+		throw EDLUTException(TASK_FILE_OUTPUT_SPIKE_DRIVER, ERROR_FILE_OUTPUT_SPIKE_DRIVER_WRITE, REPAIR_OPEN_FILE_WRITE);
+	}
 }
 		
-void FileOutputSpikeDriver::WriteState(float Time, Neuron * Source) throw (EDLUTException){
+void FileOutputSpikeDriver::WriteState(float Time, Neuron * Source) noexcept(false){
+	#pragma omp critical (FileOutputSpikeDriver)
+	{
 	if(fprintf(this->Handler,"%f\t%li",Time,Source->GetIndex()) < 0)
-		throw EDLUTException(3,3,2,0);
+		throw EDLUTException(TASK_FILE_OUTPUT_SPIKE_DRIVER, ERROR_FILE_OUTPUT_SPIKE_DRIVER_WRITE, REPAIR_OPEN_FILE_WRITE);
 
 	for (unsigned int i=0; i<Source->GetVectorNeuronState()->GetNumberOfPrintableValues(); ++i){
 		if(fprintf(this->Handler,"\t%1.12f",Source->GetVectorNeuronState()->GetPrintableValuesAt(Source->GetIndex_VectorNeuronState(),i)) < 0)
-				throw EDLUTException(3,3,2,0);
+			throw EDLUTException(TASK_FILE_OUTPUT_SPIKE_DRIVER, ERROR_FILE_OUTPUT_SPIKE_DRIVER_WRITE, REPAIR_OPEN_FILE_WRITE);
 	}
 
 	if(fprintf(this->Handler,"\n") < 0)
-		throw EDLUTException(3,3,2,0);
+		throw EDLUTException(TASK_FILE_OUTPUT_SPIKE_DRIVER, ERROR_FILE_OUTPUT_SPIKE_DRIVER_WRITE, REPAIR_OPEN_FILE_WRITE);
+	}
 }
 
 bool FileOutputSpikeDriver::IsBuffered() const{
@@ -62,7 +69,7 @@ bool FileOutputSpikeDriver::IsWritePotentialCapable() const{
 	return this->PotentialWriteable;	
 }
 
-void FileOutputSpikeDriver::FlushBuffers() throw (EDLUTException){
+void FileOutputSpikeDriver::FlushBuffers() noexcept(false){
 	return;
 }
 

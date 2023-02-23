@@ -16,111 +16,131 @@
 
 #include "../../include/learning_rules/AdditiveKernelChange.h"
 
-#include "../../include/learning_rules/ExpState.h"
-
+#include "../../include/simulation/NetworkDescription.h"
 #include "../../include/spike/Interconnection.h"
 #include "../../include/spike/Neuron.h"
 
+#include <boost/any.hpp>
+
 #include "../../include/simulation/Utils.h"
 
+#include "../../include/openmp/openmp.h"
+
 #include <cmath>
+
+
+AdditiveKernelChange::AdditiveKernelChange():WithTriggerSynaptic(){
+	this->SetParameters(AdditiveKernelChange::GetDefaultParameters());
+}
+
+AdditiveKernelChange::~AdditiveKernelChange(){
+}
+
 
 int AdditiveKernelChange::GetNumberOfVar() const{
 	return 2;
 }
 
-void AdditiveKernelChange::LoadLearningRule(FILE * fh, long & Currentline) throw (EDLUTFileException){
-	skip_comments(fh,Currentline);
+void AdditiveKernelChange::SetParameters(std::map<std::string, boost::any> param_map) noexcept(false){
 
-	if(fscanf(fh,"%i",&this->trigger)==1 && fscanf(fh,"%f",&this->maxpos)==1 && fscanf(fh,"%f",&this->a1pre)==1 && fscanf(fh,"%f",&this->a2prepre)==1){
-		if(this->a1pre < -1.0 || this->a1pre > 1.0){
-			throw EDLUTFileException(4,27,22,1,Currentline);
+	// Search for the parameters in the dictionary
+	std::map<std::string,boost::any>::iterator it=param_map.find("kernel_peak");
+	if (it!=param_map.end()){
+		float newkernelpeak = boost::any_cast<float>(it->second);
+		if (newkernelpeak <= 0){
+			throw EDLUTException(TASK_LEARNING_RULE_LOAD, ERROR_ADDITIVE_KERNEL_CHANGE_VALUES, REPAIR_LEARNING_RULE_VALUES);
 		}
+		this->kernelpeak = newkernelpeak;
+		param_map.erase(it);
+	}
 
-		this->numexps = 3;
-	}else{
-		throw EDLUTFileException(4,28,23,1,Currentline);
+	// Search for the parameters in the dictionary
+	it=param_map.find("fixed_change");
+	if (it!=param_map.end()){
+		this->fixwchange = boost::any_cast<float>(it->second);
+		param_map.erase(it);
+	}
+
+	// Search for the parameters in the dictionary
+	it=param_map.find("kernel_change");
+	if (it!=param_map.end()){
+		this->kernelwchange = boost::any_cast<float>(it->second);
+		param_map.erase(it);
+	}
+
+	WithTriggerSynaptic::SetParameters(param_map);
+
+}
+
+ModelDescription AdditiveKernelChange::ParseLearningRule(FILE * fh) noexcept(false) {
+	float maxpos, fixwchange, kernelwchange;
+	if(fscanf(fh,"%f",&maxpos)!=1 ||
+	   fscanf(fh,"%f",&fixwchange)!=1 ||
+	   fscanf(fh,"%f",&kernelwchange)!=1){
+		throw EDLUTException(TASK_LEARNING_RULE_LOAD, ERROR_LEARNING_RULE_LOAD, REPAIR_ADDITIVE_KERNEL_CHANGE_LOAD);
+	}
+	if (maxpos <= 0){
+		throw EDLUTException(TASK_LEARNING_RULE_LOAD, ERROR_ADDITIVE_KERNEL_CHANGE_VALUES, REPAIR_LEARNING_RULE_VALUES);
+	}
+
+	ModelDescription lrule;
+	lrule.model_name = "AdditiveRule";
+	lrule.param_map["kernel_peak"] = boost::any(maxpos);
+	lrule.param_map["fixed_change"] = boost::any(fixwchange);
+	lrule.param_map["kernel_change"] = boost::any(kernelwchange);
+	return lrule;
+}
+
+void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection, double SpikeTime){
+
+
+	if (Connection->GetTriggerConnection() == false){
+		int LearningRuleIndex = Connection->GetLearningRuleIndex_withTrigger();
+
+		// Second case: the weight change is linked to this connection
+		Connection->IncrementWeight(this->fixwchange);
+
+		// Update the presynaptic activity
+		State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
+
+		// Add the presynaptic spike influence
+		State->ApplyPresynapticSpike(LearningRuleIndex);
+
+	}
+	else{
+		Neuron * TargetNeuron = Connection->GetTarget();
+		unsigned int LearningRuleId = this->GetLearningRuleIndex();
+
+		for (int i = 0; i<TargetNeuron->GetInputNumberWithTriggerSynapticLearning(LearningRuleId); ++i){
+			Interconnection * interi=TargetNeuron->GetInputConnectionWithTriggerSynapticLearningAt(LearningRuleId,i);
+
+			if(interi->GetTriggerConnection()==false){
+				// Apply sinaptic plasticity driven by teaching signal
+				int LearningRuleIndex = interi->GetLearningRuleIndex_withTrigger();
+
+				// Update the presynaptic activity
+				State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
+				// Update synaptic weight
+				interi->IncrementWeight(this->kernelwchange*State->GetPresynapticActivity(LearningRuleIndex));
+			}
+		}
 	}
 }
 
-//void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
-//	int LearningRuleIndex = Connection->GetLearningRuleIndex();
-//
-//	// Second case: the weight change is linked to this connection
-//	Connection->IncrementWeight(this->a1pre);
-//
-//	// Update the presynaptic activity
-//	State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-//
-//	// Add the presynaptic spike influence
-//	State->ApplyPresynapticSpike(LearningRuleIndex);
-//
-//	// Check if this is the teaching signal
-//	if(this->trigger == 1){
-//		for(int i=0; i<Connection->GetTarget()->GetInputNumberWithoutPostSynapticLearning(); ++i){
-//			Interconnection * interi=Connection->GetTarget()->GetInputConnectionWithoutPostSynapticLearningAt(i);
-//		    AdditiveKernelChange * wchani=(AdditiveKernelChange *)interi->GetWeightChange();
-//
-//		    // Apply sinaptic plasticity driven by teaching signal
-//		    // Get connection state
-//			ConnectionState * ConnectionStatePre = wchani->GetConnectionState();
-//			int LearningRuleIndex = interi->GetLearningRuleIndex();
-//
-//			// Update the presynaptic activity
-//			ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-//
-//			// Update synaptic weight
-//			interi->IncrementWeight(wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity(LearningRuleIndex));
-//		}
-//	}
-//}
 
-void AdditiveKernelChange::ApplyPreSynapticSpike(Interconnection * Connection,double SpikeTime){
-	int LearningRuleIndex = Connection->GetLearningRuleIndex_withoutPost();
-
-	// Second case: the weight change is linked to this connection
-	Connection->IncrementWeight(this->a1pre);
-
-	// Update the presynaptic activity
-	State->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-
-	// Add the presynaptic spike influence
-	State->ApplyPresynapticSpike(LearningRuleIndex);
-
-	// Check if this is the teaching signal
-	if(this->trigger == 1){
-		Interconnection * interi;
-		AdditiveKernelChange * wchani;
-		ConnectionState * ConnectionStatePre;
-		int LearningRuleIndex; 
-		int i;
-#pragma omp parallel for num_threads(8) schedule(guided, 32) if(Connection->GetTarget()->GetInputNumberWithoutPostSynapticLearning()>128) default(none) shared(Connection, SpikeTime) private(i, interi, wchani, ConnectionStatePre, LearningRuleIndex)
-		for(i=0; i<Connection->GetTarget()->GetInputNumberWithoutPostSynapticLearning(); ++i){
-			interi=Connection->GetTarget()->GetInputConnectionWithoutPostSynapticLearningAt(i);
-		    wchani=(AdditiveKernelChange *)interi->GetWeightChange_withoutPost();
-
-		    // Apply sinaptic plasticity driven by teaching signal
-		    // Get connection state
-			ConnectionStatePre = wchani->GetConnectionState();
-			LearningRuleIndex = interi->GetLearningRuleIndex_withoutPost();
-
-			// Update the presynaptic activity
-			ConnectionStatePre->SetNewUpdateTime(LearningRuleIndex, SpikeTime, false);
-
-			// Update synaptic weight
-			interi->IncrementWeight(wchani->a2prepre*ConnectionStatePre->GetPresynapticActivity(LearningRuleIndex));
-		}
-	}
+std::map<std::string,boost::any> AdditiveKernelChange::GetParameters(){
+	std::map<std::string,boost::any> newMap = WithTriggerSynaptic::GetParameters();
+	newMap["kernel_peak"] = boost::any(this->kernelpeak);
+	newMap["fixed_change"] = boost::any(this->fixwchange);
+	newMap["kernel_change"] = boost::any(this->kernelwchange);
+	return newMap;
 }
 
 
-
-ostream & AdditiveKernelChange::PrintInfo(ostream & out){
-
-	out << "- Additive Kernel Learning Rule: " << this->trigger << "\t" << this->maxpos << "\t" << this->a1pre << "\t" << this->a2prepre << endl;
-
-
-	return out;
+std::map<std::string,boost::any> AdditiveKernelChange::GetDefaultParameters(){
+	std::map<std::string,boost::any> newMap = WithTriggerSynaptic::GetDefaultParameters();
+	newMap["kernel_peak"] = boost::any(0.100f);
+	newMap["fixed_change"] = boost::any(0.001f);
+	newMap["kernel_change"] = boost::any(-0.010f);
+	return newMap;
 }
-
-

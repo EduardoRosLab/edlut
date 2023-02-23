@@ -26,6 +26,8 @@
 #include "../../include/spike/InputSpike.h"
 #include "../../include/spike/Network.h"
 
+#include "../../include/spike/Neuron.h"
+
 
 
 TCPIPInputSpikeDriver::TCPIPInputSpikeDriver(enum TCPIPConnectionType Type, string server_address,unsigned short tcp_port){
@@ -41,7 +43,7 @@ TCPIPInputSpikeDriver::~TCPIPInputSpikeDriver(){
 	delete this->Socket;
 }
 	
-void TCPIPInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException){
+void TCPIPInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) noexcept(false){
 	unsigned short csize;
 	
 	this->Socket->receiveBuffer(&csize, sizeof(unsigned short));
@@ -53,9 +55,9 @@ void TCPIPInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw 
 		this->Socket->receiveBuffer(InputSpikes,sizeof(OutputSpike)*(int) csize);
 		
 		for (int c=0; c<csize; ++c){
-			InputSpike * NewSpike = new InputSpike(InputSpikes[c].Time, Net->GetNeuronAt(InputSpikes[c].Neuron));
+			InputSpike * NewSpike = new InputSpike(InputSpikes[c].Time, Net->GetNeuronAt(InputSpikes[c].Neuron)->get_OpenMP_queue_index(), Net->GetNeuronAt(InputSpikes[c].Neuron));
 			
-			Queue->InsertEvent(NewSpike);				
+			Queue->InsertEvent(NewSpike->GetQueueIndex(),NewSpike);				
 		}
 
 		delete [] InputSpikes;

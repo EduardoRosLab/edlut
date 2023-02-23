@@ -35,6 +35,11 @@ class NeuronModelTable;
 class Interconnection;
 
 /*!
+* \brief Maximum number of state variables that the TableBasedModel can manage inside a neuron model.
+*/
+#define TABLE_MAX_VARIABLES 10
+
+/*!
  * \class TableBasedModel
  *
  * \brief Spiking neuron model based in look-up tables
@@ -99,15 +104,21 @@ class TableBasedModel: public EventDrivenNeuronModel {
 		 */
 		NeuronModelTable * Tables;
 
-		/*!
-		 * \brief Temporal state variables
-		 */
-		float * TempStateVars;
 
-/*!
- * \brief Vector where we temporary store initial values
- */
-float * InitValues;
+		/*!
+		 * \brief Vector where we temporary store initial values
+		 */
+		float * InitValues;
+
+		/*!
+		* \brief String where is stored the name of the configuration file where are stored the look-up table parameters ("file.cfg").
+		*/
+		string conf_filename;
+
+		/*!
+		* \brief String where is stored the name of the file where are stored the look-up tables ("file.dat").
+		*/
+		string tab_filename;
 
 		/*!
 		 * \brief It loads the neuron model description.
@@ -118,7 +129,7 @@ float * InitValues;
 		 *
 		 * \throw EDLUTFileException If something wrong has happened in the file load.
 		 */
-		virtual void LoadNeuronModel(string ConfigFile) throw (EDLUTFileException);
+		virtual void LoadNeuronModel(string ConfigFile) noexcept(false);
 
 		/*!
 		 * \brief It loads the neuron model tables.
@@ -132,14 +143,16 @@ float * InitValues;
 		 * \see LoadNeuronModel()
 		 * \throw EDLUTException If something wrong has happened in the tables loads.
 		 */
-		virtual void LoadTables(string TableFile) throw (EDLUTException);
+		virtual void LoadTables(string TableFile) noexcept(false);
 
 		/*!
 		 * \brief It returns the end of the refractory period.
 		 *
 		 * It returns the end of the refractory period.
 		 *
-		 * \param State Cell current state.
+		 * \param index index inside the VectorNeuronState of the neuron model.
+		 * \param VectorNeuronState of the neuron model.
+		 *
 		 * \return The end of the refractory period. -1 if no spike is predicted.
 		 */
 		virtual double EndRefractoryPeriod(int index, VectorNeuronState * State);
@@ -149,7 +162,8 @@ float * InitValues;
 		 *
 		 * It updates the neuron state after the evolution of the time.
 		 *
-		 * \param State Cell current state.
+		 * \param index index inside the VectorNeuronState of the neuron model.
+		 * \param VectorNeuronState of the neuron model.
 		 * \param CurrentTime Current simulation time.
 		 */
 		virtual void UpdateState(int index, VectorNeuronState * State, double CurrentTime);
@@ -159,17 +173,20 @@ float * InitValues;
 		 *
 		 * It abstracts the effect of an input spike in the cell.
 		 *
-		 * \param State Cell current state.
+		 * \param index index inside the VectorNeuronState of the neuron model.
 		 * \param InputConnection Input connection from which the input spike has got the cell.
 		 */
-		virtual void SynapsisEffect(int index, VectorNeuronState * State, Interconnection * InputConnection);
+		virtual void SynapsisEffect(int index, Interconnection * InputConnection);
+
 
 		/*!
 		 * \brief It returns the next spike time.
 		 *
 		 * It returns the next spike time.
 		 *
-		 * \param State Cell current state.
+		 * \param index index inside the VectorNeuronState of the neuron model.
+		 * \param VectorNeuronState of the neuron model.
+		 *
 		 * \return The next firing spike time. -1 if no spike is predicted.
 		 */
 		virtual double NextFiringPrediction(int index, VectorNeuronState * State);
@@ -178,12 +195,10 @@ float * InitValues;
 		/*!
 		 * \brief Default constructor with parameters.
 		 *
-		 * It generates a new neuron model object loading the configuration of
-		 * the model and the look-up tables.
+		 * It generates a new default neuron model object. The configuration parameters and look-up table will be loaded in other function.
 		 *
-		 * \param NeuronModelID Neuron model identificator.
 		 */
-		TableBasedModel(string NeuronTypeID, string NeuronModelID);
+		TableBasedModel();
 
 		/*!
 		 * \brief Class destructor.
@@ -196,8 +211,10 @@ float * InitValues;
 		 * \brief It loads the neuron model description and tables (if necessary).
 		 *
 		 * It loads the neuron model description and tables (if necessary).
+		 *
+		 * \throw EDLUTFileException If something wrong has happened in the file load.
 		 */
-		virtual void LoadNeuronModel() throw (EDLUTFileException);
+		virtual void LoadNeuronModel() noexcept(false);
 
 		/*!
 		 * \brief It creates the neuron state and initializes to defined values.
@@ -219,19 +236,6 @@ float * InitValues;
 		 */
 		virtual InternalSpike * GenerateInitialActivity(Neuron *  Cell);
 
-		/*!
-		 * \brief It processes a propagated spike (input spike in the cell).
-		 *
-		 * It processes a propagated spike (input spike in the cell).
-		 *
-		 * \note This function doesn't generate the next propagated spike. It must be externally done.
-		 *
-		 * \param InputSpike The spike happened.
-		 *
-		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
-		 */
-		virtual InternalSpike * ProcessInputSpike(PropagatedSpike *  InputSpike);
-
 
 		/*!
 		 * \brief It processes a propagated spike (input spike in the cell).
@@ -241,28 +245,47 @@ float * InitValues;
 		 * \note This function doesn't generate the next propagated spike. It must be externally done.
 		 *
 		 * \param inter the interconection which propagate the spike
-		 * \param target the neuron which receives the spike
 		 * \param time the time of the spike.
 		 *
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual InternalSpike * ProcessInputSpike(Interconnection * inter, Neuron * target, double time);
+		virtual InternalSpike * ProcessInputSpike(Interconnection * inter, double time);
 
 		/*!
-		 * \brief It processes an internal spike (generated spike in the cell).
+		 * \brief It predicts if the neuron would generate a internalSpike after the ToleranceTime.
 		 *
-		 * It processes an internal spike (generated spike in the cell).
+		 * It predicts if the neuron would generate a internalSpike after the ToleranceTime.
 		 *
-		 * \note This function doesn't generate the next propagated (output) spike. It must be externally done.
-		 * \note Before generating next spike, you should check if this spike must be discard.
-		 *
-		 * \see DiscardSpike
-		 *
-		 * \param OutputSpike The spike happened.
+		 * \param target Neuron that must be updated.
+		 * \param time time.
 		 *
 		 * \return A new internal spike if someone is predicted. 0 if none is predicted.
 		 */
-		virtual InternalSpike * GenerateNextSpike(InternalSpike *  OutputSpike);
+		virtual InternalSpike * ProcessActivityAndPredictSpike(Neuron * target, double time);
+
+
+		/*!
+		 * \brief It processes an internal spike and generates an end refractory period event.
+		 *
+		 * It processes an internal spike and generates an end refractory period event.
+		 *
+		 * \param OutputSpike The spike happened.
+		 *
+		 * \return A new end refractory period event.
+		 */
+		virtual EndRefractoryPeriodEvent * ProcessInternalSpike(InternalSpike * OutputSpike);
+
+		/*!
+		 * \brief It calculates if an internal spike must be generated at the end of the refractory period.
+		 *
+		 * It calculates if an internal spike must be generated at the end of the refractory period.
+		 *
+		 * \param time end of the refractory period.
+		 * \param neuron source neuron.
+		 *
+		 * \return A new internal spike.
+		 */
+		virtual InternalSpike * GenerateNextSpike(double time, Neuron * neuron);
 
 		/*!
 		 * \brief Check if the spike must be discard.
@@ -276,6 +299,26 @@ float * InitValues;
 		 */
 		virtual bool DiscardSpike(InternalSpike *  OutputSpike);
 
+
+		/*!
+		 * \brief It gets the neuron output activity type (spikes or currents).
+		 *
+		 * It gets the neuron output activity type (spikes or currents).
+		 *
+		 * \return The neuron output activity type (spikes or currents).
+		 */
+		enum NeuronModelOutputActivityType GetModelOutputActivityType();
+
+		/*!
+		 * \brief It gets the neuron input activity types (spikes and/or currents or none).
+		 *
+		 * It gets the neuron input activity types (spikes and/or currents or none).
+		 *
+		 * \return The neuron input activity types (spikes and/or currents or none).
+		 */
+		enum NeuronModelInputActivityType GetModelInputActivityType();
+
+
 		/*!
 		 * \brief It prints the table based model info.
 		 *
@@ -287,8 +330,137 @@ float * InitValues;
 		 */
 		virtual ostream & PrintInfo(ostream & out);
 
-virtual void InitializeStates(int N_neurons);
 
+		/*!
+		 * \brief It initialice VectorNeuronState.
+		 *
+		 * It initialice VectorNeuronState.
+		 *
+		 * \param N_neurons cell number inside the VectorNeuronState.
+		 * \param OpenMPQueueIndex openmp index
+		 */
+		virtual void InitializeStates(int N_neurons, int OpenMPQueueIndex);
+
+
+		/*!
+		 * \brief It Checks if the neuron model has this connection type.
+		 *
+		 * It Checks if the neuron model has this connection type.
+		 *
+		 * \param Type input connection type.
+		 *
+		 * \return If the neuron model supports this connection type
+		 */
+		virtual bool CheckSynapseType(Interconnection * connection);
+
+
+		/*!
+		 * \brief It returns the neuron model parameters.
+		 *
+		 * It returns the neuron model parameters.
+		 *
+		 * \returns A dictionary with the neuron model parameters
+		 */
+		virtual std::map<std::string,boost::any> GetParameters() const;
+
+		/*!
+		* \brief It returns the neuron model parameters for a specific neuron once the neuron model has been initilized with the number of neurons.
+		*
+		* It returns the neuron model parameters for a specific neuron once the neuron model has been initilized with the number of neurons.
+		*
+		* \param index neuron index inside the neuron model.
+		*
+		* \returns A dictionary with the neuron model parameters
+		*
+		* NOTE: this function is accesible throgh the Simulatiob_API interface.
+		*/
+		virtual std::map<std::string, boost::any> GetSpecificNeuronParameters(int index) const noexcept(false);
+
+		/*!
+		 * \brief It loads the neuron model properties.
+		 *
+		 * It loads the neuron model properties from parameter map.
+		 *
+		 * \param param_map The dictionary with the neuron model parameters.
+		 *
+		 * \throw EDLUTException If it happens a mistake with the parameters in the dictionary.
+		 */
+		virtual void SetParameters(std::map<std::string, boost::any> param_map) noexcept(false);
+
+		/*!
+		 * \brief It returns the default parameters of the neuron model.
+		 *
+		 * It returns the default parameters of the neuron models. It may be used to obtained the parameters that can be
+		 * set for this neuron model.
+		 *
+		 * \returns A dictionary with the neuron model default parameters.
+		 */
+		static std::map<std::string,boost::any> GetDefaultParameters();
+
+		/*!
+		 * \brief It creates a new neuron model object of this type.
+		 *
+		 * It creates a new neuron model object of this type.
+		 *
+		 * \param param_map The neuron model description object.
+		 *
+		 * \return A newly created InputNeuronModel object.
+		 */
+		static NeuronModel* CreateNeuronModel(ModelDescription nmDescription);
+
+		/*!
+		 * \brief It loads the neuron model description and tables (if necessary).
+		 *
+		 * It loads the neuron model description and tables (if necessary).
+		 *
+		 * \param FileName This parameter is not used. It is stub parameter for homegeneity with other neuron models.
+		 *
+		 * \return A neuron model description object with the parameters of the neuron model.
+		 */
+		static ModelDescription ParseNeuronModel(std::string FileName) noexcept(false);
+
+		/*!
+		 * \brief It returns the name of the neuron type
+		 *
+		 * It returns the name of the neuron type.
+		 */
+		static std::string GetName();
+
+		/*!
+		* \brief It returns the neuron model information, including its parameters.
+		*
+		* It returns the neuron model information, including its parameters.
+		*
+		*\return a map with the neuron model information, including its parameters.
+		*/
+		static std::map<std::string, std::string> GetNeuronModelInfo();
+
+		/*!
+         * \brief Comparison operator between neuron models.
+         *
+         * It compares two neuron models.
+         *
+         * \return True if the neuron models are of the same type and with the same parameters.
+         */
+        virtual bool compare(const NeuronModel * rhs) const{
+            if (!EventDrivenNeuronModel::compare(rhs)){
+                return false;
+            }
+            const TableBasedModel * e = dynamic_cast<const TableBasedModel *> (rhs);
+            if (e == 0) return false;
+
+			return this->NumStateVar == e->NumStateVar &&
+				this->NumTimeDependentStateVar == e->NumTimeDependentStateVar &&
+				this->NumSynapticVar == e->NumSynapticVar &&
+				this->SynapticVar == e->SynapticVar &&
+				this->StateVarOrder == e->StateVarOrder &&
+				this->StateVarTable == e->StateVarTable &&
+				this->FiringTable == e->FiringTable &&
+				this->EndFiringTable == e->EndFiringTable &&
+				this->NumTables == e->NumTables &&
+				this->Tables == e->Tables &&
+				this->InitValues == e->InitValues;
+        };
 };
 
 #endif /* TABLEBASEDMODEL_H_ */

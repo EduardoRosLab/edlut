@@ -20,6 +20,7 @@
 
 #include "../../include/spike/InputSpike.h"
 #include "../../include/spike/Network.h"
+#include "../../include/spike/Neuron.h"
 
 ArrayInputSpikeDriver::ArrayInputSpikeDriver() {
 	// TODO Auto-generated constructor stub
@@ -30,16 +31,16 @@ ArrayInputSpikeDriver::~ArrayInputSpikeDriver() {
 	// TODO Auto-generated destructor stub
 }
 
-void ArrayInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) throw (EDLUTFileException){
+void ArrayInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net) noexcept(false){
 	return;
 }
 
-void ArrayInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net, int NumSpikes, double * Times, long int * Cells) throw (EDLUTFileException){
+void ArrayInputSpikeDriver::LoadInputs(EventQueue * Queue, Network * Net, int NumSpikes, const double * Times, const long int * Cells) noexcept(false){
 	if (NumSpikes>0){
 		for (int i=0; i<NumSpikes; ++i){
-			InputSpike * NewSpike = new InputSpike(Times[i], Net->GetNeuronAt(Cells[i]));
+			InputSpike * NewSpike = new InputSpike(Times[i], Net->GetNeuronAt(Cells[i])->get_OpenMP_queue_index(), Net->GetNeuronAt(Cells[i]));
 
-			Queue->InsertEvent(NewSpike);
+			Queue->InsertEvent(NewSpike->GetQueueIndex(),NewSpike);
 		}
 
 	}

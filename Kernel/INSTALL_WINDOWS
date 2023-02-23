@@ -1,0 +1,144 @@
+Basic Installation on Windows
+============================
+
+These are generic installation instructions to compile and use EDLUT on Windows machines.
+
+Dependencies
+============
+
+Dependencies required to compile EDLUT are rather simple.
+- C++ compiler (visual studio).
+- Cmake installation tools (integrated in visual studio).
+- Python 3.X versions to run simulations from Python (optional) (integrated in visual studio).
+- BOOST Python library (libboost-python-dev) if Python used (optional).
+- Cython for faster Python binding (optional) (integrated in visual studio).
+- OpenMP for shared-memory parallel simulations (optional) (integrated in visual studio).
+- CUDA for GPU-powered faster simulations (optional).
+
+1. Download the visual studio (VS) community version from the official webpage: (https://visualstudio.microsoft.com/es/vs/community/). During the installation, select the following options: "Python development", "Desktop development with C++", "Data science and analytical applications" and "Linux and embedded development with C++"
+2. After install VS, download and install CUDA (a cuda version compatible with the VS version). You will need a CUDA capable GPU (Nvidia GPU).
+3. Download the boost library for windows: https://www.boost.org/users/download/. You will have to download the code, for instance in "C:\boost_1_81_0" and set the PATH in the windows environment. Open the window "advanced system setting" and clik the button "Environment Variables". In "User variables ...", click in button "New...", introduce the name "BOOST_INCLUDE_DIR" and the path to the code: C:\boost_1_81_0 
+
+
+Building EDLUT simulator
+========================
+
+First, you need to download EDLUT source code. You could download it as a .zip file or clone it from the GitHub repository (https://github.com/EduardoRosLab/edlut_private).
+
+For the starting point, we assume that you have been able to clone the EDLUT source code from the repository, so a folder called edlut_private has been created with all the source code of the simulator in the directory <download_directory>. Please, note that if you have downloaded an specific branch as a .zip file, you might get the code downloaded in different folder (e.g. EDLUT_python branch might get extracted to the edlut_private-EDLUT_python directory). In that case, we recommend to rename the folder to edlut_private.
+
+Then you will need to create a folder (you can choose the name that you prefer, but it has to be used every time that <temp_directory> is indicated) where all the building temporary folders will be stored:
+
+----->>>>>> mkdir <temp_directory>
+----->>>>>> cd <temp_directory>
+
+
+Now it is time to configure the building project. We assume that we want to install EDLUT in the folder called <install_directory> and the source code has been extracted to <download_directory>/edlut_private/Kernel folder:
+
+----->>>>>> cmake -DCMAKE_INSTALL_PREFIX:PATH=<install_directory> <download_directory>/edlut_private/Kernel
+
+Note: Be sure that you specify <install_directory> as an absolute path (/folderA/folderB/folderC/.....) instead of a relative path (../folderA/folderB/.....). DON'T USE A PATH WITH WHITE SPACES IN THE NAME (e.g.: C:\Program Files (x86)\edlut). 
+
+This tool will check that all the dependencies are correctly installed and set up in your systems, so it is critical that you check there exist no errors in this step. In particular, you need to check the following lines:
+* The C++ compiler to be used in the line: -- The CXX compiler identification is MSVE
+* The Python version to be used. If any Python version is found in your system, the default one will be used as the reference to compile EDLUT: -- Found PythonLibs: C:/ProgramData/Anaconda3/libs/python39.lib (found version "3.9.7").
+* The OpenMP version to be used: -- Found OpenMP: TRUE (found version "2.0").
+* The CUDA version to be used.
+* The BOOST library version: -- Boost version: 1.81.1.
+
+Please, note that different versions of each package can be found in your system. However, it does not necessarily represent an issue, as other versions should be compatible too.
+
+Other versions or building options can be chosen with the following definitions:
+* -Dwith-cuda: Request compilation with CUDA parallelization. Optionally give directory with CUDA installation (Default=OFF).
+* -Dwith-openmp: Enable OpenMP multithreading. Optional: set OMP flag (Default=ON).
+* -Dwith-python: Enable Python binding. Optional: set Python version (2 or 3) (Default=ON).
+* -Dwith-optimize: Enable user defined optimizations (Default=ON, when ON, defaults to '-O3').
+* -Dwith-debug: Enable user defined debug flags. (Default=OFF, when ON, defaults to '-g').
+* -Dwith-profiling: Enable user defined profiling flags (default OFF, when ON).
+* -Dwith-doc: Enable class documentation generation (default OFF, when ON).
+* -Dwith-permissive: Compile in permissive mode (default ON).
+
+EXAMPLES:
+cmake -Dwith-python=OFF -Dwith-cuda=ON -DCMAKE_INSTALL_PREFIX:PATH=C:\edlut <download_directory>/edlut_private/Kernel
+cmake -Dwith-python=3 -Dwith-cuda=OFF -DCMAKE_INSTALL_PREFIX:PATH=C:\edlut <download_directory>/edlut_private/Kernel
+
+To compile EDLUT simulator, just open VS and admin, open the VS project generated in the folder <temp_directory>, change "Debug" for "Releale" and build the project "ALL_BUILD"
+
+To install EDLUT simulator, just build the project "INSTALL"
+
+If everything happens as expected, after this step, EDLUT should be installed in <install_directory> (the one used during the cmake command). In particular, you should check that the following files exist:
+* <install_directory>/bin/edlutkernel
+* <install_directory>/bin/vars.ps1
+* <install_directory>/lib/edlut.lib
+* <install_directory>/lib/pythonX.Y/site-packages/pyedlut/simulationwrapper.so only if Python binding was selected (where pythonX.Y is the Python version installed in your system and selected during the configuration process).
+
+
+Setting EDLUT for your Windows environment
+=========================================
+
+If you want EDLUT to be part of your Windows PATH environment variables (just to find EDLUT executable from wherever you are), you need to define some "Environment Variables":
+Open a PowerShell terminal as admin and execute these commands:
+----->>>>>> set-executionpolicy remotesigned --> select option A  
+----->>>>>> cd <install_directory>\bin\vars.ps1
+----->>>>>> .\vars.ps1
+This script will automatically create the required environment variables:
+
+
+
+Testing EDLUT installation
+==========================
+
+Optional: In order to test EDLUT installation your computer needs numpy and motplotlib Python libraries correctly configured in your favorite Python environment. Once these libraries are installed, type the following commands:
+
+----->>>>>>  source <install_directory>\bin\vars.sh
+----->>>>>>  cd <download_directory>\edlut_private\Kernel\utils
+----->>>>>>  python python_test.py
+
+Once the test simulation is finished you should obtain a raster plot of the spikes emitted by the different neurons in the simulation.
+
+
+Running EDLUT simulations from command line
+===========================================
+
+In principle, EDLUT simulations could be run by just calling EDLUT executable file with the following commands:
+
+----->>>>>> cd <install_directory>\bin
+----->>>>>> .\edlutkernel -time 10 -nf <network_filename> -wf <weights_filename>
+
+If the executable runs, EDLUT is correctly installed (even if it launches some errors about the network and weight files).
+
+
+Using EDLUT from Python
+=======================
+
+Once you have sourced vars.sh file from your installation folder, EDLUT should also be available as a library for your Python installation (if it has been set during the configuration process). In particular, you could access to EDLUT-from-Python API by just typing the following line in your Python command line:
+
+----->>>>>> import pyedlut
+
+Please, be sure that your Python version is the same one as it was configured during the installation process.
+
+If you want to know more about the Python/EDLUT interface you can have a look to the *.py examples in the <download_directory>/Kernel/utils folder of the EDLUT source code.
+
+
+Using EDLUT from a virtual environment
+======================================
+
+Virtual environments are a good approach to keep reasonably isolated Python environments with specific libraries. They include a Python interpreter as well as specific versions of the required Python libraries. If you want to know more about how to set your virtual environments and use them to run Jupyter notebooks, please, check the following link: https://janakiev.com/blog/jupyter-virtual-envs/
+
+Once created the virtual environment, you can add your EDLUT installation to that environment by just creating a new text file called edlut.pth in the <virtual_env_path>/lib64/pythonX.X/site-packages folder with the following text:
+
+<install_directory>/lib/pythonX.Y/site-packages
+
+where pythonX.Y represents the Python version of your virtual environment, and it should match the python version set to compile EDLUT.
+
+
+=====================================
+
+Please, if you find any issue with this installation guide or you have any feedback to improve the document, feel free to contact to Jesús Garrido at jesusgarrido at ugr dot es or submit a pull request to this document.
+
+
+
+
+
+
+

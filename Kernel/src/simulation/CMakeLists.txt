@@ -1,0 +1,32 @@
+target_sources(${PROJECT_NAME}
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/CommunicationEvent.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/EndSimulationEvent.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/Event.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/EventQueue.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ExponentialTable.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/MediananFilter.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ParameterException.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ParamReader.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/RandomGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/RealTimeRestriction.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/SaveWeightsEvent.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/Simulation_API.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/StopSimulationEvent.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/SynchronizeActivityEvent.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/SynchronizeSimulationEvent.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/TimeEventUpdateNeurons.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/TrigonometricTable.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/Utils.cpp)
+
+if (CUDA_FOUND)
+    target_sources(${PROJECT_NAME}
+            PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/Simulation_GPU.cu
+            )
+else()
+    target_sources(${PROJECT_NAME}
+            PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/Simulation.cpp
+            )
+endif()

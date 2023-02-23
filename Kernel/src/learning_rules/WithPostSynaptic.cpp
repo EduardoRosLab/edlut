@@ -2,7 +2,7 @@
  *                           WithPostSynaptic.cpp                          *
  *                           -------------------                           *
  * copyright            : (C) 2013 by Francisco Naveros                    *
- * email                : fnaveros@atc.ugr.es                              *
+ * email                : fnaveros@ugr.es                                  *
  ***************************************************************************/
 
 /***************************************************************************
@@ -17,7 +17,7 @@
 #include "../../include/learning_rules/WithPostSynaptic.h"
 
 
-WithPostSynaptic::WithPostSynaptic(){
+WithPostSynaptic::WithPostSynaptic():LearningRule(){
 
 }
 
@@ -29,5 +29,11 @@ bool WithPostSynaptic::ImplementPostSynaptic(){
 	return true;
 }
 
+bool WithPostSynaptic::ImplementTriggerSynaptic(){
+	return false;
+}
 
-
+std::map<std::string,boost::any> WithPostSynaptic::GetDefaultParameters(){
+	std::map<std::string,boost::any> newMap = LearningRule::GetDefaultParameters();
+	return newMap;
+}

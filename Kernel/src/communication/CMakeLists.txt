@@ -1,0 +1,24 @@
+target_sources(${PROJECT_NAME}
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArrayInputCurrentDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArrayInputSpikeDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArrayOutputSpikeDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/CdSocket.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ClientSocket.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/CommunicationDevice.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ConnectionException.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/FileInputCurrentDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/FileInputSpikeDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/FileOutputSpikeDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/FileOutputWeightDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/InputBooleanArrayDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/InputCurrentDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/InputSpikeDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/OutputBooleanArrayDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/OutputSpikeDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/OutputWeightDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ServerSocket.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/TCPIPInputOutputSpikeDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/TCPIPInputSpikeDriver.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/TCPIPOutputSpikeDriver.cpp
+        )

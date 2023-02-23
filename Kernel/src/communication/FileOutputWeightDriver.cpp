@@ -18,13 +18,13 @@
 
 #include "../../include/spike/Network.h"
 
-FileOutputWeightDriver::FileOutputWeightDriver(const char * NewFileName) throw (EDLUTException): FileName(NewFileName){
+FileOutputWeightDriver::FileOutputWeightDriver(const char * NewFileName) noexcept(false): FileName(NewFileName){
 }
 		
 FileOutputWeightDriver::~FileOutputWeightDriver(){
 }
 
-void FileOutputWeightDriver::WriteWeights(Network * Net, float SimulationTime) throw (EDLUTException){
+void FileOutputWeightDriver::WriteWeights(Network * Net, float SimulationTime) noexcept(false){
 	string Name = FileName;
 	
 	char* str = new char[30];
@@ -40,7 +40,7 @@ void FileOutputWeightDriver::WriteWeights(Network * Net, float SimulationTime) t
 	return;
 }	
 
-void FileOutputWeightDriver::WriteWeights(Network * Net) throw (EDLUTException){
+void FileOutputWeightDriver::WriteWeights(Network * Net) noexcept(false){
 	Net->SaveWeights(FileName.c_str());
 }	
 

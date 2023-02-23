@@ -1,0 +1,19 @@
+from distutils.core import setup
+import sys
+import string
+
+final_directory = "@PROJECT_SOURCE_DIR@/python/pyedlut"
+if sys.platform=="win32":
+  final_directory = final_directory.replace( ":/", ":\\")
+
+setup(
+    name='pyedlut',
+    version='@NEST_VERSION_VERSION@',
+    description='PyEDLUT provides Python bindings for EDLUT kernel',
+    author='Jesus Garrido, Francisco Naveros, Alvaro Gonzalez',
+    url='https://github.com/EduardoRosLab/edlut_private',
+    license='GPLv3',
+    packages=["pyedlut"],
+    package_dir={ 'pyedlut': final_directory}
+)
+

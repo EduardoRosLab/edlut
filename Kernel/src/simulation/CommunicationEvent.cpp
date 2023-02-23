@@ -19,27 +19,53 @@
 #include "../../include/simulation/Simulation.h"
 #include "../../include/simulation/EventQueue.h"
 
-CommunicationEvent::CommunicationEvent():Event(0){
-}
+#include "../../include/simulation/SynchronizeSimulationEvent.h"
+
+#include "../../include/openmp/openmp.h"
+
    	
-CommunicationEvent::CommunicationEvent(double NewTime): Event(NewTime){
+CommunicationEvent::CommunicationEvent(double NewTime, Simulation * CurrentSimulation): Event(NewTime){
+	for(int i=0; i<CurrentSimulation->GetNumberOfQueues(); i++){
+		SynchronizeSimulationEvent * NewEvent = new SynchronizeSimulationEvent(NewTime, i);
+		CurrentSimulation->GetQueue()->InsertEvent(i,NewEvent);
+	}
 }
    		
 CommunicationEvent::~CommunicationEvent(){
 }
 
-void CommunicationEvent::ProcessEvent(Simulation * CurrentSimulation, bool RealTimeRestriction){
-	
+void CommunicationEvent::ProcessEvent(Simulation * CurrentSimulation, RealTimeRestrictionLevel RealTimeRestriction){
 	// Send the outputs
 	CurrentSimulation->SendOutput();
 	
 	// Get the inputs
 	CurrentSimulation->GetInput();
 	
+	if (CurrentSimulation->GetSimulationStep() > 0.0){
+		CommunicationEvent * NewEvent = new CommunicationEvent(this->GetTime() + CurrentSimulation->GetSimulationStep(), CurrentSimulation);
+		CurrentSimulation->GetQueue()->InsertEventWithSynchronization(NewEvent);
+	}
+}
+
+void CommunicationEvent::ProcessEvent(Simulation * CurrentSimulation){
+	// Send the outputs
+	CurrentSimulation->SendOutput();
+		
+	// Get the inputs
+	CurrentSimulation->GetInput();
+	
 	if (CurrentSimulation->GetSimulationStep()>0.0){
-		CommunicationEvent * NewEvent = new CommunicationEvent(this->GetTime()+CurrentSimulation->GetSimulationStep());
-		CurrentSimulation->GetQueue()->InsertEvent(NewEvent);
-	}		
+		CommunicationEvent * NewEvent = new CommunicationEvent(this->GetTime()+CurrentSimulation->GetSimulationStep(), CurrentSimulation);
+		CurrentSimulation->GetQueue()->InsertEventWithSynchronization(NewEvent);
+	}
+}
+
+void CommunicationEvent::PrintType(){
+	cout<<"CommunicationEvent"<<endl;
+}
+
+enum EventPriority CommunicationEvent::ProcessingPriority(){
+	return COMMUNICATIONEVENT;
 }
    	
 
