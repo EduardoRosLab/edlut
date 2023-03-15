@@ -150,7 +150,7 @@
     set_target_properties(${PROJECT_NAME}
                         PROPERTIES POSITION_INDEPENDENT_CODE ON)
     set_target_properties( ${PROJECT_NAME}
-                        PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+                        PROPERTIES CUDA_SEPARABLE_COMPILATION OFF)
     set_target_properties(${PROJECT_NAME}
 			PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 

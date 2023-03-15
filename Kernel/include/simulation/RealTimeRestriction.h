@@ -238,6 +238,15 @@ class RealTimeRestriction{
 
 
 		/*!
+		* \brief It sets a new max simulaion time in advance and update the gap time varibles.
+		*
+		* It sets a new max simulaion time in advance and update the gap time varibles.
+		* \param new_max_simulation_time_in_advance
+		*/
+		void SetMaxSimulationTimeInAdvance(double new_max_simulation_time_in_advance);
+
+
+		/*!
 		 * \brief It increases the simulation time in a simulation step.
 		 *
 		 * It increases the simulation time in a simulation step. This function is executed by the main thread.

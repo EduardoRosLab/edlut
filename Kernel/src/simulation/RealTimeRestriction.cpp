@@ -103,7 +103,18 @@ void RealTimeRestriction::SetParameterWatchDog(double new_simulation_step_size, 
 		startt = mach_absolute_time();
 	#endif
 }
- 
+
+
+void RealTimeRestriction::SetMaxSimulationTimeInAdvance(double new_max_simulation_time_in_advance){
+  if(new_max_simulation_time_in_advance<simulation_step_size){
+		max_simulation_time_in_advance=simulation_step_size;
+	}else{
+		max_simulation_time_in_advance=new_max_simulation_time_in_advance;
+	}
+  first_gap_time=max_simulation_time_in_advance*(1.0f-first_section);
+  second_gap_time=max_simulation_time_in_advance*(1.0f-second_section);
+  third_gap_time=max_simulation_time_in_advance*(1.0f-third_section);
+}
 
 
 
